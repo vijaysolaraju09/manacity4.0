@@ -13,6 +13,7 @@ const eventRoutes = require("./routes/eventRoutes");
 const specialShopRoutes = require("./routes/specialShopRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 app.use(cors());
@@ -28,6 +29,7 @@ app.use("/api/events", eventRoutes);
 app.use("/api/special-shop", specialShopRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/admin", adminRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)

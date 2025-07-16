@@ -21,6 +21,9 @@ import Cart from './pages/Cart/Cart';
 import Events from './pages/Events/Events';
 import VoiceOrder from './pages/VoiceOrder/VoiceOrder';
 import TabLayout from './layouts/TabLayout';
+import AdminLogin from './pages/AdminLogin/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminProtectedRoute from './components/AdminProtectedRoute';
 import { setUser } from './store/slices/userSlice';
 import type { AppDispatch } from './store';
 
@@ -44,7 +47,11 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
         {/* <Route path="/verify-otp" element={<OtpPage />} /> */}
+        <Route element={<AdminProtectedRoute />}>
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        </Route>
         <Route element={<ProtectedRoute />}>
           <Route element={<TabLayout />}>
             <Route path="/home" element={<Home />} />

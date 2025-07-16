@@ -1,0 +1,95 @@
+.event-details {
+  padding: 1.5rem;
+
+  .event-img {
+    width: 100%;
+    border-radius: 10px;
+    object-fit: cover;
+    max-height: 300px;
+    margin-bottom: 1.5rem;
+  }
+
+  .info {
+    text-align: center;
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .meta {
+      color: #777;
+      margin-bottom: 1rem;
+    }
+
+    .countdown {
+      font-weight: bold;
+      color: #0070f3;
+      margin-bottom: 1rem;
+    }
+
+    .description {
+      color: #333;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .admin-note {
+      background: #fef8e7;
+      border-left: 4px solid #f0c36d;
+      padding: 0.8rem;
+      margin-bottom: 1.5rem;
+      border-radius: 6px;
+      text-align: left;
+    }
+
+    .register-btn {
+      background-color: #0070f3;
+      color: white;
+      padding: 0.7rem 1.5rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+
+      &:hover {
+        background-color: #005ad4;
+      }
+    }
+
+    .message {
+      margin-top: 0.8rem;
+      font-weight: bold;
+      color: #155724;
+    }
+
+    .leaderboard {
+      margin-top: 2rem;
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+
+        th,
+        td {
+          padding: 0.4rem;
+          border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+          background: #f8f8f8;
+        }
+
+        .winner {
+          background: #fff8e1;
+        }
+      }
+    }
+  }
+}

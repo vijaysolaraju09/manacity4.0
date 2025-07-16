@@ -1,0 +1,117 @@
+@import "../../styles/mixins";
+@import "../../styles/variables";
+
+.shops {
+  padding: 1rem;
+  @include respond(md) { padding: 2rem; }
+
+  .searchBar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #fff;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .searchBar input,
+  .searchBar select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+  }
+
+  .categoryRow {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+
+    button {
+      flex-shrink: 0;
+      padding: 0.4rem 0.9rem;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s ease;
+
+      &.active {
+        background: $primary-color;
+        color: #fff;
+        border-color: $primary-color;
+      }
+    }
+  }
+
+  .list {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(1, 1fr);
+
+    @include respond(md) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+    }
+
+    img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+
+    .info {
+      padding: 0.75rem;
+      h3 {
+        margin: 0 0 0.25rem;
+        font-size: 1.1rem;
+      }
+      p {
+        margin: 0;
+        color: #666;
+      }
+      .badge {
+        display: inline-block;
+        margin-top: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        &.open {
+          background: #d4edda;
+          color: #155724;
+        }
+        &.closed {
+          background: #f8d7da;
+          color: #721c24;
+        }
+      }
+    }
+  }
+}

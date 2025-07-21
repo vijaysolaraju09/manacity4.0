@@ -83,3 +83,12 @@ exports.approveShop = async (req, res) => {
     res.status(500).json({ error: "Failed to approve shop" });
   }
 };
+
+exports.getMyProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ createdBy: req.user._id });
+    res.status(200).json(products);
+  } catch (err) {
+    res.status(500).json({ message: "Server error fetching products." });
+  }
+};

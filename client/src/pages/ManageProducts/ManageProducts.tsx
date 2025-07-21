@@ -8,9 +8,10 @@ import {
   deleteProduct,
   type Product,
 } from '../../store/slices/productSlice';
+import Loader from '../../components/Loader';
 import styles from './ManageProducts.module.scss';
 
-const emptyForm: Partial<Product> = { name: '', description: '', price: 0, category: '', image: '', stock: 0, shop: '' };
+const emptyForm: Partial<Product> = { name: '', description: '', price: 0, category: '', image: '', stock: 0 };
 
 const ManageProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -18,6 +19,7 @@ const ManageProducts = () => {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<Partial<Product>>(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     dispatch(fetchMyProducts());
@@ -35,14 +37,29 @@ const ManageProducts = () => {
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editId) {
-      dispatch(updateProduct({ id: editId, data: form }));
-    } else {
-      dispatch(createProduct(form));
+    if (!form.name || !form.price || form.price <= 0) {
+      alert('Please provide a name and valid price');
+      return;
     }
-    setShowModal(false);
+    try {
+      setSubmitting(true);
+      if (editId) {
+        await dispatch(updateProduct({ id: editId, data: form })).unwrap();
+        alert('Product updated');
+      } else {
+        await dispatch(createProduct(form)).unwrap();
+        alert('Product added');
+      }
+      setShowModal(false);
+      setForm(emptyForm);
+      dispatch(fetchMyProducts());
+    } catch {
+      alert('Failed to save product');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -90,13 +107,13 @@ const ManageProducts = () => {
               Stock
               <input type="number" value={form.stock || 0} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
             </label>
-            <label>
-              Shop ID
-              <input value={form.shop as string || ''} onChange={(e) => setForm({ ...form, shop: e.target.value })} />
-            </label>
             <div className={styles.actions}>
-              <button type="submit">Save</button>
-              <button type="button" onClick={() => setShowModal(false)}>Cancel</button>
+              <button type="submit" disabled={submitting}>
+                {submitting ? <Loader /> : 'Save'}
+              </button>
+              <button type="button" onClick={() => setShowModal(false)} disabled={submitting}>
+                Cancel
+              </button>
             </div>
           </form>
         </div>

@@ -1,0 +1,69 @@
+import { useEffect, useState } from 'react';
+import { fetchPendingShops, approveShop } from '../../api/admin';
+import './AdminPanel.scss';
+
+interface Shop {
+  _id: string;
+  name: string;
+  category: string;
+  location: string;
+  address: string;
+}
+
+const AdminPanel = () => {
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionId, setActionId] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchPendingShops();
+        setShops(data);
+      } catch {
+        setShops([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    try {
+      setActionId(id);
+      await approveShop(id);
+      setShops((prev) => prev.filter((s) => s._id !== id));
+    } catch {
+      // ignore
+    } finally {
+      setActionId('');
+    }
+  };
+
+  return (
+    <div className="admin-panel">
+      <h1>Pending Shops</h1>
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <ul>
+          {shops.map((shop) => (
+            <li key={shop._id}>
+              <div>
+                <strong>{shop.name}</strong> - {shop.category} ({shop.location})
+              </div>
+              <button
+                onClick={() => handleApprove(shop._id)}
+                disabled={actionId === shop._id}
+              >
+                {actionId === shop._id ? 'Approving...' : 'Approve'}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
+export default AdminPanel;

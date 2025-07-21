@@ -18,3 +18,12 @@ export const fetchUsers = async () => {
   const res = await adminApi.get('/admin/users');
   return res.data;
 };
+
+export const fetchPendingShops = async () => {
+  const res = await adminApi.get('/shops/pending');
+  return res.data;
+};
+
+export const approveShop = async (id: string) => {
+  await adminApi.put(`/shops/approve/${id}`);
+};

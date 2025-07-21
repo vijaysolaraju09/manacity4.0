@@ -9,7 +9,11 @@ const shopSchema = new mongoose.Schema(
       required: true,
     },
     category: { type: String, required: true }, // e.g., grocery, clothing
-    status: { type: String, enum: ["open", "closed"], default: "open" },
+    status: {
+      type: String,
+      enum: ["pending", "approved"],
+      default: "pending",
+    },
     location: { type: String, required: true },
     address: { type: String, default: "" },
     image: { type: String, default: "" },

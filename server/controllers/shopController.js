@@ -1,19 +1,21 @@
 const Shop = require("../models/Shop");
 const Product = require("../models/Product");
+const User = require("../models/User");
+const { promoteToBusiness } = require("./userController");
 
 exports.createShop = async (req, res) => {
   try {
-    const { name, category, status, location, address, image } = req.body;
+    const { name, category, location, address, image } = req.body;
     const owner = req.user._id;
 
     const shop = await Shop.create({
       name,
       category,
-      status,
       location,
       address,
       image,
       owner,
+      status: "pending",
     });
     res.status(201).json({ message: "Shop created", shop });
   } catch (err) {
@@ -52,5 +54,32 @@ exports.getProductsByShop = async (req, res) => {
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch products" });
+  }
+};
+
+exports.getPendingShops = async (req, res) => {
+  try {
+    const shops = await Shop.find({ status: "pending" }).populate(
+      "owner",
+      "name phone"
+    );
+    res.json(shops);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch pending shops" });
+  }
+};
+
+exports.approveShop = async (req, res) => {
+  try {
+    const shop = await Shop.findById(req.params.id);
+    if (!shop) return res.status(404).json({ error: "Shop not found" });
+    shop.status = "approved";
+    await shop.save();
+
+    await promoteToBusiness(shop.owner);
+
+    res.json({ message: "Shop approved" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to approve shop" });
   }
 };

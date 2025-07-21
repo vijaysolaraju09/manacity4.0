@@ -1,3 +1,5 @@
+const User = require("../models/User");
+
 exports.getProfile = async (req, res) => {
   res.status(200).json({ user: req.user });
 };
@@ -27,4 +29,12 @@ exports.updateProfile = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to update profile" });
   }
+};
+
+exports.promoteToBusiness = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+  user.role = "business";
+  await user.save();
+  return user;
 };

@@ -1,9 +1,22 @@
 body {
   font-family: $font-body;
-  color: #111;
-  background: linear-gradient(135deg, $gradient-start, $gradient-middle, $gradient-end);
   min-height: 100vh;
   line-height: 1.5;
+}
+
+body.theme-colored {
+  background: linear-gradient(135deg, $gradient-start, $gradient-middle, $gradient-end);
+  color: #111;
+}
+
+body.theme-light {
+  background: #f7f7f7;
+  color: #111;
+}
+
+body.theme-dark {
+  background: #111;
+  color: #f7f7f7;
 }
 
 h1,

@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { FiLogOut, FiShoppingCart, FiSettings, FiShoppingBag, FiPackage, FiUserCheck, FiUsers } from 'react-icons/fi';
 import type { RootState } from '../../store';
 import { setUser, clearUser } from '../../store/slices/userSlice';
+import { setTheme, type Theme } from '../../store/slices/themeSlice';
+import type { AppDispatch } from '../../store';
 import {
   getCurrentUser,
   updateProfile,
@@ -14,10 +16,8 @@ import {
 import styles from './Profile.module.scss';
 import Loader from '../../components/Loader';
 
-export type Theme = 'colored' | 'light' | 'dark';
-
 const Profile = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user as any);
 
@@ -29,7 +29,7 @@ const Profile = () => {
   const [showBusiness, setShowBusiness] = useState(false);
   const [businessForm, setBusinessForm] = useState({ name: '', category: '', location: '', address: '' });
   const [submitting, setSubmitting] = useState(false);
-  const [theme, setTheme] = useState<Theme>('colored');
+  const theme = useSelector((state: RootState) => state.theme as Theme);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -111,7 +111,11 @@ const Profile = () => {
   return (
     <div className={`${styles.profile} ${styles[theme]}`}>
       <motion.div className={styles.userCard} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
-        <select className={styles.themeSelect} value={theme} onChange={(e) => setTheme(e.target.value as Theme)}>
+        <select
+          className={styles.themeSelect}
+          value={theme}
+          onChange={(e) => dispatch(setTheme(e.target.value as Theme))}
+        >
           <option value="colored">Colored</option>
           <option value="light">Light</option>
           <option value="dark">Dark</option>

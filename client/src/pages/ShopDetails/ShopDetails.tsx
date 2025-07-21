@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import api from "../../api/client";
-import { sampleShops } from "../../data/sampleData";
-import { useDispatch } from "react-redux";
-import { addToCart } from "../../store/slices/cartSlice";
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import api from '../../api/client';
+import { sampleShops } from '../../data/sampleData';
+import { useDispatch } from 'react-redux';
+import { addToCart } from '../../store/slices/cartSlice';
 import Shimmer from "../../components/Shimmer";
 import "./ShopDetails.scss";
 import fallbackImage from "../../assets/no-image.svg";
@@ -22,6 +22,7 @@ interface Shop {
   location: string;
   address: string;
   image?: string;
+  owner?: string;
   products: Product[];
 }
 
@@ -31,23 +32,25 @@ const ShopDetails = () => {
   const dispatch = useDispatch();
 
   const [shop, setShop] = useState<Shop | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get(`/shops/${id}`)
-      .then((res) => {
-        if (res.data) {
-          setShop(res.data);
-        } else {
-          setShop(sampleShops[0]);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
+    const load = async () => {
+      try {
+        const shopRes = await api.get(`/shops/${id}`);
+        setShop(shopRes.data || sampleShops[0]);
+        const prodRes = await api.get(`/shops/${id}/products`);
+        setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
+      } catch {
         setShop(sampleShops[0]);
+        setProducts(sampleShops[0].products);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    load();
   }, [id]);
 
   if (loading || !shop)
@@ -91,7 +94,7 @@ const ShopDetails = () => {
 
       <h3 className="section-title">Products</h3>
       <div className="product-list">
-        {shop.products.map((product) => (
+        {products.map((product) => (
           <div key={product._id} className="product-card">
             <img
               src={product.image || "https://via.placeholder.com/200"}
@@ -100,20 +103,25 @@ const ShopDetails = () => {
             />
             <h4>{product.name}</h4>
             <p>₹{product.price}</p>
+            <input
+              type="number"
+              min={1}
+              value={quantities[product._id] || 1}
+              onChange={(e) =>
+                setQuantities({ ...quantities, [product._id]: Number(e.target.value) })
+              }
+            />
             <button
               onClick={() =>
-                dispatch(
-                  addToCart({
-                    id: product._id,
-                    name: product.name,
-                    price: product.price,
-                    quantity: 1,
-                    image: product.image,
-                  })
-                )
+                api.post('/interests/', {
+                  productId: product._id,
+                  quantity: quantities[product._id] || 1,
+                  businessId: shop?.owner,
+                  shopId: shop?._id,
+                })
               }
             >
-              Add to Cart
+              I'm Interested
             </button>
           </div>
         ))}

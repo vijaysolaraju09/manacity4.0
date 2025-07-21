@@ -5,9 +5,10 @@ const productSchema = new mongoose.Schema(
     shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", required: true },
     name: { type: String, required: true },
     description: { type: String, default: "" },
-    quantity: { type: String, required: true },
-    category: { type: String, enum: ["all", "sale"], default: "all" },
+    price: { type: Number, required: true },
+    category: { type: String, default: "general" },
     image: { type: String, default: "" },
+    stock: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

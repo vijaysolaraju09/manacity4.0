@@ -14,6 +14,8 @@ const specialShopRoutes = require("./routes/specialShopRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const productRoutes = require("./routes/productRoutes");
+const interestRoutes = require("./routes/interestRoutes");
 
 const app = express();
 app.use(cors());
@@ -30,6 +32,8 @@ app.use("/api/special-shop", specialShopRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/interests", interestRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)

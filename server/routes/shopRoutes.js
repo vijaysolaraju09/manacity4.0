@@ -9,6 +9,7 @@ const {
   getProductsByShop,
   getPendingShops,
   approveShop,
+  getMyProducts,
 } = require("../controllers/shopController");
 
 router.post("/", protect, createShop);
@@ -17,5 +18,6 @@ router.put("/approve/:id", adminAuth, approveShop);
 router.get("/", getAllShops);
 router.get("/:id", getShopById);
 router.get("/:id/products", getProductsByShop);
+router.get("/my-products", protect, getMyProducts);
 
 module.exports = router;

@@ -18,7 +18,7 @@ interface Props {
   product: BasicProduct;
   showActions?: boolean;
   onAddToCart?: () => void;
-  onShowInterest?: () => void;
+  onPlaceOrder?: () => void;
   onClick?: () => void;
   className?: string;
 }
@@ -27,7 +27,7 @@ const ProductCard = ({
   product,
   showActions = true,
   onAddToCart,
-  onShowInterest,
+  onPlaceOrder,
   onClick,
   className = '',
 }: Props) => {
@@ -50,13 +50,13 @@ const ProductCard = ({
     }
   };
 
-  const handleInterest = async () => {
+  const handleOrder = async () => {
     try {
       const qty = parseInt(prompt('Quantity', '1') || '1', 10);
-      await api.post(`/interests/${product._id}`, { quantity: qty });
-      alert('Interest sent');
+      await api.post(`/orders/place/${product._id}`, { quantity: qty });
+      alert('Order request sent');
     } catch {
-      alert('Failed to send interest');
+      alert('Failed to send order');
     }
   };
 
@@ -83,7 +83,7 @@ const ProductCard = ({
       {showActions && (
         <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
           <button onClick={onAddToCart || handleAdd}>Add to Cart</button>
-          <button onClick={onShowInterest || handleInterest}>Interested</button>
+          <button onClick={onPlaceOrder || handleOrder}>Place Order</button>
         </div>
       )}
     </motion.div>

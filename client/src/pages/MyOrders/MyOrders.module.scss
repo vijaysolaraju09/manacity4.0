@@ -1,4 +1,4 @@
-.receivedInterests {
+.myOrders {
   padding: 1rem;
 }
 .filters {
@@ -16,13 +16,4 @@
   &:hover {
     transform: translateY(-2px);
   }
-}
-.actions {
-  display: flex;
-  gap: 0.5rem;
-}
-.call {
-  color: green;
-  text-decoration: none;
-  font-weight: bold;
 }

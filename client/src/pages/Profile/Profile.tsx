@@ -64,7 +64,7 @@ const Profile = () => {
   } else {
     actions.push(
       { label: 'Manage Products', icon: FiPackage, onClick: () => navigate('/manage-products') },
-      { label: 'Received Interests', icon: FiUsers, onClick: () => navigate('/interests/received') },
+      { label: 'Received Orders', icon: FiUsers, onClick: () => navigate('/orders/received') },
     );
   }
 

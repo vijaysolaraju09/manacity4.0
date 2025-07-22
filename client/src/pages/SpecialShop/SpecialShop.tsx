@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import api from '../../api/client';
 import { sampleSpecialProducts } from '../../data/sampleHomeData';
 import Shimmer from '../../components/Shimmer';
-import { addToCart } from '../../store/slices/cartSlice';
-import fallbackImage from '../../assets/no-image.svg';
+import ProductCard from '../../components/ProductCard/ProductCard';
 import styles from './SpecialShop.module.scss';
 
 interface Product {
@@ -23,7 +20,6 @@ const SpecialShop = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -81,39 +77,11 @@ const SpecialShop = () => {
               <Shimmer style={{ height: 16, marginTop: 8, width: '60%' }} />
             </div>
           ) : (
-            <motion.div
-              whileHover={{ scale: 1.02 }}
+            <ProductCard
               key={p._id}
-              className={styles.card}
-            >
-              <img
-                src={p.image || 'https://via.placeholder.com/200'}
-                alt={p.name}
-                onError={(e) => (e.currentTarget.src = fallbackImage)}
-                onClick={() => navigate(`/product/${p._id}`)}
-              />
-              <h3 className={styles.name}>{p.name}</h3>
-              {p.description && <p className={styles.desc}>{p.description}</p>}
-              <p className={styles.price}>₹{p.price}</p>
-              <motion.button
-                className={styles.add}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() =>
-                  dispatch(
-                    addToCart({
-                      id: p._id,
-                      name: p.name,
-                      price: p.price,
-                      quantity: 1,
-                      image: p.image,
-                    })
-                  )
-                }
-              >
-                Add to Cart
-              </motion.button>
-            </motion.div>
+              product={p}
+              onClick={() => navigate(`/product/${p._id}`)}
+            />
           )
         )}
       </div>

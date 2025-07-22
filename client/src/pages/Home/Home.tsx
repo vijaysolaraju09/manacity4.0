@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/client";
 import Shimmer from "../../components/Shimmer";
+import ProductCard from "../../components/ProductCard/ProductCard";
 import {
   sampleOffers,
   sampleVerifiedUsers,
@@ -146,49 +147,52 @@ const Section = ({ title, data, type, navigate, settings, loading }: SectionProp
           key={item?._id || idx}
           className="card"
           whileHover={{ scale: 1.03 }}
-          onClick={() =>
-            !loading &&
-            navigate(
-              type === "product"
-                ? `/product/${item._id}`
-                : type === "user"
-                ? `/verified-users/${item._id}`
-                : `/events/${item._id}`
-            )
-          }
         >
           {loading ? (
             <>
               <Shimmer className="rounded" style={{ height: 150 }} />
               <div className="card-info">
-                <Shimmer style={{ height: 16, marginTop: 8, width: "60%" }} />
-                {type === "event" && (
-                  <Shimmer style={{ height: 14, marginTop: 4, width: "40%" }} />
+                <Shimmer style={{ height: 16, marginTop: 8, width: '60%' }} />
+                {type === 'event' && (
+                  <Shimmer style={{ height: 14, marginTop: 4, width: '40%' }} />
                 )}
               </div>
             </>
+          ) : type === 'product' ? (
+            <ProductCard
+              product={item}
+              showActions={false}
+              onClick={() => navigate(`/product/${item._id}`)}
+            />
           ) : (
             <>
               <img
                 src={item.image}
                 alt={item.name || item.title}
                 onError={(e) => (e.currentTarget.src = fallbackImage)}
+                onClick={() =>
+                  navigate(
+                    type === 'user'
+                      ? `/verified-users/${item._id}`
+                      : `/events/${item._id}`
+                  )
+                }
               />
               <div className="card-info">
                 <h4>{item.name || item.title}</h4>
-                {type === "event" && (
+                {type === 'event' && (
                   <p>
                     Ends in {Math.ceil(
-                      (new Date(item.startDate || item.date).getTime() - Date.now()) /
+                      (new Date(item.startDate || item.date).getTime() -
+                        Date.now()) /
                         (1000 * 60 * 60 * 24)
-                    )}{" "}
+                    )}{' '}
                     days
                   </p>
                 )}
               </div>
             </>
           )}
-       
         </motion.div>
       ))}
     </Slider>

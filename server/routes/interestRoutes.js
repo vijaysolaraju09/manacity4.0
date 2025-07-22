@@ -11,6 +11,7 @@ const {
 } = require('../controllers/interestController');
 
 router.post('/', protect, createInterest);
+router.post('/:productId', protect, createInterest);
 router.get('/my', protect, getMyInterests);
 router.get('/received', protect, getReceivedInterests);
 router.post('/:id/accept', protect, acceptInterest);

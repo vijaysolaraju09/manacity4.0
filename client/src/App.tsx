@@ -21,8 +21,8 @@ import Cart from './pages/Cart/Cart';
 import Events from './pages/Events/Events';
 import VoiceOrder from './pages/VoiceOrder/VoiceOrder';
 import ManageProducts from './pages/ManageProducts/ManageProducts';
-import ReceivedInterests from './pages/ReceivedInterests/ReceivedInterests';
-import MyInterests from './pages/MyInterests/MyInterests';
+import ReceivedOrders from './pages/ReceivedOrders/ReceivedOrders';
+import MyOrders from './pages/MyOrders/MyOrders';
 import TabLayout from './layouts/TabLayout';
 import AdminLogin from './pages/AdminLogin/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
@@ -68,8 +68,8 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/manage-products" element={<ManageProducts />} />
-          <Route path="/interests/received" element={<ReceivedInterests />} />
-          <Route path="/interests/my" element={<MyInterests />} />
+          <Route path="/orders/received" element={<ReceivedOrders />} />
+          <Route path="/orders/my" element={<MyOrders />} />
         </Route>
           <Route path="/shops/:id" element={<ShopDetails />} />
           <Route path="/product/:id" element={<ProductDetails />} />

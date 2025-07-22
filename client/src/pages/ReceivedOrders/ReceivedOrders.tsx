@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/client';
-import styles from './MyInterests.module.scss';
+import styles from './ReceivedOrders.module.scss';
 
-interface Interest {
+interface Order {
   _id: string;
-  productId: { name: string };
+  user: { name: string; phone?: string };
+  product: { name: string };
   quantity: number;
   status: string;
 }
 
-const MyInterests = () => {
-  const [list, setList] = useState<Interest[]>([]);
+const ReceivedOrders = () => {
+  const [list, setList] = useState<Order[]>([]);
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
 
@@ -19,7 +20,7 @@ const MyInterests = () => {
       const params = new URLSearchParams();
       if (status) params.append('status', status);
       if (search) params.append('search', search);
-      const res = await api.get(`/interests/my?${params.toString()}`);
+      const res = await api.get(`/orders/received?${params.toString()}`);
       setList(res.data);
     } catch {
       setList([]);
@@ -30,14 +31,14 @@ const MyInterests = () => {
     load();
   }, [status, search]);
 
-  const cancel = async (id: string) => {
-    await api.post(`/interests/${id}/cancel`);
+  const act = async (id: string, action: 'accept' | 'reject') => {
+    await api.post(`/orders/${action}/${id}`);
     load();
   };
 
   return (
-    <div className={styles.myInterests}>
-      <h2>My Interests</h2>
+    <div className={styles.receivedOrders}>
+      <h2>Received Orders</h2>
       <div className={styles.filters}>
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All Statuses</option>
@@ -48,18 +49,25 @@ const MyInterests = () => {
         </select>
         <input
           type="text"
-          placeholder="Search"
+          placeholder="Search products"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
       {list.map((i) => (
         <div key={i._id} className={styles.card}>
-          <p>
-            {i.productId?.name} - Qty {i.quantity} ({i.status})
-          </p>
+          <p>{i.user?.name} ordered {i.product?.name}</p>
+          <p>Qty: {i.quantity}</p>
+          {i.status === 'accepted' && i.user?.phone && (
+            <a href={`tel:${i.user.phone}`} className={styles.call}>
+              Call: {i.user.phone}
+            </a>
+          )}
           {i.status === 'pending' && (
-            <button onClick={() => cancel(i._id)}>Cancel</button>
+            <div className={styles.actions}>
+              <button onClick={() => act(i._id, 'accept')}>Accept</button>
+              <button onClick={() => act(i._id, 'reject')}>Reject</button>
+            </div>
           )}
         </div>
       ))}
@@ -67,4 +75,4 @@ const MyInterests = () => {
   );
 };
 
-export default MyInterests;
+export default ReceivedOrders;

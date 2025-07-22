@@ -34,8 +34,8 @@ exports.verifyUser = async (req, res) => {
 exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
-      .populate('customer', 'name phone')
-      .populate('shop', 'name phone');
+      .populate('user', 'name phone')
+      .populate('shop', 'name');
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch orders' });

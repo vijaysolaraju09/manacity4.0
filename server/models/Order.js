@@ -2,25 +2,25 @@ const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
   {
-    customer: {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    business: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    shop: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // business
-    items: [
-      {
-        name: String,
-        productId: { type: mongoose.Schema.Types.ObjectId },
-        quantity: Number,
-        price: String,
-      },
-    ],
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+    },
+    shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", required: true },
+    quantity: { type: Number, default: 1 },
     status: {
       type: String,
-      enum: ["pending", "accepted", "rejected"],
+      enum: ["pending", "accepted", "rejected", "cancelled"],
       default: "pending",
     },
+    createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

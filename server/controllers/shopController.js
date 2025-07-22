@@ -5,7 +5,7 @@ const { promoteToBusiness } = require("./userController");
 
 exports.createShop = async (req, res) => {
   try {
-    const { name, category, location, address, image } = req.body;
+    const { name, category, location, address, image, banner, description } = req.body;
     const owner = req.user._id;
 
     const shop = await Shop.create({
@@ -15,6 +15,8 @@ exports.createShop = async (req, res) => {
       address,
       image,
       owner,
+      banner,
+      description,
       status: "pending",
     });
     res.status(201).json({ message: "Shop created", shop });

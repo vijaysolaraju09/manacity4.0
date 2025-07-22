@@ -9,6 +9,7 @@ import {
   type Product,
 } from '../../store/slices/productSlice';
 import Loader from '../../components/Loader';
+import ProductCard from '../../components/ProductCard/ProductCard';
 import styles from './ManageProducts.module.scss';
 
 const emptyForm: Partial<Product> = { name: '', description: '', price: 0, category: '', image: '', stock: 0 };
@@ -69,9 +70,8 @@ const ManageProducts = () => {
       {loading && <p>Loading...</p>}
       <div className={styles.grid}>
         {items.map((p) => (
-          <div key={p._id} className={styles.card}>
-            <h4>{p.name}</h4>
-            <p>₹{p.price}</p>
+          <div key={p._id} className={styles.cardWrapper}>
+            <ProductCard product={p} showActions={false} />
             <div className={styles.actions}>
               <button onClick={() => openEdit(p)}>Edit</button>
               <button onClick={() => dispatch(deleteProduct(p._id))}>Delete</button>

@@ -17,6 +17,8 @@ const shopSchema = new mongoose.Schema(
     location: { type: String, required: true },
     address: { type: String, default: "" },
     image: { type: String, default: "" },
+    banner: { type: String, default: "" },
+    description: { type: String, default: "" },
   },
   { timestamps: true }
 );

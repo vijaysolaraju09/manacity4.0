@@ -8,6 +8,8 @@ export const sampleShops = [
     address: '123 Main St, Town Center',
     isOpen: true,
     image: 'https://source.unsplash.com/400x300/?cafe,coffee',
+    banner: 'https://source.unsplash.com/600x250/?coffee,shop',
+    description: 'Cozy place for freshly brewed coffee and snacks.',
     products: [
       {
         _id: 'p1',

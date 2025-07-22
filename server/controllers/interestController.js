@@ -4,7 +4,19 @@ const Shop = require('../models/Shop');
 
 exports.createInterest = async (req, res) => {
   try {
-    const { productId, quantity, businessId, shopId } = req.body;
+    let { productId, quantity, businessId, shopId } = req.body;
+    productId = productId || req.params.productId;
+
+    if (!productId) {
+      return res.status(400).json({ error: 'Product ID required' });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+
+    businessId = businessId || product.createdBy;
+    shopId = shopId || product.shop;
+
     const interest = await Interest.create({
       userId: req.user._id,
       businessId,

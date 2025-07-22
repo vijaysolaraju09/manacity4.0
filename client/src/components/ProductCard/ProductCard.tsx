@@ -52,7 +52,8 @@ const ProductCard = ({
 
   const handleInterest = async () => {
     try {
-      await api.post(`/interests/${product._id}`, { quantity: 1 });
+      const qty = parseInt(prompt('Quantity', '1') || '1', 10);
+      await api.post(`/interests/${product._id}`, { quantity: qty });
       alert('Interest sent');
     } catch {
       alert('Failed to send interest');

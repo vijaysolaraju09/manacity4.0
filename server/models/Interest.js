@@ -9,7 +9,7 @@ const interestSchema = new mongoose.Schema(
     quantity: { type: Number, default: 1 },
     status: {
       type: String,
-      enum: ["pending", "accepted", "rejected", "cancelled", "completed"],
+      enum: ["pending", "accepted", "rejected", "cancelled"],
       default: "pending",
     },
     createdAt: { type: Date, default: Date.now },

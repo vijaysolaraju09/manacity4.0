@@ -33,10 +33,32 @@ exports.createInterest = async (req, res) => {
 
 exports.getMyInterests = async (req, res) => {
   try {
-    const interests = await Interest.find({ userId: req.user._id })
-      .populate('productId')
-      .populate('shopId');
-    res.json(interests);
+  let interests = await Interest.find({ userId: req.user._id })
+    .populate('productId', 'name category price')
+    .populate('shopId', 'name');
+
+  const { status, category, minPrice, maxPrice, search } = req.query;
+  if (status) interests = interests.filter((i) => i.status === status);
+  if (category)
+    interests = interests.filter((i) => i.productId?.category === category);
+  if (minPrice)
+    interests = interests.filter(
+      (i) => (i.productId?.price || 0) >= Number(minPrice)
+    );
+  if (maxPrice)
+    interests = interests.filter(
+      (i) => (i.productId?.price || 0) <= Number(maxPrice)
+    );
+  if (search) {
+    const q = search.toLowerCase();
+    interests = interests.filter(
+      (i) =>
+        (i.productId?.name || '').toLowerCase().includes(q) ||
+        (i.shopId?.name || '').toLowerCase().includes(q)
+    );
+  }
+
+  res.json(interests);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch interests' });
   }
@@ -44,10 +66,38 @@ exports.getMyInterests = async (req, res) => {
 
 exports.getReceivedInterests = async (req, res) => {
   try {
-    const interests = await Interest.find({ businessId: req.user._id })
+    let interests = await Interest.find({ businessId: req.user._id })
       .populate('userId', 'name phone')
-      .populate('productId');
-    res.json(interests);
+      .populate('productId', 'name category price');
+
+    const { status, category, minPrice, maxPrice, search } = req.query;
+    if (status) interests = interests.filter((i) => i.status === status);
+    if (category)
+      interests = interests.filter((i) => i.productId?.category === category);
+    if (minPrice)
+      interests = interests.filter(
+        (i) => (i.productId?.price || 0) >= Number(minPrice)
+      );
+    if (maxPrice)
+      interests = interests.filter(
+        (i) => (i.productId?.price || 0) <= Number(maxPrice)
+      );
+    if (search) {
+      const q = search.toLowerCase();
+      interests = interests.filter((i) =>
+        (i.productId?.name || '').toLowerCase().includes(q)
+      );
+    }
+
+    const result = interests.map((i) => {
+      const item = i.toObject();
+      if (item.status !== 'accepted' && item.userId) {
+        delete item.userId.phone;
+      }
+      return item;
+    });
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch interests' });
   }
@@ -59,7 +109,7 @@ exports.acceptInterest = async (req, res) => {
     if (!interest) return res.status(404).json({ error: 'Interest not found' });
     if (interest.businessId.toString() !== req.user._id.toString())
       return res.status(403).json({ error: 'Not authorized' });
-    interest.status = 'completed';
+    interest.status = 'accepted';
     await interest.save();
     res.json(interest);
   } catch (err) {

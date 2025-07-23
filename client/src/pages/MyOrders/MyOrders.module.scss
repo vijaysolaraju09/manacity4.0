@@ -6,6 +6,16 @@
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
+.empty {
+  text-align: center;
+  margin-top: 2rem;
+
+  img {
+    width: 150px;
+    margin-bottom: 1rem;
+  }
+}
+
 .card {
   border: 1px solid #ddd;
   padding: 0.75rem;
@@ -13,7 +23,51 @@
   border-radius: 6px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
   &:hover {
     transform: translateY(-2px);
   }
+
+  img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .info {
+    flex: 1;
+    h4 {
+      margin: 0 0 2px 0;
+    }
+    p {
+      margin: 0;
+      font-size: 0.85rem;
+    }
+  }
+
+  .status {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    text-transform: capitalize;
+    font-weight: bold;
+    &.pending { background: #e5e7eb; color: #555; }
+    &.accepted { background: #d1fae5; color: #065f46; }
+    &.rejected { background: #fee2e2; color: #991b1b; }
+    &.cancelled { background: #ffedd5; color: #9a3412; }
+  }
+
+  button {
+    margin-left: 0.5rem;
+    @include button-style(red, #fff);
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+.browse {
+  margin-top: 1rem;
+  @include button-style($primary-color, #fff);
 }

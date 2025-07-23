@@ -30,7 +30,11 @@ exports.placeOrder = async (req, res) => {
 exports.getMyOrders = async (req, res) => {
   try {
     let orders = await Order.find({ user: req.user._id })
-      .populate('product', 'name category price')
+      .populate({
+        path: 'product',
+        select: 'name image shop',
+        populate: { path: 'shop', select: 'name' },
+      })
       .populate('shop', 'name');
 
     const { status, category, minPrice, maxPrice, search } = req.query;

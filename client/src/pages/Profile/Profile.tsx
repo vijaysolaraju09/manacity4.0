@@ -54,7 +54,7 @@ const Profile = () => {
   const avatar = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`;
 
   const actions: Array<{ label: string; icon: React.ComponentType<any>; onClick: () => void }> = [
-    { label: 'My Orders', icon: FiPackage, onClick: () => navigate('/profile') },
+    { label: 'My Orders', icon: FiPackage, onClick: () => navigate('/orders/my') },
     { label: 'My Cart', icon: FiShoppingCart, onClick: () => navigate('/cart') },
     { label: 'Settings', icon: FiSettings, onClick: () => navigate('/settings') },
   ];

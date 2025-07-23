@@ -24,6 +24,9 @@ exports.updateProfile = async (req, res) => {
         address: updatedUser.address,
         role: updatedUser.role,
         isVerified: updatedUser.isVerified,
+        verificationStatus: updatedUser.verificationStatus,
+        profession: updatedUser.profession,
+        bio: updatedUser.bio,
       },
     });
   } catch (err) {

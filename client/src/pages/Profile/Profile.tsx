@@ -68,7 +68,7 @@ const Profile = () => {
     );
   }
 
-  if (user.role !== 'verified') {
+  if (!user.isVerified) {
     actions.push({ label: 'Request Verification', icon: FiUserCheck, onClick: () => setShowVerify(true) });
   }
 
@@ -89,6 +89,12 @@ const Profile = () => {
     try {
       setSubmitting(true);
       await requestVerification(verifyForm);
+      dispatch(setUser({
+        ...user,
+        profession: verifyForm.profession,
+        bio: verifyForm.bio,
+        verificationStatus: 'pending',
+      }));
       setShowVerify(false);
     } finally {
       setSubmitting(false);
@@ -126,6 +132,13 @@ const Profile = () => {
         <p>{user.phone}</p>
         <p>{user.location}</p>
         {user.address && <p>{user.address}</p>}
+        {user.isVerified ? (
+          <p className={styles.status + ' ' + styles.verified}>Verified</p>
+        ) : user.verificationStatus === 'pending' ? (
+          <p className={styles.status + ' ' + styles.pending}>Pending</p>
+        ) : user.verificationStatus === 'rejected' ? (
+          <p className={styles.status + ' ' + styles.rejected}>Rejected</p>
+        ) : null}
         <button className={styles.editBtn} onClick={() => setShowEdit(true)}>
           Edit Profile
         </button>

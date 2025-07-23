@@ -56,6 +56,21 @@
       margin-top: 0.5rem;
       @include button-style($primary-color, #fff);
     }
+
+    .status {
+      font-weight: 600;
+      margin-top: 0.5rem;
+
+      &.verified {
+        color: #22c55e;
+      }
+      &.pending {
+        color: #fbbf24;
+      }
+      &.rejected {
+        color: #ef4444;
+      }
+    }
   }
 
   .actionsGrid {

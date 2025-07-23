@@ -27,3 +27,16 @@ export const fetchPendingShops = async () => {
 export const approveShop = async (id: string) => {
   await adminApi.put(`/shops/approve/${id}`);
 };
+
+export const fetchVerificationRequests = async () => {
+  const res = await adminApi.get('/verified/requests');
+  return res.data;
+};
+
+export const acceptVerification = async (id: string) => {
+  await adminApi.post(`/verified/accept/${id}`);
+};
+
+export const rejectVerification = async (id: string) => {
+  await adminApi.post(`/verified/reject/${id}`);
+};

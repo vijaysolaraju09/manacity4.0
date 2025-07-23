@@ -27,6 +27,7 @@ import TabLayout from './layouts/TabLayout';
 import AdminLogin from './pages/AdminLogin/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminPanel from './pages/AdminPanel';
+import VerificationRequests from './pages/VerificationRequests';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
 import { setUser } from './store/slices/userSlice';
 import type { AppDispatch } from './store';
@@ -56,6 +57,7 @@ function App() {
         <Route element={<AdminProtectedRoute />}>
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/admin-panel" element={<AdminPanel />} />
+          <Route path="/admin/verification-requests" element={<VerificationRequests />} />
         </Route>
         <Route element={<ProtectedRoute />}>
           <Route element={<TabLayout />}>

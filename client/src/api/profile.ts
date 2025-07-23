@@ -36,7 +36,8 @@ export const updateProfile = async (data: UpdateProfileData) => {
 };
 
 export const requestVerification = async (data: VerifyRequest) => {
-  await api.post('/verified/apply', data);
+  const res = await api.post('/verified/apply', data);
+  return res.data;
 };
 
 export const requestBusiness = async (data: BusinessRequest) => {

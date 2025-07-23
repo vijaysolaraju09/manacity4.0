@@ -40,6 +40,9 @@ exports.signup = async (req, res) => {
         address: user.address,
         role: user.role,
         isVerified: user.isVerified,
+        verificationStatus: user.verificationStatus,
+        profession: user.profession,
+        bio: user.bio,
       },
     });
   } catch (err) {
@@ -76,6 +79,9 @@ exports.login = async (req, res) => {
         location: user.location,
         address: user.address,
         isVerified: user.isVerified,
+        verificationStatus: user.verificationStatus,
+        profession: user.profession,
+        bio: user.bio,
       },
     });
   } catch (err) {

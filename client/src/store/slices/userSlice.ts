@@ -6,6 +6,10 @@ export interface UserState {
   location: string;
   role: string;
   address?: string;
+  isVerified?: boolean;
+  verificationStatus?: string;
+  profession?: string;
+  bio?: string;
 }
 
 const initialState: UserState = {
@@ -13,6 +17,7 @@ const initialState: UserState = {
   phone: '',
   location: '',
   role: 'user',
+  isVerified: false,
 };
 
 const userSlice = createSlice({

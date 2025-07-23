@@ -4,14 +4,31 @@ const User = require("../models/User");
 exports.applyForVerification = async (req, res) => {
   try {
     const { profession, bio } = req.body;
-    const user = req.user._id;
+    const userId = req.user._id;
 
-    const alreadyApplied = await VerifiedUser.findOne({ user });
-    if (alreadyApplied)
-      return res.status(400).json({ error: "Already applied or approved" });
+    let request = await VerifiedUser.findOne({ user: userId });
+    if (request && request.status === "pending")
+      return res.status(400).json({ error: "Already applied" });
 
-    const request = await VerifiedUser.create({ user, profession, bio });
-    res.status(201).json({ message: "Request submitted", request });
+    if (request) {
+      request.profession = profession;
+      request.bio = bio;
+      request.status = "pending";
+      await request.save();
+    } else {
+      request = await VerifiedUser.create({ user: userId, profession, bio });
+    }
+
+    const user = await User.findById(userId);
+    if (user) {
+      user.profession = profession;
+      user.bio = bio;
+      user.isVerified = false;
+      user.verificationStatus = "pending";
+      await user.save();
+    }
+
+    res.status(201).json({ message: "Request submitted" });
   } catch (err) {
     res.status(500).json({ error: "Verification request failed" });
   }
@@ -114,5 +131,62 @@ exports.getAcceptedProviders = async (req, res) => {
     res.json(providers);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch providers" });
+  }
+};
+
+exports.getVerificationRequests = async (req, res) => {
+  try {
+    const requests = await VerifiedUser.find({ status: "pending" }).populate(
+      "user",
+      "name phone profession bio createdAt"
+    );
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch requests" });
+  }
+};
+
+exports.acceptVerificationRequest = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const request = await VerifiedUser.findOne({ user: userId, status: "pending" });
+    if (!request) return res.status(404).json({ error: "Request not found" });
+
+    request.status = "approved";
+    await request.save();
+
+    const user = await User.findById(userId);
+    if (user) {
+      user.isVerified = true;
+      user.verificationStatus = "verified";
+      user.profession = request.profession;
+      user.bio = request.bio;
+      await user.save();
+    }
+
+    res.json({ message: "User verified" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to accept request" });
+  }
+};
+
+exports.rejectVerificationRequest = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const request = await VerifiedUser.findOne({ user: userId, status: "pending" });
+    if (!request) return res.status(404).json({ error: "Request not found" });
+
+    request.status = "rejected";
+    await request.save();
+
+    const user = await User.findById(userId);
+    if (user) {
+      user.verificationStatus = "rejected";
+      await user.save();
+    }
+
+    res.json({ message: "Request rejected" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to reject request" });
   }
 };

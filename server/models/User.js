@@ -13,6 +13,12 @@ const userSchema = new mongoose.Schema(
       default: "customer",
     },
     isVerified: { type: Boolean, default: false },
+    verificationStatus: {
+      type: String,
+      enum: ["pending", "verified", "rejected"],
+    },
+    profession: { type: String, default: "" },
+    bio: { type: String, default: "" },
   },
   { timestamps: true }
 );

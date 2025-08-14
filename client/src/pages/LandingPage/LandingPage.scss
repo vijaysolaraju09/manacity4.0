@@ -87,7 +87,7 @@
           border: none;
 
           &:hover {
-            background: darken($primary-color, 10%);
+            background: $primary-color-hover;
           }
         }
 

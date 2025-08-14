@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { AiFillStar } from 'react-icons/ai';
+import { FiPhone } from 'react-icons/fi';
 import api from '../../api/client';
 import { sampleShops } from '../../data/sampleData';
 import Shimmer from '../../components/Shimmer';
-import { ProductCard, type Product as BasicProduct } from '../../components/base';
+import ProductCard, { type Product } from '../../components/ui/ProductCard';
 import './ShopDetails.scss';
 import fallbackImage from '../../assets/no-image.svg';
 
@@ -17,14 +19,18 @@ interface Shop {
   banner?: string;
   description?: string;
   owner?: string;
+  rating?: number;
+  contact?: string;
 }
 
 const ShopDetails = () => {
   const { id } = useParams();
 
   const [shop, setShop] = useState<Shop | null>(null);
-  const [products, setProducts] = useState<BasicProduct[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('relevance');
 
   useEffect(() => {
     const load = async () => {
@@ -43,23 +49,30 @@ const ShopDetails = () => {
     load();
   }, [id]);
 
+  const filtered = useMemo(() => {
+    const bySearch = products.filter((p) =>
+      p.name.toLowerCase().includes(search.toLowerCase()),
+    );
+    const sorted = [...bySearch];
+    if (sort === 'priceAsc') sorted.sort((a, b) => a.price - b.price);
+    if (sort === 'priceDesc') sorted.sort((a, b) => b.price - a.price);
+    return sorted;
+  }, [products, search, sort]);
+
   if (loading || !shop)
     return (
       <div className="shop-details">
-        <div className="header">
-          <Shimmer style={{ width: "100%", height: 250 }} className="rounded" />
-          <div className="info">
-            <Shimmer style={{ height: 24, width: "60%", margin: "0.5rem auto" }} />
-            <Shimmer style={{ height: 16, width: "40%" }} />
-          </div>
+        <div className="hero">
+          <Shimmer style={{ width: '100%', height: 200 }} className="rounded" />
         </div>
-        <h3 className="section-title">Products</h3>
-        <div className="product-list">
-          {Array.from({ length: 3 }).map((_, i) => (
+        <div className="filters">
+          <Shimmer style={{ height: 36, width: '100%' }} />
+        </div>
+        <div className="product-grid">
+          {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="placeholder-card">
-              <Shimmer className="rounded" style={{ height: 120 }} />
-              <Shimmer style={{ height: 16, marginTop: 8 }} />
-              <Shimmer style={{ height: 16, width: '50%', marginBottom: 8 }} />
+              <Shimmer className="rounded" style={{ height: 140 }} />
+              <Shimmer style={{ height: 16, marginTop: 8, width: '60%' }} />
             </div>
           ))}
         </div>
@@ -68,25 +81,54 @@ const ShopDetails = () => {
 
   return (
     <div className="shop-details">
-      <div className="header">
+      <div className="hero">
         <img
-          className="banner"
+          className="cover"
           src={shop.banner || shop.image || 'https://via.placeholder.com/500x250'}
           alt={shop.name}
           onError={(e) => (e.currentTarget.src = fallbackImage)}
         />
-        <div className="info">
-          <h2>{shop.name}</h2>
-          <p>{shop.category}</p>
-          <p>{shop.location}</p>
-          <p>{shop.address}</p>
-          {shop.description && <p className="desc">{shop.description}</p>}
+        <div className="content">
+          <img
+            className="logo"
+            src={shop.image || 'https://via.placeholder.com/80'}
+            alt={shop.name}
+            onError={(e) => (e.currentTarget.src = fallbackImage)}
+          />
+          <div className="info">
+            <h2>{shop.name}</h2>
+            {shop.rating && (
+              <div className="rating">
+                <AiFillStar color="var(--color-warning, #fbbf24)" />
+                <span>{shop.rating.toFixed(1)}</span>
+              </div>
+            )}
+            <p className="area">{shop.location}</p>
+          </div>
+          {shop.contact && (
+            <a href={`tel:${shop.contact}`} className="call">
+              <FiPhone /> Call
+            </a>
+          )}
         </div>
       </div>
 
-      <h3 className="section-title">Products</h3>
-      <div className="product-list">
-        {products.map((product) => (
+      <div className="filters">
+        <input
+          type="text"
+          placeholder="Search products"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select value={sort} onChange={(e) => setSort(e.target.value)}>
+          <option value="relevance">Sort: Relevance</option>
+          <option value="priceAsc">Price: Low to High</option>
+          <option value="priceDesc">Price: High to Low</option>
+        </select>
+      </div>
+
+      <div className="product-grid">
+        {filtered.map((product) => (
           <ProductCard key={product._id} product={product} />
         ))}
       </div>

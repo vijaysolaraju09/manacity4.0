@@ -1,5 +1,5 @@
 import PriceBlock from './PriceBlock';
-import StatusChip, { Status } from '../ui/StatusChip';
+import StatusChip, { type Status } from '../ui/StatusChip';
 import styles from './OrderCard.module.scss';
 
 export interface OrderItem {

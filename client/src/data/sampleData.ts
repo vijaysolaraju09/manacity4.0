@@ -10,6 +10,8 @@ export const sampleShops = [
     image: 'https://source.unsplash.com/400x300/?cafe,coffee',
     banner: 'https://source.unsplash.com/600x250/?coffee,shop',
     description: 'Cozy place for freshly brewed coffee and snacks.',
+    contact: '1234567890',
+    rating: 4.5,
     products: [
       {
         _id: 'p1',

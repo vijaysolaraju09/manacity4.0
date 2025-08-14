@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiShoppingCart, FiSettings, FiShoppingBag, FiPackage, FiUserCheck, FiUsers } from 'react-icons/fi';
 import type { RootState } from '../../store';
-import { setUser, clearUser } from '../../store/slices/userSlice';
+import { setUser } from '../../store/slices/userSlice';
 import { type Theme } from '../../store/slices/themeSlice';
 import type { AppDispatch } from '../../store';
 import {
@@ -44,8 +44,6 @@ const Profile = () => {
     };
     loadUser();
   }, [dispatch]);
-
-  };
 
   const avatar = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`;
 

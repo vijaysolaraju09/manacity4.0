@@ -3,34 +3,61 @@
 
 .shop {
   padding: 1rem;
-  @include respond(md) { padding: 2rem; }
-
-  h2 {
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
+  @include respond(md) {
+    padding: 2rem;
   }
 
-  .filters {
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #fff;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-bottom: 1px solid #eee;
+
+    input {
+      width: 100%;
+      padding: 0.45rem 0.6rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+    }
+  }
+
+  .applied {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     margin-bottom: 1rem;
 
-    input,
-    select {
-      padding: 0.45rem 0.6rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 0.9rem;
-      flex: 1;
-      min-width: 140px;
+    .chip {
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 999px;
+      background: #f2f2f2;
+      font-size: 0.85rem;
+      cursor: pointer;
     }
   }
 
   .grid {
     display: grid;
     gap: 1rem;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
+
+    @include respond(md) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    @include respond(lg) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    @include respond(xl) {
+      grid-template-columns: repeat(5, 1fr);
+    }
   }
 
   .card {
@@ -41,42 +68,27 @@
     display: flex;
     flex-direction: column;
     text-align: center;
-    cursor: pointer;
-    transition: transform 0.2s ease;
+  }
 
-    &:hover {
-      transform: translateY(-3px);
-    }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
 
-    img {
-      width: 100%;
-      height: 140px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
-    }
-
-    .name {
-      font-weight: 600;
-      margin: 0.25rem 0;
-    }
-
-    .desc {
-      font-size: 0.85rem;
-      color: #666;
-      flex: 1;
-    }
-
-    .price {
-      margin-top: 0.5rem;
-      font-weight: bold;
-      color: #111;
-    }
-
-    .add {
-      margin-top: 0.5rem;
-      @include button-style($primary-color, #fff);
+    button {
       padding: 0.4rem 0.8rem;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     }
   }
 }
+

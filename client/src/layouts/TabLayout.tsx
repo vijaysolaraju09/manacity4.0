@@ -39,7 +39,7 @@ const TabLayout = () => {
 
   useEffect(() => {
     if (location.pathname === "/") navigate("/home");
-  }, [location.pathname]);
+  }, [location.pathname, navigate]);
 
   return (
     <div className="tab-layout">

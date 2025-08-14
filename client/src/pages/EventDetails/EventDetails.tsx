@@ -17,6 +17,7 @@ interface Event {
   date?: string;
   description: string;
   adminNote?: string;
+  registeredUsers?: { user: string }[];
 }
 
 const EventDetails = () => {
@@ -35,15 +36,12 @@ const EventDetails = () => {
       .then((res) => {
         if (res.data) {
           setEvent(res.data);
-          startCountdown(res.data.startDate || res.data.date);
         } else {
           setEvent(sampleEvent);
-          startCountdown(sampleEvent.startDate || sampleEvent.date);
         }
       })
       .catch(() => {
         setEvent(sampleEvent);
-        startCountdown(sampleEvent.startDate || sampleEvent.date);
       })
       .finally(() => setLoading(false));
 
@@ -55,7 +53,10 @@ const EventDetails = () => {
       .catch(() => setLeaderboard([]));
   }, [id]);
 
-  const startCountdown = (eventDate: string) => {
+  useEffect(() => {
+    if (!event) return;
+    const eventDate = event.startDate || event.date;
+    if (!eventDate) return;
     const interval = setInterval(() => {
       const distance = new Date(eventDate).getTime() - Date.now();
       if (distance < 0) {
@@ -68,7 +69,8 @@ const EventDetails = () => {
         setCountdown(`${days}d ${hrs}h ${mins}m`);
       }
     }, 1000);
-  };
+    return () => clearInterval(interval);
+  }, [event]);
 
   const handleRegister = () => {
     setRegistering(true);
@@ -77,6 +79,17 @@ const EventDetails = () => {
       .then(() => {
         setRegistered(true);
         setMessage("Registered successfully!");
+        setEvent((prev) =>
+          prev
+            ? {
+                ...prev,
+                registeredUsers: [
+                  ...(prev.registeredUsers || []),
+                  { user: "self" },
+                ],
+              }
+            : prev
+        );
       })
       .catch(() => setMessage("Registration failed"))
       .finally(() => setRegistering(false));
@@ -116,7 +129,10 @@ const EventDetails = () => {
             <strong>Admin Note:</strong> {event.adminNote}
           </div>
         )}
-
+        <div className="participants">
+          <h3>Participants</h3>
+          <p>{event.registeredUsers?.length ?? 0} registered</p>
+        </div>
         <button
           className="register-btn"
           onClick={handleRegister}

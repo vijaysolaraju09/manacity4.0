@@ -6,6 +6,26 @@
     margin-bottom: 1rem;
   }
 
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+
+    .tab {
+      padding: 0.4rem 0.9rem;
+      border: none;
+      border-radius: 16px;
+      background: #f0f0f0;
+      cursor: pointer;
+      font-weight: 500;
+
+      &.active {
+        background: #0070f3;
+        color: #fff;
+      }
+    }
+  }
+
   .event-list {
     display: grid;
     gap: 1rem;
@@ -34,35 +54,25 @@
       font-size: 1.1rem;
     }
 
-    .cat {
-      color: #666;
-      margin: 0;
-    }
-
-    .time {
-      font-weight: bold;
-      color: #0070f3;
+    .date,
+    .location {
       margin: 0.2rem 0;
+      color: #666;
+      font-size: 0.9rem;
     }
 
-    .status {
-      display: inline-block;
-      margin-top: 0.3rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      text-transform: capitalize;
-      &.active {
-        background: #d4edda;
-        color: #155724;
-      }
-      &.completed {
-        background: #f8f9fa;
-        color: #6c757d;
-      }
-      &.upcoming {
-        background: #e7f1ff;
-        color: #005ad4;
+    .register-btn {
+      margin-top: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      background: #0070f3;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+
+      &:hover {
+        background: #005ad4;
       }
     }
 

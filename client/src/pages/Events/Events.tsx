@@ -10,17 +10,18 @@ interface EventItem {
   _id: string;
   title?: string;
   name?: string;
-  category?: string;
   startDate?: string;
   date?: string;
   status?: string;
   banner?: string;
   image?: string;
+  location?: string;
 }
 
 const Events = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"upcoming" | "ongoing" | "past">("upcoming");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,20 +38,32 @@ const Events = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const getCountdown = (date: string) => {
-    const diff = new Date(date).getTime() - Date.now();
-    if (diff <= 0) return "Started";
-    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    return `${d}d ${h}h`;
-  };
-
   return (
     <div className="events">
       <h2>Events & Tournaments</h2>
+      <div className="tabs">
+        {(["upcoming", "ongoing", "past"] as const).map((t) => (
+          <button
+            key={t}
+            className={`tab ${tab === t ? "active" : ""}`}
+            onClick={() => setTab(t)}
+          >
+            {t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        ))}
+      </div>
       <div className="event-list">
-        {(loading ? Array.from({ length: 4 }) : events).map((ev, i) => {
+        {(loading ? Array.from({ length: 4 }) : events.filter((ev) => {
+          if (tab === "past") return ev.status === "closed" || ev.status === "past";
+          return (ev.status || "upcoming") === tab;
+        })).map((ev, i) => {
           const date = ev?.startDate || ev?.date || "";
+          const formattedDate = date
+            ? new Date(date).toLocaleString(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })
+            : "";
           return (
             <div
               key={ev?._id || i}
@@ -66,17 +79,24 @@ const Events = () => {
               ) : (
                 <>
                   <img
-                    src={ev.banner || ev.image || "https://via.placeholder.com/300x200?text=Event"}
+                    src={ev.banner || ev.image || fallbackImage}
                     alt={ev.title || ev.name}
                     onError={(e) => (e.currentTarget.src = fallbackImage)}
                   />
                   <h3>{ev.title || ev.name}</h3>
-                  {ev.category && <p className="cat">{ev.category}</p>}
-                  {date && <p className="time">{getCountdown(date)}</p>}
-                  {ev.status && <span className={`status ${ev.status}`}>{ev.status}</span>}
+                  {formattedDate && <p className="date">{formattedDate}</p>}
+                  {ev.location && <p className="location">{ev.location}</p>}
+                  <button
+                    className="register-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/events/${ev._id}`);
+                    }}
+                  >
+                    Register
+                  </button>
                 </>
               )}
-              
             </div>
           );
         })}

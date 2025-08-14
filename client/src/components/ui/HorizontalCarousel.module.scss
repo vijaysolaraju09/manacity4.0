@@ -1,0 +1,55 @@
+.wrapper {
+  position: relative;
+}
+
+.container {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  -webkit-overflow-scrolling: touch;
+}
+
+.container::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  flex: 0 0 70%;
+  scroll-snap-align: start;
+
+  @media (min-width: 768px) {
+    flex-basis: 33.33%;
+  }
+
+  @media (min-width: 1024px) {
+    flex-basis: 25%;
+  }
+}
+
+.chevron {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: none;
+  z-index: 1;
+}
+
+.left {
+  left: -0.5rem;
+}
+
+.right {
+  right: -0.5rem;
+}
+
+@media (min-width: 768px) {
+  .chevron {
+    display: block;
+  }
+}

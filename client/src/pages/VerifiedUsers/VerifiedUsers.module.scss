@@ -37,6 +37,7 @@
     flex-direction: column;
     position: relative;
     overflow: hidden;
+    cursor: pointer;
   }
 
   .badge {
@@ -70,47 +71,11 @@
       color: #555;
       font-size: 0.85rem;
     }
-
-    .rating {
-      margin-top: 0.2rem;
-      display: flex;
-      justify-content: center;
-      gap: 2px;
-    }
   }
 
-  .bio {
-    font-size: 0.85rem;
-    color: #444;
-    margin: 0.5rem 0;
-  }
-
-  .actions {
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-
-    a,
-    button {
-      padding: 0.45rem 0.8rem;
-      border-radius: 6px;
-      border: none;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    a {
-      background-color: #25d366;
-      color: #fff;
-      text-align: center;
-      text-decoration: none;
-    }
-
-    button {
-      background-color: $primary-color;
-      color: #fff;
-    }
+  .empty {
+    text-align: center;
+    color: #777;
+    margin-top: 2rem;
   }
 }

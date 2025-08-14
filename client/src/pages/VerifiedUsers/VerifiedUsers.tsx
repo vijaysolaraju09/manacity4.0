@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { AiFillCheckCircle, AiFillStar } from 'react-icons/ai';
+import { AiFillCheckCircle } from 'react-icons/ai';
 import api from '../../api/client';
 import { sampleVerifiedUsers } from '../../data/sampleHomeData';
 import Shimmer from '../../components/Shimmer';
-import Loader from '../../components/Loader';
 import fallbackImage from '../../assets/no-image.svg';
 import styles from './VerifiedUsers.module.scss';
 
@@ -24,9 +23,7 @@ const VerifiedUsers = () => {
   const [users, setUsers] = useState<VerifiedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [professionFilter, setProfessionFilter] = useState('');
-  const [locationFilter, setLocationFilter] = useState('');
-  const [requestingId, setRequestingId] = useState('');
+  const [sort, setSort] = useState('name-asc');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,34 +42,28 @@ const VerifiedUsers = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const professions = useMemo(
-    () => Array.from(new Set(users.map((u) => u.profession).filter(Boolean))),
-    [users]
-  );
-  const locations = useMemo(
-    () => Array.from(new Set(users.map((u) => u.location).filter(Boolean))),
-    [users]
+  const filtered = useMemo(
+    () =>
+      users.filter((u) =>
+        u.name.toLowerCase().includes(search.toLowerCase())
+      ),
+    [users, search]
   );
 
-  const filtered = users.filter((u) => {
-    return (
-      (!professionFilter || u.profession === professionFilter) &&
-      (!locationFilter || u.location === locationFilter) &&
-      u.name.toLowerCase().includes(search.toLowerCase())
-    );
-  });
-
-  const requestService = async (id: string) => {
-    try {
-      setRequestingId(id);
-      await api.post(`/verified/interest/${id}`);
-      alert('Request sent');
-    } catch {
-      alert('Failed to request');
-    } finally {
-      setRequestingId('');
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    switch (sort) {
+      case 'name-desc':
+        return arr.sort((a, b) => b.name.localeCompare(a.name));
+      case 'location-asc':
+        return arr.sort((a, b) => a.location.localeCompare(b.location));
+      case 'location-desc':
+        return arr.sort((a, b) => b.location.localeCompare(a.location));
+      case 'name-asc':
+      default:
+        return arr.sort((a, b) => a.name.localeCompare(b.name));
     }
-  };
+  }, [filtered, sort]);
 
   return (
     <div className={styles.verifiedUsers}>
@@ -84,27 +75,11 @@ const VerifiedUsers = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <select
-          value={professionFilter}
-          onChange={(e) => setProfessionFilter(e.target.value)}
-        >
-          <option value="">All Professions</option>
-          {professions.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-        <select
-          value={locationFilter}
-          onChange={(e) => setLocationFilter(e.target.value)}
-        >
-          <option value="">All Locations</option>
-          {locations.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
+        <select value={sort} onChange={(e) => setSort(e.target.value)}>
+          <option value="name-asc">Name A-Z</option>
+          <option value="name-desc">Name Z-A</option>
+          <option value="location-asc">Location A-Z</option>
+          <option value="location-desc">Location Z-A</option>
         </select>
       </div>
       <div className={styles.grid}>
@@ -117,11 +92,12 @@ const VerifiedUsers = () => {
                 </div>
               </div>
             ))
-          : filtered.map((user) => (
+          : sorted.map((user) => (
               <motion.div
                 key={user._id}
                 className={styles.card}
                 whileHover={{ scale: 1.02 }}
+                onClick={() => navigate(`/verified-users/${user._id}`)}
               >
                 <div className={styles.badge}>
                   <AiFillCheckCircle />
@@ -136,44 +112,18 @@ const VerifiedUsers = () => {
                   }
                   alt={user.name}
                   onError={(e) => (e.currentTarget.src = fallbackImage)}
-                  onClick={() => navigate(`/verified-users/${user._id}`)}
                 />
                 <div className={styles.info}>
                   <h3>{user.name}</h3>
                   <p>{user.profession}</p>
                   <p>{user.location}</p>
-                  {user.rating && (
-                    <div className={styles.rating}>
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <AiFillStar
-                          key={i}
-                          color={i < user.rating! ? '#fbbf24' : '#ddd'}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className={styles.bio}>{user.bio}</div>
-                <div className={styles.actions}>
-                  {user.contact && (
-                    <a
-                      href={`https://wa.me/${user.contact}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Contact on WhatsApp
-                    </a>
-                  )}
-                  <button
-                    onClick={() => requestService(user._id)}
-                    disabled={requestingId === user._id}
-                  >
-                    {requestingId === user._id ? <Loader /> : 'Request Service'}
-                  </button>
                 </div>
               </motion.div>
             ))}
       </div>
+      {!loading && sorted.length === 0 && (
+        <div className={styles.empty}>No verified professionals found.</div>
+      )}
     </div>
   );
 };

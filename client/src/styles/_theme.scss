@@ -4,68 +4,94 @@
  * so that they apply to every theme. Colour tokens are namespaced
  * under data-theme attributes.
  */
+
 :root {
-  /* Typography */
+  /* Typography scale */
   --font-family-sans: 'Inter', 'DM Sans', sans-serif;
+  --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
 
   /* Radii */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 
   /* Shadows */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
 
-  /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
+  /* Spacing scale (4px – 32px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+
+  /* Legacy spacing aliases */
+  --spacing-xs: var(--space-1);
+  --spacing-sm: var(--space-2);
+  --spacing-md: var(--space-4);
+  --spacing-lg: var(--space-6);
+  --spacing-xl: var(--space-8);
 }
 
 /* Light theme (default) */
 :root,
 [data-theme='light'] {
+  --color-bg: #ffffff;
+  --color-surface: #f5f5f7;
+  --color-text: #1f2937;
   --color-primary: #ff3e6c;
   --color-primary-hover: #ff6b81;
-  --color-text: #3a3a3a;
-  --color-surface: #f5f5f7;
-  --color-card: #ffffff;
   --color-success: #22c55e;
-  --color-warning: #f59e0b;
   --color-danger: #ef4444;
+  --color-muted: #6b7280;
+
+  /* Legacy colour aliases */
+  --color-card: var(--color-surface);
+  --color-warning: #f59e0b;
   --color-info: #3b82f6;
 }
 
 /* Dark theme */
 [data-theme='dark'] {
+  --color-bg: #18181b;
+  --color-surface: #27272a;
+  --color-text: #f5f5f5;
   --color-primary: #ff3e6c;
   --color-primary-hover: #ff6b81;
-  --color-text: #f5f5f5;
-  --color-surface: #1f1f1f;
-  --color-card: #2b2b2b;
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.6);
-  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.8);
   --color-success: #22c55e;
-  --color-warning: #f59e0b;
   --color-danger: #ef4444;
+  --color-muted: #9ca3af;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.8);
+
+  --color-card: var(--color-surface);
+  --color-warning: #f59e0b;
   --color-info: #3b82f6;
 }
 
 /* Colourful theme with brand accents */
 [data-theme='colorful'] {
+  --color-bg: #fff8e1;
+  --color-surface: #ffffff;
+  --color-text: #222222;
   --color-primary: #ff9800;
   --color-primary-hover: #ffb74d;
-  --color-text: #222222;
-  --color-surface: #fff8e1;
-  --color-card: #ffffff;
   --color-success: #22c55e;
-  --color-warning: #f59e0b;
   --color-danger: #ef4444;
+  --color-muted: #6b7280;
+
+  --color-card: var(--color-surface);
+  --color-warning: #f59e0b;
   --color-info: #3b82f6;
 }
+

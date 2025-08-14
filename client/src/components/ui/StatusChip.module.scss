@@ -1,0 +1,31 @@
+.chip {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.pending {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.accepted {
+  background: var(--color-success);
+  color: #fff;
+}
+
+.rejected,
+.cancelled {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+@media (min-width: 768px) {
+  .chip {
+    font-size: var(--font-size-md);
+  }
+}
+

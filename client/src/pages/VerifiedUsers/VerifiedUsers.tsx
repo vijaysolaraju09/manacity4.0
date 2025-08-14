@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { AiFillCheckCircle, AiFillStar } from 'react-icons/ai';
 import api from '../../api/client';
 import { sampleVerifiedUsers } from '../../data/sampleHomeData';
 import Shimmer from '../../components/Shimmer';
 import Loader from '../../components/Loader';
-import type { RootState } from '../../store';
 import fallbackImage from '../../assets/no-image.svg';
 import styles from './VerifiedUsers.module.scss';
 
@@ -30,7 +28,6 @@ const VerifiedUsers = () => {
   const [locationFilter, setLocationFilter] = useState('');
   const [requestingId, setRequestingId] = useState('');
   const navigate = useNavigate();
-  const currentUser = useSelector((state: RootState) => state.user as any);
 
   useEffect(() => {
     api

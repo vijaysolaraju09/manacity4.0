@@ -1,7 +1,8 @@
+
 .priceBlock {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: var(--space-1);
 }
 
 .price {
@@ -10,7 +11,7 @@
 
 .mrp {
   text-decoration: line-through;
-  color: #777;
+  color: var(--color-muted);
   font-size: var(--font-size-sm);
 }
 

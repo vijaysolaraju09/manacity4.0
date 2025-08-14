@@ -1,8 +1,14 @@
 .bar {
   display: flex;
-  overflow-x: auto;
+  align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm);
+}
+
+.categories {
+  display: flex;
+  overflow-x: auto;
+  gap: var(--spacing-sm);
 }
 
 .chip {
@@ -13,9 +19,64 @@
   color: var(--color-text);
   cursor: pointer;
   white-space: nowrap;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
 }
 
 .active {
   background: var(--color-primary);
   color: #fff;
+}
+
+.desktopFilters {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  margin-left: auto;
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.availability {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.mobileToggle {
+  display: none;
+  margin-left: auto;
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.priceRange {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 600px) {
+  .desktopFilters {
+    display: none;
+  }
+
+  .mobileToggle {
+    display: block;
+  }
 }

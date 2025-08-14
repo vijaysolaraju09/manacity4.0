@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import api from '../../api/client';
 import Shimmer from '../../components/Shimmer';
 import { OrderCard } from '../../components/base';
@@ -19,7 +19,7 @@ const MyOrders = () => {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -32,11 +32,11 @@ const MyOrders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [status, search]);
 
   useEffect(() => {
     load();
-  }, [status, search]);
+  }, [load]);
 
   const cancel = async (id: string) => {
     await api.post(`/orders/cancel/${id}`);

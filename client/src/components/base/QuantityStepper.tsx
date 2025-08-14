@@ -13,11 +13,25 @@ const QuantityStepper = ({ value, min = 1, max = 99, onChange }: QuantityStepper
   const inc = () => value < max && onChange(value + 1);
   return (
     <div className={styles.stepper}>
-      <motion.button className={styles.button} whileTap={{ scale: 0.9 }} onClick={dec}>
+      <motion.button
+        type="button"
+        className={styles.button}
+        whileTap={{ scale: 0.95 }}
+        onClick={dec}
+        disabled={value <= min}
+        aria-label="Decrease quantity"
+      >
         -
       </motion.button>
       <span className={styles.value}>{value}</span>
-      <motion.button className={styles.button} whileTap={{ scale: 0.9 }} onClick={inc}>
+      <motion.button
+        type="button"
+        className={styles.button}
+        whileTap={{ scale: 0.95 }}
+        onClick={inc}
+        disabled={value >= max}
+        aria-label="Increase quantity"
+      >
         +
       </motion.button>
     </div>

@@ -32,7 +32,6 @@ const OtpPage = () => {
         await verifyOtp(phone, code);
         navigate('/profile');
       } catch (err) {
-        /* eslint no-console: off */
         console.error(err);
         alert('OTP verification failed');
       } finally {
@@ -47,7 +46,6 @@ const OtpPage = () => {
       await resendOtpApi(phone);
       alert(`OTP resent to ${phone}`);
     } catch (err) {
-      /* eslint no-console: off */
       console.error(err);
       alert('Failed to resend OTP');
     } finally {

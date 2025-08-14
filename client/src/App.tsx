@@ -31,6 +31,7 @@ import VerificationRequests from './pages/VerificationRequests';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
 import { setUser } from './store/slices/userSlice';
 import type { AppDispatch } from './store';
+import UiPreview from './pages/UiPreview';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -53,6 +54,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/preview" element={<UiPreview />} />
         {/* <Route path="/verify-otp" element={<OtpPage />} /> */}
         <Route element={<AdminProtectedRoute />}>
           <Route path="/admin-dashboard" element={<AdminDashboard />} />

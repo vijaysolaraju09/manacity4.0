@@ -30,9 +30,9 @@ body {
   min-height: 100%;
   width: 100%;
   line-height: 1.5;
-  font-family: system-ui, sans-serif;
-  background-color: #fff;
-  color: #111;
+  font-family: var(--font-family-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 /* Remove list styles */

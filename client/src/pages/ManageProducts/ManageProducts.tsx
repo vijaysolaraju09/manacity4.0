@@ -9,7 +9,7 @@ import {
   type Product,
 } from '../../store/slices/productSlice';
 import Loader from '../../components/Loader';
-import ProductCard from '../../components/ProductCard/ProductCard';
+import ProductCard from '../../components/ui/ProductCard';
 import styles from './ManageProducts.module.scss';
 
 const emptyForm: Partial<Product> = { name: '', description: '', price: 0, category: '', image: '', stock: 0 };

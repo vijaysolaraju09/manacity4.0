@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/client";
 import Shimmer from "../../components/Shimmer";
-import ProductCard from "../../components/ProductCard/ProductCard";
+import ProductCard from "../../components/ui/ProductCard";
 import {
   sampleOffers,
   sampleVerifiedUsers,

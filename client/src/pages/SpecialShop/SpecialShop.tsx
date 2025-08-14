@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import { sampleSpecialProducts } from '../../data/sampleHomeData';
 import Shimmer from '../../components/Shimmer';
-import ProductCard from '../../components/ProductCard/ProductCard';
+import ProductCard from '../../components/ui/ProductCard';
 import styles from './SpecialShop.module.scss';
 
 interface Product {

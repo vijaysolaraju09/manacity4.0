@@ -1,6 +1,6 @@
-$primary-color: #2563eb;
-$gradient-start: #8b5cf6; // purple
-$gradient-middle: #ec4899; // pink
-$gradient-end: #0ea5e9; // blue
-$font-header: 'Orbitron', sans-serif;
-$font-body: 'Inter', sans-serif;
+$primary-color: var(--color-primary);
+$gradient-start: #FF3E6C;
+$gradient-middle: #FF6B81;
+$gradient-end: #FF3E6C;
+$font-header: var(--font-family-sans);
+$font-body: var(--font-family-sans);

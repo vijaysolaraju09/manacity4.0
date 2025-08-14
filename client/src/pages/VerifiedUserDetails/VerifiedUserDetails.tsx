@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { AiFillCheckCircle, AiFillStar } from 'react-icons/ai';
+import { AiFillCheckCircle } from 'react-icons/ai';
 import api from '../../api/client';
 import { sampleVerifiedUser } from '../../data/sampleData';
 import Shimmer from '../../components/Shimmer';
@@ -74,16 +74,6 @@ const VerifiedUserDetails = () => {
           </h2>
           <p>{user.profession}</p>
           <p>{user.location}</p>
-          {user.rating && (
-            <div className="rating">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <AiFillStar
-                  key={i}
-                  color={i < user.rating! ? '#fbbf24' : '#ddd'}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </div>
 

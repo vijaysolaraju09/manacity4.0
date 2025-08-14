@@ -1,0 +1,21 @@
+.price {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.current {
+  font-weight: 600;
+}
+
+.mrp {
+  text-decoration: line-through;
+  color: var(--color-text);
+  opacity: 0.6;
+  font-size: var(--font-size-sm);
+}
+
+.discount {
+  color: var(--color-success);
+  font-size: var(--font-size-sm);
+}

@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiLogOut, FiShoppingCart, FiSettings, FiShoppingBag, FiPackage, FiUserCheck, FiUsers } from 'react-icons/fi';
+import { FiShoppingCart, FiSettings, FiShoppingBag, FiPackage, FiUserCheck, FiUsers } from 'react-icons/fi';
 import type { RootState } from '../../store';
 import { setUser, clearUser } from '../../store/slices/userSlice';
-import { setTheme, type Theme } from '../../store/slices/themeSlice';
+import { type Theme } from '../../store/slices/themeSlice';
 import type { AppDispatch } from '../../store';
 import {
   getCurrentUser,
@@ -13,6 +13,7 @@ import {
   requestVerification,
   requestBusiness,
 } from '../../api/profile';
+import { ProfileHeader } from '../../components/base';
 import styles from './Profile.module.scss';
 import Loader from '../../components/Loader';
 
@@ -44,11 +45,6 @@ const Profile = () => {
     loadUser();
   }, [dispatch]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    dispatch(clearUser());
-    navigate('/login');
   };
 
   const avatar = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`;
@@ -116,33 +112,7 @@ const Profile = () => {
 
   return (
     <div className={`${styles.profile} ${styles[theme]}`}>
-      <motion.div className={styles.userCard} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
-        <select
-          className={styles.themeSelect}
-          value={theme}
-          onChange={(e) => dispatch(setTheme(e.target.value as Theme))}
-        >
-          <option value="colored">Colored</option>
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
-        <FiLogOut className={styles.logout} onClick={handleLogout} />
-        <img className={styles.avatar} src={avatar} alt={user.name} />
-        <h2>{user.name}</h2>
-        <p>{user.phone}</p>
-        <p>{user.location}</p>
-        {user.address && <p>{user.address}</p>}
-        {user.isVerified ? (
-          <p className={styles.status + ' ' + styles.verified}>Verified</p>
-        ) : user.verificationStatus === 'pending' ? (
-          <p className={styles.status + ' ' + styles.pending}>Pending</p>
-        ) : user.verificationStatus === 'rejected' ? (
-          <p className={styles.status + ' ' + styles.rejected}>Rejected</p>
-        ) : null}
-        <button className={styles.editBtn} onClick={() => setShowEdit(true)}>
-          Edit Profile
-        </button>
-      </motion.div>
+        <ProfileHeader avatar={avatar} name={user.name} onEdit={() => setShowEdit(true)} />
 
       <div className={styles.actionsGrid}>
         {actions.map(({ label, icon: Icon, onClick }) => (

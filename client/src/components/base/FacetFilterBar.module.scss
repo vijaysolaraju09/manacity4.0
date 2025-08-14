@@ -1,0 +1,21 @@
+.bar {
+  display: flex;
+  overflow-x: auto;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+}
+
+.chip {
+  flex: 0 0 auto;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.active {
+  background: var(--color-primary);
+  color: #fff;
+}

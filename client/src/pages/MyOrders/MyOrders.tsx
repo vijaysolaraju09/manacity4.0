@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/client';
 import Shimmer from '../../components/Shimmer';
+import { OrderCard } from '../../components/base';
 import fallbackImage from '../../assets/no-image.svg';
 import styles from './MyOrders.module.scss';
 
@@ -72,21 +73,7 @@ const MyOrders = () => {
         </div>
       ) : (
         list.map((i) => (
-          <div key={i._id} className={styles.card}>
-            {i.product?.image && (
-              <img src={i.product.image} alt={i.product.name} />
-            )}
-            <div className={styles.info}>
-              <h4>{i.product?.name}</h4>
-              {i.product?.shop?.name && <p>{i.product.shop.name}</p>}
-              <p>Qty: {i.quantity}</p>
-              <p>{new Date(i.createdAt).toLocaleDateString()}</p>
-            </div>
-            <span className={`${styles.status} ${styles[i.status]}`}>{i.status}</span>
-            {i.status === 'pending' && (
-              <button onClick={() => cancel(i._id)}>Cancel</button>
-            )}
-          </div>
+          <OrderCard key={i._id} order={i} onCancel={i.status === 'pending' ? () => cancel(i._id) : undefined} />
         ))
       )}
     </div>

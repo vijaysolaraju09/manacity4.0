@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { FiPhone, FiUser, FiPackage } from 'react-icons/fi';
 import api from '../../api/client';
 import Shimmer from '../../components/Shimmer';
+import { OrderCard } from '../../components/base';
 import fallbackImage from '../../assets/no-image.svg';
 import styles from './ReceivedOrders.module.scss';
 
@@ -73,26 +73,12 @@ const ReceivedOrders = () => {
         </div>
       ) : (
         list.map((i) => (
-          <div key={i._id} className={styles.card}>
-            <div className={styles.info}>
-              <p className={styles.field}><FiPackage /> {i.product?.name}</p>
-              <p className={styles.field}><FiUser /> {i.user?.name}</p>
-              <p className={styles.field}>Qty: {i.quantity}</p>
-              <p className={styles.field}>{new Date(i.createdAt).toLocaleDateString()}</p>
-            </div>
-            <span className={`${styles.status} ${styles[i.status]}`}>{i.status}</span>
-            {i.status === 'accepted' && i.user?.phone && (
-              <a href={`tel:${i.user.phone}`} className={styles.call}>
-                <FiPhone /> {i.user.phone}
-              </a>
-            )}
-            {i.status === 'pending' && (
-              <div className={styles.actions}>
-                <button className={styles.accept} onClick={() => act(i._id, 'accept')}>Accept</button>
-                <button className={styles.reject} onClick={() => act(i._id, 'reject')}>Reject</button>
-              </div>
-            )}
-          </div>
+          <OrderCard
+            key={i._id}
+            order={i}
+            onAccept={i.status === 'pending' ? () => act(i._id, 'accept') : undefined}
+            onReject={i.status === 'pending' ? () => act(i._id, 'reject') : undefined}
+          />
         ))
       )}
     </div>

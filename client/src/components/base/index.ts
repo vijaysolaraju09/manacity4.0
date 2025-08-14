@@ -7,3 +7,6 @@ export { default as QuantityStepper } from './QuantityStepper';
 export { default as PriceBlock } from './PriceBlock';
 export { default as NotificationsCard } from './NotificationsCard';
 export { default as ModalSheet } from './ModalSheet';
+export { default as OrderLineItem } from './OrderLineItem';
+export { default as OrderLineItemSkeleton } from './OrderLineItemSkeleton';
+export { default as CartSummary } from './CartSummary';

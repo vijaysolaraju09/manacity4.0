@@ -1,23 +1,36 @@
+/**
+ * Global design tokens and theme definitions.
+ * Tokens for typography, spacing, radii and shadows live on :root
+ * so that they apply to every theme. Colour tokens are namespaced
+ * under data-theme attributes.
+ */
 :root {
+  /* Typography */
   --font-family-sans: 'Inter', 'DM Sans', sans-serif;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.25rem;
 
+  /* Radii */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
 
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 10px rgba(0,0,0,0.1);
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.1);
 
+  /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
+}
 
-  /* Light theme colours */
+/* Light theme (default) */
+:root,
+[data-theme='light'] {
   --color-primary: #ff3e6c;
   --color-primary-hover: #ff6b81;
   --color-text: #3a3a3a;
@@ -29,18 +42,30 @@
   --color-info: #3b82f6;
 }
 
+/* Dark theme */
 [data-theme='dark'] {
+  --color-primary: #ff3e6c;
+  --color-primary-hover: #ff6b81;
   --color-text: #f5f5f5;
   --color-surface: #1f1f1f;
   --color-card: #2b2b2b;
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.6);
-  --shadow-md: 0 4px 10px rgba(0,0,0,0.8);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.8);
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
 }
 
+/* Colourful theme with brand accents */
 [data-theme='colorful'] {
   --color-primary: #ff9800;
   --color-primary-hover: #ffb74d;
   --color-text: #222222;
   --color-surface: #fff8e1;
   --color-card: #ffffff;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
 }

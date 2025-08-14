@@ -5,6 +5,7 @@ import api from '../../api/client';
 import { addToCart } from '../../store/slices/cartSlice';
 import fallbackImage from '../../assets/no-image.svg';
 import WishlistHeart from './WishlistHeart';
+import PriceBlock from './PriceBlock';
 import styles from './ProductCard.module.scss';
 
 export interface Product {
@@ -95,15 +96,13 @@ const ProductCard = ({
       </div>
       <div className={styles.info}>
         <h4>{product.name}</h4>
-        <div className={styles.priceRow}>
-          <span>₹{product.price}</span>
-          {product.mrp && <span className={styles.mrp}>₹{product.mrp}</span>}
-          {computedDiscount && (
-            <span className={styles.discount}>{computedDiscount}% off</span>
-          )}
-        </div>
+        <PriceBlock
+          price={product.price}
+          mrp={product.mrp}
+          discount={computedDiscount}
+        />
         {product.rating && (
-          <div className={styles.priceRow}>
+          <div className={styles.row}>
             <AiFillStar color="var(--color-warning)" />
             <span>{product.rating.toFixed(1)}</span>
           </div>

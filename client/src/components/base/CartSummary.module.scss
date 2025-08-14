@@ -1,0 +1,48 @@
+@import '../../styles/mixins';
+@import '../../styles/variables';
+
+.summary {
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-top: 0.5rem;
+}
+
+.checkout {
+  @include button-style(var(--color-primary), #fff);
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.coupon {
+  display: flex;
+  gap: 0.5rem;
+  input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  button {
+    @include button-style(var(--color-primary), #fff);
+    padding: 0.5rem 1rem;
+  }
+}

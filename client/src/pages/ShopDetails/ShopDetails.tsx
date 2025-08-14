@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import api from '../../api/client';
 import { sampleShops } from '../../data/sampleData';
 import Shimmer from '../../components/Shimmer';
-import ProductCard, { type BasicProduct } from '../../components/ProductCard/ProductCard';
+import ProductCard, { type Product as BasicProduct } from '../../components/ui/ProductCard';
 import './ShopDetails.scss';
 import fallbackImage from '../../assets/no-image.svg';
 

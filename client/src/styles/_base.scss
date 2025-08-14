@@ -1,22 +1,9 @@
 body {
-  font-family: $font-body;
+  font-family: var(--font-family-sans);
   min-height: 100vh;
   line-height: 1.5;
-}
-
-body.theme-colored {
-  background: linear-gradient(135deg, $gradient-start, $gradient-middle, $gradient-end);
-  color: #111;
-}
-
-body.theme-light {
-  background: #f7f7f7;
-  color: #111;
-}
-
-body.theme-dark {
-  background: #111;
-  color: #f7f7f7;
+  background-color: var(--color-surface);
+  color: var(--color-text);
 }
 
 h1,
@@ -25,16 +12,13 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: $font-header;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
 }
 
-p {
-  margin-bottom: 1rem;
-}
-
 .card {
-  @include glass-card;
-  padding: 1rem;
+  background: var(--color-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-md);
 }

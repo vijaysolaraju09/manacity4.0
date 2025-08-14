@@ -1,21 +1,26 @@
 import { motion } from 'framer-motion';
+import { AiFillStar } from 'react-icons/ai';
 import { useDispatch } from 'react-redux';
 import api from '../../api/client';
 import { addToCart } from '../../store/slices/cartSlice';
 import fallbackImage from '../../assets/no-image.svg';
+import WishlistHeart from './WishlistHeart';
 import styles from './ProductCard.module.scss';
 
-export interface BasicProduct {
+export interface Product {
   _id: string;
   name: string;
   price: number;
-  description?: string;
+  mrp?: number;
+  discount?: number;
   image?: string;
+  rating?: number;
+  description?: string;
   stock?: number;
 }
 
 interface Props {
-  product: BasicProduct;
+  product: Product;
   showActions?: boolean;
   onAddToCart?: () => void;
   onPlaceOrder?: () => void;
@@ -60,30 +65,54 @@ const ProductCard = ({
     }
   };
 
+  const computedDiscount =
+    product.discount !== undefined
+      ? product.discount
+      : product.mrp
+      ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+      : undefined;
+
   return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.98 }}
       className={`${styles.card} ${className}`}
       onClick={onClick}
     >
-      <img
-        src={product.image || 'https://via.placeholder.com/200'}
-        alt={product.name}
-        onError={(e) => (e.currentTarget.src = fallbackImage)}
-      />
+      <div className={styles.imageWrapper}>
+        <img
+          src={product.image || 'https://via.placeholder.com/200'}
+          alt={product.name}
+          loading="lazy"
+          onError={(e) => (e.currentTarget.src = fallbackImage)}
+        />
+        {computedDiscount && (
+          <span className={styles.badge}>{computedDiscount}% OFF</span>
+        )}
+        <div className={styles.wishlist}>
+          <WishlistHeart />
+        </div>
+      </div>
       <div className={styles.info}>
         <h4>{product.name}</h4>
-        <p className={styles.price}>₹{product.price}</p>
-        {product.description && <p className={styles.desc}>{product.description}</p>}
-        {product.stock !== undefined && (
-          <p className={styles.stock}>Available: {product.stock}</p>
+        <div className={styles.priceRow}>
+          <span>₹{product.price}</span>
+          {product.mrp && <span className={styles.mrp}>₹{product.mrp}</span>}
+          {computedDiscount && (
+            <span className={styles.discount}>{computedDiscount}% off</span>
+          )}
+        </div>
+        {product.rating && (
+          <div className={styles.priceRow}>
+            <AiFillStar color="var(--color-warning)" />
+            <span>{product.rating.toFixed(1)}</span>
+          </div>
         )}
       </div>
       {showActions && (
         <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
           <button onClick={onAddToCart || handleAdd}>Add to Cart</button>
-          <button onClick={onPlaceOrder || handleOrder}>Place Order</button>
+          <button onClick={onPlaceOrder || handleOrder}>Order</button>
         </div>
       )}
     </motion.div>

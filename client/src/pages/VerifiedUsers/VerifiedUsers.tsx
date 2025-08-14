@@ -45,7 +45,7 @@ const VerifiedUsers = () => {
   const filtered = useMemo(
     () =>
       users.filter((u) =>
-        u.name.toLowerCase().includes(search.toLowerCase())
+        (u.name ?? '').toLowerCase().includes(search.toLowerCase())
       ),
     [users, search]
   );
@@ -54,14 +54,22 @@ const VerifiedUsers = () => {
     const arr = [...filtered];
     switch (sort) {
       case 'name-desc':
-        return arr.sort((a, b) => b.name.localeCompare(a.name));
+        return arr.sort((a, b) =>
+          (b.name ?? '').localeCompare(a.name ?? '')
+        );
       case 'location-asc':
-        return arr.sort((a, b) => a.location.localeCompare(b.location));
+        return arr.sort((a, b) =>
+          (a.location ?? '').localeCompare(b.location ?? '')
+        );
       case 'location-desc':
-        return arr.sort((a, b) => b.location.localeCompare(a.location));
+        return arr.sort((a, b) =>
+          (b.location ?? '').localeCompare(a.location ?? '')
+        );
       case 'name-asc':
       default:
-        return arr.sort((a, b) => a.name.localeCompare(b.name));
+        return arr.sort((a, b) =>
+          (a.name ?? '').localeCompare(b.name ?? '')
+        );
     }
   }, [filtered, sort]);
 

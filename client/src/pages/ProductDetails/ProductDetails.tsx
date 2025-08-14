@@ -1,18 +1,25 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../../api/client";
-import { sampleProduct } from "../../data/sampleData";
+import { sampleProduct, sampleShops } from "../../data/sampleData";
 import Shimmer from "../../components/Shimmer";
 import "./ProductDetails.scss";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../store/slices/cartSlice";
 import fallbackImage from "../../assets/no-image.svg";
+import PriceBlock from "../../components/ui/PriceBlock";
+import HorizontalCarousel from "../../components/ui/HorizontalCarousel";
+import ProductCard from "../../components/ui/ProductCard";
+import SectionHeader from "../../components/ui/SectionHeader";
+import { QuantityStepper } from "../../components/base";
 
 interface Product {
   _id: string;
   name: string;
   image?: string;
+  images?: string[];
   price: number;
+  mrp?: number;
   description: string;
   category: string;
   shopName?: string;
@@ -24,6 +31,8 @@ const ProductDetails = () => {
   const dispatch = useDispatch();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [qty, setQty] = useState(1);
+  const [activeImg, setActiveImg] = useState(0);
 
   useEffect(() => {
     api
@@ -55,46 +64,83 @@ const ProductDetails = () => {
       </div>
     );
 
+  const images = product.images?.length
+    ? product.images
+    : product.image
+    ? [product.image]
+    : [];
+
+  const related = sampleShops[0].products;
+
+  const handleAdd = () => {
+    dispatch(
+      addToCart({
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        quantity: qty,
+        image: images[0],
+      })
+    );
+  };
+
   return (
     <div className="product-details">
-      <img
-        src={
-          product.image || "https://via.placeholder.com/600x300?text=Product"
-        }
-        alt={product.name}
-        className="product-img"
-        onError={(e) => (e.currentTarget.src = fallbackImage)}
+      <div className="gallery">
+        <div className="main-image">
+          <img
+            src={images[activeImg] || fallbackImage}
+            alt={product.name}
+            loading="lazy"
+            onError={(e) => (e.currentTarget.src = fallbackImage)}
+          />
+        </div>
+        <div className="thumbnails">
+          {images.map((img, i) => (
+            <img
+              key={img + i}
+              src={img}
+              alt={`${product.name} ${i + 1}`}
+              loading="lazy"
+              onError={(e) => (e.currentTarget.src = fallbackImage)}
+              className={i === activeImg ? "active" : ""}
+              onClick={() => setActiveImg(i)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <h1 className="title">{product.name}</h1>
+      <PriceBlock
+        price={product.price}
+        mrp={product.mrp}
+        discount={product.discount}
+        className="price-block"
       />
 
-      <div className="info">
-        <h1>{product.name}</h1>
-        <p className="meta">
-          {product.category} {product.shopName ? `• ${product.shopName}` : ""}
-        </p>
+      <div className="collapsibles">
+        <details open>
+          <summary>Description</summary>
+          <p>{product.description}</p>
+        </details>
+        <details>
+          <summary>Reviews</summary>
+          <p>No reviews yet.</p>
+        </details>
+      </div>
 
-        <p className="price">
-          ₹{product.price}
-          {product.discount && (
-            <span className="discount"> -{product.discount}%</span>
-          )}
-        </p>
+      <section className="related">
+        <SectionHeader title="Related Products" />
+        <HorizontalCarousel>
+          {related.map((p) => (
+            <ProductCard key={p._id} product={p} showActions={false} />
+          ))}
+        </HorizontalCarousel>
+      </section>
 
-        <p className="desc">{product.description}</p>
-
-        <button
-          className="add-cart-btn"
-          onClick={() =>
-            dispatch(
-              addToCart({
-                id: product._id,
-                name: product.name,
-                price: product.price,
-                quantity: 1,
-                image: product.image,
-              })
-            )
-          }
-        >
+      <div className="cta-bar">
+        <QuantityStepper value={qty} onChange={setQty} min={1} />
+        <button className="add-cart-btn" onClick={handleAdd}>
           Add to Cart
         </button>
       </div>

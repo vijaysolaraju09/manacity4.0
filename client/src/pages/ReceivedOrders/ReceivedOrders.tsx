@@ -3,14 +3,15 @@ import api from '../../api/client';
 import Shimmer from '../../components/Shimmer';
 import { OrderCard } from '../../components/base';
 import fallbackImage from '../../assets/no-image.svg';
+import { type Status } from '../../components/ui/StatusChip';
 import styles from './ReceivedOrders.module.scss';
 
 interface Order {
   _id: string;
   user: { name: string; phone?: string };
-  product: { name: string };
+  product: { name: string; price: number; image?: string };
   quantity: number;
-  status: string;
+  status: Status;
   createdAt: string;
 }
 
@@ -75,7 +76,18 @@ const ReceivedOrders = () => {
         list.map((i) => (
           <OrderCard
             key={i._id}
-            order={i}
+            items={[
+              {
+                id: i._id,
+                title: i.product.name,
+                image: i.product.image || fallbackImage,
+              },
+            ]}
+            shop={i.user.name}
+            date={i.createdAt}
+            status={i.status}
+            quantity={i.quantity}
+            total={i.product.price * i.quantity}
             onAccept={i.status === 'pending' ? () => act(i._id, 'accept') : undefined}
             onReject={i.status === 'pending' ? () => act(i._id, 'reject') : undefined}
           />

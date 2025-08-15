@@ -9,11 +9,11 @@ const showToast = (message: string, type: ToastType = 'success') => {
     bottom: 1rem;
     left: 50%;
     transform: translateX(-50%);
-    background: ${type === 'success' ? '#16a34a' : '#dc2626'};
-    color: #fff;
+    background: ${type === 'success' ? 'var(--color-success)' : 'var(--color-danger)'};
+    color: var(--color-on-primary);
     padding: 0.75rem 1rem;
     border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
     z-index: 9999;
     opacity: 0;
     transition: opacity 0.3s ease;

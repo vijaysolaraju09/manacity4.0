@@ -22,7 +22,7 @@
     padding: 0.4rem 0.8rem;
     border: none;
     border-radius: 999px;
-    background: #f2f2f2;
+    background: var(--color-surface);
     font-size: 0.85rem;
     cursor: pointer;
   }
@@ -32,14 +32,14 @@
   margin-bottom: 1rem;
 }
 
-.month {
-  position: sticky;
-  top: 0;
-  background: #fff;
-  padding: 0.25rem 0;
-  font-weight: bold;
-  z-index: 1;
-}
+  .month {
+    position: sticky;
+    top: 0;
+    background: var(--color-bg);
+    padding: 0.25rem 0;
+    font-weight: bold;
+    z-index: 1;
+  }
 
 .empty {
   text-align: center;
@@ -57,5 +57,5 @@
 
 .browse {
   margin-top: 1rem;
-  @include button-style($primary-color, #fff);
+  @include button-style($primary-color, var(--color-on-primary));
 }

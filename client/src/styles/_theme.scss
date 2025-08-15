@@ -50,6 +50,10 @@
   --color-success: #22c55e;
   --color-danger: #ef4444;
   --color-muted: #6b7280;
+  --color-text-secondary: var(--color-muted);
+  --color-border: var(--color-muted);
+  --color-on-primary: #ffffff;
+  --overlay-bg: rgba(0, 0, 0, 0.4);
 
   /* Legacy colour aliases */
   --color-card: var(--color-surface);
@@ -72,6 +76,7 @@
   --color-card: var(--color-surface);
   --color-warning: #f59e0b;
   --color-info: #3b82f6;
+  --overlay-bg: rgba(0, 0, 0, 0.4);
 }
 
 /* Dark theme */
@@ -91,6 +96,7 @@
   --color-card: var(--color-surface);
   --color-warning: #f59e0b;
   --color-info: #3b82f6;
+  --overlay-bg: rgba(0, 0, 0, 0.6);
 }
 
 /* Colourful theme with brand accents */
@@ -107,5 +113,6 @@
   --color-card: var(--color-surface);
   --color-warning: #f59e0b;
   --color-info: #3b82f6;
+  --overlay-bg: rgba(0, 0, 0, 0.4);
 }
 

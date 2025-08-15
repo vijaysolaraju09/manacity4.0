@@ -31,7 +31,7 @@
     left: var(--spacing-sm);
     top: var(--spacing-sm);
     background: var(--color-primary);
-    color: #fff;
+    color: var(--color-on-primary);
     border-radius: var(--radius-sm);
     padding: 2px 6px;
     font-size: var(--font-size-sm);
@@ -66,7 +66,7 @@
   border: none;
   border-radius: var(--radius-sm);
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   cursor: pointer;
   transition: background var(--transition-fast);
 

@@ -169,3 +169,31 @@
     }
   }
 }
+
+.list {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.themes {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.logout {
+  align-self: flex-start;
+}
+
+.prefs {
+  font-size: 0.9rem;
+  color: #666;
+}

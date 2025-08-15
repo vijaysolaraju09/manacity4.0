@@ -2,6 +2,7 @@ export type { Product } from './ProductCard';
 export { default as ProductCard } from './ProductCard';
 export { default as OrderCard } from './OrderCard';
 export { default as ProfileHeader } from './ProfileHeader';
+export { default as Tabs } from './Tabs';
 export { default as FacetFilterBar } from './FacetFilterBar';
 export { default as QuantityStepper } from './QuantityStepper';
 export { default as PriceBlock } from './PriceBlock';

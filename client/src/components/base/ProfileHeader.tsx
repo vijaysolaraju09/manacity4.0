@@ -4,28 +4,47 @@ import styles from './ProfileHeader.module.scss';
 export interface ProfileHeaderProps {
   avatar: string;
   name: string;
-  posts?: number;
-  followers?: number;
-  following?: number;
-  onEdit?: () => void;
+  role: string;
+  location?: string;
+  stats?: Array<{ label: string; value: number }>;
+  actions?: Array<{ label: string; onClick: () => void }>;
 }
 
-const ProfileHeader = ({ avatar, name, posts, followers, following, onEdit }: ProfileHeaderProps) => (
+const ProfileHeader = ({
+  avatar,
+  name,
+  role,
+  location,
+  stats = [],
+  actions = [],
+}: ProfileHeaderProps) => (
   <motion.div className={styles.header} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
     <img src={avatar} alt={name} className={styles.avatar} />
     <div className={styles.info}>
-      <h3>{name}</h3>
-      <div className={styles.stats}>
-        {posts !== undefined && <span>{posts} posts</span>}
-        {followers !== undefined && <span>{followers} followers</span>}
-        {following !== undefined && <span>{following} following</span>}
+      <div className={styles.nameRow}>
+        <h3>{name}</h3>
+        <span className={styles.role}>{role}</span>
       </div>
+      {location && <p className={styles.location}>{location}</p>}
+      {stats.length > 0 && (
+        <div className={styles.stats}>
+          {stats.map((s) => (
+            <span key={s.label}>
+              <strong>{s.value}</strong> {s.label}
+            </span>
+          ))}
+        </div>
+      )}
+      {actions.length > 0 && (
+        <div className={styles.actions}>
+          {actions.map(({ label, onClick }) => (
+            <button key={label} type="button" onClick={onClick}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
-    {onEdit && (
-      <button style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '0.4rem 0.8rem' }} onClick={onEdit}>
-        Edit
-      </button>
-    )}
   </motion.div>
 );
 

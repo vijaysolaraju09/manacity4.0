@@ -2,6 +2,77 @@
   padding: 1rem;
 }
 
+.themeSection {
+  margin-top: 1rem;
+}
+
+.description {
+  margin-top: 0.25rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+
+.themeOptions {
+  display: flex;
+  gap: 1rem;
+  margin-top: var(--space-3);
+}
+
+.themeOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.themeOption input {
+  position: absolute;
+  opacity: 0;
+}
+
+.themeOption input:focus-visible + .swatch {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.swatch {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.swatchText {
+  font-size: var(--font-size-sm);
+}
+
+.swatchPrimary {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+.optionLabel {
+  margin-top: 0.25rem;
+  font-size: var(--font-size-sm);
+}
+
+.selected .swatch {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .dangerZone {
   margin-top: 2rem;
   border-top: 1px solid #e53e3e;

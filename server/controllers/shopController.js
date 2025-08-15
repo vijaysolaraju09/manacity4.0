@@ -1,6 +1,5 @@
 const Shop = require("../models/Shop");
 const Product = require("../models/Product");
-const User = require("../models/User");
 const Notification = require("../models/Notification");
 const { promoteToBusiness } = require("./userController");
 
@@ -43,14 +42,93 @@ exports.createShop = async (req, res) => {
 
 exports.getAllShops = async (req, res) => {
   try {
-    const { status, category } = req.query;
-    const filters = {};
+    const {
+      query: q,
+      status,
+      page = 1,
+      pageSize = 10,
+      sort = "-createdAt",
+      category,
+      location,
+    } = req.query;
 
-    if (status) filters.status = status;
-    if (category) filters.category = category;
+    const match = {};
+    const statusMap = { active: "approved", suspended: "rejected", pending: "pending" };
+    if (status) match.status = statusMap[status] || status;
+    if (category) match.category = category;
+    if (location) match.location = location;
 
-    const shops = await Shop.find(filters);
-    res.json(shops);
+    const pipeline = [
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "owner",
+        },
+      },
+      { $unwind: "$owner" },
+    ];
+
+    if (q) {
+      pipeline.push({
+        $match: {
+          ...match,
+          $or: [
+            { name: { $regex: q, $options: "i" } },
+            { "owner.name": { $regex: q, $options: "i" } },
+          ],
+        },
+      });
+    } else {
+      pipeline.push({ $match: match });
+    }
+
+    pipeline.push(
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "shop",
+          as: "products",
+        },
+      },
+      { $addFields: { productsCount: { $size: "$products" }, ownerName: "$owner.name" } },
+      { $project: { products: 0, owner: 0 } },
+    );
+
+    const basePipeline = [...pipeline];
+
+    const sortField = typeof sort === "string" && sort.startsWith("-") ? sort.slice(1) : sort;
+    const sortDir = typeof sort === "string" && sort.startsWith("-") ? -1 : 1;
+
+    const resultPipeline = [
+      ...basePipeline,
+      { $sort: { [sortField]: sortDir } },
+      { $skip: (Number(page) - 1) * Number(pageSize) },
+      { $limit: Number(pageSize) },
+    ];
+
+    const [items, countRes] = await Promise.all([
+      Shop.aggregate(resultPipeline),
+      Shop.aggregate([...basePipeline, { $count: "total" }]),
+    ]);
+
+    const total = countRes[0]?.total || 0;
+    const statusMapOut = { approved: "active", rejected: "suspended", pending: "pending" };
+    const mapped = items.map((s) => ({
+      id: s._id.toString(),
+      _id: s._id.toString(),
+      name: s.name,
+      owner: s.ownerName,
+      category: s.category,
+      location: s.location,
+      status: statusMapOut[s.status] || s.status,
+      productsCount: s.productsCount || 0,
+      createdAt: s.createdAt,
+    }));
+
+    res.json({ items: mapped, total });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch shops" });
   }
@@ -139,6 +217,34 @@ exports.rejectShop = async (req, res) => {
     res.json({ message: "Shop rejected" });
   } catch (err) {
     res.status(500).json({ error: "Failed to reject shop" });
+  }
+};
+
+exports.updateShop = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = { ...req.body };
+    if (updates.status) {
+      const map = { active: "approved", suspended: "rejected", pending: "pending" };
+      updates.status = map[updates.status] || updates.status;
+    }
+    const shop = await Shop.findByIdAndUpdate(id, updates, { new: true });
+    if (!shop) return res.status(404).json({ error: "Shop not found" });
+    res.json({ message: "Shop updated" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update shop" });
+  }
+};
+
+exports.deleteShop = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const shop = await Shop.findByIdAndDelete(id);
+    if (!shop) return res.status(404).json({ error: "Shop not found" });
+    await Product.deleteMany({ shop: id });
+    res.json({ message: "Shop deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete shop" });
   }
 };
 

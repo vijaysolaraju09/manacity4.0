@@ -28,7 +28,7 @@ import Notifications from './pages/Notifications/Notifications';
 import TabLayout from './layouts/TabLayout';
 import AdminLogin from './pages/AdminLogin/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
-import AdminPanel from './pages/AdminPanel';
+import AdminShops from './pages/AdminShops';
 import VerificationRequests from './pages/VerificationRequests';
 import BusinessRequests from './pages/BusinessRequests';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
@@ -69,7 +69,7 @@ function App() {
         <Route path="/admin" element={<AdminProtectedRoute />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="shops" element={<AdminPanel />} />
+            <Route path="shops" element={<AdminShops />} />
             <Route path="requests">
               <Route path="business" element={<BusinessRequests />} />
               <Route path="verification" element={<VerificationRequests />} />

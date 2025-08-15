@@ -4,6 +4,21 @@ const User = require("../models/User");
 const Notification = require("../models/Notification");
 const { promoteToBusiness } = require("./userController");
 
+const normalizeProduct = (p) => ({
+  id: p._id.toString(),
+  _id: p._id.toString(),
+  name: p.name,
+  price: p.price,
+  mrp: p.mrp,
+  discount: p.mrp ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0,
+  stock: p.stock,
+  images: p.images,
+  image: p.images?.[0] || '',
+  category: p.category,
+  shopId: p.shop.toString(),
+  shop: p.shop.toString(),
+});
+
 exports.createShop = async (req, res) => {
   try {
     const { name, category, location, address, image, banner, description } = req.body;
@@ -54,7 +69,7 @@ exports.getShopById = async (req, res) => {
 exports.getProductsByShop = async (req, res) => {
   try {
     const products = await Product.find({ shop: req.params.id });
-    res.json(products);
+    res.json(products.map(normalizeProduct));
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch products" });
   }
@@ -127,7 +142,7 @@ exports.rejectShop = async (req, res) => {
 exports.getMyProducts = async (req, res) => {
   try {
     const products = await Product.find({ createdBy: req.user._id });
-    res.status(200).json(products);
+    res.status(200).json(products.map(normalizeProduct));
   } catch (err) {
     res.status(500).json({ message: "Server error fetching products." });
   }

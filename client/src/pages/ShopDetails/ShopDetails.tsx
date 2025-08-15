@@ -47,6 +47,16 @@ const ShopDetails = () => {
       }
     };
     load();
+    const refresh = async () => {
+      try {
+        const prodRes = await api.get(`/shops/${id}/products`);
+        setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('productsUpdated', refresh);
+    return () => window.removeEventListener('productsUpdated', refresh);
   }, [id]);
 
   const filtered = useMemo(() => {

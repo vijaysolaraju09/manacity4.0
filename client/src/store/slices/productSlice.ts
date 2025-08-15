@@ -8,6 +8,9 @@ export interface Product {
   price: number;
   category: string;
   image?: string;
+  images?: string[];
+  mrp?: number;
+  discount?: number;
   stock: number;
   shop: string;
 }

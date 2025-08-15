@@ -20,6 +20,7 @@ import Settings from './pages/Settings/Settings';
 import Cart from './pages/Cart/Cart';
 import Events from './pages/Events/Events';
 import VoiceOrder from './pages/VoiceOrder/VoiceOrder';
+import OrderNow from './pages/OrderNow/OrderNow';
 import ManageProducts from './pages/ManageProducts/ManageProducts';
 import ReceivedOrders from './pages/ReceivedOrders/ReceivedOrders';
 import MyOrders from './pages/MyOrders/MyOrders';
@@ -69,6 +70,7 @@ function App() {
             <Route path="/events" element={<Events />} />
             <Route path="/special-shop" element={<SpecialShop />} />
             <Route path="/voice-order" element={<VoiceOrder />} />
+            <Route path="/order-now" element={<OrderNow />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/manage-products" element={<ManageProducts />} />

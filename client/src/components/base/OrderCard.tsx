@@ -15,6 +15,7 @@ export interface OrderCardProps {
   status: Status;
   quantity: number;
   total: number;
+  phone?: string;
   onAccept?: () => void;
   onReject?: () => void;
   onCancel?: () => void;
@@ -29,6 +30,7 @@ const OrderCard = ({
   status,
   quantity,
   total,
+  phone,
   onAccept,
   onReject,
   onCancel,
@@ -48,10 +50,11 @@ const OrderCard = ({
       <PriceBlock price={total} />
     </div>
     <StatusChip status={status} className={styles.status} />
-    {(onAccept || onReject || onCancel || onCall) && (
+    {(onAccept || onReject || onCancel || onCall || phone) && (
       <div className={styles.actions}>
+        {phone && <span className={styles.phone}>{phone}</span>}
         {onCall && (
-          <button type="button" onClick={onCall} aria-label="Call shop">
+          <button type="button" onClick={onCall} aria-label="Call buyer">
             Call
           </button>
         )}

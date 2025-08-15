@@ -36,7 +36,12 @@
 
 .actions {
   display: flex;
+  align-items: center;
   gap: var(--spacing-xs);
+
+  .phone {
+    font-size: var(--font-size-sm);
+  }
 
   button {
     padding: 0.25rem 0.5rem;

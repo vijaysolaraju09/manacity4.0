@@ -19,13 +19,17 @@ export const fetchUsers = async () => {
   return res.data;
 };
 
-export const fetchPendingShops = async () => {
-  const res = await adminApi.get('/shops/pending');
+export const fetchBusinessRequests = async () => {
+  const res = await adminApi.get('/shops/requests');
   return res.data;
 };
 
 export const approveShop = async (id: string) => {
   await adminApi.put(`/shops/approve/${id}`);
+};
+
+export const rejectShop = async (id: string) => {
+  await adminApi.put(`/shops/reject/${id}`);
 };
 
 export const fetchVerificationRequests = async () => {

@@ -11,7 +11,7 @@ const shopSchema = new mongoose.Schema(
     category: { type: String, required: true }, // e.g., grocery, clothing
     status: {
       type: String,
-      enum: ["pending", "approved"],
+      enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
     location: { type: String, required: true },

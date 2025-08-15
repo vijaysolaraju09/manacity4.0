@@ -1,6 +1,7 @@
 const Shop = require("../models/Shop");
 const Product = require("../models/Product");
 const User = require("../models/User");
+const Notification = require("../models/Notification");
 const { promoteToBusiness } = require("./userController");
 
 exports.createShop = async (req, res) => {
@@ -71,6 +72,16 @@ exports.getPendingShops = async (req, res) => {
   }
 };
 
+exports.getMyShop = async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ owner: req.user._id });
+    if (!shop) return res.status(404).json({ message: "No shop request" });
+    res.json(shop);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch shop" });
+  }
+};
+
 exports.approveShop = async (req, res) => {
   try {
     const shop = await Shop.findById(req.params.id);
@@ -80,9 +91,36 @@ exports.approveShop = async (req, res) => {
 
     await promoteToBusiness(shop.owner);
 
+    await Notification.create({
+      title: "Business request approved",
+      message: "Your business request has been approved.",
+      type: "shop",
+      user: shop.owner,
+    });
+
     res.json({ message: "Shop approved" });
   } catch (err) {
     res.status(500).json({ error: "Failed to approve shop" });
+  }
+};
+
+exports.rejectShop = async (req, res) => {
+  try {
+    const shop = await Shop.findById(req.params.id);
+    if (!shop) return res.status(404).json({ error: "Shop not found" });
+    shop.status = "rejected";
+    await shop.save();
+
+    await Notification.create({
+      title: "Business request rejected",
+      message: "Your business request has been rejected.",
+      type: "shop",
+      user: shop.owner,
+    });
+
+    res.json({ message: "Shop rejected" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to reject shop" });
   }
 };
 

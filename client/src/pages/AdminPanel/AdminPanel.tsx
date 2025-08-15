@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchPendingShops, approveShop } from '../../api/admin';
+import { fetchBusinessRequests, approveShop, rejectShop } from '../../api/admin';
 import './AdminPanel.scss';
 
 interface Shop {
@@ -18,7 +18,7 @@ const AdminPanel = () => {
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetchPendingShops();
+        const data = await fetchBusinessRequests();
         setShops(data);
       } catch {
         setShops([]);
@@ -32,6 +32,18 @@ const AdminPanel = () => {
     try {
       setActionId(id);
       await approveShop(id);
+      setShops((prev) => prev.filter((s) => s._id !== id));
+    } catch {
+      // ignore
+    } finally {
+      setActionId('');
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      setActionId(id);
+      await rejectShop(id);
       setShops((prev) => prev.filter((s) => s._id !== id));
     } catch {
       // ignore
@@ -57,6 +69,12 @@ const AdminPanel = () => {
                 disabled={actionId === shop._id}
               >
                 {actionId === shop._id ? 'Approving...' : 'Approve'}
+              </button>
+              <button
+                onClick={() => handleReject(shop._id)}
+                disabled={actionId === shop._id}
+              >
+                {actionId === shop._id ? 'Processing...' : 'Reject'}
               </button>
             </li>
           ))}

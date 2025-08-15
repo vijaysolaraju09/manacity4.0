@@ -40,10 +40,24 @@
   --spacing-md: var(--space-4);
   --spacing-lg: var(--space-6);
   --spacing-xl: var(--space-8);
+
+  /* Default (light) colours */
+  --color-bg: #ffffff;
+  --color-surface: #f5f5f7;
+  --color-text: #1f2937;
+  --color-primary: #ff3e6c;
+  --color-primary-hover: #ff6b81;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+  --color-muted: #6b7280;
+
+  /* Legacy colour aliases */
+  --color-card: var(--color-surface);
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
 }
 
-/* Light theme (default) */
-:root,
+/* Light theme (explicit) */
 [data-theme='light'] {
   --color-bg: #ffffff;
   --color-surface: #f5f5f7;

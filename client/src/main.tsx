@@ -7,7 +7,7 @@ import 'slick-carousel/slick/slick-theme.css'
 import './styles/main.scss';
 import App from './App.tsx'
 import { store } from './store'
-import ThemeProvider from './components/ThemeProvider';
+import ThemeProvider from './theme/ThemeProvider';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

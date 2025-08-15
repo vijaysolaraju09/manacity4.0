@@ -6,7 +6,6 @@ import ProductCard from '../../components/ui/ProductCard';
 import type { RootState } from '../../store';
 import { sampleShops } from '../../data/sampleData';
 import { clearUser, setUser } from '../../store/slices/userSlice';
-import { setTheme, type Theme } from '../../store/slices/themeSlice';
 import ModalSheet from '../../components/base/ModalSheet';
 import {
   requestBusiness,
@@ -14,11 +13,12 @@ import {
   requestVerification,
   getCurrentUser,
 } from '../../api/profile';
+import { useTheme } from '../../theme/ThemeProvider';
 import styles from './Profile.module.scss';
 
 const Profile = () => {
   const user = useSelector((state: RootState) => state.user as any);
-  const theme = useSelector((state: RootState) => state.theme as Theme);
+  const { theme, setTheme } = useTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -111,13 +111,13 @@ const Profile = () => {
     content: (
       <div className={styles.settings}>
         <div className={styles.themes}>
-          <button type="button" onClick={() => dispatch(setTheme('colored'))}>
-            Colored
+          <button type="button" onClick={() => setTheme('colorful')}>
+            Colorful
           </button>
-          <button type="button" onClick={() => dispatch(setTheme('light'))}>
+          <button type="button" onClick={() => setTheme('light')}>
             Light
           </button>
-          <button type="button" onClick={() => dispatch(setTheme('dark'))}>
+          <button type="button" onClick={() => setTheme('dark')}>
             Dark
           </button>
         </div>

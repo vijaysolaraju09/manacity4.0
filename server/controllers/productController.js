@@ -12,13 +12,25 @@ const normalize = (p) => ({
   images: p.images,
   image: p.images?.[0] || '',
   category: p.category,
-  shopId: p.shop.toString(),
-  shop: p.shop.toString(),
+  status: p.status,
+  shopId: typeof p.shop === 'object' ? p.shop._id.toString() : p.shop.toString(),
+  shopName: typeof p.shop === 'object' ? p.shop.name : undefined,
+  updatedAt: p.updatedAt,
 });
 
 exports.createProduct = async (req, res) => {
   try {
-    const { name, description, price, mrp, category, images = [], stock, shopId } = req.body;
+    const {
+      name,
+      description,
+      price,
+      mrp,
+      category,
+      images = [],
+      stock,
+      status,
+      shopId,
+    } = req.body;
     if (!name || price === undefined || mrp === undefined) {
       return res.status(400).json({ error: 'Name, price and mrp are required' });
     }
@@ -41,6 +53,7 @@ exports.createProduct = async (req, res) => {
       category,
       images,
       stock,
+      status,
     });
     res.status(201).json(normalize(product));
   } catch (err) {
@@ -52,10 +65,12 @@ exports.updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ error: 'Product not found' });
-    const shop = await Shop.findOne({ _id: product.shop, owner: req.user._id });
-    if (!shop) return res.status(403).json({ error: 'Not authorized' });
+    if (req.user.role !== 'admin') {
+      const shop = await Shop.findOne({ _id: product.shop, owner: req.user._id });
+      if (!shop) return res.status(403).json({ error: 'Not authorized' });
+    }
 
-    const { name, description, price, mrp, category, images, stock } = req.body;
+    const { name, description, price, mrp, category, images, stock, status } = req.body;
     if (name !== undefined) product.name = name;
     if (description !== undefined) product.description = description;
     if (price !== undefined) {
@@ -73,6 +88,7 @@ exports.updateProduct = async (req, res) => {
     if (category !== undefined) product.category = category;
     if (images !== undefined) product.images = images;
     if (stock !== undefined) product.stock = stock;
+    if (status !== undefined) product.status = status;
     await product.save();
     res.json(normalize(product));
   } catch (err) {
@@ -84,13 +100,62 @@ exports.deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ error: 'Product not found' });
-    const shop = await Shop.findOne({ _id: product.shop, owner: req.user._id });
-    if (!shop) return res.status(403).json({ error: 'Not authorized' });
+    if (req.user.role !== 'admin') {
+      const shop = await Shop.findOne({ _id: product.shop, owner: req.user._id });
+      if (!shop) return res.status(403).json({ error: 'Not authorized' });
+    }
 
     await product.deleteOne();
     res.json({ message: 'Product deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete product' });
+  }
+};
+
+exports.getProducts = async (req, res) => {
+  try {
+    const {
+      shopId,
+      query,
+      category,
+      status,
+      minPrice,
+      maxPrice,
+      page = 1,
+      pageSize = 20,
+      sort = '-updatedAt',
+    } = req.query;
+
+    const filter = {};
+    if (shopId) filter.shop = shopId;
+    if (category) filter.category = category;
+    if (status) filter.status = status;
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+    if (query) filter.name = { $regex: query, $options: 'i' };
+
+    const sortField = typeof sort === 'string' ? sort : '';
+    const sortObj = sortField
+      ? { [sortField.replace('-', '')]: sortField.startsWith('-') ? -1 : 1 }
+      : {};
+
+    const skip = (Number(page) - 1) * Number(pageSize);
+
+    const [items, total] = await Promise.all([
+      Product.find(filter)
+        .populate('shop', 'name')
+        .sort(sortObj)
+        .skip(skip)
+        .limit(Number(pageSize)),
+      Product.countDocuments(filter),
+    ]);
+
+    res.json({ items: items.map(normalize), total });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch products' });
   }
 };
 

@@ -8,7 +8,14 @@ import './VerificationRequests.scss';
 
 interface Request {
   _id: string;
-  user: { _id: string; name: string; phone: string; profession: string; bio: string; };
+  user: {
+    _id: string;
+    name: string;
+    phone: string;
+    profession: string;
+    bio: string;
+  };
+  portfolio?: string[];
   createdAt: string;
 }
 
@@ -63,6 +70,15 @@ const VerificationRequests = () => {
                 <strong>{req.user.name}</strong> - {req.user.phone}
                 <div>{req.user.profession}</div>
                 <div>{req.user.bio}</div>
+                {req.portfolio && req.portfolio.length > 0 && (
+                  <div>
+                    {req.portfolio.map((link) => (
+                      <a key={link} href={link} target="_blank" rel="noreferrer">
+                        {link}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="actions">
                 <button onClick={() => handleAccept(req.user._id)} disabled={actionId === req.user._id}>

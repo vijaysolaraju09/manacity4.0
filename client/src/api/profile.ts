@@ -24,6 +24,7 @@ export interface BusinessRequest {
 export interface VerifyRequest {
   profession: string;
   bio: string;
+  portfolio?: string[];
 }
 
 export const getCurrentUser = async () => {

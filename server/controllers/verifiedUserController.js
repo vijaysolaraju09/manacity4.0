@@ -3,7 +3,7 @@ const User = require("../models/User");
 
 exports.applyForVerification = async (req, res) => {
   try {
-    const { profession, bio } = req.body;
+    const { profession, bio, portfolio = [] } = req.body;
     const userId = req.user._id;
 
     let request = await VerifiedUser.findOne({ user: userId });
@@ -13,10 +13,16 @@ exports.applyForVerification = async (req, res) => {
     if (request) {
       request.profession = profession;
       request.bio = bio;
+      request.portfolio = portfolio;
       request.status = "pending";
       await request.save();
     } else {
-      request = await VerifiedUser.create({ user: userId, profession, bio });
+      request = await VerifiedUser.create({
+        user: userId,
+        profession,
+        bio,
+        portfolio,
+      });
     }
 
     const user = await User.findById(userId);

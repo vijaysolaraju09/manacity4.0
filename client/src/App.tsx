@@ -30,6 +30,7 @@ import AdminLogin from './pages/AdminLogin/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminPanel from './pages/AdminPanel';
 import VerificationRequests from './pages/VerificationRequests';
+import BusinessRequests from './pages/BusinessRequests';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
 import AdminLayout from './layouts/AdminLayout';
 import { setUser } from './store/slices/userSlice';
@@ -70,6 +71,7 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="shops" element={<AdminPanel />} />
             <Route path="requests">
+              <Route path="business" element={<BusinessRequests />} />
               <Route path="verification" element={<VerificationRequests />} />
             </Route>
           </Route>

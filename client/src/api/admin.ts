@@ -22,17 +22,25 @@ export const fetchUsers = async () => {
   return res.data;
 };
 
-export const fetchBusinessRequests = async () => {
-  const res = await adminApi.get('/shops/requests');
+export interface BusinessRequestParams {
+  status?: string;
+  category?: string;
+  location?: string;
+}
+
+export const fetchBusinessRequests = async (
+  params: BusinessRequestParams = {},
+) => {
+  const res = await adminApi.get('/shops/requests', { params });
   return res.data;
 };
 
 export const approveShop = async (id: string) => {
-  await adminApi.put(`/shops/approve/${id}`);
+  await adminApi.post(`/shops/approve/${id}`);
 };
 
 export const rejectShop = async (id: string) => {
-  await adminApi.put(`/shops/reject/${id}`);
+  await adminApi.post(`/shops/reject/${id}`);
 };
 
 export interface VerificationRequestParams {

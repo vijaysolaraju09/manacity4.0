@@ -18,7 +18,7 @@ const AdminPanel = () => {
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetchBusinessRequests();
+        const data = await fetchBusinessRequests({ status: 'pending' });
         setShops(data);
       } catch {
         setShops([]);

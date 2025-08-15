@@ -8,7 +8,8 @@ const AdminLayout = () => {
         <nav>
           <ul>
             <li><Link to="/admin">Dashboard</Link></li>
-            <li><Link to="/admin/requests/verification">Requests</Link></li>
+            <li><Link to="/admin/requests/business">Business Requests</Link></li>
+            <li><Link to="/admin/requests/verification">Verification Requests</Link></li>
             <li><Link to="/admin/shops">Shops</Link></li>
             <li><span>Products</span></li>
             <li><span>Events</span></li>

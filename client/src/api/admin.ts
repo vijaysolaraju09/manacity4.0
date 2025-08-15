@@ -126,3 +126,37 @@ export const updateProduct = async (
 export const deleteProduct = async (id: string) => {
   await adminApi.delete(`/products/${id}`);
 };
+
+export interface EventQueryParams {
+  status?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+}
+
+export const fetchEvents = async (params: EventQueryParams = {}) => {
+  const res = await adminApi.get('/events', { params });
+  return res.data as { items: any[]; total: number };
+};
+
+export const createEvent = async (data: {
+  title: string;
+  startAt: string;
+  endAt: string;
+  capacity: number;
+}) => {
+  const res = await adminApi.post('/events', data);
+  return res.data;
+};
+
+export const updateEvent = async (
+  id: string,
+  data: Partial<{ title: string; startAt: string; endAt: string; capacity: number }>,
+) => {
+  const res = await adminApi.put(`/events/${id}`, data);
+  return res.data;
+};
+
+export const deleteEvent = async (id: string) => {
+  await adminApi.delete(`/events/${id}`);
+};

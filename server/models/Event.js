@@ -2,42 +2,38 @@ const mongoose = require("mongoose");
 
 const eventSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    type: { type: String, required: true }, // tournament, exhibition, etc.
-    mode: { type: String, enum: ["online", "offline"], required: true },
-    coverImage: { type: String },
-    date: { type: String, required: true }, // format: YYYY-MM-DD
-    time: { type: String, required: true }, // format: HH:mm
-    location: { type: String, default: "" },
-    description: { type: String, default: "" },
-    totalSlots: { type: Number, required: true },
-    entryFee: { type: String, default: "Free" },
-    registrationDeadline: { type: Date, required: true },
-    messageFromAdmin: {
-      type: {
-        text: String,
-        image: String,
-        link: String,
-      },
-      default: {},
-    },
-    status: {
-      type: String,
-      enum: ["upcoming", "ongoing", "closed"],
-      default: "upcoming",
-    },
+    title: { type: String, required: true },
+    startAt: { type: Date, required: true },
+    endAt: { type: Date, required: true },
+    capacity: { type: Number, required: true },
     registeredUsers: [
-      {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        status: {
-          type: String,
-          enum: ["pending", "accepted", "rejected"],
-          default: "pending",
-        },
-      },
-    ],
+      { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    ]
   },
   { timestamps: true }
 );
+
+function getStatus(e) {
+  const now = new Date();
+  if (now < e.startAt) return "upcoming";
+  if (now > e.endAt) return "past";
+  return "ongoing";
+}
+
+eventSchema.virtual("status").get(function () {
+  return getStatus(this);
+});
+
+eventSchema.virtual("registered").get(function () {
+  return this.registeredUsers.length;
+});
+
+// include virtuals when converting to JSON
+// eslint-disable-next-line func-names
+if (!eventSchema.options.toJSON) eventSchema.options.toJSON = {};
+// eslint-disable-next-line func-names
+if (!eventSchema.options.toObject) eventSchema.options.toObject = {};
+eventSchema.options.toJSON.virtuals = true;
+eventSchema.options.toObject.virtuals = true;
 
 module.exports = mongoose.model("Event", eventSchema);

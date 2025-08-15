@@ -5,13 +5,14 @@ const {
   verifyUser,
   getAllOrders,
 } = require('../controllers/adminController');
-const protectAdmin = require('../middleware/adminAuth');
+const protect = require('../middleware/authMiddleware');
+const isAdmin = require('../middleware/isAdmin');
 
 const router = express.Router();
 
-router.get('/users', protectAdmin, getAllUsers);
-router.delete('/user/:id', protectAdmin, deleteUser);
-router.put('/user/:id/verify', protectAdmin, verifyUser);
-router.get('/orders', protectAdmin, getAllOrders);
+router.get('/users', protect, isAdmin, getAllUsers);
+router.delete('/user/:id', protect, isAdmin, deleteUser);
+router.put('/user/:id/verify', protect, isAdmin, verifyUser);
+router.get('/orders', protect, isAdmin, getAllOrders);
 
 module.exports = router;

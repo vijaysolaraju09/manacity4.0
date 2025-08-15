@@ -96,8 +96,8 @@ exports.adminLogin = async (req, res) => {
       email === process.env.ADMIN_EMAIL &&
       password === process.env.ADMIN_PASSWORD
     ) {
-      const token = jwt.sign({ role: 'admin' }, process.env.ADMIN_SECRET, {
-        expiresIn: '7d',
+      const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, {
+        expiresIn: "7d",
       });
       return res.json({ token });
     }

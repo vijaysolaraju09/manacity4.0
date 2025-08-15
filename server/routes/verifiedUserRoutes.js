@@ -12,7 +12,7 @@ const {
 } = require("../controllers/verifiedUserController");
 
 router.post("/apply", protect, applyForVerification);
-router.get("/all", protect, getAllVerifiedUsers);
+router.get("/all", protect, isAdmin, getAllVerifiedUsers);
 router.get("/requests", protect, isAdmin, getVerificationRequests);
 router.post("/accept/:userId", protect, isAdmin, acceptVerificationRequest);
 router.post("/reject/:userId", protect, isAdmin, rejectVerificationRequest);

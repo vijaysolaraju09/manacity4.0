@@ -34,6 +34,7 @@ import AdminEvents from './pages/AdminEvents';
 import VerificationRequests from './pages/VerificationRequests';
 import BusinessRequests from './pages/BusinessRequests';
 import AdminUsers from './pages/AdminUsers';
+import AdminAnalytics from './pages/AdminAnalytics';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
 import AdminLayout from './layouts/AdminLayout';
 import { setUser } from './store/slices/userSlice';
@@ -76,6 +77,7 @@ function App() {
             <Route path="products" element={<AdminProducts />} />
             <Route path="events" element={<AdminEvents />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="requests">
               <Route path="business" element={<BusinessRequests />} />
               <Route path="verification" element={<VerificationRequests />} />

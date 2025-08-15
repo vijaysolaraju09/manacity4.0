@@ -1,0 +1,62 @@
+.admin-analytics {
+  padding: 1rem;
+
+  .analytics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .kpi {
+    background: #fff;
+    padding: 1rem;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    h3 {
+      margin: 0 0 0.5rem;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    p {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+  }
+
+  .charts {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .chart {
+    background: #fff;
+    padding: 1rem;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  .tables {
+    display: grid;
+    gap: 2rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    th, td {
+      padding: 0.5rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+  }
+}

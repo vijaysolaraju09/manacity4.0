@@ -35,8 +35,16 @@ export const rejectShop = async (id: string) => {
   await adminApi.put(`/shops/reject/${id}`);
 };
 
-export const fetchVerificationRequests = async () => {
-  const res = await adminApi.get('/verified/requests');
+export interface VerificationRequestParams {
+  page?: number;
+  status?: string;
+  profession?: string;
+}
+
+export const fetchVerificationRequests = async (
+  params: VerificationRequestParams = {},
+) => {
+  const res = await adminApi.get('/verified/requests', { params });
   return res.data;
 };
 

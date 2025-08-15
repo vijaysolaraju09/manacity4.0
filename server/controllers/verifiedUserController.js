@@ -118,11 +118,33 @@ exports.getAcceptedProviders = async (req, res) => {
 
 exports.getVerificationRequests = async (req, res) => {
   try {
-    const requests = await VerifiedUser.find({ status: "pending" }).populate(
-      "user",
-      "name phone profession bio createdAt"
-    );
-    res.json(requests);
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      profession,
+    } = req.query;
+
+    const query = {};
+    if (status) query.status = status;
+    if (profession)
+      query.profession = { $regex: new RegExp(profession, "i") };
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const total = await VerifiedUser.countDocuments(query);
+
+    const requests = await VerifiedUser.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate("user", "name phone");
+
+    res.json({
+      requests,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit)),
+    });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch requests" });
   }

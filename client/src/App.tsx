@@ -69,7 +69,9 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="shops" element={<AdminPanel />} />
-            <Route path="requests" element={<VerificationRequests />} />
+            <Route path="requests">
+              <Route path="verification" element={<VerificationRequests />} />
+            </Route>
           </Route>
         </Route>
         <Route element={<ProtectedRoute />}>

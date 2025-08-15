@@ -1,6 +1,11 @@
 import styles from './StatusChip.module.scss';
 
-export type Status = 'pending' | 'accepted' | 'rejected' | 'cancelled';
+export type Status =
+  | 'pending'
+  | 'accepted'
+  | 'rejected'
+  | 'cancelled'
+  | 'completed';
 
 interface StatusChipProps {
   status: Status;

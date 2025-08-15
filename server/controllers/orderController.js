@@ -32,24 +32,34 @@ exports.getMyOrders = async (req, res) => {
     let orders = await Order.find({ user: req.user._id })
       .populate({
         path: 'product',
-        select: 'name image shop',
+        select: 'name image price shop',
         populate: { path: 'shop', select: 'name' },
       })
       .populate('shop', 'name');
 
-    const { status, category, minPrice, maxPrice, search } = req.query;
+    const { status, shop, startDate, endDate, minPrice, maxPrice } = req.query;
     if (status) orders = orders.filter((o) => o.status === status);
-    if (category) orders = orders.filter((o) => o.product?.category === category);
-    if (minPrice) orders = orders.filter((o) => (o.product?.price || 0) >= Number(minPrice));
-    if (maxPrice) orders = orders.filter((o) => (o.product?.price || 0) <= Number(maxPrice));
-    if (search) {
-      const q = search.toLowerCase();
+    if (shop) {
+      const q = shop.toLowerCase();
       orders = orders.filter(
         (o) =>
-          (o.product?.name || '').toLowerCase().includes(q) ||
+          (o.product?.shop?.name || '').toLowerCase().includes(q) ||
           (o.shop?.name || '').toLowerCase().includes(q)
       );
     }
+    if (startDate) {
+      const start = new Date(startDate);
+      orders = orders.filter((o) => new Date(o.createdAt) >= start);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      orders = orders.filter((o) => new Date(o.createdAt) <= end);
+    }
+    if (minPrice)
+      orders = orders.filter((o) => (o.product?.price || 0) >= Number(minPrice));
+    if (maxPrice)
+      orders = orders.filter((o) => (o.product?.price || 0) <= Number(maxPrice));
+
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch orders' });

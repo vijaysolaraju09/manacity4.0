@@ -43,6 +43,12 @@ const MyOrders = () => {
     setSearchParams(params);
   };
 
+  const clearFilters = (...keys: string[]) => {
+    const params = new URLSearchParams(searchParams);
+    keys.forEach((k) => params.delete(k));
+    setSearchParams(params);
+  };
+
   const cancel = async (id: string) => {
     await api.post(`/orders/cancel/${id}`);
     load();
@@ -63,14 +69,32 @@ const MyOrders = () => {
 
   const status = searchParams.get('status') ?? '';
   const shop = searchParams.get('shop') ?? '';
-  const date = searchParams.get('date') ?? '';
-  const price = searchParams.get('price') ?? '';
+  const startDate = searchParams.get('startDate') ?? '';
+  const endDate = searchParams.get('endDate') ?? '';
+  const minPrice = searchParams.get('minPrice') ?? '';
+  const maxPrice = searchParams.get('maxPrice') ?? '';
 
   const chips = [
-    status && { label: `Status: ${status}`, onRemove: () => updateFilter('status', '') },
-    date && { label: `Date: ${date}`, onRemove: () => updateFilter('date', '') },
-    shop && { label: `Shop: ${shop}`, onRemove: () => updateFilter('shop', '') },
-    price && { label: `Price ≤ ${price}`, onRemove: () => updateFilter('price', '') },
+    status && { label: `Status: ${status}`, onRemove: () => clearFilters('status') },
+    shop && { label: `Shop: ${shop}`, onRemove: () => clearFilters('shop') },
+    (startDate || endDate) && {
+      label:
+        startDate && endDate
+          ? `Date: ${startDate} - ${endDate}`
+          : startDate
+          ? `From: ${startDate}`
+          : `Until: ${endDate}`,
+      onRemove: () => clearFilters('startDate', 'endDate'),
+    },
+    (minPrice || maxPrice) && {
+      label:
+        minPrice && maxPrice
+          ? `Price: ${minPrice} - ${maxPrice}`
+          : minPrice
+          ? `Price ≥ ${minPrice}`
+          : `Price ≤ ${maxPrice}`,
+      onRemove: () => clearFilters('minPrice', 'maxPrice'),
+    },
   ].filter(Boolean) as { label: string; onRemove: () => void }[];
 
   return (
@@ -83,11 +107,17 @@ const MyOrders = () => {
           <option value="accepted">Accepted</option>
           <option value="rejected">Rejected</option>
           <option value="cancelled">Cancelled</option>
+          <option value="completed">Completed</option>
         </select>
         <input
           type="date"
-          value={date}
-          onChange={(e) => updateFilter('date', e.target.value)}
+          value={startDate}
+          onChange={(e) => updateFilter('startDate', e.target.value)}
+        />
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => updateFilter('endDate', e.target.value)}
         />
         <input
           type="text"
@@ -97,9 +127,15 @@ const MyOrders = () => {
         />
         <input
           type="number"
+          placeholder="Min Price"
+          value={minPrice}
+          onChange={(e) => updateFilter('minPrice', e.target.value)}
+        />
+        <input
+          type="number"
           placeholder="Max Price"
-          value={price}
-          onChange={(e) => updateFilter('price', e.target.value)}
+          value={maxPrice}
+          onChange={(e) => updateFilter('maxPrice', e.target.value)}
         />
       </div>
       {chips.length > 0 && (

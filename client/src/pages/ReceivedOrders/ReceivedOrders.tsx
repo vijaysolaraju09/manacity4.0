@@ -5,6 +5,7 @@ import Shimmer from '../../components/Shimmer';
 import { OrderCard } from '../../components/base';
 import fallbackImage from '../../assets/no-image.svg';
 import { type Status } from '../../components/ui/StatusChip';
+import toast from '../../components/toast';
 import styles from './ReceivedOrders.module.scss';
 
 interface Order {
@@ -58,8 +59,12 @@ const ReceivedOrders = () => {
       setList((curr) =>
         curr.map((o) => (o._id === id ? { ...o, ...res.data } : o))
       );
+      toast(
+        action === 'accept' ? 'Order accepted' : 'Order rejected',
+        'success'
+      );
     } catch {
-      alert(`Failed to ${action} order`);
+      toast(`Failed to ${action} order`, 'error');
       setList(prev);
     }
   };
@@ -148,7 +153,12 @@ const ReceivedOrders = () => {
             total={i.product.price * i.quantity}
             onAccept={i.status === 'pending' ? () => act(i._id, 'accept') : undefined}
             onReject={i.status === 'pending' ? () => act(i._id, 'reject') : undefined}
-            onCall={i.user.phone ? () => (window.location.href = `tel:${i.user.phone}`) : undefined}
+            phone={i.user.phone}
+            onCall={
+              i.status === 'accepted' && i.user.phone
+                ? () => (window.location.href = `tel:${i.user.phone}`)
+                : undefined
+            }
           />
         ))
       )}

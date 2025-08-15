@@ -18,6 +18,7 @@ export interface BusinessRequest {
   category: string;
   location: string;
   address: string;
+  description?: string;
 }
 
 export interface VerifyRequest {
@@ -42,6 +43,11 @@ export const requestVerification = async (data: VerifyRequest) => {
 
 export const requestBusiness = async (data: BusinessRequest) => {
   await api.post('/shops', data);
+};
+
+export const getMyBusinessRequest = async () => {
+  const res = await api.get('/shops/my');
+  return res.data;
 };
 
 export const getMyProducts = async () => {

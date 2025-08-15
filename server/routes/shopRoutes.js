@@ -8,16 +8,20 @@ const {
   getShopById,
   getProductsByShop,
   getPendingShops,
+  getMyShop,
   approveShop,
+  rejectShop,
   getMyProducts,
 } = require("../controllers/shopController");
 
 router.post("/", protect, createShop);
-router.get("/pending", adminAuth, getPendingShops);
+router.get("/requests", adminAuth, getPendingShops);
 router.put("/approve/:id", adminAuth, approveShop);
+router.put("/reject/:id", adminAuth, rejectShop);
+router.get("/my", protect, getMyShop);
 router.get("/", getAllShops);
+router.get("/my-products", protect, getMyProducts);
 router.get("/:id", getShopById);
 router.get("/:id/products", getProductsByShop);
-router.get("/my-products", protect, getMyProducts);
 
 module.exports = router;

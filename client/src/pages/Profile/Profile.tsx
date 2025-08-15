@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { ProfileHeader, Tabs, OrderCard } from '../../components/base';
@@ -7,6 +7,8 @@ import type { RootState } from '../../store';
 import { sampleShops } from '../../data/sampleData';
 import { clearUser } from '../../store/slices/userSlice';
 import { setTheme, type Theme } from '../../store/slices/themeSlice';
+import ModalSheet from '../../components/base/ModalSheet';
+import { requestBusiness, getMyBusinessRequest } from '../../api/profile';
 import styles from './Profile.module.scss';
 
 const Profile = () => {
@@ -16,6 +18,23 @@ const Profile = () => {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('overview');
+  const [businessOpen, setBusinessOpen] = useState(false);
+  const [shopStatus, setShopStatus] = useState<string | null>(null);
+  const [shopForm, setShopForm] = useState({
+    name: '',
+    category: '',
+    location: '',
+    address: '',
+    description: '',
+  });
+
+  useEffect(() => {
+    if (user.role !== 'business') {
+      getMyBusinessRequest()
+        .then((res) => setShopStatus(res.status))
+        .catch(() => setShopStatus(null));
+    }
+  }, [user.role]);
 
   const avatar =
     user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`;
@@ -108,9 +127,85 @@ const Profile = () => {
         role={user.role}
         location={user.location}
         stats={[{ label: 'Orders', value: orders.length }]}
-        actions={[{ label: 'Settings', onClick: () => setActiveTab('settings') }]}
+        actions={[
+          ...(user.role !== 'business' && shopStatus !== 'pending'
+            ? [{ label: 'Request Business', onClick: () => setBusinessOpen(true) }]
+            : []),
+          { label: 'Settings', onClick: () => setActiveTab('settings') },
+        ]}
       />
+      {shopStatus && (
+        <p className={`${styles.statusIndicator} ${styles[shopStatus]}`}>
+          Request {shopStatus}
+        </p>
+      )}
       <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+      <ModalSheet open={businessOpen} onClose={() => setBusinessOpen(false)}>
+        <form
+          className={styles.businessForm}
+          onSubmit={async (e) => {
+            e.preventDefault();
+            await requestBusiness(shopForm);
+            setShopStatus('pending');
+            setBusinessOpen(false);
+          }}
+        >
+          <h3>Request Business</h3>
+          <label>
+            Shop Name
+            <input
+              value={shopForm.name}
+              onChange={(e) => setShopForm({ ...shopForm, name: e.target.value })}
+              required
+            />
+          </label>
+          <label>
+            Category
+            <input
+              value={shopForm.category}
+              onChange={(e) =>
+                setShopForm({ ...shopForm, category: e.target.value })
+              }
+              required
+            />
+          </label>
+          <label>
+            Location
+            <input
+              value={shopForm.location}
+              onChange={(e) =>
+                setShopForm({ ...shopForm, location: e.target.value })
+              }
+              required
+            />
+          </label>
+          <label>
+            Address
+            <input
+              value={shopForm.address}
+              onChange={(e) =>
+                setShopForm({ ...shopForm, address: e.target.value })
+              }
+              required
+            />
+          </label>
+          <label>
+            Description
+            <textarea
+              value={shopForm.description}
+              onChange={(e) =>
+                setShopForm({ ...shopForm, description: e.target.value })
+              }
+            />
+          </label>
+          <div className={styles.modalActions}>
+            <button type="button" onClick={() => setBusinessOpen(false)}>
+              Cancel
+            </button>
+            <button type="submit">Submit</button>
+          </div>
+        </form>
+      </ModalSheet>
     </div>
   );
 };

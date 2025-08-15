@@ -9,19 +9,19 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    background: #fff;
+    background: var(--color-card);
     padding-bottom: 0.75rem;
     margin-bottom: 0.75rem;
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .searchBar input,
   .searchBar select {
     padding: 0.5rem 0.75rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     flex: 1;
     min-width: 140px;
@@ -44,8 +44,8 @@
     button {
       flex-shrink: 0;
       padding: 0.4rem 0.9rem;
-      border: 1px solid #ccc;
-      background: #fff;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
       border-radius: 999px;
       cursor: pointer;
       white-space: nowrap;
@@ -53,7 +53,7 @@
 
       &.active {
         background: $primary-color;
-        color: #fff;
+        color: var(--color-on-primary);
         border-color: $primary-color;
       }
     }
@@ -70,10 +70,10 @@
   }
 
   .card {
-    background: #fff;
+    background: var(--color-card);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-sm);
     cursor: pointer;
     transition: transform 0.2s ease;
 
@@ -95,7 +95,7 @@
       }
       p {
         margin: 0;
-        color: #666;
+        color: var(--color-muted);
       }
       .badge {
         display: inline-block;
@@ -104,12 +104,12 @@
         border-radius: 4px;
         font-size: 0.75rem;
         &.open {
-          background: #d4edda;
-          color: #155724;
+          background: var(--color-success);
+          color: var(--color-on-primary);
         }
         &.closed {
-          background: #f8d7da;
-          color: #721c24;
+          background: var(--color-danger);
+          color: var(--color-on-primary);
         }
       }
     }

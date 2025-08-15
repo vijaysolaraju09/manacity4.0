@@ -9,23 +9,23 @@
 
 .pending {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .accepted {
   background: var(--color-success);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .rejected,
 .cancelled {
   background: var(--color-danger);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .completed {
   background: var(--color-info);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 @media (min-width: 768px) {

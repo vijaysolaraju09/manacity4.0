@@ -13,13 +13,13 @@
   }
 
   &.light {
-    background: #f7f7f7;
-    color: #111;
+    background: var(--color-bg);
+    color: var(--color-text);
   }
 
   &.dark {
-    background: #111;
-    color: #f7f7f7;
+    background: var(--color-bg);
+    color: var(--color-text);
   }
 
   .userCard {
@@ -54,7 +54,7 @@
 
     .editBtn {
       margin-top: 0.5rem;
-      @include button-style($primary-color, #fff);
+      @include button-style($primary-color, var(--color-on-primary));
     }
 
     .status {
@@ -62,13 +62,13 @@
       margin-top: 0.5rem;
 
       &.verified {
-        color: #22c55e;
+        color: var(--color-success);
       }
       &.pending {
-        color: #fbbf24;
+        color: var(--color-warning);
       }
       &.rejected {
-        color: #ef4444;
+        color: var(--color-danger);
       }
     }
   }
@@ -104,7 +104,7 @@
   .modal {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
+    background: var(--overlay-bg);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -135,7 +135,7 @@
             width: 100%;
             padding: 0.6rem;
             margin-top: 0.3rem;
-            border: 1px solid #ccc;
+            border: 1px solid var(--color-border);
             border-radius: 8px;
             font-size: 1rem;
 
@@ -152,15 +152,15 @@
           gap: 1rem;
 
           button {
-            @include button-style($primary-color, #fff);
+            @include button-style($primary-color, var(--color-on-primary));
             padding: 0.5rem 1rem;
 
             &.cancel {
-              background: #eee;
-              color: #333;
+              background: var(--color-surface);
+              color: var(--color-text);
 
               &:hover {
-                background: #ddd;
+                background: var(--color-muted);
               }
             }
           }
@@ -195,20 +195,20 @@
 
 .prefs {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--color-muted);
 }
 
 .statusIndicator {
   font-weight: 600;
   margin: 0.5rem 0;
   &.approved {
-    color: #22c55e;
+    color: var(--color-success);
   }
   &.pending {
-    color: #fbbf24;
+    color: var(--color-warning);
   }
   &.rejected {
-    color: #ef4444;
+    color: var(--color-danger);
   }
 }
 
@@ -233,7 +233,7 @@
       width: 100%;
       padding: 0.6rem;
       margin-top: 0.3rem;
-      border: 1px solid #ccc;
+      border: 1px solid var(--color-border);
       border-radius: 8px;
       font-size: 1rem;
 
@@ -250,15 +250,15 @@
     gap: 1rem;
 
     button {
-      @include button-style($primary-color, #fff);
+      @include button-style($primary-color, var(--color-on-primary));
       padding: 0.5rem 1rem;
 
       &:first-child {
-        background: #eee;
-        color: #333;
+        background: var(--color-surface);
+        color: var(--color-text);
 
         &:hover {
-          background: #ddd;
+          background: var(--color-muted);
         }
       }
     }

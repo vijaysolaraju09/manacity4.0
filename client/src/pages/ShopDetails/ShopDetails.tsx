@@ -109,7 +109,7 @@ const ShopDetails = () => {
             <h2>{shop.name}</h2>
             {shop.rating && (
               <div className="rating">
-                <AiFillStar color="var(--color-warning, #fbbf24)" />
+                <AiFillStar color="var(--color-warning)" />
                 <span>{shop.rating.toFixed(1)}</span>
               </div>
             )}

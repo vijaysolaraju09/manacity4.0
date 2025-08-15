@@ -1,7 +1,7 @@
 $primary-color: var(--color-primary);
 $primary-color-hover: var(--color-primary-hover);
-$gradient-start: #FF3E6C;
-$gradient-middle: #FF6B81;
-$gradient-end: #FF3E6C;
+$gradient-start: var(--color-primary);
+$gradient-middle: var(--color-primary-hover);
+$gradient-end: var(--color-primary);
 $font-header: var(--font-family-sans);
 $font-body: var(--font-family-sans);

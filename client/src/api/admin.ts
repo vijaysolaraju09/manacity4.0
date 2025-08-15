@@ -1,15 +1,18 @@
 import adminApi from './adminClient';
 
 export interface AdminCreds {
-  email: string;
+  identifier: string;
   password: string;
 }
 
-export const adminLogin = async (creds: AdminCreds) => {
-  const res = await adminApi.post('/auth/admin-login', creds);
+export const adminLogin = async ({ identifier, password }: AdminCreds) => {
+  const res = await adminApi.post('/auth/admin-login', {
+    email: identifier,
+    password,
+  });
   const { token } = res.data;
   if (token) {
-    localStorage.setItem('adminToken', token);
+    localStorage.setItem('manacity_admin_token', token);
   }
   return token;
 };

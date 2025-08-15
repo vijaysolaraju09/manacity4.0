@@ -46,30 +46,6 @@ exports.getAllVerifiedUsers = async (req, res) => {
   }
 };
 
-exports.markInterest = async (req, res) => {
-  try {
-    const verifiedId = req.params.id;
-    const userId = req.user._id;
-
-    const verified = await VerifiedUser.findById(verifiedId);
-    if (!verified)
-      return res.status(404).json({ error: "Verified user not found" });
-
-    const alreadyConnected = verified.connections.some(
-      (c) => c.user.toString() === userId.toString()
-    );
-
-    if (!alreadyConnected) {
-      verified.connections.push({ user: userId, status: "pending" });
-      await verified.save();
-    }
-
-    res.json({ message: "Interest marked successfully" });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to mark interest" });
-  }
-};
-
 exports.getMyRequests = async (req, res) => {
   try {
     const verified = await VerifiedUser.findOne({ user: req.user._id });

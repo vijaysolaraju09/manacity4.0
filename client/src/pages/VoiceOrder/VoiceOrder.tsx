@@ -103,10 +103,6 @@ const VoiceOrder = () => {
         shopId: item.shop._id,
         source: 'voice-order',
       });
-      await api.post('/orders/interest', {
-        shopId: item.shop._id,
-        productId: item.product._id,
-      });
       alert('Order placed');
     } catch {
       alert('Failed to place order');

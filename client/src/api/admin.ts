@@ -17,9 +17,30 @@ export const adminLogin = async ({ identifier, password }: AdminCreds) => {
   return token;
 };
 
-export const fetchUsers = async () => {
-  const res = await adminApi.get('/admin/users');
-  return res.data;
+export interface UserQueryParams {
+  role?: string;
+  verified?: boolean;
+  query?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+}
+
+export const fetchUsers = async (params: UserQueryParams = {}) => {
+  const res = await adminApi.get('/users', { params });
+  return res.data as { items: any[]; total: number };
+};
+
+export const updateUserRole = async (id: string, role: string) => {
+  await adminApi.put(`/users/${id}/role`, { role });
+};
+
+export const updateUserStatus = async (id: string, active: boolean) => {
+  await adminApi.put(`/users/${id}/status`, { active });
+};
+
+export const deleteUser = async (id: string) => {
+  await adminApi.delete(`/users/${id}`);
 };
 
 export interface BusinessRequestParams {

@@ -9,10 +9,11 @@ const userSchema = new mongoose.Schema(
     address: { type: String, default: "" },
     role: {
       type: String,
-      enum: ["customer", "business"],
+      enum: ["customer", "verified", "business", "admin"],
       default: "customer",
     },
     isVerified: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
     verificationStatus: {
       type: String,
       enum: ["pending", "verified", "rejected"],

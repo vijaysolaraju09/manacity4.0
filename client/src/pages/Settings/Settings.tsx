@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { ModalSheet } from '../../components/base';
 import { clearUser } from '../../store/slices/userSlice';
+import { setLanguage, setNotificationPrefs } from '../../store/slices/settingsSlice';
+import type { RootState } from '../../store';
 import { useTheme, type Theme } from '../../theme/ThemeProvider';
 import styles from './Settings.module.scss';
 
@@ -12,6 +14,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { theme, setTheme, availableThemes } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const settings = useSelector((state: RootState) => state.settings);
 
   const handleSelectTheme = (option: Theme) => {
     setTheme(option);
@@ -24,6 +27,43 @@ const Settings = () => {
     dispatch(clearUser());
     navigate('/login');
   };
+
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const lang = e.target.value;
+    localStorage.setItem('manacity_lang', lang);
+    dispatch(setLanguage(lang));
+  };
+
+  const handleToggle = (
+    key: keyof typeof settings.notifications,
+    value: boolean,
+  ) => {
+    const updated = { ...settings.notifications, [key]: value };
+    localStorage.setItem('manacity_prefs', JSON.stringify(updated));
+    dispatch(setNotificationPrefs({ [key]: value }));
+  };
+
+  const notificationOptions: {
+    key: keyof typeof settings.notifications;
+    label: string;
+    description: string;
+  }[] = [
+    {
+      key: 'orderUpdates',
+      label: 'Order updates',
+      description: 'Get updates about the status of your orders.',
+    },
+    {
+      key: 'offersPromos',
+      label: 'Offers & promos',
+      description: 'Receive special offers and promotions.',
+    },
+    {
+      key: 'systemMessages',
+      label: 'System messages',
+      description: 'Be notified about important system changes.',
+    },
+  ];
 
   return (
     <motion.div
@@ -69,6 +109,36 @@ const Settings = () => {
             </label>
           ))}
         </div>
+      </fieldset>
+      <fieldset className={styles.section}>
+        <legend>Language</legend>
+        <p className={styles.description}>Select your preferred language.</p>
+        <select
+          id="language"
+          className={styles.select}
+          value={settings.language}
+          onChange={handleLanguageChange}
+        >
+          <option value="EN">English</option>
+          <option value="ES">Spanish</option>
+        </select>
+      </fieldset>
+      <fieldset className={styles.section}>
+        <legend>Notifications</legend>
+        {notificationOptions.map((opt) => (
+          <div key={opt.key} className={styles.prefItem}>
+            <div className={styles.optionRow}>
+              <label htmlFor={opt.key}>{opt.label}</label>
+              <input
+                id={opt.key}
+                type="checkbox"
+                checked={settings.notifications[opt.key]}
+                onChange={(e) => handleToggle(opt.key, e.target.checked)}
+              />
+            </div>
+            <p className={styles.description}>{opt.description}</p>
+          </div>
+        ))}
       </fieldset>
       <ModalSheet open={sheetOpen} onClose={() => setSheetOpen(false)}>
         <div className={styles.themeOptions}>

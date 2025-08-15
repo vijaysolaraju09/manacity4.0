@@ -5,6 +5,7 @@ const verifiedUserSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     profession: { type: String, required: true },
     bio: { type: String, default: "" },
+    portfolio: [{ type: String }],
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],

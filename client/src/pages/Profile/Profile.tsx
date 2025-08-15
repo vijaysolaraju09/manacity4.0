@@ -5,10 +5,15 @@ import { ProfileHeader, Tabs, OrderCard } from '../../components/base';
 import ProductCard from '../../components/ui/ProductCard';
 import type { RootState } from '../../store';
 import { sampleShops } from '../../data/sampleData';
-import { clearUser } from '../../store/slices/userSlice';
+import { clearUser, setUser } from '../../store/slices/userSlice';
 import { setTheme, type Theme } from '../../store/slices/themeSlice';
 import ModalSheet from '../../components/base/ModalSheet';
-import { requestBusiness, getMyBusinessRequest } from '../../api/profile';
+import {
+  requestBusiness,
+  getMyBusinessRequest,
+  requestVerification,
+  getCurrentUser,
+} from '../../api/profile';
 import styles from './Profile.module.scss';
 
 const Profile = () => {
@@ -19,6 +24,7 @@ const Profile = () => {
 
   const [activeTab, setActiveTab] = useState('overview');
   const [businessOpen, setBusinessOpen] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
   const [shopStatus, setShopStatus] = useState<string | null>(null);
   const [shopForm, setShopForm] = useState({
     name: '',
@@ -26,6 +32,11 @@ const Profile = () => {
     location: '',
     address: '',
     description: '',
+  });
+  const [verifyForm, setVerifyForm] = useState({
+    profession: '',
+    bio: '',
+    portfolio: [''],
   });
 
   useEffect(() => {
@@ -35,6 +46,12 @@ const Profile = () => {
         .catch(() => setShopStatus(null));
     }
   }, [user.role]);
+
+  useEffect(() => {
+    getCurrentUser()
+      .then((res) => dispatch(setUser(res)))
+      .catch(() => undefined);
+  }, [dispatch]);
 
   const avatar =
     user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`;
@@ -128,6 +145,9 @@ const Profile = () => {
         location={user.location}
         stats={[{ label: 'Orders', value: orders.length }]}
         actions={[
+          ...(!user.isVerified && user.verificationStatus !== 'pending'
+            ? [{ label: 'Request Verification', onClick: () => setVerifyOpen(true) }]
+            : []),
           ...(user.role !== 'business' && shopStatus !== 'pending'
             ? [{ label: 'Request Business', onClick: () => setBusinessOpen(true) }]
             : []),
@@ -137,6 +157,17 @@ const Profile = () => {
       {shopStatus && (
         <p className={`${styles.statusIndicator} ${styles[shopStatus]}`}>
           Request {shopStatus}
+        </p>
+      )}
+      {(user.isVerified || user.verificationStatus) && (
+        <p
+          className={`${styles.statusIndicator} ${
+            styles[user.isVerified ? 'approved' : user.verificationStatus || 'pending']
+          }`}
+        >
+          {user.isVerified
+            ? 'Verified'
+            : `Verification ${user.verificationStatus}`}
         </p>
       )}
       <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
@@ -200,6 +231,80 @@ const Profile = () => {
           </label>
           <div className={styles.modalActions}>
             <button type="button" onClick={() => setBusinessOpen(false)}>
+              Cancel
+            </button>
+            <button type="submit">Submit</button>
+          </div>
+        </form>
+      </ModalSheet>
+      <ModalSheet open={verifyOpen} onClose={() => setVerifyOpen(false)}>
+        <form
+          className={styles.businessForm}
+          onSubmit={async (e) => {
+            e.preventDefault();
+            await requestVerification({
+              profession: verifyForm.profession,
+              bio: verifyForm.bio,
+              portfolio: verifyForm.portfolio.filter((p) => p),
+            });
+            dispatch(
+              setUser({
+                ...user,
+                profession: verifyForm.profession,
+                bio: verifyForm.bio,
+                isVerified: false,
+                verificationStatus: 'pending',
+              })
+            );
+            setVerifyOpen(false);
+          }}
+        >
+          <h3>Request Verification</h3>
+          <label>
+            Profession
+            <input
+              value={verifyForm.profession}
+              onChange={(e) =>
+                setVerifyForm({ ...verifyForm, profession: e.target.value })
+              }
+              required
+            />
+          </label>
+          <label>
+            Bio
+            <textarea
+              value={verifyForm.bio}
+              onChange={(e) =>
+                setVerifyForm({ ...verifyForm, bio: e.target.value })
+              }
+            />
+          </label>
+          {verifyForm.portfolio.map((link, idx) => (
+            <label key={idx}>
+              Portfolio Link
+              <input
+                value={link}
+                onChange={(e) => {
+                  const portfolio = [...verifyForm.portfolio];
+                  portfolio[idx] = e.target.value;
+                  setVerifyForm({ ...verifyForm, portfolio });
+                }}
+              />
+            </label>
+          ))}
+          <button
+            type="button"
+            onClick={() =>
+              setVerifyForm({
+                ...verifyForm,
+                portfolio: [...verifyForm.portfolio, ''],
+              })
+            }
+          >
+            Add Link
+          </button>
+          <div className={styles.modalActions}>
+            <button type="button" onClick={() => setVerifyOpen(false)}>
               Cancel
             </button>
             <button type="submit">Submit</button>

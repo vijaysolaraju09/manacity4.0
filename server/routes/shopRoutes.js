@@ -16,8 +16,8 @@ const {
 
 router.post("/", protect, createShop);
 router.get("/requests", protect, isAdmin, getPendingShops);
-router.put("/approve/:id", protect, isAdmin, approveShop);
-router.put("/reject/:id", protect, isAdmin, rejectShop);
+router.post("/approve/:id", protect, isAdmin, approveShop);
+router.post("/reject/:id", protect, isAdmin, rejectShop);
 router.get("/my", protect, getMyShop);
 router.get("/", getAllShops);
 router.get("/my-products", protect, getMyProducts);

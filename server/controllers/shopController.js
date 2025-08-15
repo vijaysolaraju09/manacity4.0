@@ -77,13 +77,16 @@ exports.getProductsByShop = async (req, res) => {
 
 exports.getPendingShops = async (req, res) => {
   try {
-    const shops = await Shop.find({ status: "pending" }).populate(
-      "owner",
-      "name phone"
-    );
+    const { status, category, location } = req.query;
+    const filters = {};
+    if (status) filters.status = status;
+    if (category) filters.category = category;
+    if (location) filters.location = location;
+
+    const shops = await Shop.find(filters).populate("owner", "name phone");
     res.json(shops);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch pending shops" });
+    res.status(500).json({ error: "Failed to fetch shop requests" });
   }
 };
 

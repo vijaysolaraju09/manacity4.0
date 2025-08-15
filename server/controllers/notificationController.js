@@ -34,10 +34,12 @@ exports.getUserNotifications = async (req, res) => {
       ],
     }).sort({ createdAt: -1 });
 
-    // Exclude viewed ones
-    const filtered = notifs.filter((n) => !n.viewedBy.includes(userId));
+    const mapped = notifs.map((n) => ({
+      ...n.toObject(),
+      isRead: n.viewedBy.includes(userId),
+    }));
 
-    res.json(filtered);
+    res.json(mapped);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch notifications" });
   }

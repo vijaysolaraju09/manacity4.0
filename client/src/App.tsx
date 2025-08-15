@@ -24,6 +24,7 @@ import OrderNow from './pages/OrderNow/OrderNow';
 import ManageProducts from './pages/ManageProducts/ManageProducts';
 import ReceivedOrders from './pages/ReceivedOrders/ReceivedOrders';
 import MyOrders from './pages/MyOrders/MyOrders';
+import Notifications from './pages/Notifications/Notifications';
 import TabLayout from './layouts/TabLayout';
 import AdminLogin from './pages/AdminLogin/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
@@ -71,12 +72,13 @@ function App() {
             <Route path="/special-shop" element={<SpecialShop />} />
             <Route path="/voice-order" element={<VoiceOrder />} />
             <Route path="/order-now" element={<OrderNow />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/manage-products" element={<ManageProducts />} />
-          <Route path="/orders/received" element={<ReceivedOrders />} />
-          <Route path="/orders/my" element={<MyOrders />} />
-        </Route>
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/manage-products" element={<ManageProducts />} />
+            <Route path="/orders/received" element={<ReceivedOrders />} />
+            <Route path="/orders/my" element={<MyOrders />} />
+          </Route>
           <Route path="/shops/:id" element={<ShopDetails />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/events/:id" element={<EventDetails />} />

@@ -63,3 +63,29 @@ export const acceptVerification = async (id: string) => {
 export const rejectVerification = async (id: string) => {
   await adminApi.post(`/verified/reject/${id}`);
 };
+
+export interface ShopQueryParams {
+  query?: string;
+  status?: string;
+  category?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+}
+
+export const fetchShops = async (params: ShopQueryParams = {}) => {
+  const res = await adminApi.get('/shops', { params });
+  return res.data;
+};
+
+export const updateShop = async (
+  id: string,
+  data: Partial<{ name: string; category: string; location: string; status: string }>,
+) => {
+  const res = await adminApi.put(`/shops/${id}`, data);
+  return res.data;
+};
+
+export const deleteShop = async (id: string) => {
+  await adminApi.delete(`/shops/${id}`);
+};

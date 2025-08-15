@@ -17,6 +17,39 @@ export const adminLogin = async ({ identifier, password }: AdminCreds) => {
   return token;
 };
 
+export interface MetricsSummary {
+  users: number;
+  shops: number;
+  gmv: number;
+  ordersToday: number;
+  orders7d: number;
+  orders30d: number;
+  activeEvents: number;
+  conversions: number;
+  topShops?: Array<{ id: string; name: string; orders: number }>;
+  topProducts?: Array<{ id: string; name: string; orders: number }>;
+}
+
+export interface SeriesPoint {
+  date: string;
+  value: number;
+}
+
+export const fetchMetrics = async () => {
+  const res = await adminApi.get('/metrics');
+  return res.data as MetricsSummary;
+};
+
+export const fetchMetricSeries = async (
+  metric: 'orders' | 'signups' | 'gmv',
+  period: string,
+) => {
+  const res = await adminApi.get('/metrics/timeseries', {
+    params: { metric, period },
+  });
+  return res.data as SeriesPoint[];
+};
+
 export interface UserQueryParams {
   role?: string;
   verified?: boolean;

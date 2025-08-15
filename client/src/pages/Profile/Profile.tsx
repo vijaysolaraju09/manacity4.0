@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import { ProfileHeader, Tabs, OrderCard } from '../../components/base';
 import ProductCard from '../../components/ui/ProductCard';
 import type { RootState } from '../../store';
 import { sampleShops } from '../../data/sampleData';
-import { clearUser, setUser } from '../../store/slices/userSlice';
+import { setUser } from '../../store/slices/userSlice';
 import ModalSheet from '../../components/base/ModalSheet';
 import {
   requestBusiness,
@@ -18,9 +17,8 @@ import styles from './Profile.module.scss';
 
 const Profile = () => {
   const user = useSelector((state: RootState) => state.user as any);
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [businessOpen, setBusinessOpen] = useState(false);
@@ -105,36 +103,6 @@ const Profile = () => {
     tabs.push({ key: 'reviews', label: 'Reviews', content: <p>No reviews yet.</p> });
   }
 
-  tabs.push({
-    key: 'settings',
-    label: 'Settings',
-    content: (
-      <div className={styles.settings}>
-        <div className={styles.themes}>
-          <button type="button" onClick={() => setTheme('colorful')}>
-            Colorful
-          </button>
-          <button type="button" onClick={() => setTheme('light')}>
-            Light
-          </button>
-          <button type="button" onClick={() => setTheme('dark')}>
-            Dark
-          </button>
-        </div>
-        <button
-          type="button"
-          className={styles.logout}
-          onClick={() => {
-            dispatch(clearUser());
-            navigate('/login');
-          }}
-        >
-          Logout
-        </button>
-        <p className={styles.prefs}>Preferences coming soon.</p>
-      </div>
-    ),
-  });
 
   return (
     <div className={`${styles.profile} ${styles[theme]}`}>
@@ -151,7 +119,6 @@ const Profile = () => {
           ...(user.role !== 'business' && shopStatus !== 'pending'
             ? [{ label: 'Request Business', onClick: () => setBusinessOpen(true) }]
             : []),
-          { label: 'Settings', onClick: () => setActiveTab('settings') },
         ]}
       />
       {shopStatus && (

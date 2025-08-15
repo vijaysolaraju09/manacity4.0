@@ -23,6 +23,11 @@
   color: #fff;
 }
 
+.completed {
+  background: var(--color-info);
+  color: #fff;
+}
+
 @media (min-width: 768px) {
   .chip {
     font-size: var(--font-size-md);

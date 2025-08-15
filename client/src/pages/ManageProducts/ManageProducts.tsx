@@ -9,10 +9,19 @@ import {
   type Product,
 } from '../../store/slices/productSlice';
 import Loader from '../../components/Loader';
-import { ProductCard } from '../../components/base';
+import ProductCard from '../../components/ui/ProductCard';
+import toast from '../../components/toast';
 import styles from './ManageProducts.module.scss';
 
-const emptyForm: Partial<Product> = { name: '', description: '', price: 0, category: '', image: '', stock: 0 };
+const emptyForm: Partial<Product> = {
+  name: '',
+  description: '',
+  price: 0,
+  mrp: 0,
+  category: '',
+  image: '',
+  stock: 0,
+};
 
 const ManageProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -41,25 +50,50 @@ const ManageProducts = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.price || form.price <= 0) {
-      alert('Please provide a name and valid price');
+      toast('Please provide a name and valid price', 'error');
+      return;
+    }
+    if (!form.mrp || form.mrp <= 0) {
+      toast('Please provide a valid MRP', 'error');
+      return;
+    }
+    if (form.price > form.mrp) {
+      toast('Price cannot exceed MRP', 'error');
       return;
     }
     try {
       setSubmitting(true);
+      const payload: Partial<Product> = {
+        ...form,
+        images: form.image ? [form.image] : [],
+      };
       if (editId) {
-        await dispatch(updateProduct({ id: editId, data: form })).unwrap();
-        alert('Product updated');
+        await dispatch(updateProduct({ id: editId, data: payload })).unwrap();
+        toast('Product updated');
       } else {
-        await dispatch(createProduct(form)).unwrap();
-        alert('Product added');
+        await dispatch(createProduct(payload)).unwrap();
+        toast('Product added');
       }
       setShowModal(false);
       setForm(emptyForm);
       dispatch(fetchMyProducts());
+      window.dispatchEvent(new Event('productsUpdated'));
     } catch {
-      alert('Failed to save product');
+      toast('Failed to save product', 'error');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete product?')) return;
+    try {
+      await dispatch(deleteProduct(id)).unwrap();
+      toast('Product deleted');
+      dispatch(fetchMyProducts());
+      window.dispatchEvent(new Event('productsUpdated'));
+    } catch {
+      toast('Failed to delete product', 'error');
     }
   };
 
@@ -74,7 +108,7 @@ const ManageProducts = () => {
             <ProductCard product={p} showActions={false} />
             <div className={styles.actions}>
               <button onClick={() => openEdit(p)}>Edit</button>
-              <button onClick={() => dispatch(deleteProduct(p._id))}>Delete</button>
+              <button onClick={() => handleDelete(p._id)}>Delete</button>
             </div>
           </div>
         ))}
@@ -91,14 +125,18 @@ const ManageProducts = () => {
               Description
               <input value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </label>
-            <label>
-              Price
-              <input type="number" value={form.price || 0} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
-            </label>
-            <label>
-              Category
-              <input value={form.category || ''} onChange={(e) => setForm({ ...form, category: e.target.value })} />
-            </label>
+          <label>
+            Price
+            <input type="number" value={form.price || 0} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+          </label>
+          <label>
+            MRP
+            <input type="number" value={form.mrp || 0} onChange={(e) => setForm({ ...form, mrp: Number(e.target.value) })} />
+          </label>
+          <label>
+            Category
+            <input value={form.category || ''} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+          </label>
             <label>
               Image URL
               <input value={form.image || ''} onChange={(e) => setForm({ ...form, image: e.target.value })} />

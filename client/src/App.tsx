@@ -31,7 +31,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminPanel from './pages/AdminPanel';
 import VerificationRequests from './pages/VerificationRequests';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
+import AdminLayout from './layouts/AdminLayout';
 import { setUser } from './store/slices/userSlice';
+import { setAdminToken } from './store/slices/adminSlice';
 import type { AppDispatch } from './store';
 import UiPreview from './pages/UiPreview';
 
@@ -47,6 +49,11 @@ function App() {
         // ignore parsing errors
       }
     }
+
+    const adminToken = localStorage.getItem('manacity_admin_token');
+    if (adminToken) {
+      dispatch(setAdminToken(adminToken));
+    }
   }, [dispatch]);
 
   return (
@@ -55,13 +62,15 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/preview" element={<UiPreview />} />
         {/* <Route path="/verify-otp" element={<OtpPage />} /> */}
-        <Route element={<AdminProtectedRoute />}>
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/admin-panel" element={<AdminPanel />} />
-          <Route path="/admin/verification-requests" element={<VerificationRequests />} />
+        <Route path="/admin" element={<AdminProtectedRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="shops" element={<AdminPanel />} />
+            <Route path="requests" element={<VerificationRequests />} />
+          </Route>
         </Route>
         <Route element={<ProtectedRoute />}>
           <Route element={<TabLayout />}>

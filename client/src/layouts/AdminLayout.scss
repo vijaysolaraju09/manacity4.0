@@ -1,0 +1,46 @@
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  width: 220px;
+  background: #f5f5f5;
+  padding: 1rem;
+}
+
+.admin-sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-sidebar li {
+  margin-bottom: 0.5rem;
+}
+
+.admin-sidebar a,
+.admin-sidebar span {
+  color: #333;
+  text-decoration: none;
+}
+
+.admin-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-topbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
+
+.admin-main {
+  flex: 1;
+  padding: 1rem;
+  background: #fafafa;
+}

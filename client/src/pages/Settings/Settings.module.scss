@@ -18,6 +18,14 @@
   margin-top: var(--space-3);
 }
 
+.chooseThemeBtn {
+  display: none;
+}
+
+.desktop {
+  /* placeholder for media query */
+}
+
 .themeOption {
   display: flex;
   flex-direction: column;
@@ -86,4 +94,14 @@
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .desktop {
+    display: none;
+  }
+  .chooseThemeBtn {
+    display: inline-block;
+    margin-top: var(--space-3);
+  }
 }

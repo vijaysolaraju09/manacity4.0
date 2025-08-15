@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const protect = require("../middleware/authMiddleware");
-const adminAuth = require("../middleware/adminAuth");
+const isAdmin = require("../middleware/isAdmin");
 const {
   createShop,
   getAllShops,
@@ -15,9 +15,9 @@ const {
 } = require("../controllers/shopController");
 
 router.post("/", protect, createShop);
-router.get("/requests", adminAuth, getPendingShops);
-router.put("/approve/:id", adminAuth, approveShop);
-router.put("/reject/:id", adminAuth, rejectShop);
+router.get("/requests", protect, isAdmin, getPendingShops);
+router.put("/approve/:id", protect, isAdmin, approveShop);
+router.put("/reject/:id", protect, isAdmin, rejectShop);
 router.get("/my", protect, getMyShop);
 router.get("/", getAllShops);
 router.get("/my-products", protect, getMyProducts);

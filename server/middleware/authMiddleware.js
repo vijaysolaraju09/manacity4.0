@@ -7,8 +7,16 @@ const protect = async (req, res, next) => {
     if (!token) return res.status(401).json({ error: "No token provided" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.userId).select("-password");
-    if (!req.user) return res.status(401).json({ error: "Invalid token user" });
+
+    if (decoded.userId) {
+      req.user = await User.findById(decoded.userId).select("-password");
+      if (!req.user)
+        return res.status(401).json({ error: "Invalid token user" });
+      req.user.userId = decoded.userId;
+      req.user.role = decoded.role;
+    } else {
+      req.user = { role: decoded.role };
+    }
 
     next();
   } catch (err) {

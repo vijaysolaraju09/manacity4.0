@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const protect = require("../middleware/authMiddleware");
-const protectAdmin = require("../middleware/adminAuth");
+const isAdmin = require("../middleware/isAdmin");
 const {
   applyForVerification,
   getAllVerifiedUsers,
@@ -13,9 +13,9 @@ const {
 
 router.post("/apply", protect, applyForVerification);
 router.get("/all", protect, getAllVerifiedUsers);
-router.get("/requests", protectAdmin, getVerificationRequests);
-router.post("/accept/:userId", protectAdmin, acceptVerificationRequest);
-router.post("/reject/:userId", protectAdmin, rejectVerificationRequest);
+router.get("/requests", protect, isAdmin, getVerificationRequests);
+router.post("/accept/:userId", protect, isAdmin, acceptVerificationRequest);
+router.post("/reject/:userId", protect, isAdmin, rejectVerificationRequest);
 router.get("/accepted", protect, getAcceptedProviders);
 
 module.exports = router;

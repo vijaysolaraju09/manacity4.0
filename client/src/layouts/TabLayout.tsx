@@ -11,6 +11,7 @@ import {
   AiOutlineCalendar,
   AiOutlineUser,
   AiOutlineSetting,
+  AiOutlineBell,
 } from "react-icons/ai";
 import { FaShoppingCart, FaMicrophone } from "react-icons/fa";
 import "./TabLayout.scss";
@@ -60,6 +61,12 @@ const TabLayout = () => {
             </button>
           )}
           <button
+            className="notif-btn"
+            onClick={() => navigate('/notifications')}
+          >
+            <AiOutlineBell />
+          </button>
+          <button
             className="profile-btn"
             onClick={() => navigate('/profile')}
           >
@@ -106,6 +113,12 @@ const TabLayout = () => {
             <span className="count">{cartItems.length}</span>
           </button>
         )}
+        <button
+          className="sidebar-notifications"
+          onClick={() => navigate('/notifications')}
+        >
+          <AiOutlineBell />
+        </button>
         <button
           className="sidebar-profile"
           onClick={() => navigate('/profile')}

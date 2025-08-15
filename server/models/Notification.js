@@ -8,8 +8,8 @@ const notificationSchema = new mongoose.Schema(
     link: { type: String },
     type: {
       type: String,
-      enum: ["general", "event", "shop", "order"],
-      default: "general",
+      enum: ["order", "admin", "offer", "system"],
+      default: "system",
     },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // null = global
     viewedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

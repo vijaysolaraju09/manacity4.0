@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './ModalSheet.module.scss';
 
@@ -9,10 +9,45 @@ export interface ModalSheetProps {
 }
 
 const ModalSheet = ({ open, onClose, children }: ModalSheetProps) => {
+  const sheetRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    if (open) window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
+    if (!open) return;
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'Tab' && sheetRef.current) {
+        const focusable = sheetRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const node = sheetRef.current;
+    if (!node) return;
+    const focusable = node.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+    );
+    focusable[0]?.focus();
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKey);
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKey);
+      previouslyFocused?.focus();
+    };
   }, [open, onClose]);
 
   return (
@@ -29,6 +64,7 @@ const ModalSheet = ({ open, onClose, children }: ModalSheetProps) => {
             role="dialog"
             aria-modal="true"
             className={styles.sheet}
+            ref={sheetRef}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

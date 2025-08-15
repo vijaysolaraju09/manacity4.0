@@ -3,18 +3,7 @@ const Event = require("../models/Event");
 exports.createEvent = async (req, res) => {
   try {
     const { title, startAt, endAt, capacity } = req.body;
-    if (!title || !startAt || !endAt || capacity == null)
-      return res.status(400).json({ error: "Missing fields" });
-    if (new Date(startAt) >= new Date(endAt))
-      return res
-        .status(400)
-        .json({ error: "startAt must be before endAt" });
-    const event = await Event.create({
-      title,
-      startAt,
-      endAt,
-      capacity,
-    });
+    const event = await Event.create({ title, startAt, endAt, capacity });
     res.status(201).json(event);
   } catch {
     res.status(500).json({ error: "Failed to create event" });
@@ -66,16 +55,7 @@ exports.getEventById = async (req, res) => {
 exports.updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, startAt, endAt, capacity } = req.body;
-    if (startAt && endAt && new Date(startAt) >= new Date(endAt))
-      return res
-        .status(400)
-        .json({ error: "startAt must be before endAt" });
-    const update = {};
-    if (title !== undefined) update.title = title;
-    if (startAt !== undefined) update.startAt = startAt;
-    if (endAt !== undefined) update.endAt = endAt;
-    if (capacity !== undefined) update.capacity = capacity;
+    const update = req.body;
     const event = await Event.findByIdAndUpdate(id, update, { new: true });
     if (!event) return res.status(404).json({ error: "Event not found" });
     res.json(event);

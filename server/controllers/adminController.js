@@ -1,20 +1,19 @@
 const User = require('../models/User');
 const Order = require('../models/Order');
+const { parseQuery } = require('../utils/query');
 
 exports.getUsers = async (req, res) => {
   try {
-    const {
-      role,
-      query,
-      verified,
-      page = 1,
-      pageSize = 10,
-      sort = '-createdAt',
-    } = req.query;
+    const { query, ...rest } = req.query;
+    const { limit, skip, sort, filters } = parseQuery(rest, [
+      'role',
+      'verified',
+    ]);
 
     const filter = {};
-    if (role) filter.role = role;
-    if (verified !== undefined) filter.isVerified = verified === 'true';
+    if (filters.role) filter.role = filters.role;
+    if (filters.verified !== undefined)
+      filter.isVerified = filters.verified === 'true';
     if (query) {
       filter.$or = [
         { name: { $regex: query, $options: 'i' } },
@@ -22,15 +21,7 @@ exports.getUsers = async (req, res) => {
       ];
     }
 
-    const skip = (Number(page) - 1) * Number(pageSize);
-    const sortObj = {};
-    if (sort) {
-      if (sort.startsWith('-')) {
-        sortObj[sort.slice(1)] = -1;
-      } else {
-        sortObj[sort] = 1;
-      }
-    }
+    const sortObj = Object.keys(sort).length ? sort : { createdAt: -1 };
 
     const pipeline = [
       { $match: filter },
@@ -46,7 +37,7 @@ exports.getUsers = async (req, res) => {
       { $project: { password: 0, orders: 0 } },
       { $sort: sortObj },
       { $skip: skip },
-      { $limit: Number(pageSize) },
+      { $limit: limit },
     ];
 
     const [items, total] = await Promise.all([
@@ -139,10 +130,21 @@ exports.verifyUser = async (req, res) => {
 
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
-      .populate('user', 'name phone')
-      .populate('shop', 'name');
-    res.json(orders);
+    const { limit, skip, sort, filters } = parseQuery(req.query, ['status']);
+    const filter = {};
+    if (filters.status) filter.status = filters.status;
+    const sortObj = Object.keys(sort).length ? sort : { createdAt: -1 };
+
+    const [items, total] = await Promise.all([
+      Order.find(filter)
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limit)
+        .populate('user', 'name phone')
+        .populate('shop', 'name'),
+      Order.countDocuments(filter),
+    ]);
+    res.json({ items, total });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch orders' });
   }

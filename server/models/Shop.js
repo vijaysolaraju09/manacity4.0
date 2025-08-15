@@ -23,4 +23,6 @@ const shopSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+shopSchema.index({ status: 1 });
+
 module.exports = mongoose.model("Shop", shopSchema);

@@ -29,6 +29,7 @@ import TabLayout from './layouts/TabLayout';
 import AdminLogin from './pages/AdminLogin/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminShops from './pages/AdminShops';
+import AdminProducts from './pages/AdminProducts';
 import VerificationRequests from './pages/VerificationRequests';
 import BusinessRequests from './pages/BusinessRequests';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
@@ -70,6 +71,7 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="shops" element={<AdminShops />} />
+            <Route path="products" element={<AdminProducts />} />
             <Route path="requests">
               <Route path="business" element={<BusinessRequests />} />
               <Route path="verification" element={<VerificationRequests />} />

@@ -15,6 +15,11 @@ const productSchema = new mongoose.Schema(
     category: { type: String, default: "general" },
     images: { type: [String], default: [] },
     stock: { type: Number, default: 0 },
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
+    },
   },
   { timestamps: true }
 );

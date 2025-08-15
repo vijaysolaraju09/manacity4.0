@@ -89,3 +89,40 @@ export const updateShop = async (
 export const deleteShop = async (id: string) => {
   await adminApi.delete(`/shops/${id}`);
 };
+
+export interface ProductQueryParams {
+  shopId?: string;
+  query?: string;
+  category?: string;
+  status?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+}
+
+export const fetchProducts = async (params: ProductQueryParams = {}) => {
+  const res = await adminApi.get('/products', { params });
+  return res.data as { items: any[]; total: number };
+};
+
+export const updateProduct = async (
+  id: string,
+  data: Partial<{
+    name: string;
+    mrp: number;
+    price: number;
+    stock: number;
+    images: string[];
+    status: string;
+    category: string;
+  }>,
+) => {
+  const res = await adminApi.put(`/products/${id}`, data);
+  return res.data;
+};
+
+export const deleteProduct = async (id: string) => {
+  await adminApi.delete(`/products/${id}`);
+};

@@ -6,6 +6,10 @@
   margin-top: 1rem;
 }
 
+.section {
+  margin-top: 1rem;
+}
+
 .description {
   margin-top: 0.25rem;
   font-size: var(--font-size-sm);
@@ -42,6 +46,26 @@
 .themeOption input:focus-visible + .swatch {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+.select {
+  margin-top: var(--space-3);
+}
+
+.select:focus-visible,
+.optionRow input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.prefItem {
+  margin-top: var(--space-3);
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .swatch {

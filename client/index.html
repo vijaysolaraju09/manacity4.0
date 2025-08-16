@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@600&display=swap" rel="stylesheet" />
     <title>Manacity</title>
+    <script>
+      (function () {
+        try {
+          const theme = localStorage.getItem('manacity_theme') || 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch {
+          // ignore access issues
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

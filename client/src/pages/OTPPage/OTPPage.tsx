@@ -78,22 +78,25 @@ const OtpPage = () => {
         </div>
 
         <motion.button
-          className="verify-btn"
+          className="btn btn-primary verify-btn"
           onClick={handleVerify}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
           disabled={verifying}
         >
           {verifying ? <Loader /> : 'Verify'}
         </motion.button>
 
-        <div className="resend" onClick={resendOtp} style={{ pointerEvents: resending ? 'none' : 'auto' }}>
+        <button
+          type="button"
+          className="link resend"
+          onClick={resendOtp}
+          style={{ pointerEvents: resending ? 'none' : 'auto' }}
+        >
           {resending ? 'Sending...' : 'Resend OTP'}
-        </div>
+        </button>
 
-        <div className="back" onClick={() => navigate('/signup')}>
+        <button type="button" className="link back" onClick={() => navigate('/signup')}>
           ← Back to Signup
-        </div>
+        </button>
       </motion.div>
     </div>
   );

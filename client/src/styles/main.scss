@@ -2,6 +2,7 @@
 @import "./variables";
 @import "./mixins";
 @import "./shimmer";
+@import "./controls";
 
 /* Box sizing reset */
 *,
@@ -55,30 +56,6 @@ h6 {
   font-weight: 700;
   line-height: 1.2;
   color: var(--color-primary);
-}
-
-/* Link defaults */
-a {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-a:hover {
-  color: var(--color-primary-hover);
-}
-
-/* Button defaults */
-button {
-  border: none;
-  background-color: var(--color-primary);
-  color: var(--color-on-primary);
-  font: inherit;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-}
-
-button:hover {
-  background-color: var(--color-primary-hover);
 }
 
 /* Image responsiveness */

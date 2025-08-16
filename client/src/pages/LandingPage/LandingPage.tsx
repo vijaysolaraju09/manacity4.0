@@ -47,18 +47,14 @@ const LandingPage = () => {
 
         <div className="buttons">
           <motion.button
-            className="primary"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className="btn btn-primary"
             onClick={() => navigate("/login")}
           >
             Login
           </motion.button>
 
           <motion.button
-            className="secondary"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className="btn btn-secondary"
             onClick={() => navigate("/signup")}
           >
             Sign Up

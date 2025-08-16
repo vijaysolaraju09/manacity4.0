@@ -86,6 +86,28 @@
 
 /* Blue Light theme (explicit) */
 [data-theme='light'] {
+  /* Blue scale */
+  --blue-900: #0B3C8A;
+  --blue-800: #1149A6;
+  --blue-700: #1657C2;
+  --blue-600: #1B63D9;
+  --blue-500: #2A75E8;
+  --blue-400: #5B95F0;
+  --blue-300: #8AB2F6;
+  --blue-200: #BDD1FA;
+  --blue-100: #E7F0FE;
+  --blue-050: #F3F8FF;
+
+  /* Neutrals */
+  --gray-900: #111827;
+  --gray-700: #374151;
+  --gray-600: #4B5563;
+  --gray-500: #6B7280;
+  --gray-300: #D1D5DB;
+  --gray-200: #E5E7EB;
+  --gray-100: #F3F4F6;
+  --white: #FFFFFF;
+
   --color-bg: var(--white);
   --color-surface: var(--white);
   --color-surface-alt: var(--blue-050);

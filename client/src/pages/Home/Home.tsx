@@ -7,6 +7,8 @@ import Shimmer from '../../components/Shimmer';
 import ProductCard from '../../components/ui/ProductCard';
 import SectionHeader from '../../components/ui/SectionHeader';
 import HorizontalCarousel from '../../components/ui/HorizontalCarousel';
+import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
+import EmptyState from '../../components/ui/EmptyState';
 import {
   sampleOffers,
   sampleVerifiedUsers,
@@ -82,7 +84,7 @@ const Home = () => {
         onClick={() => banner.link && navigate(banner.link)}
       >
         <img
-          src={banner.image}
+          src={banner.image || fallbackImage}
           alt="Admin Update"
           onError={(e) => (e.currentTarget.src = fallbackImage)}
         />
@@ -141,59 +143,70 @@ interface SectionProps {
 const Section = ({ title, data, type, loading, seeAll, navigate }: SectionProps) => (
   <div className="section">
     <SectionHeader title={title} onClick={() => navigate(seeAll)} />
-    <HorizontalCarousel>
-      {(loading ? Array.from({ length: 3 }) : data).map((item: any, idx: number) =>
-        loading ? (
-          <div key={idx} className="card">
-            <Shimmer className="rounded" style={{ height: 150 }} />
-            <div className="card-info">
-              <Shimmer style={{ height: 16, marginTop: 8, width: '60%' }} />
-              {type === 'event' && (
-                <Shimmer style={{ height: 14, marginTop: 4, width: '40%' }} />
-              )}
+    {loading ? (
+      <HorizontalCarousel>
+        {Array.from({ length: 3 }).map((_, idx) =>
+          type === 'product' ? (
+            <SkeletonProductCard key={idx} />
+          ) : (
+            <div key={idx} className="card">
+              <Shimmer className="rounded" style={{ height: 150 }} />
+              <div className="card-info">
+                <Shimmer style={{ height: 16, marginTop: 8, width: '60%' }} />
+                {type === 'event' && (
+                  <Shimmer style={{ height: 14, marginTop: 4, width: '40%' }} />
+                )}
+              </div>
             </div>
-          </div>
-        ) : type === 'product' ? (
-          <ProductCard
-            key={item._id}
-            product={item}
-            showActions={false}
-            onClick={() => navigate(`/product/${item._id}`)}
-          />
-        ) : (
-          <motion.div
-            key={item._id}
-            className="card"
-            whileHover={{ scale: 1.03 }}
-          >
-            <img
-              src={item.image}
-              alt={item.name || item.title}
-              onError={(e) => (e.currentTarget.src = fallbackImage)}
-              onClick={() =>
-                navigate(
-                  type === 'user'
-                    ? `/verified-users/${item._id}`
-                    : `/events/${item._id}`,
-                )
-              }
+          ),
+        )}
+      </HorizontalCarousel>
+    ) : data.length === 0 ? (
+      <EmptyState message={`No ${title.toLowerCase()}`} />
+    ) : (
+      <HorizontalCarousel>
+        {data.map((item: any) =>
+          type === 'product' ? (
+            <ProductCard
+              key={item._id}
+              product={item}
+              onClick={() => navigate(`/product/${item._id}`)}
             />
-            <div className="card-info">
-              <h4>{item.name || item.title}</h4>
-              {type === 'event' && (
-                <p>
-                  Ends in {Math.ceil(
-                    (new Date(item.startDate || item.date).getTime() - Date.now()) /
-                      (1000 * 60 * 60 * 24),
-                  )}{' '}
-                  days
-                </p>
-              )}
-            </div>
-          </motion.div>
-        ),
-      )}
-    </HorizontalCarousel>
+          ) : (
+            <motion.div
+              key={item._id}
+              className="card"
+              whileHover={{ scale: 1.03 }}
+            >
+              <img
+                src={item.image || fallbackImage}
+                alt={item.name || item.title}
+                onError={(e) => (e.currentTarget.src = fallbackImage)}
+                onClick={() =>
+                  navigate(
+                    type === 'user'
+                      ? `/verified-users/${item._id}`
+                      : `/events/${item._id}`,
+                  )
+                }
+              />
+              <div className="card-info">
+                <h4>{item.name || item.title}</h4>
+                {type === 'event' && (
+                  <p>
+                    Ends in {Math.ceil(
+                      (new Date(item.startDate || item.date).getTime() - Date.now()) /
+                        (1000 * 60 * 60 * 24),
+                    )}{' '}
+                    days
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          ),
+        )}
+      </HorizontalCarousel>
+    )}
   </div>
 );
 

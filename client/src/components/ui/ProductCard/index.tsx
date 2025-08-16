@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion';
 import { AiFillStar } from 'react-icons/ai';
 import { useDispatch } from 'react-redux';
-import api from '../../api/client';
-import { addToCart } from '../../store/slices/cartSlice';
-import fallbackImage from '../../assets/no-image.svg';
-import WishlistHeart from './WishlistHeart';
-import PriceBlock from './PriceBlock';
-import showToast from './Toast';
+import api from '../../../api/client';
+import { addToCart } from '../../../store/slices/cartSlice';
+import fallbackImage from '../../../assets/no-image.svg';
+import WishlistHeart from '../WishlistHeart';
+import PriceBlock from '../PriceBlock';
+import showToast from '../Toast';
 import styles from './ProductCard.module.scss';
 
 export interface Product {
@@ -25,7 +25,6 @@ interface Props {
   product: Product;
   showActions?: boolean;
   onAddToCart?: () => void;
-  onPlaceOrder?: () => void;
   onClick?: () => void;
   className?: string;
 }
@@ -34,7 +33,6 @@ const ProductCard = ({
   product,
   showActions = true,
   onAddToCart,
-  onPlaceOrder,
   onClick,
   className = '',
 }: Props) => {
@@ -58,16 +56,6 @@ const ProductCard = ({
     }
   };
 
-  const handleOrder = async () => {
-    try {
-      const qty = parseInt(prompt('Quantity', '1') || '1', 10);
-      await api.post(`/orders/place/${product._id}`, { quantity: qty });
-      showToast('Order request sent');
-    } catch {
-      showToast('Failed to send order', 'error');
-    }
-  };
-
   const computedDiscount =
     product.discount !== undefined
       ? product.discount
@@ -84,7 +72,7 @@ const ProductCard = ({
     >
       <div className={styles.imageWrapper}>
         <img
-          src={product.image || 'https://via.placeholder.com/200'}
+          src={product.image || fallbackImage}
           alt={product.name}
           loading="lazy"
           onError={(e) => (e.currentTarget.src = fallbackImage)}
@@ -113,7 +101,6 @@ const ProductCard = ({
       {showActions && (
         <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
           <button onClick={onAddToCart || handleAdd}>Add to Cart</button>
-          <button onClick={onPlaceOrder || handleOrder}>Order</button>
         </div>
       )}
     </motion.div>

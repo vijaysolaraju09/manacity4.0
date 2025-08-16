@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/client';
 import { sampleSpecialProducts } from '../../data/sampleHomeData';
-import Shimmer from '../../components/Shimmer';
-import { FacetFilterBar, ProductCard } from '../../components/base';
+import { FacetFilterBar } from '../../components/base';
+import ProductCard from '../../components/ui/ProductCard';
+import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
+import EmptyState from '../../components/ui/EmptyState';
 import styles from './SpecialShop.module.scss';
 
 interface Product {
@@ -190,27 +192,21 @@ const SpecialShop = () => {
       )}
 
       <div className={styles.grid}>
-        {loading
-          ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
-              <div key={i} className={styles.card}>
-                <Shimmer className="rounded" style={{ height: 140 }} />
-                <Shimmer style={{ height: 16, marginTop: 8, width: '60%' }} />
-              </div>
-            ))
-            : paginated.map((p) => (
-                <ProductCard
-                  key={p._id}
-                  product={{
-                    id: p._id,
-                    title: p.name,
-                    image: p.image ?? '',
-                    price: p.price,
-                  }}
-                  ctaLabel="View"
-                  onCtaClick={() => navigate(`/product/${p._id}`)}
-                  onClick={() => navigate(`/product/${p._id}`)}
-                />
-              ))}
+        {loading ? (
+          Array.from({ length: PAGE_SIZE }).map((_, i) => (
+            <SkeletonProductCard key={i} />
+          ))
+        ) : paginated.length === 0 ? (
+          <EmptyState message="No products found" />
+        ) : (
+          paginated.map((p) => (
+            <ProductCard
+              key={p._id}
+              product={p}
+              onClick={() => navigate(`/product/${p._id}`)}
+            />
+          ))
+        )}
       </div>
 
       {!loading && totalPages > 1 && (

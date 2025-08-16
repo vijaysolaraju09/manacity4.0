@@ -6,7 +6,7 @@ import {
   rejectShop,
   type BusinessRequestParams,
 } from '../../api/admin';
-import toast from '../../components/toast';
+import showToast from '../../components/ui/Toast';
 import './BusinessRequests.scss';
 
 interface ShopRequest {
@@ -76,12 +76,12 @@ const BusinessRequests = () => {
     try {
       if (newStatus === 'approved') await approveShop(id);
       else await rejectShop(id);
-      toast(
+      showToast(
         `Request ${newStatus === 'approved' ? 'approved' : 'rejected'}`,
       );
     } catch {
       setRequests(prev);
-      toast('Failed to update request', 'error');
+      showToast('Failed to update request', 'error');
     } finally {
       setActionId('');
     }

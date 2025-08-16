@@ -5,7 +5,7 @@ import Shimmer from '../../components/Shimmer';
 import { OrderCard } from '../../components/base';
 import fallbackImage from '../../assets/no-image.svg';
 import { type Status } from '../../components/ui/StatusChip';
-import toast from '../../components/toast';
+import showToast from '../../components/ui/Toast';
 import styles from './ReceivedOrders.module.scss';
 
 interface Order {
@@ -59,12 +59,12 @@ const ReceivedOrders = () => {
       setList((curr) =>
         curr.map((o) => (o._id === id ? { ...o, ...res.data } : o))
       );
-      toast(
+      showToast(
         action === 'accept' ? 'Order accepted' : 'Order rejected',
         'success'
       );
     } catch {
-      toast(`Failed to ${action} order`, 'error');
+      showToast(`Failed to ${action} order`, 'error');
       setList(prev);
     }
   };

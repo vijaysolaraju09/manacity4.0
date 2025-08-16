@@ -5,7 +5,7 @@ import {
   acceptVerification,
   rejectVerification,
 } from '../../api/admin';
-import toast from '../../components/toast';
+import showToast from '../../components/ui/Toast';
 import './VerificationRequests.scss';
 
 interface Request {
@@ -95,12 +95,12 @@ const VerificationRequests = () => {
     try {
       if (newStatus === 'approved') await acceptVerification(id);
       else await rejectVerification(id);
-      toast(
+      showToast(
         `Request ${newStatus === 'approved' ? 'approved' : 'rejected'}`,
       );
     } catch {
       setRequests(prev);
-      toast('Failed to update request', 'error');
+      showToast('Failed to update request', 'error');
     } finally {
       setActionId('');
     }

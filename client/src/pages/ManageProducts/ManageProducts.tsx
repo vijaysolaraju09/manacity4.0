@@ -10,7 +10,7 @@ import {
 } from '../../store/slices/productSlice';
 import Loader from '../../components/Loader';
 import ProductCard from '../../components/ui/ProductCard';
-import toast from '../../components/toast';
+import showToast from '../../components/ui/Toast';
 import styles from './ManageProducts.module.scss';
 
 const emptyForm: Partial<Product> = {
@@ -50,15 +50,15 @@ const ManageProducts = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.price || form.price <= 0) {
-      toast('Please provide a name and valid price', 'error');
+      showToast('Please provide a name and valid price', 'error');
       return;
     }
     if (!form.mrp || form.mrp <= 0) {
-      toast('Please provide a valid MRP', 'error');
+      showToast('Please provide a valid MRP', 'error');
       return;
     }
     if (form.price > form.mrp) {
-      toast('Price cannot exceed MRP', 'error');
+      showToast('Price cannot exceed MRP', 'error');
       return;
     }
     try {
@@ -69,17 +69,17 @@ const ManageProducts = () => {
       };
       if (editId) {
         await dispatch(updateProduct({ id: editId, data: payload })).unwrap();
-        toast('Product updated');
+        showToast('Product updated');
       } else {
         await dispatch(createProduct(payload)).unwrap();
-        toast('Product added');
+        showToast('Product added');
       }
       setShowModal(false);
       setForm(emptyForm);
       dispatch(fetchMyProducts());
       window.dispatchEvent(new Event('productsUpdated'));
     } catch {
-      toast('Failed to save product', 'error');
+      showToast('Failed to save product', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -89,11 +89,11 @@ const ManageProducts = () => {
     if (!confirm('Delete product?')) return;
     try {
       await dispatch(deleteProduct(id)).unwrap();
-      toast('Product deleted');
+      showToast('Product deleted');
       dispatch(fetchMyProducts());
       window.dispatchEvent(new Event('productsUpdated'));
     } catch {
-      toast('Failed to delete product', 'error');
+      showToast('Failed to delete product', 'error');
     }
   };
 

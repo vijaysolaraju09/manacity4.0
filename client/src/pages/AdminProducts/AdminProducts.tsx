@@ -6,7 +6,7 @@ import {
   type ProductQueryParams,
 } from '../../api/admin';
 import Loader from '../../components/Loader';
-import toast from '../../components/toast';
+import showToast from '../../components/ui/Toast';
 import './AdminProducts.scss';
 
 interface Product {
@@ -69,7 +69,7 @@ const AdminProducts = () => {
       setProducts(data.items as Product[]);
       setTotal(data.total);
     } catch {
-      toast('Failed to load products', 'error');
+      showToast('Failed to load products', 'error');
     } finally {
       setLoading(false);
     }
@@ -125,7 +125,7 @@ const AdminProducts = () => {
       setProducts((prevList) =>
         prevList.map((p) => (p._id === prev._id ? prev : p)),
       );
-      toast('Failed to update product', 'error');
+      showToast('Failed to update product', 'error');
     } finally {
       setSaving(false);
     }
@@ -139,7 +139,7 @@ const AdminProducts = () => {
       await apiDeleteProduct(id);
     } catch {
       setProducts(prev);
-      toast('Failed to delete product', 'error');
+      showToast('Failed to delete product', 'error');
     }
   };
 

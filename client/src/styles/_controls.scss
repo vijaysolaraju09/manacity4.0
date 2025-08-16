@@ -17,7 +17,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--blue-500);
+    outline: 2px solid var(--color-focus-ring);
     outline-offset: 2px;
   }
 
@@ -81,9 +81,9 @@ textarea,
   padding: var(--space-2) var(--space-3);
   transition: border-color 0.2s, box-shadow 0.2s;
 
-  &:focus {
+  &:focus-visible {
     outline: none;
-    border-color: var(--blue-500);
+    border-color: var(--color-focus-ring);
     box-shadow: 0 0 0 2px var(--blue-100);
   }
 
@@ -108,6 +108,10 @@ a,
   &:visited {
     color: var(--blue-800);
   }
+
+  &:focus-visible {
+    outline-offset: 2px;
+  }
 }
 
 /* Chips */
@@ -122,6 +126,11 @@ a,
   color: var(--gray-700);
   cursor: pointer;
   border: 1px solid transparent;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
 }
 
 .chip--selected {
@@ -145,6 +154,11 @@ a,
   color: var(--gray-600);
   border-bottom: 2px solid transparent;
   transition: color 0.2s, border-color 0.2s;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
 }
 
 .tab:hover {

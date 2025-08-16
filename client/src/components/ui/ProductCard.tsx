@@ -6,6 +6,7 @@ import { addToCart } from '../../store/slices/cartSlice';
 import fallbackImage from '../../assets/no-image.svg';
 import WishlistHeart from './WishlistHeart';
 import PriceBlock from './PriceBlock';
+import showToast from './Toast';
 import styles from './ProductCard.module.scss';
 
 export interface Product {
@@ -51,8 +52,9 @@ const ProductCard = ({
           image: product.image,
         })
       );
+      showToast('Added to cart');
     } catch {
-      alert('Failed to add to cart');
+      showToast('Failed to add to cart', 'error');
     }
   };
 
@@ -60,9 +62,9 @@ const ProductCard = ({
     try {
       const qty = parseInt(prompt('Quantity', '1') || '1', 10);
       await api.post(`/orders/place/${product._id}`, { quantity: qty });
-      alert('Order request sent');
+      showToast('Order request sent');
     } catch {
-      alert('Failed to send order');
+      showToast('Failed to send order', 'error');
     }
   };
 

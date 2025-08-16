@@ -6,7 +6,7 @@ import {
   type ShopQueryParams,
 } from '../../api/admin';
 import Loader from '../../components/Loader';
-import toast from '../../components/toast';
+import showToast from '../../components/ui/Toast';
 import './AdminShops.scss';
 
 interface Shop {
@@ -49,7 +49,7 @@ const AdminShops = () => {
       setShops(data.items);
       setTotal(data.total);
     } catch {
-      toast('Failed to load shops', 'error');
+      showToast('Failed to load shops', 'error');
     } finally {
       setLoading(false);
     }
@@ -69,11 +69,11 @@ const AdminShops = () => {
         category: edit.category,
         location: edit.location,
       });
-      toast('Shop updated');
+      showToast('Shop updated');
       setEdit(null);
       load();
     } catch {
-      toast('Failed to update shop', 'error');
+      showToast('Failed to update shop', 'error');
     } finally {
       setSaving(false);
     }
@@ -87,7 +87,7 @@ const AdminShops = () => {
         prev.map((s) => (s._id === shop._id ? { ...s, status: newStatus } : s)),
       );
     } catch {
-      toast('Failed to update status', 'error');
+      showToast('Failed to update status', 'error');
     }
   };
 
@@ -96,10 +96,10 @@ const AdminShops = () => {
     try {
       await apiDeleteShop(id);
       setShops((prev) => prev.filter((s) => s._id !== id));
-      toast('Shop deleted');
+      showToast('Shop deleted');
       load();
     } catch {
-      toast('Failed to delete shop', 'error');
+      showToast('Failed to delete shop', 'error');
     }
   };
 

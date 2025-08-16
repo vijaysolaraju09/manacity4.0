@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import LandingPage from './pages/LandingPage/LandingPage';
-import LoginPage from './pages/LoginPage/LoginPage';
-import SignupPage from './pages/SignupPage/SignupPage';
+import Landing from './pages/Landing/Landing';
+import Login from './pages/auth/Login/Login';
+import Signup from './pages/auth/Signup/Signup';
 import ProtectedRoute from './components/ProtectedRoute';
 import './styles/main.scss';
-// import OtpPage from "./pages/OTPPage/OTPPage";
+import OTP from './pages/auth/OTP/OTP';
 import Profile from './pages/Profile/Profile';
 import Home from './pages/Home/Home';
 import Shops from './pages/Shops/Shops';
@@ -64,12 +64,12 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/otp" element={<OTP />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/preview" element={<UiPreview />} />
-        {/* <Route path="/verify-otp" element={<OtpPage />} /> */}
         <Route path="/admin" element={<AdminProtectedRoute />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />

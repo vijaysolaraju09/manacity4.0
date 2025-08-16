@@ -1,21 +1,22 @@
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { login } from '../../api/auth';
-import { setUser } from '../../store/slices/userSlice';
-import type { AppDispatch } from '../../store';
-import './LoginPage.scss';
-import logo from '../../assets/logo.png';
-import fallbackImage from '../../assets/no-image.svg';
-import Loader from '../../components/Loader';
+import { login } from '../../../api/auth';
+import { setUser } from '../../../store/slices/userSlice';
+import type { AppDispatch } from '../../../store';
+import './Login.scss';
+import logo from '../../../assets/logo.png';
+import fallbackImage from '../../../assets/no-image.svg';
+import Loader from '../../../components/Loader';
 
-const LoginPage = () => {
+const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const [form, setForm] = useState({ phone: '', password: '' });
   const [errors, setErrors] = useState<{ phone?: string; password?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -40,7 +41,6 @@ const LoginPage = () => {
       dispatch(setUser(user));
       navigate('/home');
     } catch (err: any) {
-     
       const data = err.response?.data;
       const fieldErrors = data?.errors;
       if (fieldErrors && typeof fieldErrors === 'object') {
@@ -49,7 +49,6 @@ const LoginPage = () => {
         const message = data?.message || 'Login failed';
         setErrors({ general: message });
       }
-
     } finally {
       setLoading(false);
     }
@@ -72,7 +71,7 @@ const LoginPage = () => {
 
         <h2>Login to Your Account</h2>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <label>
             Phone Number
             <input
@@ -88,14 +87,23 @@ const LoginPage = () => {
 
           <label>
             Password
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
+            <div className="password-field">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Enter your password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+              <button
+                type="button"
+                className="toggle"
+                onClick={() => setShowPassword((s) => !s)}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
             {errors.password && <span className="error">{errors.password}</span>}
           </label>
 
@@ -114,15 +122,13 @@ const LoginPage = () => {
 
         <div className="links">
           <span onClick={() => navigate('/signup')}>Create Account</span>
-          <span onClick={() => navigate('/reset-password')}>Forgot Password?</span>
+          <Link to="/reset-password">Forgot Password?</Link>
         </div>
 
-        <div className="back" onClick={() => navigate('/')}>
-          ← Back to Landing
-        </div>
+        <div className="back" onClick={() => navigate('/')}>← Back to Landing</div>
       </motion.div>
     </div>
   );
 };
 
-export default LoginPage;
+export default Login;

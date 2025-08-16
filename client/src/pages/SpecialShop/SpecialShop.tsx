@@ -197,13 +197,20 @@ const SpecialShop = () => {
                 <Shimmer style={{ height: 16, marginTop: 8, width: '60%' }} />
               </div>
             ))
-          : paginated.map((p) => (
-              <ProductCard
-                key={p._id}
-                product={p}
-                onClick={() => navigate(`/product/${p._id}`)}
-              />
-            ))}
+            : paginated.map((p) => (
+                <ProductCard
+                  key={p._id}
+                  product={{
+                    id: p._id,
+                    title: p.name,
+                    image: p.image ?? '',
+                    price: p.price,
+                  }}
+                  ctaLabel="View"
+                  onCtaClick={() => navigate(`/product/${p._id}`)}
+                  onClick={() => navigate(`/product/${p._id}`)}
+                />
+              ))}
       </div>
 
       {!loading && totalPages > 1 && (

@@ -29,7 +29,7 @@ const Events = () => {
       .get("/events")
       .then((res) => {
         if (Array.isArray(res.data) && res.data.length > 0) {
-          setEvents(res.data);
+          setEvents(res.data as EventItem[]);
         } else {
           setEvents(sampleEvents);
         }
@@ -37,6 +37,11 @@ const Events = () => {
       .catch(() => setEvents(sampleEvents))
       .finally(() => setLoading(false));
   }, []);
+
+  const filteredEvents = events.filter((ev) => {
+    if (tab === "past") return ev.status === "closed" || ev.status === "past";
+    return (ev.status || "upcoming") === tab;
+  });
 
   return (
     <div className="events">
@@ -53,39 +58,40 @@ const Events = () => {
         ))}
       </div>
       <div className="event-list">
-        {(loading ? Array.from({ length: 4 }) : events.filter((ev) => {
-          if (tab === "past") return ev.status === "closed" || ev.status === "past";
-          return (ev.status || "upcoming") === tab;
-        })).map((ev, i) => {
-          const date = ev?.startDate || ev?.date || "";
-          const formattedDate = date
-            ? new Date(date).toLocaleString(undefined, {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })
-            : "";
-          return (
-            <div
-              key={ev?._id || i}
-              className="event-card"
-              onClick={() => !loading && navigate(`/events/${ev._id}`)}
-            >
-              {loading ? (
-                <>
-                  <Shimmer className="rounded" style={{ height: 140 }} />
-                  <Shimmer style={{ height: 16, marginTop: 8, width: "70%" }} />
-                  <Shimmer style={{ height: 14, marginTop: 4, width: "40%" }} />
-                </>
-              ) : (
-                <>
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="event-card">
+                <Shimmer className="rounded" style={{ height: 140 }} />
+                <Shimmer style={{ height: 16, marginTop: 8, width: "70%" }} />
+                <Shimmer style={{ height: 14, marginTop: 4, width: "40%" }} />
+              </div>
+            ))
+          : filteredEvents.map((ev, i) => {
+              const date = ev.startDate || ev.date || "";
+              const formattedDate = date
+                ? new Date(date).toLocaleString(undefined, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
+                : "";
+              return (
+                <div
+                  key={ev._id || i}
+                  className="event-card"
+                  onClick={() => navigate(`/events/${ev._id}`)}
+                >
                   <img
                     src={ev.banner || ev.image || fallbackImage}
                     alt={ev.title || ev.name}
                     onError={(e) => (e.currentTarget.src = fallbackImage)}
                   />
                   <h3>{ev.title || ev.name}</h3>
-                  {formattedDate && <p className="date">{formattedDate}</p>}
-                  {ev.location && <p className="location">{ev.location}</p>}
+                  {formattedDate && (
+                    <p className="date">{formattedDate}</p>
+                  )}
+                  {ev.location && (
+                    <p className="location">{ev.location}</p>
+                  )}
                   <button
                     className="register-btn"
                     onClick={(e) => {
@@ -95,11 +101,9 @@ const Events = () => {
                   >
                     Register
                   </button>
-                </>
-              )}
-            </div>
-          );
-        })}
+                </div>
+              );
+            })}
       </div>
     </div>
   );

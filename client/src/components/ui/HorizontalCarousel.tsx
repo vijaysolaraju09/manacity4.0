@@ -1,4 +1,5 @@
-import { ReactNode, useRef } from 'react';
+import type { ReactNode } from 'react';
+import { useRef } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import styles from './HorizontalCarousel.module.scss';
 

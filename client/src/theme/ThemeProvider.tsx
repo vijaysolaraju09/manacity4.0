@@ -21,8 +21,7 @@ const ThemeProvider = ({ children }: { children: ReactNode }) => {
     if (stored && availableThemes.includes(stored)) {
       setTheme(stored);
     } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
+      setTheme('light');
     }
   }, []);
 

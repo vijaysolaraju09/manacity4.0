@@ -1,4 +1,5 @@
 @import "../../styles/variables";
+@import "../../styles/mixins";
 .verifiedUsers {
   padding: 2rem;
 
@@ -17,7 +18,9 @@
     select {
       padding: 0.4rem 0.6rem;
       border-radius: 6px;
-      border: 1px solid #ddd;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text);
       font-size: 0.9rem;
     }
   }
@@ -29,22 +32,28 @@
   }
 
   .card {
-    background: #fff;
+    background: var(--color-surface);
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
     padding: 1rem;
     display: flex;
     flex-direction: column;
     position: relative;
     overflow: hidden;
     cursor: pointer;
+    transition: box-shadow 0.2s ease;
+
+    &:hover {
+      box-shadow: var(--shadow-md);
+    }
   }
 
   .badge {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
-    color: $primary-color;
+    color: var(--color-primary);
     display: flex;
     align-items: center;
     font-size: 1.1rem;
@@ -64,18 +73,25 @@
     h3 {
       margin: 0.3rem 0;
       font-size: 1.1rem;
+      color: var(--color-primary);
     }
 
     p {
       margin: 0.15rem 0;
-      color: #555;
+      color: var(--color-text-secondary);
       font-size: 0.85rem;
     }
   }
 
   .empty {
     text-align: center;
-    color: #777;
+    color: var(--color-muted);
     margin-top: 2rem;
+
+    button,
+    a {
+      @include button-style($primary-color, var(--color-on-primary));
+      margin-top: 1rem;
+    }
   }
 }

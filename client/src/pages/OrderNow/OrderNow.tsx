@@ -7,6 +7,7 @@ import { sampleShops } from '../../data/sampleData';
 import type { RootState } from '../../store';
 import ModalSheet from '../../components/base/ModalSheet';
 import Loader from '../../components/Loader';
+import showToast from '../../components/ui/Toast';
 import styles from './OrderNow.module.scss';
 
 interface Product {
@@ -131,13 +132,13 @@ const OrderNow = () => {
           })
         )
       );
-      alert('Order placed');
+      showToast('Order placed');
       setMatched([]);
       setTranscript('');
       setManual('');
       setConfirmOpen(false);
     } catch {
-      alert('Failed to place order');
+      showToast('Failed to place order', 'error');
     } finally {
       setPlacing(false);
     }

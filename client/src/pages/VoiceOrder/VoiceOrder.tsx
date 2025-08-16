@@ -7,6 +7,7 @@ import { sampleShops } from '../../data/sampleData';
 import type { RootState } from '../../store';
 import styles from './VoiceOrder.module.scss';
 import Loader from '../../components/Loader';
+import showToast from '../../components/ui/Toast';
 
 interface Product {
   _id: string;
@@ -54,7 +55,7 @@ const VoiceOrder = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Speech recognition not supported');
+      showToast('Speech recognition not supported', 'error');
       return;
     }
     const recognition = new SpeechRecognition();
@@ -103,9 +104,9 @@ const VoiceOrder = () => {
         shopId: item.shop._id,
         source: 'voice-order',
       });
-      alert('Order placed');
+      showToast('Order placed');
     } catch {
-      alert('Failed to place order');
+      showToast('Failed to place order', 'error');
     } finally {
       setOrderingId('');
     }

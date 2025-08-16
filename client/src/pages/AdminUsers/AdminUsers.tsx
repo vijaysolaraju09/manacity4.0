@@ -7,7 +7,7 @@ import {
   type UserQueryParams,
 } from '../../api/admin';
 import Loader from '../../components/Loader';
-import toast from '../../components/toast';
+import showToast from '../../components/ui/Toast';
 import './AdminUsers.scss';
 
 interface User {
@@ -47,7 +47,7 @@ const AdminUsers = () => {
       setUsers(data.items as User[]);
       setTotal(data.total);
     } catch {
-      toast('Failed to load users', 'error');
+      showToast('Failed to load users', 'error');
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,7 @@ const AdminUsers = () => {
       await updateUserRole(id, newRole);
     } catch {
       setUsers(prev);
-      toast('Failed to update role', 'error');
+      showToast('Failed to update role', 'error');
     }
   };
 
@@ -86,7 +86,7 @@ const AdminUsers = () => {
       await updateUserStatus(user._id, !user.isActive);
     } catch {
       setUsers(prev);
-      toast('Failed to update status', 'error');
+      showToast('Failed to update status', 'error');
     }
   };
 
@@ -98,7 +98,7 @@ const AdminUsers = () => {
       await apiDeleteUser(id);
     } catch {
       setUsers(prev);
-      toast('Failed to delete user', 'error');
+      showToast('Failed to delete user', 'error');
     }
   };
 

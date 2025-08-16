@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Toolbar from '../components/ui/Toolbar';
 import SectionHeader from '../components/ui/SectionHeader';
 import StatusChip from '../components/ui/StatusChip';
+import showToast from '../components/ui/Toast';
 import {
   ProductCard,
   OrderCard,
@@ -54,7 +55,7 @@ const UiPreview = () => {
         <ProductCard
           product={product}
           ctaLabel="Add to Cart"
-          onCtaClick={() => alert('Added to cart')}
+          onCtaClick={() => showToast('Added to cart')}
         />
         <OrderCard {...order} />
         <FacetFilterBar

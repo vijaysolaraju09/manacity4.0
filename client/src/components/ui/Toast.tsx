@@ -1,6 +1,6 @@
-export type ToastType = 'success' | 'error';
+export type ToastType = 'success' | 'error' | 'info';
 
-const showToast = (message: string, type: ToastType = 'success') => {
+const showToast = (message: string, type: ToastType = 'info') => {
   if (typeof document === 'undefined') return;
   const toast = document.createElement('div');
   toast.textContent = message;
@@ -9,10 +9,10 @@ const showToast = (message: string, type: ToastType = 'success') => {
     bottom: 1rem;
     left: 50%;
     transform: translateX(-50%);
-    background: ${type === 'success' ? 'var(--color-success)' : 'var(--color-danger)'};
+    background: ${type === 'success' ? 'var(--color-success)' : type === 'error' ? 'var(--color-danger)' : 'var(--color-info)'};
     color: var(--color-on-primary);
     padding: 0.75rem 1rem;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     box-shadow: var(--shadow-md);
     z-index: 9999;
     opacity: 0;
@@ -31,4 +31,3 @@ const showToast = (message: string, type: ToastType = 'success') => {
 };
 
 export default showToast;
-

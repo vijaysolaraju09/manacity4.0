@@ -7,7 +7,7 @@ import {
   type EventQueryParams,
 } from '../../api/admin';
 import Loader from '../../components/Loader';
-import toast from '../../components/toast';
+import showToast from '../../components/ui/Toast';
 import './AdminEvents.scss';
 import useFocusTrap from '../../hooks/useFocusTrap';
 
@@ -67,7 +67,7 @@ const AdminEvents = () => {
       setEvents(data.items as EventItem[]);
       setTotal(data.total);
     } catch {
-      toast('Failed to load events', 'error');
+      showToast('Failed to load events', 'error');
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ const AdminEvents = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (new Date(form.startAt) >= new Date(form.endAt)) {
-      toast('startAt must be before endAt', 'error');
+      showToast('startAt must be before endAt', 'error');
       return;
     }
     setSaving(true);
@@ -92,7 +92,7 @@ const AdminEvents = () => {
       setCreateOpen(false);
       setForm(emptyForm);
     } catch {
-      toast('Failed to create event', 'error');
+      showToast('Failed to create event', 'error');
     } finally {
       setSaving(false);
     }
@@ -112,7 +112,7 @@ const AdminEvents = () => {
     e.preventDefault();
     if (!edit) return;
     if (new Date(form.startAt) >= new Date(form.endAt)) {
-      toast('startAt must be before endAt', 'error');
+      showToast('startAt must be before endAt', 'error');
       return;
     }
     setSaving(true);
@@ -121,7 +121,7 @@ const AdminEvents = () => {
       setEvents((prev) => prev.map((ev) => (ev._id === edit._id ? updated : ev)));
       setEdit(null);
     } catch {
-      toast('Failed to update event', 'error');
+      showToast('Failed to update event', 'error');
     } finally {
       setSaving(false);
     }
@@ -134,7 +134,7 @@ const AdminEvents = () => {
       setEvents((prev) => prev.filter((ev) => ev._id !== id));
       setTotal((t) => t - 1);
     } catch {
-      toast('Failed to delete event', 'error');
+      showToast('Failed to delete event', 'error');
     }
   };
 

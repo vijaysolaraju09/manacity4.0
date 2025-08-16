@@ -1,17 +1,129 @@
 @import "./theme";
-@import "./reset";
 @import "./variables";
 @import "./mixins";
-@import "./base";
 @import "./shimmer";
 
+/* Box sizing reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Remove default margin/padding */
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol,
+li,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+  padding: 0;
+}
+
+/* Root element sizing */
 html,
 body,
 #root {
   height: 100%;
   width: 100%;
-  margin: 0;
-  padding: 0;
+}
+
+/* Base typography */
+body {
+  line-height: 1.5;
+  font-family: var(--font-family-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-primary);
+}
+
+/* Link defaults */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+/* Button defaults */
+button {
+  border: none;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* Image responsiveness */
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Input reset */
+input,
+textarea,
+select,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* Focus states */
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Utility classes */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4);
+}
+
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-2);
+  padding-right: var(--space-2);
+  max-width: 1200px;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
 }
 
 .app {

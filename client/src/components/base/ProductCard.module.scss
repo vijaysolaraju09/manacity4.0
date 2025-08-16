@@ -1,5 +1,6 @@
 .card {
-  background: var(--color-card);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
@@ -7,9 +8,10 @@
   flex-direction: column;
   position: relative;
   cursor: pointer;
-  transition: box-shadow var(--transition-medium);
+  transition: transform var(--transition-medium), box-shadow var(--transition-medium);
 
   &:hover {
+    transform: translateY(-2px);
     box-shadow: var(--shadow-md);
   }
 }
@@ -30,8 +32,8 @@
     position: absolute;
     left: var(--spacing-sm);
     top: var(--spacing-sm);
-    background: var(--color-primary);
-    color: var(--color-on-primary);
+    background: var(--blue-600);
+    color: var(--white);
     border-radius: var(--radius-sm);
     padding: 2px 6px;
     font-size: var(--font-size-sm);

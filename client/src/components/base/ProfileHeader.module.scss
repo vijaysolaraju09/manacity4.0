@@ -3,7 +3,8 @@
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-sm);
-  background: var(--color-card);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
 }
@@ -27,8 +28,8 @@
 }
 
 .role {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--blue-100);
+  color: var(--blue-700);
   padding: 0 var(--spacing-xs);
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
@@ -54,9 +55,26 @@
 }
 
 .actions button {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-md);
   padding: 0.25rem 0.75rem;
   cursor: pointer;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.actions button + button {
+  background: var(--blue-100);
+  color: var(--blue-700);
+  border-color: var(--blue-100);
+}
+
+.nameRow h3 {
+  color: var(--gray-900);
+  margin: 0;
 }

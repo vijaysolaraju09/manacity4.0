@@ -8,19 +8,19 @@
 }
 
 .pending {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--blue-100);
+  color: var(--blue-700);
 }
 
 .accepted {
-  background: var(--color-success);
-  color: var(--color-on-primary);
+  background: var(--blue-600);
+  color: var(--white);
 }
 
 .rejected,
 .cancelled {
   background: var(--color-danger);
-  color: var(--color-on-primary);
+  color: var(--white);
 }
 
 .completed {

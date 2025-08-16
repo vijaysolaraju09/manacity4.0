@@ -64,7 +64,7 @@
   /* Default (Blue Light) colours */
   --color-bg: var(--white);
   --color-surface: var(--white);
-  --color-surface-alt: var(--blue-050);
+  --color-surface-alt: var(--white);
   --color-text: var(--gray-900);
   --color-muted: var(--gray-600);
   --color-primary: var(--blue-600);
@@ -110,7 +110,7 @@
 
   --color-bg: var(--white);
   --color-surface: var(--white);
-  --color-surface-alt: var(--blue-050);
+  --color-surface-alt: var(--white);
   --color-text: var(--gray-900);
   --color-muted: var(--gray-600);
   --color-primary: var(--blue-600);
@@ -132,9 +132,9 @@
 
 /* Dark theme */
 [data-theme='dark'] {
-  --color-bg: #18181b;
-  --color-surface: #27272a;
-  --color-surface-alt: #1f1f23;
+  --color-bg: var(--white);
+  --color-surface: var(--white);
+  --color-surface-alt: var(--white);
   --color-text: #f5f5f5;
   --color-muted: #9ca3af;
   --color-primary: #ff3e6c;
@@ -158,9 +158,9 @@
 
 /* Colourful theme with brand accents */
 [data-theme='colorful'] {
-  --color-bg: #fff8e1;
-  --color-surface: #ffffff;
-  --color-surface-alt: #fff4e6;
+  --color-bg: var(--white);
+  --color-surface: var(--white);
+  --color-surface-alt: var(--white);
   --color-text: #222222;
   --color-muted: #6b7280;
   --color-primary: #ff9800;

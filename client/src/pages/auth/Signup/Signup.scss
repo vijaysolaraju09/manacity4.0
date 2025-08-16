@@ -1,5 +1,5 @@
-@import "../../styles/variables";
-@import "../../styles/mixins";
+@import "../../../styles/variables";
+@import "../../../styles/mixins";
 
 .signup-page {
   display: flex;
@@ -51,6 +51,26 @@
 
           &:focus {
             border-color: $primary-color;
+          }
+        }
+
+        .password-field {
+          position: relative;
+          display: flex;
+          align-items: center;
+
+          input {
+            padding-right: 3rem;
+          }
+
+          .toggle {
+            position: absolute;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            color: $primary-color;
+            cursor: pointer;
+            font-size: 0.85rem;
           }
         }
       }

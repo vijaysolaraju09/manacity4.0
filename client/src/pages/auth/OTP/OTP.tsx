@@ -1,17 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { verifyOtp, resendOtp as resendOtpApi } from '../../api/auth';
-import Loader from '../../components/Loader';
-import './OtpPage.scss';
+import { verifyOtp, resendOtp as resendOtpApi } from '../../../api/auth';
+import Loader from '../../../components/Loader';
+import './OTP.scss';
 
-const OtpPage = () => {
-  const [otp, setOtp] = useState<string[]>(['', '', '', '']);
+const OTP = () => {
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
+  const [timer, setTimer] = useState(30);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
   const phone = (location.state as { phone?: string })?.phone || '';
+
+  useEffect(() => {
+    if (timer <= 0) return;
+    const id = setInterval(() => setTimer((t) => t - 1), 1000);
+    return () => clearInterval(id);
+  }, [timer]);
 
   const handleChange = (index: number, value: string) => {
     if (/^[0-9]?$/.test(value)) {
@@ -19,21 +28,31 @@ const OtpPage = () => {
       updated[index] = value;
       setOtp(updated);
 
-      const nextInput = document.getElementById(`otp-${index + 1}`);
-      if (value && nextInput) nextInput.focus();
+      if (value && index < otp.length - 1) {
+        const nextInput = document.getElementById(`otp-${index + 1}`);
+        nextInput?.focus();
+      }
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      prevInput?.focus();
     }
   };
 
   const handleVerify = async () => {
     const code = otp.join('');
-    if (code.length === 4) {
+    if (code.length === 6) {
       try {
         setVerifying(true);
+        setError('');
         await verifyOtp(phone, code);
-        navigate('/profile');
-      } catch (err) {
-        console.error(err);
-        alert('OTP verification failed');
+        setMessage('Verified successfully');
+        setTimeout(() => navigate('/login'), 800);
+      } catch {
+        setError('OTP verification failed');
       } finally {
         setVerifying(false);
       }
@@ -43,11 +62,12 @@ const OtpPage = () => {
   const resendOtp = async () => {
     try {
       setResending(true);
+      setError('');
       await resendOtpApi(phone);
-      alert(`OTP resent to ${phone}`);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to resend OTP');
+      setMessage(`OTP resent to ${phone}`);
+      setTimer(30);
+    } catch {
+      setError('Failed to resend OTP');
     } finally {
       setResending(false);
     }
@@ -62,7 +82,7 @@ const OtpPage = () => {
         transition={{ duration: 0.7 }}
       >
         <h2>Verify OTP</h2>
-        <p>Enter the 4-digit code sent to <strong>{phone}</strong></p>
+        <p>Enter the 6-digit code sent to <strong>{phone}</strong></p>
 
         <div className="otp-inputs">
           {otp.map((digit, i) => (
@@ -73,9 +93,13 @@ const OtpPage = () => {
               maxLength={1}
               value={digit}
               onChange={(e) => handleChange(i, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(i, e)}
             />
           ))}
         </div>
+
+        {message && <div className="feedback success">{message}</div>}
+        {error && <div className="feedback error">{error}</div>}
 
         <motion.button
           className="btn btn-primary verify-btn"
@@ -89,9 +113,9 @@ const OtpPage = () => {
           type="button"
           className="link resend"
           onClick={resendOtp}
-          style={{ pointerEvents: resending ? 'none' : 'auto' }}
+          disabled={timer > 0 || resending}
         >
-          {resending ? 'Sending...' : 'Resend OTP'}
+          {resending ? 'Sending...' : timer > 0 ? `Resend in ${timer}s` : 'Resend OTP'}
         </button>
 
         <button type="button" className="link back" onClick={() => navigate('/signup')}>
@@ -102,4 +126,4 @@ const OtpPage = () => {
   );
 };
 
-export default OtpPage;
+export default OTP;

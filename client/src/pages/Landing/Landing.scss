@@ -1,0 +1,48 @@
+@import "../../styles/variables";
+@import "../../styles/mixins";
+
+.landing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, $gradient-start, $gradient-middle, $gradient-end);
+
+  .logo {
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    color: var(--color-muted);
+    margin-bottom: 2rem;
+    max-width: 420px;
+  }
+
+  .primary-cta {
+    @include button-style($primary-color, #fff);
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+  }
+
+  .secondary-link {
+    margin-top: 1rem;
+
+    a {
+      color: $primary-color;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}

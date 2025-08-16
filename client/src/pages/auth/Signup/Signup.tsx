@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import './SignupPage.scss';
-import logo from '../../assets/logo.png';
-import fallbackImage from '../../assets/no-image.svg';
-import { signup } from '../../api/auth';
-import Loader from '../../components/Loader';
+import './Signup.scss';
+import logo from '../../../assets/logo.png';
+import fallbackImage from '../../../assets/no-image.svg';
+import { signup } from '../../../api/auth';
+import Loader from '../../../components/Loader';
 
-const SignupPage = () => {
+const Signup = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: '',
@@ -17,6 +17,7 @@ const SignupPage = () => {
   });
   const [errors, setErrors] = useState<{ name?: string; phone?: string; password?: string; location?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -35,7 +36,7 @@ const SignupPage = () => {
     try {
       setLoading(true);
       await signup(form);
-      navigate('/login');
+      navigate('/otp', { state: { phone: form.phone } });
     } catch (err: any) {
       const data = err.response?.data;
       const fieldErrors = data?.errors;
@@ -45,7 +46,6 @@ const SignupPage = () => {
         const message = data?.message || 'Signup failed';
         setErrors({ general: message });
       }
-
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ const SignupPage = () => {
         <img src={logo} alt="Manacity Logo" className="logo" onError={(e) => (e.currentTarget.src = fallbackImage)} />
         <h2>Create Your Account</h2>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <label>
             Name
             <input type="text" name="name" required value={form.name} onChange={handleChange} />
@@ -77,7 +77,18 @@ const SignupPage = () => {
 
           <label>
             Password
-            <input type="password" name="password" required value={form.password} onChange={handleChange} />
+            <div className="password-field">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                required
+                value={form.password}
+                onChange={handleChange}
+              />
+              <button type="button" className="toggle" onClick={() => setShowPassword((s) => !s)}>
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
             {errors.password && <span className="error">{errors.password}</span>}
           </label>
 
@@ -109,12 +120,10 @@ const SignupPage = () => {
         <div className="links">
           <span onClick={() => navigate('/login')}>Already have an account?</span>
         </div>
-        <div className="back" onClick={() => navigate('/')}>
-          ← Back to Landing
-        </div>
+        <div className="back" onClick={() => navigate('/')}>← Back to Landing</div>
       </motion.div>
     </div>
   );
 };
 
-export default SignupPage;
+export default Signup;

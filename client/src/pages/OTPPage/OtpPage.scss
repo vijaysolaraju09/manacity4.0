@@ -40,18 +40,10 @@
         height: 3rem;
         text-align: center;
         font-size: 1.5rem;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-
-        &:focus {
-          border-color: $primary-color;
-          outline: none;
-        }
       }
     }
 
     .verify-btn {
-      @include button-style($primary-color, #fff);
       width: 100%;
     }
 
@@ -59,12 +51,6 @@
     .back {
       margin-top: 1rem;
       font-size: 0.9rem;
-      color: $primary-color;
-      cursor: pointer;
-
-      &:hover {
-        text-decoration: underline;
-      }
     }
   }
 }

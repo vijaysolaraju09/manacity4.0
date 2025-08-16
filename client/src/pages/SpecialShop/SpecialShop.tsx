@@ -138,6 +138,7 @@ const SpecialShop = () => {
       <div className={styles.toolbar}>
         <input
           type="text"
+          className="input"
           placeholder="Search products"
           value={search}
           onChange={(e) => {
@@ -181,7 +182,7 @@ const SpecialShop = () => {
       {appliedFilters.length > 0 && (
         <div className={styles.applied}>
           {appliedFilters.map((f) => (
-            <button key={f.label} className={styles.chip} onClick={f.onRemove}>
+            <button key={f.label} className="chip chip--selected" onClick={f.onRemove}>
               {f.label} ✕
             </button>
           ))}
@@ -209,6 +210,7 @@ const SpecialShop = () => {
         <div className={styles.pagination}>
           <button
             type="button"
+            className="btn btn-secondary"
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
@@ -219,6 +221,7 @@ const SpecialShop = () => {
           </span>
           <button
             type="button"
+            className="btn btn-secondary"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           >

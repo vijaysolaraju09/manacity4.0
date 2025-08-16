@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   fetchEvents,
   createEvent as apiCreateEvent,
@@ -9,6 +9,7 @@ import {
 import Loader from '../../components/Loader';
 import toast from '../../components/toast';
 import './AdminEvents.scss';
+import useFocusTrap from '../../hooks/useFocusTrap';
 
 interface EventItem {
   _id: string;
@@ -47,6 +48,11 @@ const AdminEvents = () => {
   const [edit, setEdit] = useState<EventItem | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+
+  const createRef = useRef<HTMLFormElement>(null);
+  const editRef = useRef<HTMLFormElement>(null);
+  useFocusTrap<HTMLFormElement>(createRef, createOpen, () => setCreateOpen(false));
+  useFocusTrap<HTMLFormElement>(editRef, !!edit, () => setEdit(null));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -166,15 +172,24 @@ const AdminEvents = () => {
           <tbody>
             {events.map((ev) => (
               <tr key={ev._id}>
-                <td>{ev.title}</td>
-                <td>{new Date(ev.startAt).toLocaleString()}</td>
-                <td>{new Date(ev.endAt).toLocaleString()}</td>
-                <td>{ev.status}</td>
-                <td>{ev.capacity}</td>
-                <td>{ev.registered}</td>
-                <td className="actions">
-                  <button onClick={() => openEdit(ev)}>Edit</button>
-                  <button onClick={() => handleDelete(ev._id)}>Delete</button>
+                <td data-label="Title">{ev.title}</td>
+                <td data-label="Start">{new Date(ev.startAt).toLocaleString()}</td>
+                <td data-label="End">{new Date(ev.endAt).toLocaleString()}</td>
+                <td data-label="Status">
+                  <span className={`status-chip status-${ev.status}`}>{ev.status}</span>
+                </td>
+                <td data-label="Capacity">{ev.capacity}</td>
+                <td data-label="Registered">{ev.registered}</td>
+                <td className="actions" data-label="Actions">
+                  <button aria-label={`Edit ${ev.title}`} onClick={() => openEdit(ev)}>
+                    Edit
+                  </button>
+                  <button
+                    aria-label={`Delete ${ev.title}`}
+                    onClick={() => handleDelete(ev._id)}
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
@@ -197,8 +212,12 @@ const AdminEvents = () => {
       </div>
 
       {createOpen && (
-        <div className="modal">
-          <form className="modal-content" onSubmit={handleCreate}>
+        <div className="modal" role="dialog" aria-modal="true">
+          <form
+            ref={createRef}
+            className="modal-content"
+            onSubmit={handleCreate}
+          >
             <h3>Create Event</h3>
             <label>
               Title
@@ -250,8 +269,12 @@ const AdminEvents = () => {
       )}
 
       {edit && (
-        <div className="modal">
-          <form className="modal-content" onSubmit={handleUpdate}>
+        <div className="modal" role="dialog" aria-modal="true">
+          <form
+            ref={editRef}
+            className="modal-content"
+            onSubmit={handleUpdate}
+          >
             <h3>Edit Event</h3>
             <label>
               Title

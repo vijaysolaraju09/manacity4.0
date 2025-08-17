@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { ProfileHeader, Tabs, OrderCard } from '../../components/base';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import ProfileHeader from '../../components/ui/ProfileHeader';
+import { OrderCard } from '../../components/base';
 import ProductCard from '../../components/ui/ProductCard.tsx';
 import type { RootState } from '../../store';
 import { sampleShops } from '../../data/sampleData';
@@ -13,16 +16,23 @@ import {
   getCurrentUser,
 } from '../../api/profile';
 import { useTheme } from '../../theme/ThemeProvider';
+import ProductModal, { type ProductForm } from './modals/ProductModal';
+import DeleteProductModal from './modals/DeleteProductModal';
 import styles from './Profile.module.scss';
 
 const Profile = () => {
   const user = useSelector((state: RootState) => state.user as any);
   const { theme } = useTheme();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'overview';
 
-  const [activeTab, setActiveTab] = useState('overview');
   const [businessOpen, setBusinessOpen] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductForm | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [shopStatus, setShopStatus] = useState<string | null>(null);
   const [shopForm, setShopForm] = useState({
     name: '',
@@ -66,43 +76,93 @@ const Profile = () => {
       total: 50,
     },
   ];
+  const [products, setProducts] = useState(sampleShops[0].products);
 
-  const products = sampleShops[0].products;
-
-  const tabs: Array<{ key: string; label: string; content: React.ReactNode }> = [
-    {
-      key: 'overview',
-      label: 'Overview',
-      content: <p>Welcome back, {user.name}!</p>,
-    },
-    {
-      key: 'orders',
-      label: 'Orders',
-      content: (
-        <div className={styles.list}>
-          {orders.map((o) => (
-            <OrderCard key={o.date} {...o} />
-          ))}
-        </div>
-      ),
-    },
+  const tabItems = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'orders', label: 'Orders' },
+    { key: 'products', label: 'Products' },
+    { key: 'reviews', label: 'Reviews' },
+    { key: 'settings', label: 'Settings' },
   ];
 
-  if (user.role === 'business') {
-    tabs.push({
-      key: 'products',
-      label: 'Products',
-      content: (
+  const changeTab = (key: string) => setSearchParams({ tab: key });
+
+  const openAddProduct = () => {
+    setEditingProduct(null);
+    setProductModalOpen(true);
+  };
+
+  const openEditProduct = (p: ProductForm) => {
+    setEditingProduct(p);
+    setProductModalOpen(true);
+  };
+
+  const handleSaveProduct = (data: ProductForm) => {
+    if (editingProduct) {
+      setProducts((prev) =>
+        prev.map((p) => (p._id === editingProduct._id ? { ...p, ...data } : p))
+      );
+    } else {
+      setProducts((prev) => [...prev, { ...data, _id: Date.now().toString() }]);
+    }
+    setProductModalOpen(false);
+  };
+
+  const handleDeleteProduct = () => {
+    if (deleteId) {
+      setProducts((prev) => prev.filter((p) => p._id !== deleteId));
+      setDeleteId(null);
+    }
+  };
+
+  let content: React.ReactNode = null;
+  if (activeTab === 'overview') {
+    content = <p>Welcome back, {user.name}!</p>;
+  } else if (activeTab === 'orders') {
+    content = (
+      <div className={styles.list}>
+        {orders.map((o) => (
+          <OrderCard key={o.date} {...o} />
+        ))}
+      </div>
+    );
+  } else if (activeTab === 'products') {
+    content = (
+      <div className={styles.productsTab}>
+        <button onClick={openAddProduct}>Add Product</button>
         <div className={styles.list}>
           {products.map((p) => (
-            <ProductCard key={p._id} product={p} showActions={false} />
+            <div key={p._id} className={styles.productItem}>
+              <ProductCard product={p} showActions={false} />
+              <div className={styles.productActions}>
+                <button onClick={() => openEditProduct(p)}>Edit</button>
+                <button onClick={() => setDeleteId(p._id!)}>Remove</button>
+              </div>
+            </div>
           ))}
         </div>
-      ),
-    });
-    tabs.push({ key: 'reviews', label: 'Reviews', content: <p>No reviews yet.</p> });
+      </div>
+    );
+  } else if (activeTab === 'reviews') {
+    content = <p>No reviews yet.</p>;
+  } else if (activeTab === 'settings') {
+    content = (
+      <div className={styles.settings}>
+        <button onClick={() => navigate('/settings')}>Open Settings</button>
+      </div>
+    );
   }
-
+  const actions = [
+    { label: 'Edit', onClick: () => alert('Edit profile coming soon') },
+    ...(!user.isVerified && user.verificationStatus !== 'pending'
+      ? [{ label: 'Request Verification', onClick: () => setVerifyOpen(true) }]
+      : []),
+    ...(user.role !== 'business' && shopStatus !== 'pending'
+      ? [{ label: 'Request Business', onClick: () => setBusinessOpen(true) }]
+      : []),
+    { label: 'Settings', onClick: () => navigate('/settings') },
+  ];
 
   return (
     <div className={`${styles.profile} ${styles[theme]}`}>
@@ -112,14 +172,7 @@ const Profile = () => {
         role={user.role}
         location={user.location}
         stats={[{ label: 'Orders', value: orders.length }]}
-        actions={[
-          ...(!user.isVerified && user.verificationStatus !== 'pending'
-            ? [{ label: 'Request Verification', onClick: () => setVerifyOpen(true) }]
-            : []),
-          ...(user.role !== 'business' && shopStatus !== 'pending'
-            ? [{ label: 'Request Business', onClick: () => setBusinessOpen(true) }]
-            : []),
-        ]}
+        actions={actions}
       />
       {shopStatus && (
         <p className={`${styles.statusIndicator} ${styles[shopStatus]}`}>
@@ -137,7 +190,23 @@ const Profile = () => {
             : `Verification ${user.verificationStatus}`}
         </p>
       )}
-      <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+      <div className={styles.tabs}>
+        {tabItems.map((t) => (
+          <button
+            key={t.key}
+            className={`${styles.tabButton} ${
+              activeTab === t.key ? styles.tabButtonActive : ''
+            }`}
+            onClick={() => changeTab(t.key)}
+          >
+            {t.label}
+            {activeTab === t.key && (
+              <motion.div layoutId="tab-underline" className={styles.underline} />
+            )}
+          </button>
+        ))}
+      </div>
+      {content}
       <ModalSheet open={businessOpen} onClose={() => setBusinessOpen(false)}>
         <form
           className={styles.businessForm}
@@ -278,6 +347,17 @@ const Profile = () => {
           </div>
         </form>
       </ModalSheet>
+      <ProductModal
+        open={productModalOpen}
+        initial={editingProduct}
+        onClose={() => setProductModalOpen(false)}
+        onSave={handleSaveProduct}
+      />
+      <DeleteProductModal
+        open={Boolean(deleteId)}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDeleteProduct}
+      />
     </div>
   );
 };

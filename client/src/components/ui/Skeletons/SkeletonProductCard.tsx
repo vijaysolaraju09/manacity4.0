@@ -1,5 +1,5 @@
 import Shimmer from '../../Shimmer';
-import styles from '../ProductCard/ProductCard.module.scss';
+import styles from '../ProductCard.module.scss';
 
 const SkeletonProductCard = () => (
   <div className={styles.card}>

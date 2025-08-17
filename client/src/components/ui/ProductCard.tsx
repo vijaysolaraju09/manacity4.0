@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion';
 import { AiFillStar } from 'react-icons/ai';
 import { useDispatch } from 'react-redux';
-import api from '../../../api/client';
-import { addToCart } from '../../../store/slices/cartSlice';
-import fallbackImage from '../../../assets/no-image.svg';
-import WishlistHeart from '../WishlistHeart';
-import PriceBlock from '../PriceBlock';
-import showToast from '../Toast';
+import api from '../../api/client';
+import { addToCart } from '../../store/slices/cartSlice';
+import fallbackImage from '../../assets/no-image.svg';
+import WishlistHeart from './WishlistHeart';
+import PriceBlock from './PriceBlock';
+import showToast from './Toast';
 import styles from './ProductCard.module.scss';
 
 export interface Product {

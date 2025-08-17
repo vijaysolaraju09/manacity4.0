@@ -13,8 +13,8 @@ import Shops from './pages/Shops/Shops';
 import ShopDetails from './pages/ShopDetails/ShopDetails';
 import ProductDetails from './pages/ProductDetails/ProductDetails';
 import EventDetails from './pages/EventDetails/EventDetails';
-import VerifiedUserDetails from './pages/VerifiedUserDetails/VerifiedUserDetails';
-import VerifiedUsers from './pages/VerifiedUsers/VerifiedUsers';
+import VerifiedDetails from './pages/Verified/Details';
+import VerifiedList from './pages/Verified/List';
 import SpecialShop from './pages/SpecialShop/SpecialShop';
 import Settings from './pages/Settings/Settings';
 import Cart from './pages/Cart/Cart';
@@ -89,7 +89,7 @@ function App() {
           <Route element={<TabLayout />}>
             <Route path="/home" element={<Home />} />
             <Route path="/shops" element={<Shops />} />
-            <Route path="/verified-users" element={<VerifiedUsers />} />
+            <Route path="/verified-users" element={<VerifiedList />} />
             <Route path="/events" element={<Events />} />
             <Route path="/special-shop" element={<SpecialShop />} />
             <Route path="/voice-order" element={<VoiceOrder />} />
@@ -104,7 +104,7 @@ function App() {
           <Route path="/shops/:id" element={<ShopDetails />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/events/:id" element={<EventDetails />} />
-          <Route path="/verified-users/:id" element={<VerifiedUserDetails />} />
+          <Route path="/verified-users/:id" element={<VerifiedDetails />} />
           <Route path="/orders/:id" element={<OrderDetail />} />
           <Route path="/cart" element={<Cart />} />
         </Route>

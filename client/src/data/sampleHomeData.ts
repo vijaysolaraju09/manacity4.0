@@ -32,6 +32,7 @@ export const sampleVerifiedUsers = [
     bio: "Experienced electrician available for all household needs.",
     contact: "1234567890",
     avatar: "https://source.unsplash.com/200x200/?electrician",
+    rating: 4.5,
   },
   {
     _id: "v2",
@@ -41,6 +42,7 @@ export const sampleVerifiedUsers = [
     bio: "Reliable plumbing services for homes and offices.",
     contact: "9876543210",
     avatar: "https://source.unsplash.com/200x200/?plumber",
+    rating: 4.2,
   },
   {
     _id: "v3",
@@ -50,6 +52,7 @@ export const sampleVerifiedUsers = [
     bio: "Crafting quality wooden furniture and fittings.",
     contact: "9988776655",
     avatar: "https://source.unsplash.com/200x200/?carpenter",
+    rating: 4.8,
   },
 ];
 

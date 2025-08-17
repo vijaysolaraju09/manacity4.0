@@ -1,0 +1,54 @@
+.card {
+  position: relative;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0.5rem;
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #10b981;
+  font-size: 1.25rem;
+}
+
+.info h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.profession {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.location {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.25rem;
+  color: #fbbf24;
+}
+
+.rating span {
+  margin-left: 4px;
+  font-size: 0.85rem;
+  color: #555;
+}

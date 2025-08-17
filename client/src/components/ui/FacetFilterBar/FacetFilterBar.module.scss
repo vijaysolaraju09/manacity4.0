@@ -1,0 +1,58 @@
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-card);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  input,
+  select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    flex: 1;
+    min-width: 140px;
+  }
+}
+
+.chips {
+  display: flex;
+  overflow-x: auto;
+  gap: 0.5rem;
+  align-items: center;
+
+  button {
+    flex-shrink: 0;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+
+    &.active {
+      background: $primary-color;
+      color: var(--color-on-primary);
+      border-color: $primary-color;
+    }
+  }
+
+  .openNow {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    margin-left: auto;
+  }
+}

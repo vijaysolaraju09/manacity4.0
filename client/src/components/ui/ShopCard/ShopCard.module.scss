@@ -1,0 +1,59 @@
+.card {
+  background: var(--color-card);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+  }
+
+  .info {
+    padding: 0.75rem;
+
+    h3 {
+      margin: 0 0 0.25rem;
+      font-size: 1.1rem;
+    }
+
+    .category {
+      margin: 0;
+      color: var(--color-muted);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      align-items: center;
+    }
+
+    .rating {
+      color: $primary-color;
+    }
+
+    .distance {
+      color: var(--color-muted);
+    }
+
+    .status {
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      &.open {
+        background: var(--color-success);
+        color: var(--color-on-primary);
+      }
+      &.closed {
+        background: var(--color-danger);
+        color: var(--color-on-primary);
+      }
+    }
+  }
+}

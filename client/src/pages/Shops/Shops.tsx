@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../api/client";
 import { sampleShops } from "../../data/sampleData";
 import Shimmer from "../../components/Shimmer";
 import styles from "./Shops.module.scss";
-import fallbackImage from "../../assets/no-image.svg";
+import FacetFilterBar from "../../components/ui/FacetFilterBar/FacetFilterBar";
+import ShopCard from "../../components/ui/ShopCard/ShopCard";
 
 interface Shop {
   _id: string;
@@ -14,37 +14,51 @@ interface Shop {
   location: string;
   isOpen?: boolean;
   image?: string;
+  logo?: string;
+  rating?: number;
+  distance?: number;
+  products?: { _id: string }[];
 }
 
 const Shops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState("");
-  const [location, setLocation] = useState("");
-  const [search, setSearch] = useState("");
-  const [openOnly, setOpenOnly] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [category, setCategory] = useState(searchParams.get("category") || "");
+  const [location, setLocation] = useState(searchParams.get("location") || "");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [openOnly, setOpenOnly] = useState(searchParams.get("open") === "true");
+  const [sort, setSort] = useState(searchParams.get("sort") || "rating");
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (search) params.append("search", search);
-    if (category) params.append("category", category);
-    if (location) params.append("location", location);
-    if (openOnly) params.append("isOpen", "true");
+    const params: Record<string, string> = {};
+    if (search) params.search = search;
+    if (category) params.category = category;
+    if (location) params.location = location;
+    if (openOnly) params.open = "true";
+    if (sort) params.sort = sort;
+    setSearchParams(params, { replace: true });
+  }, [search, category, location, openOnly, sort, setSearchParams]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
     api
       .get(`/shops?${params.toString()}`)
       .then((res) => {
         if (Array.isArray(res.data) && res.data.length > 0) {
           setShops(res.data);
         } else {
-          setShops(sampleShops);
+          setShops(sampleShops as unknown as Shop[]);
         }
       })
       .catch(() => {
-        setShops(sampleShops);
+        setShops(sampleShops as unknown as Shop[]);
       })
       .finally(() => setLoading(false));
-  }, [search, category, location, openOnly]);
+  }, [searchParams]);
 
   const filteredShops = shops.filter((shop) => {
     return (
@@ -55,54 +69,34 @@ const Shops = () => {
     );
   });
 
+  const sortedShops = [...filteredShops].sort((a, b) => {
+    if (sort === "rating") return (b.rating || 0) - (a.rating || 0);
+    if (sort === "distance") return (a.distance || 0) - (b.distance || 0);
+    if (sort === "productCount")
+      return (b.products?.length || 0) - (a.products?.length || 0);
+    return 0;
+  });
+
   const categories = ["Restaurant", "Mechanic", "Fashion", "Grocery"];
   const locations = ["Town Center", "West End", "East Side", "North Market"];
 
   return (
     <div className={styles.shops}>
       <h2>Explore Shops</h2>
-      <div className={styles.searchBar}>
-        <input
-          type="text"
-          placeholder="Search shops..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select value={location} onChange={(e) => setLocation(e.target.value)}>
-          <option value="">All Locations</option>
-          {locations.map((loc) => (
-            <option key={loc} value={loc}>
-              {loc}
-            </option>
-          ))}
-        </select>
-        <label className={styles.toggle}>
-          <input
-            type="checkbox"
-            checked={openOnly}
-            onChange={(e) => setOpenOnly(e.target.checked)}
-          />
-          Only Open Shops
-        </label>
-      </div>
-
-      <div className={styles.categoryRow}>
-        <button
-          className={!category ? styles.active : ""}
-          onClick={() => setCategory("")}
-        >
-          All
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            className={category === cat ? styles.active : ""}
-            onClick={() => setCategory(cat)}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+      <FacetFilterBar
+        search={search}
+        onSearch={setSearch}
+        location={location}
+        locations={locations}
+        onLocationChange={setLocation}
+        category={category}
+        categories={categories}
+        onCategoryChange={setCategory}
+        openOnly={openOnly}
+        onOpenChange={setOpenOnly}
+        sort={sort}
+        onSortChange={setSort}
+      />
 
       <div className={styles.list}>
         {loading
@@ -115,33 +109,17 @@ const Shops = () => {
                 </div>
               </div>
             ))
-          : filteredShops.map((shop) => (
-              <motion.div
-                whileHover={{ scale: 1.02 }}
+          : sortedShops.map((shop) => (
+              <ShopCard
                 key={shop._id}
-                className={styles.card}
+                shop={{
+                  ...shop,
+                  distance: shop.distance,
+                  rating: shop.rating,
+                  isOpen: shop.isOpen,
+                }}
                 onClick={() => navigate(`/shops/${shop._id}`)}
-              >
-                <img
-                  src={shop.image || "https://via.placeholder.com/150"}
-                  alt={shop.name}
-                  onError={(e) => (e.currentTarget.src = fallbackImage)}
-                />
-                <div className={styles.info}>
-                  <h3>{shop.name}</h3>
-                  <p>{shop.category}</p>
-                  <p>{shop.location}</p>
-                  {shop.isOpen !== undefined && (
-                    <span
-                      className={`${styles.badge} ${
-                        shop.isOpen ? styles.open : styles.closed
-                      }`}
-                    >
-                      {shop.isOpen ? "Open" : "Closed"}
-                    </span>
-                  )}
-                </div>
-              </motion.div>
+              />
             ))}
       </div>
     </div>
@@ -149,3 +127,4 @@ const Shops = () => {
 };
 
 export default Shops;
+

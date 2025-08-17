@@ -6,6 +6,8 @@ import api from '../../api/client';
 import { sampleShops } from '../../data/sampleData';
 import Shimmer from '../../components/Shimmer';
 import ProductCard, { type Product } from '../../components/ui/ProductCard';
+import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
+import EmptyState from '../../components/ui/EmptyState';
 import './ShopDetails.scss';
 import fallbackImage from '../../assets/no-image.svg';
 
@@ -80,10 +82,7 @@ const ShopDetails = () => {
         </div>
         <div className="product-grid">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="placeholder-card">
-              <Shimmer className="rounded" style={{ height: 140 }} />
-              <Shimmer style={{ height: 16, marginTop: 8, width: '60%' }} />
-            </div>
+            <SkeletonProductCard key={i} />
           ))}
         </div>
       </div>
@@ -94,14 +93,14 @@ const ShopDetails = () => {
       <div className="hero">
         <img
           className="cover"
-          src={shop.banner || shop.image || 'https://via.placeholder.com/500x250'}
+          src={shop.banner || shop.image || fallbackImage}
           alt={shop.name}
           onError={(e) => (e.currentTarget.src = fallbackImage)}
         />
         <div className="content">
           <img
             className="logo"
-            src={shop.image || 'https://via.placeholder.com/80'}
+            src={shop.image || fallbackImage}
             alt={shop.name}
             onError={(e) => (e.currentTarget.src = fallbackImage)}
           />
@@ -138,9 +137,13 @@ const ShopDetails = () => {
       </div>
 
       <div className="product-grid">
-        {filtered.map((product) => (
-          <ProductCard key={product._id} product={product} />
-        ))}
+        {filtered.length === 0 ? (
+          <EmptyState message="No products found" />
+        ) : (
+          filtered.map((product) => (
+            <ProductCard key={product._id} product={product} />
+          ))
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ProfileHeader, Tabs, OrderCard } from '../../components/base';
-import ProductCard from '../../components/ui/ProductCard';
+import ProductCard from '../../components/ui/ProductCard.tsx';
 import type { RootState } from '../../store';
 import { sampleShops } from '../../data/sampleData';
 import { setUser } from '../../store/slices/userSlice';

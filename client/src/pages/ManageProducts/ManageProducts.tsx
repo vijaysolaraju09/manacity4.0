@@ -9,7 +9,7 @@ import {
   type Product,
 } from '../../store/slices/productSlice';
 import Loader from '../../components/Loader';
-import ProductCard from '../../components/ui/ProductCard';
+import ProductCard from '../../components/ui/ProductCard.tsx';
 import showToast from '../../components/ui/Toast';
 import styles from './ManageProducts.module.scss';
 

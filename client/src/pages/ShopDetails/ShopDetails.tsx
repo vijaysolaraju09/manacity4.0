@@ -5,7 +5,7 @@ import { FiPhone } from 'react-icons/fi';
 import api from '../../api/client';
 import { sampleShops } from '../../data/sampleData';
 import Shimmer from '../../components/Shimmer';
-import ProductCard, { type Product } from '../../components/ui/ProductCard';
+import ProductCard, { type Product } from '../../components/ui/ProductCard.tsx';
 import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
 import EmptyState from '../../components/ui/EmptyState';
 import './ShopDetails.scss';

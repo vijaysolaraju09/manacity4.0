@@ -1,0 +1,44 @@
+@import "../../styles/variables";
+@import "../../styles/mixins";
+
+.receivedOrders {
+  padding: 1rem;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  .chip {
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: 999px;
+    background: var(--color-surface);
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+}
+
+.empty {
+  text-align: center;
+  margin-top: 2rem;
+
+  img {
+    width: 150px;
+    margin-bottom: 1rem;
+  }
+}
+
+.card {
+  margin-bottom: 0.75rem;
+}
+

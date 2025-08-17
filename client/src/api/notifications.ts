@@ -11,11 +11,28 @@ export interface Notification {
   isRead?: boolean;
 }
 
-export const fetchNotifications = async (): Promise<Notification[]> => {
-  const res = await api.get('/notifications');
-  return res.data;
+export interface NotificationsResponse {
+  notifications: Notification[];
+  hasMore: boolean;
+}
+
+export const fetchNotifications = async (
+  {
+    page = 1,
+    limit = 10,
+    type,
+  }: { page?: number; limit?: number; type?: string } = {},
+): Promise<NotificationsResponse> => {
+  const res = await api.get('/notifications', {
+    params: { page, limit, type },
+  });
+  if (Array.isArray(res.data)) {
+    return { notifications: res.data, hasMore: res.data.length === limit };
+  }
+  return res.data as NotificationsResponse;
 };
 
 export const markNotificationRead = async (id: string) => {
   await api.post(`/notifications/view/${id}`);
 };
+

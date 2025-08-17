@@ -22,8 +22,9 @@ import Events from './pages/Events/Events';
 import VoiceOrder from './pages/VoiceOrder/VoiceOrder';
 import OrderNow from './pages/OrderNow/OrderNow';
 import ManageProducts from './pages/ManageProducts/ManageProducts';
-import ReceivedOrders from './pages/ReceivedOrders/ReceivedOrders';
-import MyOrders from './pages/MyOrders/MyOrders';
+import ReceivedOrders from './pages/Orders/ReceivedOrders';
+import MyOrders from './pages/Orders/MyOrders';
+import OrderDetail from './pages/Orders/OrderDetail';
 import Notifications from './pages/Notifications/Notifications';
 import TabLayout from './layouts/TabLayout';
 import AdminLogin from './pages/AdminLogin/AdminLogin';
@@ -104,6 +105,7 @@ function App() {
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/events/:id" element={<EventDetails />} />
           <Route path="/verified-users/:id" element={<VerifiedUserDetails />} />
+          <Route path="/orders/:id" element={<OrderDetail />} />
           <Route path="/cart" element={<Cart />} />
         </Route>
       </Routes>

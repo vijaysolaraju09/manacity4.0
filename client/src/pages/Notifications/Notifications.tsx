@@ -6,12 +6,13 @@ import {
   markNotificationRead,
   type Notification,
 } from '../../api/notifications';
-import Shimmer from '../../components/Shimmer';
+import NotificationCard, {
+  SkeletonNotificationCard,
+} from '../../components/ui/NotificationCard';
 
 const filterLabels: Record<string, string> = {
   all: 'All',
   orders: 'Orders',
-  admin: 'Admin',
   offers: 'Offers',
   system: 'System',
 };
@@ -20,10 +21,13 @@ const filters = Object.keys(filterLabels);
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchParams, setSearchParams] = useSearchParams();
-  const touchStart = useRef(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,10 +36,48 @@ const Notifications = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    fetchNotifications()
-      .then((data) => setNotifications(data))
-      .finally(() => setLoading(false));
-  }, []);
+    setNotifications([]);
+    setPage(1);
+    setHasMore(true);
+  }, [activeFilter]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetchNotifications({
+      page,
+      type: activeFilter === 'all' ? undefined : activeFilter,
+    })
+      .then((data) => {
+        if (cancelled) return;
+        setNotifications((prev) =>
+          page === 1 ? data.notifications : [...prev, ...data.notifications],
+        );
+        setHasMore(data.hasMore);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+          setInitialLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [page, activeFilter]);
+
+  useEffect(() => {
+    if (!hasMore || loading) return;
+    const el = loaderRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setPage((p) => p + 1);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, loading]);
 
   const handleMarkRead = async (id: string) => {
     setNotifications((prev) =>
@@ -44,23 +86,21 @@ const Notifications = () => {
     try {
       await markNotificationRead(id);
     } catch {
-      // revert on failure
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, isRead: false } : n)),
       );
     }
   };
 
-  const filtered = notifications.filter(
-    (n) => activeFilter === 'all' || n.type === activeFilter,
+  const groups = notifications.reduce<Record<string, Notification[]>>(
+    (acc, n) => {
+      const date = new Date(n.createdAt).toDateString();
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(n);
+      return acc;
+    },
+    {},
   );
-
-  const groups = filtered.reduce<Record<string, Notification[]>>((acc, n) => {
-    const date = new Date(n.createdAt).toDateString();
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(n);
-    return acc;
-  }, {});
 
   return (
     <div className="notifications-page">
@@ -79,58 +119,40 @@ const Notifications = () => {
           </button>
         ))}
       </div>
-      {loading ? (
-        <div className="notif-skeletons">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="notif-item">
-              <Shimmer width={40} height={40} className="rounded" />
-              <div className="info">
-                <Shimmer style={{ height: 14, width: '60%', marginBottom: 6 }} />
-                <Shimmer style={{ height: 12, width: '80%' }} />
-              </div>
-            </div>
-          ))}
-        </div>
+      {initialLoading ? (
+        Array.from({ length: 3 }).map((_, i) => (
+          <SkeletonNotificationCard key={i} />
+        ))
       ) : Object.keys(groups).length === 0 ? (
         <div className="empty-state">No notifications</div>
       ) : (
-        Object.entries(groups).map(([date, items]) => (
-          <div key={date} className="notif-group">
-            <h4 className="group-date">{date}</h4>
-            {items.map((n) => (
-              <div
-                key={n._id}
-                className={`notif-item ${n.isRead ? 'read' : ''}`}
-                onTouchStart={(e) => (touchStart.current = e.touches[0].clientX)}
-                onTouchEnd={(e) => {
-                  const diff = touchStart.current - e.changedTouches[0].clientX;
-                  if (diff > 50) handleMarkRead(n._id);
-                }}
-              >
-                {n.image && (
-                  <img
-                    src={n.image}
-                    alt=""
-                    onClick={() => n.link && navigate(n.link)}
-                  />
-                )}
-                <div className="info" onClick={() => n.link && navigate(n.link)}>
-                  <h5>{n.title}</h5>
-                  <p>{n.message}</p>
-                </div>
-                <button
-                  className="mark-btn"
-                  onClick={() => handleMarkRead(n._id)}
-                >
-                  Mark read
-                </button>
-              </div>
-            ))}
-          </div>
-        ))
+        <>
+          {Object.entries(groups).map(([date, items]) => (
+            <div key={date} className="notif-group">
+              <h4 className="group-date">{date}</h4>
+              {items.map((n) => (
+                <NotificationCard
+                  key={n._id}
+                  icon={n.image}
+                  title={n.title}
+                  message={n.message}
+                  timestamp={n.createdAt}
+                  read={n.isRead}
+                  ctaLabel={n.link ? 'View' : undefined}
+                  onClick={() => n.link && navigate(n.link)}
+                  onCtaClick={() => n.link && navigate(n.link)}
+                  onSwipeLeft={() => handleMarkRead(n._id)}
+                />
+              ))}
+            </div>
+          ))}
+          {loading && <SkeletonNotificationCard />}
+          <div ref={loaderRef} />
+        </>
       )}
     </div>
   );
 };
 
 export default Notifications;
+

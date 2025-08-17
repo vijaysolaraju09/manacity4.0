@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/client';
 import { sampleSpecialProducts } from '../../data/sampleHomeData';
 import { FacetFilterBar } from '../../components/base';
-import ProductCard from '../../components/ui/ProductCard';
+import ProductCard from '../../components/ui/ProductCard.tsx';
 import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
 import EmptyState from '../../components/ui/EmptyState';
 import styles from './SpecialShop.module.scss';

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import Shimmer from '../../components/Shimmer';
-import ProductCard from '../../components/ui/ProductCard';
+import ProductCard from '../../components/ui/ProductCard.tsx';
 import SectionHeader from '../../components/ui/SectionHeader';
 import HorizontalCarousel from '../../components/ui/HorizontalCarousel';
 import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';

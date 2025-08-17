@@ -9,7 +9,7 @@ import { addToCart } from "../../store/slices/cartSlice";
 import fallbackImage from "../../assets/no-image.svg";
 import PriceBlock from "../../components/ui/PriceBlock";
 import HorizontalCarousel from "../../components/ui/HorizontalCarousel";
-import ProductCard from "../../components/ui/ProductCard";
+import ProductCard from "../../components/ui/ProductCard.tsx";
 import SectionHeader from "../../components/ui/SectionHeader";
 import { QuantityStepper } from "../../components/base";
 

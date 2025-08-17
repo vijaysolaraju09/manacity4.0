@@ -20,6 +20,22 @@ interface Event {
   registeredUsers?: { user: string }[];
 }
 
+const getCalendarUrl = (event: Event) => {
+  const date = event.startDate || event.date;
+  if (!date) return "#";
+  const start = new Date(date)
+    .toISOString()
+    .replace(/-|:|\.\d\d\d/g, "");
+  const end = new Date(new Date(date).getTime() + 60 * 60 * 1000)
+    .toISOString()
+    .replace(/-|:|\.\d\d\d/g, "");
+  return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+    event.name
+  )}&dates=${start}/${end}&details=${encodeURIComponent(
+    event.description
+  )}&location=${encodeURIComponent(event.location)}`;
+};
+
 const EventDetails = () => {
   const { id } = useParams();
   const [event, setEvent] = useState<Event | null>(null);
@@ -78,7 +94,7 @@ const EventDetails = () => {
       .post(`/events/${id}/register`)
       .then(() => {
         setRegistered(true);
-        setMessage("Registered successfully!");
+        setMessage("You're registered!");
         setEvent((prev) =>
           prev
             ? {
@@ -140,8 +156,17 @@ const EventDetails = () => {
         >
           {registering ? <Loader /> : registered ? 'Registered' : 'Register Now'}
         </button>
-
         {message && <p className="message">{message}</p>}
+        {registered && (
+          <a
+            href={getCalendarUrl(event)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="add-calendar-btn"
+          >
+            Add to Calendar
+          </a>
+        )}
 
         {leaderboard.length > 0 && (
           <div className="leaderboard">

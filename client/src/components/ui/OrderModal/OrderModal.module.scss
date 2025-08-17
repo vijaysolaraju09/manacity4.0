@@ -1,0 +1,50 @@
+.modal {
+  padding: 1rem;
+
+  .product {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    img {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+  }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    button {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 8px;
+    }
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+
+    button {
+      padding: 0.5rem 1rem;
+      background: var(--color-primary, #1a1a1a);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+    }
+  }
+}

@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AiFillStar } from 'react-icons/ai';
-import { FiPhone } from 'react-icons/fi';
+import { FiPhone, FiArrowLeft, FiShare2 } from 'react-icons/fi';
 import api from '../../api/client';
 import { sampleShops } from '../../data/sampleData';
 import Shimmer from '../../components/Shimmer';
 import ProductCard, { type Product } from '../../components/ui/ProductCard.tsx';
 import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
 import EmptyState from '../../components/ui/EmptyState';
+import OrderModal from '../../components/ui/OrderModal/OrderModal';
+import showToast from '../../components/ui/Toast';
 import './ShopDetails.scss';
 import fallbackImage from '../../assets/no-image.svg';
 
@@ -23,6 +25,7 @@ interface Shop {
   owner?: string;
   rating?: number;
   contact?: string;
+  isOpen?: boolean;
 }
 
 const ShopDetails = () => {
@@ -33,6 +36,8 @@ const ShopDetails = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('relevance');
+  const [selected, setSelected] = useState<Product | null>(null);
+  const [orderOpen, setOrderOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -90,6 +95,30 @@ const ShopDetails = () => {
 
   return (
     <div className="shop-details">
+      <div className="mini-toolbar">
+        <button onClick={() => window.history.back()} aria-label="Back">
+          <FiArrowLeft />
+        </button>
+        {shop.contact && (
+          <a href={`tel:${shop.contact}`} aria-label="Call">
+            <FiPhone />
+          </a>
+        )}
+        <button
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({ title: shop.name, url: window.location.href });
+            } else {
+              navigator.clipboard.writeText(window.location.href);
+              showToast('Link copied');
+            }
+          }}
+          aria-label="Share"
+        >
+          <FiShare2 />
+        </button>
+      </div>
+
       <div className="hero">
         <img
           className="cover"
@@ -97,27 +126,19 @@ const ShopDetails = () => {
           alt={shop.name}
           onError={(e) => (e.currentTarget.src = fallbackImage)}
         />
-        <div className="content">
-          <img
-            className="logo"
-            src={shop.image || fallbackImage}
-            alt={shop.name}
-            onError={(e) => (e.currentTarget.src = fallbackImage)}
-          />
-          <div className="info">
-            <h2>{shop.name}</h2>
-            {shop.rating && (
-              <div className="rating">
-                <AiFillStar color="var(--color-warning)" />
-                <span>{shop.rating.toFixed(1)}</span>
-              </div>
-            )}
-            <p className="area">{shop.location}</p>
-          </div>
-          {shop.contact && (
-            <a href={`tel:${shop.contact}`} className="call">
-              <FiPhone /> Call
-            </a>
+        <div className="overlay">
+          <h2>{shop.name}</h2>
+          {shop.rating && (
+            <div className="rating">
+              <AiFillStar color="var(--color-warning)" />
+              <span>{shop.rating.toFixed(1)}</span>
+            </div>
+          )}
+          <p className="address">{shop.address || shop.location}</p>
+          {shop.isOpen !== undefined && (
+            <span className={`status ${shop.isOpen ? 'open' : 'closed'}`}>
+              {shop.isOpen ? 'Open' : 'Closed'}
+            </span>
           )}
         </div>
       </div>
@@ -141,10 +162,24 @@ const ShopDetails = () => {
           <EmptyState message="No products found" />
         ) : (
           filtered.map((product) => (
-            <ProductCard key={product._id} product={product} />
+            <ProductCard
+              key={product._id}
+              product={product}
+              showActions={false}
+              onClick={() => {
+                setSelected(product);
+                setOrderOpen(true);
+              }}
+            />
           ))
         )}
       </div>
+      <OrderModal
+        open={orderOpen}
+        onClose={() => setOrderOpen(false)}
+        product={selected}
+        shopId={shop._id}
+      />
     </div>
   );
 };

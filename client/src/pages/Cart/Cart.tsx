@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import {
-  OrderLineItem,
-  OrderLineItemSkeleton,
-  CartSummary,
-} from '../../components/base';
+import { useNavigate } from 'react-router-dom';
+import QuantityStepper from '../../components/ui/QuantityStepper/QuantityStepper';
+import PriceBlock from '../../components/ui/PriceBlock';
+import EmptyState from '../../components/ui/EmptyState';
+import fallbackImage from '../../assets/no-image.svg';
 import { removeFromCart, updateQuantity } from '../../store/slices/cartSlice';
 import type { RootState } from '../../store';
 import styles from './Cart.module.scss';
@@ -12,67 +11,80 @@ import styles from './Cart.module.scss';
 const Cart = () => {
   const items = useSelector((state: RootState) => state.cart.items);
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(true);
-  const [coupon, setCoupon] = useState('');
-  const [discount, setDiscount] = useState(0);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const discount = 0;
+  const fee = items.length > 0 && subtotal <= 200 ? 40 : 0;
+  const total = subtotal - discount + fee;
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const delivery = items.length > 0 && subtotal <= 200 ? 40 : 0;
-
-  const applyCoupon = () => {
-    if (coupon.trim().toLowerCase() === 'save10') {
-      setDiscount(Math.round(subtotal * 0.1));
-    } else {
-      setDiscount(0);
-    }
-  };
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        image={fallbackImage}
+        message="Your cart is empty"
+        ctaLabel="Browse shops"
+        onCtaClick={() => navigate('/shops')}
+      />
+    );
+  }
 
   return (
     <div className={styles.cart}>
-      <h2>Your Cart</h2>
-      {loading ? (
-        <div className={styles.list}>
-          {[1, 2].map((i) => (
-            <OrderLineItemSkeleton key={i} />
+      <div className={styles.content}>
+        <div className={styles.items}>
+          {items.map((it) => (
+            <div key={it.id} className={styles.item}>
+              <img src={it.image || fallbackImage} alt={it.name} />
+              <div className={styles.details}>
+                <h4 className={styles.title}>{it.name}</h4>
+                <PriceBlock price={it.price} />
+              </div>
+              <div className={styles.controls}>
+                <QuantityStepper
+                  value={it.quantity}
+                  onChange={(q) =>
+                    dispatch(updateQuantity({ id: it.id, quantity: q }))
+                  }
+                  min={1}
+                />
+                <button
+                  type="button"
+                  className={styles.remove}
+                  onClick={() => dispatch(removeFromCart(it.id))}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
           ))}
         </div>
-      ) : items.length === 0 ? (
-        <p className={styles.empty}>Your cart is empty.</p>
-      ) : (
-        <div className={styles.content}>
-          <div className={styles.list}>
-            {items.map((it) => (
-              <OrderLineItem
-                key={it.id}
-                image={it.image}
-                title={it.name}
-                price={it.price}
-                quantity={it.quantity}
-                onQuantityChange={(q) =>
-                  dispatch(updateQuantity({ id: it.id, quantity: q }))
-                }
-                onRemove={() => dispatch(removeFromCart(it.id))}
-              />
-            ))}
+
+        <div className={styles.summary}>
+          <div className={styles.row}>
+            <span>Subtotal</span>
+            <span>₹{subtotal}</span>
           </div>
-          <CartSummary
-            subtotal={subtotal}
-            discount={discount}
-            delivery={delivery}
-            coupon={coupon}
-            onCouponChange={setCoupon}
-            onApplyCoupon={applyCoupon}
-            onCheckout={() => {
-              /* placeholder */
-            }}
-          />
+          <div className={styles.row}>
+            <span>Discount</span>
+            <span>-₹{discount}</span>
+          </div>
+          <div className={styles.row}>
+            <span>Fee</span>
+            <span>₹{fee}</span>
+          </div>
+          <div className={`${styles.row} ${styles.total}`}>
+            <span>Total</span>
+            <span>₹{total}</span>
+          </div>
+          <button type="button" className={styles.checkout}>
+            Checkout
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 };

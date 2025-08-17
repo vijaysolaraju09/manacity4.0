@@ -1,5 +1,23 @@
 .empty {
   text-align: center;
-  padding: var(--spacing-lg) 0;
+  padding: var(--space-6) 0;
   color: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.image {
+  width: 160px;
+  height: auto;
+}
+
+.cta {
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
 }

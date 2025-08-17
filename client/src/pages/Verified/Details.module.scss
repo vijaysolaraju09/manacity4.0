@@ -1,0 +1,109 @@
+.details {
+  padding: 1rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.info h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.badge {
+  color: #10b981;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  color: #fbbf24;
+  margin-top: 0.25rem;
+}
+
+.rating span {
+  margin-left: 4px;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.bio,
+.stats,
+.reviews {
+  margin-top: 1.5rem;
+}
+
+.stats ul {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+  padding: 0;
+}
+
+.stats li {
+  text-align: center;
+}
+
+.stats li span {
+  display: block;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.contactButtons {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.contactButtons a {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: 8px;
+  color: #fff;
+}
+
+.contactButtons a:first-child {
+  background: #25d366;
+}
+
+.contactButtons a:last-child {
+  background: #1e40af;
+}
+
+.review {
+  border-top: 1px solid #eee;
+  padding: 0.75rem 0;
+}
+
+.reviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.reviewRating {
+  display: flex;
+  align-items: center;
+  color: #fbbf24;
+}
+
+.reviewRating span {
+  margin-left: 4px;
+  font-size: 0.85rem;
+  color: #555;
+}

@@ -118,7 +118,25 @@ export const sampleVerifiedUser = {
   location: 'Town Center',
   contact: '1234567890',
   avatar: 'https://source.unsplash.com/300x200/?portrait',
-  rating: 4,
+  rating: 4.3,
+  stats: {
+    jobsCompleted: 120,
+    yearsExperience: 5,
+  },
+  reviews: [
+    {
+      _id: 'r1',
+      reviewer: 'John',
+      comment: 'Great service!',
+      rating: 5,
+    },
+    {
+      _id: 'r2',
+      reviewer: 'Mary',
+      comment: 'Very professional.',
+      rating: 4,
+    },
+  ],
 };
 
 export const sampleEvent = {

@@ -5,21 +5,21 @@ import {
   acceptVerification,
   rejectVerification,
 } from '../../api/admin';
+import DataTable, { type Column } from '../../components/admin/DataTable';
+import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
 import './VerificationRequests.scss';
 
 interface Request {
   _id: string;
-  user: {
-    _id: string;
-    name: string;
-    phone: string;
-  };
+  user: { _id: string; name: string; phone: string };
   profession: string;
   bio: string;
   status: string;
   createdAt: string;
 }
+
+type RequestRow = Request & { actions?: string };
 
 interface RequestResponse {
   requests: Request[];
@@ -31,7 +31,7 @@ interface RequestResponse {
 const VerificationRequests = () => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(false);
-  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [actionId, setActionId] = useState('');
   const [professionInput, setProfessionInput] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -54,10 +54,9 @@ const VerificationRequests = () => {
           profession,
         });
         setRequests(data.requests);
-        setPages(data.pages);
+        setTotal(data.total);
       } catch {
         setRequests([]);
-        setPages(1);
       } finally {
         setLoading(false);
       }
@@ -95,9 +94,7 @@ const VerificationRequests = () => {
     try {
       if (newStatus === 'approved') await acceptVerification(id);
       else await rejectVerification(id);
-      showToast(
-        `Request ${newStatus === 'approved' ? 'approved' : 'rejected'}`,
-      );
+      showToast(`Request ${newStatus === 'approved' ? 'approved' : 'rejected'}`);
     } catch {
       setRequests(prev);
       showToast('Failed to update request', 'error');
@@ -105,6 +102,43 @@ const VerificationRequests = () => {
       setActionId('');
     }
   };
+
+  const columns: Column<RequestRow>[] = [
+    { key: 'name', label: 'Name', render: (r) => r.user.name },
+    { key: 'phone', label: 'Phone', render: (r) => r.user.phone },
+    { key: 'profession', label: 'Profession' },
+    { key: 'bio', label: 'Bio' },
+    {
+      key: 'createdAt',
+      label: 'Requested At',
+      render: (r) => new Date(r.createdAt).toLocaleDateString(),
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (r) => <StatusChip status={r.status as any} />,
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (r) => (
+        <>
+          <button
+            onClick={() => handleAction(r.user._id, 'approved')}
+            disabled={actionId === r.user._id}
+          >
+            Accept
+          </button>
+          <button
+            onClick={() => handleAction(r.user._id, 'rejected')}
+            disabled={actionId === r.user._id}
+          >
+            Reject
+          </button>
+        </>
+      ),
+    },
+  ];
 
   return (
     <div className="verification-requests">
@@ -127,63 +161,15 @@ const VerificationRequests = () => {
           onBlur={() => updateParam('profession', professionInput)}
         />
       </div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Profession</th>
-              <th>Bio</th>
-              <th>Requested At</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map((req) => (
-              <tr key={req._id}>
-                <td>{req.user.name}</td>
-                <td>{req.user.phone}</td>
-                <td>{req.profession}</td>
-                <td>{req.bio}</td>
-                <td>{new Date(req.createdAt).toLocaleDateString()}</td>
-                <td>{req.status}</td>
-                <td>
-                  <button
-                    onClick={() => handleAction(req.user._id, 'approved')}
-                    disabled={actionId === req.user._id}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    onClick={() => handleAction(req.user._id, 'rejected')}
-                    disabled={actionId === req.user._id}
-                  >
-                    Reject
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      <div className="pagination">
-        <button disabled={page <= 1} onClick={() => changePage(page - 1)}>
-          Prev
-        </button>
-        <span>
-          {page} / {pages}
-        </span>
-        <button
-          disabled={page >= pages}
-          onClick={() => changePage(page + 1)}
-        >
-          Next
-        </button>
-      </div>
+      <DataTable<RequestRow>
+        columns={columns}
+        rows={requests as RequestRow[]}
+        page={page}
+        pageSize={requests.length || 1}
+        total={total}
+        onPageChange={changePage}
+        loading={loading}
+      />
     </div>
   );
 };

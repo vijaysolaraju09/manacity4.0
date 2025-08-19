@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { fetchMetrics, fetchMetricSeries, type MetricsSummary, type SeriesPoint } from '../../api/admin';
+import DataTable, { type Column } from '../../components/admin/DataTable';
 import Loader from '../../components/Loader';
 import './AdminAnalytics.scss';
 
@@ -9,6 +10,16 @@ const AdminAnalytics = () => {
   const [metrics, setMetrics] = useState<MetricsSummary | null>(null);
   const [series, setSeries] = useState<Record<string, SeriesPoint[]>>({});
   const [loading, setLoading] = useState(false);
+
+  const shopColumns: Column<{ name: string; orders: number; id: string }>[] = [
+    { key: 'name', label: 'Shop' },
+    { key: 'orders', label: 'Orders' },
+  ];
+
+  const productColumns: Column<{ name: string; orders: number; id: string }>[] = [
+    { key: 'name', label: 'Product' },
+    { key: 'orders', label: 'Orders' },
+  ];
 
   const load = async () => {
     setLoading(true);
@@ -59,15 +70,15 @@ const AdminAnalytics = () => {
             <Suspense fallback={<Loader />}>
               <div className="chart">
                 <h3>Orders</h3>
-                <Chart data={series.orders || []} />
+                <Chart data={series.orders || []} height={80} />
               </div>
               <div className="chart">
                 <h3>Signups</h3>
-                <Chart data={series.signups || []} />
+                <Chart data={series.signups || []} height={80} />
               </div>
               <div className="chart">
                 <h3>GMV</h3>
-                <Chart data={series.gmv || []} />
+                <Chart data={series.gmv || []} height={80} />
               </div>
             </Suspense>
           </section>
@@ -75,14 +86,15 @@ const AdminAnalytics = () => {
             <div className="table">
               <h3>Top Shops</h3>
               {metrics.topShops && metrics.topShops.length ? (
-                <table>
-                  <thead><tr><th>Shop</th><th>Orders</th></tr></thead>
-                  <tbody>
-                    {metrics.topShops.map((s) => (
-                      <tr key={s.id}><td>{s.name}</td><td>{s.orders}</td></tr>
-                    ))}
-                  </tbody>
-                </table>
+                <DataTable<{ name: string; orders: number; id: string }>
+                  columns={shopColumns}
+                  rows={metrics.topShops}
+                  page={1}
+                  pageSize={metrics.topShops.length}
+                  total={metrics.topShops.length}
+                  onPageChange={() => {}}
+                  rowKey={(r) => r.id}
+                />
               ) : (
                 <p>No data</p>
               )}
@@ -90,14 +102,15 @@ const AdminAnalytics = () => {
             <div className="table">
               <h3>Top Products</h3>
               {metrics.topProducts && metrics.topProducts.length ? (
-                <table>
-                  <thead><tr><th>Product</th><th>Orders</th></tr></thead>
-                  <tbody>
-                    {metrics.topProducts.map((p) => (
-                      <tr key={p.id}><td>{p.name}</td><td>{p.orders}</td></tr>
-                    ))}
-                  </tbody>
-                </table>
+                <DataTable<{ name: string; orders: number; id: string }>
+                  columns={productColumns}
+                  rows={metrics.topProducts}
+                  page={1}
+                  pageSize={metrics.topProducts.length}
+                  total={metrics.topProducts.length}
+                  onPageChange={() => {}}
+                  rowKey={(r) => r.id}
+                />
               ) : (
                 <p>No data</p>
               )}

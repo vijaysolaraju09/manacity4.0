@@ -5,7 +5,8 @@ import {
   deleteProduct as apiDeleteProduct,
   type ProductQueryParams,
 } from '../../api/admin';
-import Loader from '../../components/Loader';
+import DataTable, { type Column } from '../../components/admin/DataTable';
+import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
 import './AdminProducts.scss';
 
@@ -24,6 +25,8 @@ interface Product {
   images?: string[];
   updatedAt: string;
 }
+
+type ProductRow = Product & { actions?: string };
 
 const emptyForm = {
   name: '',
@@ -143,7 +146,52 @@ const AdminProducts = () => {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const columns: Column<ProductRow>[] = [
+    {
+      key: 'image',
+      label: 'Image',
+      render: (p) =>
+        p.image ? (
+          <img
+            src={p.image}
+            alt={p.name}
+            width={40}
+            height={40}
+            loading="lazy"
+            style={{ objectFit: 'cover' }}
+          />
+        ) : null,
+    },
+    { key: 'name', label: 'Name' },
+    {
+      key: 'shopName',
+      label: 'Shop',
+      render: (p) => p.shopName || p.shopId,
+    },
+    { key: 'category', label: 'Category' },
+    { key: 'price', label: 'Price' },
+    { key: 'stock', label: 'Stock' },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (p) => <StatusChip status={p.status as any} />,
+    },
+    {
+      key: 'updatedAt',
+      label: 'Updated',
+      render: (p) => new Date(p.updatedAt).toLocaleDateString(),
+    },
+    {
+      key: 'actions',
+      label: '',
+      render: (p) => (
+        <div className="actions">
+          <button onClick={() => openEdit(p)}>Edit</button>
+          <button onClick={() => handleDelete(p._id)}>Delete</button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="admin-products">
@@ -209,68 +257,15 @@ const AdminProducts = () => {
           <option value="price">Price: Low to High</option>
         </select>
       </div>
-      {loading ? (
-        <Loader />
-      ) : (
-        <table className="products-table">
-          <thead>
-            <tr>
-              <th>Image</th>
-              <th>Name</th>
-              <th>Shop</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Stock</th>
-              <th>Status</th>
-              <th>Updated</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p) => (
-              <tr key={p._id}>
-                <td>
-                  {p.image ? (
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      width={40}
-                      height={40}
-                      loading="lazy"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : null}
-                </td>
-                <td>{p.name}</td>
-                <td>{p.shopName || p.shopId}</td>
-                <td>{p.category}</td>
-                <td>{p.price}</td>
-                <td>{p.stock}</td>
-                <td>{p.status}</td>
-                <td>{new Date(p.updatedAt).toLocaleDateString()}</td>
-                <td className="actions">
-                  <button onClick={() => openEdit(p)}>Edit</button>
-                  <button onClick={() => handleDelete(p._id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      <div className="pagination">
-        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          Prev
-        </button>
-        <span>
-          {page}/{totalPages}
-        </span>
-        <button
-          disabled={page >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
-        </button>
-      </div>
+      <DataTable<ProductRow>
+        columns={columns}
+        rows={products as ProductRow[]}
+        page={page}
+        pageSize={pageSize}
+        total={total}
+        onPageChange={setPage}
+        loading={loading}
+      />
       {edit && (
         <div className="modal">
           <form className="modal-content" onSubmit={handleSave}>

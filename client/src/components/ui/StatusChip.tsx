@@ -5,7 +5,14 @@ export type Status =
   | 'accepted'
   | 'rejected'
   | 'cancelled'
-  | 'completed';
+  | 'completed'
+  | 'approved'
+  | 'active'
+  | 'suspended'
+  | 'inactive'
+  | 'upcoming'
+  | 'ongoing'
+  | 'past';
 
 interface StatusChipProps {
   status: Status;

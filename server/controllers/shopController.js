@@ -2,21 +2,7 @@ const Shop = require("../models/Shop");
 const Product = require("../models/Product");
 const Notification = require("../models/Notification");
 const { promoteToBusiness } = require("./userController");
-
-const normalizeProduct = (p) => ({
-  id: p._id.toString(),
-  _id: p._id.toString(),
-  name: p.name,
-  price: p.price,
-  mrp: p.mrp,
-  discount: p.mrp ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0,
-  stock: p.stock,
-  images: p.images,
-  image: p.images?.[0] || '',
-  category: p.category,
-  shopId: p.shop.toString(),
-  shop: p.shop.toString(),
-});
+const { normalizeProduct } = require("../utils/normalize");
 
 exports.createShop = async (req, res) => {
   try {
@@ -146,7 +132,19 @@ exports.getShopById = async (req, res) => {
 
 exports.getProductsByShop = async (req, res) => {
   try {
-    const products = await Product.find({ shop: req.params.id });
+    const { page, limit } = req.query;
+    let query = Product.find({ shop: req.params.id }).populate(
+      "shop",
+      "name image location"
+    );
+
+    if (page !== undefined || limit !== undefined) {
+      const p = parseInt(page || 1, 10);
+      const l = parseInt(limit || 10, 10);
+      query = query.skip((p - 1) * l).limit(l);
+    }
+
+    const products = await query;
     res.json(products.map(normalizeProduct));
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch products" });

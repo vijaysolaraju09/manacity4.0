@@ -1,7 +1,40 @@
-const { Schema, model } = require('mongoose');
-const { AddressSchema } = require('./shared/Address');
+import { Schema, Document, model, Model } from 'mongoose';
+import { Address, AddressSchema } from './shared/Address';
 
-const dayHoursSchema = new Schema(
+export interface DayHours {
+  open: string;
+  close: string;
+}
+
+export interface ShopAttrs {
+  ownerId: Schema.Types.ObjectId;
+  name: string;
+  slug?: string;
+  category: string;
+  description?: string;
+  logoUrl?: string;
+  coverUrl?: string;
+  phone?: string;
+  whatsapp?: string;
+  address?: Address;
+  geo?: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
+  hours?: Map<string, DayHours>;
+  ratingAvg?: number;
+  ratingCount?: number;
+  tags?: string[];
+  isDeleted?: boolean;
+}
+
+export interface ShopDoc extends Document, ShopAttrs {
+  createdAt: Date;
+  updatedAt: Date;
+  isOpenNow: boolean;
+}
+
+const dayHoursSchema = new Schema<DayHours>(
   {
     open: { type: String, required: true },
     close: { type: String, required: true },
@@ -17,16 +50,7 @@ const geoSchema = new Schema(
   { _id: false }
 );
 
-function slugify(text) {
-  return text
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-const shopSchema = new Schema(
+const shopSchema = new Schema<ShopDoc>(
   {
     ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true },
@@ -54,12 +78,21 @@ shopSchema.index({ category: 1 });
 shopSchema.index({ ratingAvg: -1 });
 shopSchema.index({ geo: '2dsphere' });
 
+function slugify(text: string): string {
+  return text
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 shopSchema.pre('validate', async function (next) {
   if (!this.slug && this.name) {
     const base = slugify(this.name);
     let slug = base;
     let i = 0;
-    const Shop = this.constructor;
+    const Shop = this.constructor as Model<ShopDoc>;
     while (await Shop.exists({ slug })) {
       i += 1;
       slug = `${base}-${i}`;
@@ -69,7 +102,7 @@ shopSchema.pre('validate', async function (next) {
   next();
 });
 
-shopSchema.virtual('isOpenNow').get(function () {
+shopSchema.virtual('isOpenNow').get(function (this: ShopDoc) {
   if (!this.hours) return false;
   const now = new Date();
   const day = now.toLocaleString('en-US', { weekday: 'short' }).toLowerCase();
@@ -84,6 +117,7 @@ shopSchema.virtual('isOpenNow').get(function () {
   return now >= open && now <= close;
 });
 
-const ShopModel = model('Shop', shopSchema);
+export const ShopModel = model<ShopDoc>('Shop', shopSchema);
 
-module.exports = { ShopModel };
+export default ShopModel;
+

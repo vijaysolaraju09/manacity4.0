@@ -99,12 +99,16 @@ const Profile = () => {
   };
 
   const handleSaveProduct = (data: ProductForm) => {
+    const withImage = { ...data, image: data.image || '' };
     if (editingProduct) {
       setProducts((prev) =>
-        prev.map((p) => (p._id === editingProduct._id ? { ...p, ...data } : p))
+        prev.map((p) => (p._id === editingProduct._id ? { ...p, ...withImage } : p))
       );
     } else {
-      setProducts((prev) => [...prev, { ...data, _id: Date.now().toString() }]);
+      setProducts((prev) => [
+        ...prev,
+        { ...withImage, _id: Date.now().toString() },
+      ]);
     }
     setProductModalOpen(false);
   };

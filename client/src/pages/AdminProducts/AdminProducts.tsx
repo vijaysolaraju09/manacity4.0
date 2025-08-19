@@ -230,7 +230,16 @@ const AdminProducts = () => {
             {products.map((p) => (
               <tr key={p._id}>
                 <td>
-                  {p.image ? <img src={p.image} alt="" width={40} /> : null}
+                  {p.image ? (
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      width={40}
+                      height={40}
+                      loading="lazy"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  ) : null}
                 </td>
                 <td>{p.name}</td>
                 <td>{p.shopName || p.shopId}</td>

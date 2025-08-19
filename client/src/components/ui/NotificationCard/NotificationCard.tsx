@@ -1,4 +1,5 @@
-import { ReactNode, useRef } from 'react';
+import { useRef } from 'react';
+import type { ReactNode } from 'react';
 import styles from './NotificationCard.module.scss';
 
 export interface NotificationCardProps {

@@ -1,19 +1,6 @@
 import { Schema, Document, model, Model } from 'mongoose';
-
-export interface MediaAsset {
-  url: string;
-  alt?: string;
-  isPrimary?: boolean;
-}
-
-const MediaAssetSchema = new Schema<MediaAsset>(
-  {
-    url: { type: String, required: true },
-    alt: { type: String },
-    isPrimary: { type: Boolean, default: false },
-  },
-  { _id: false }
-);
+import { MediaAsset, MediaAssetSchema } from './shared/MediaAsset';
+import { generateSlug } from '../utils/slug';
 
 export interface Pricing {
   mrp: number;
@@ -56,15 +43,6 @@ interface ProductModel extends Model<ProductDoc> {
   exists(filter: any): Promise<any>;
 }
 
-function slugify(text: string): string {
-  return text
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 const productSchema = new Schema<ProductDoc>(
   {
     shopId: { type: Schema.Types.ObjectId, ref: 'Shop', required: true },
@@ -85,14 +63,7 @@ const productSchema = new Schema<ProductDoc>(
 
 productSchema.pre('validate', async function (next) {
   if (!this.slug && this.title) {
-    const base = slugify(this.title);
-    let slug = base;
-    let i = 0;
-    while (await (this.constructor as ProductModel).exists({ slug })) {
-      i += 1;
-      slug = `${base}-${i}`;
-    }
-    this.slug = slug;
+    this.slug = await generateSlug(this.constructor as ProductModel, this.title);
   }
   if (this.pricing) {
     const { mrp, price } = this.pricing;

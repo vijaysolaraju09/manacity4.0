@@ -1,4 +1,5 @@
 import { Schema, model, Document, Types } from 'mongoose';
+import { generateSlug } from '../utils/slug';
 
 export enum EventCategory {
   GAMING = 'gaming',
@@ -38,7 +39,7 @@ const LocationSchema = new Schema<Location>({
 
 export interface EventAttrs {
   title: string;
-  slug: string;
+  slug?: string;
   coverUrl?: string;
   description?: string;
   category: EventCategory;
@@ -68,7 +69,7 @@ function deriveStatus(e: EventAttrs): EventStatus {
 
 const eventSchema = new Schema<EventDoc>({
   title: { type: String, required: true },
-  slug: { type: String, required: true, unique: true },
+  slug: { type: String, unique: true },
   coverUrl: { type: String },
   description: { type: String, default: '' },
   category: { type: String, enum: Object.values(EventCategory), required: true },
@@ -83,7 +84,10 @@ const eventSchema = new Schema<EventDoc>({
   isDeleted: { type: Boolean, default: false },
 }, { timestamps: true });
 
-eventSchema.pre('validate', function(next) {
+eventSchema.pre('validate', async function (next) {
+  if (!this.slug && this.title) {
+    this.slug = await generateSlug(this.constructor as any, this.title);
+  }
   if (this.status !== EventStatus.CANCELLED) {
     this.status = deriveStatus(this);
   }

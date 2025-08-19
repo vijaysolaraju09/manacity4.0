@@ -19,6 +19,17 @@ describe('Product schema', () => {
     spy.mockRestore();
   });
 
+  it('requires alt text for images', async () => {
+    const product = new ProductModel({
+      shopId: new mongoose.Types.ObjectId(),
+      title: 'Img Test',
+      category: 'general',
+      images: [{ url: 'https://example.com/img.jpg' }],
+      pricing: { mrp: 10, price: 8, currency: 'USD' },
+    });
+    await expect(product.validate()).rejects.toThrow();
+  });
+
   it('validates required fields', async () => {
     const product = new ProductModel({});
     await expect(product.validate()).rejects.toThrow();

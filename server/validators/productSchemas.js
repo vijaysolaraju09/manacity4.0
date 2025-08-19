@@ -1,12 +1,21 @@
 const { z } = require('zod');
 
+const mediaAsset = z.object({
+  url: z.string().url(),
+  alt: z.string(),
+  width: z.number().int().nonnegative().optional(),
+  height: z.number().int().nonnegative().optional(),
+  mime: z.string().optional(),
+  isPrimary: z.boolean().optional(),
+});
+
 const productBase = {
   name: z.string().min(1),
   description: z.string().optional(),
   price: z.number().positive(),
   mrp: z.number().positive(),
   category: z.string().optional(),
-  images: z.array(z.string().url()).optional(),
+  images: z.array(mediaAsset).optional(),
   stock: z.number().int().nonnegative().optional(),
   status: z.enum(['active', 'inactive']).optional(),
   shopId: z.string().optional(),
@@ -24,7 +33,7 @@ const updateProductSchema = {
       price: z.number().positive().optional(),
       mrp: z.number().positive().optional(),
       category: z.string().optional(),
-      images: z.array(z.string().url()).optional(),
+      images: z.array(mediaAsset).optional(),
       stock: z.number().int().nonnegative().optional(),
       status: z.enum(['active', 'inactive']).optional(),
     })

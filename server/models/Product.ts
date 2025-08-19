@@ -1,6 +1,12 @@
-const { Schema, model } = require('mongoose');
+import { Schema, Document, model, Model } from 'mongoose';
 
-const mediaAssetSchema = new Schema(
+export interface MediaAsset {
+  url: string;
+  alt?: string;
+  isPrimary?: boolean;
+}
+
+const MediaAssetSchema = new Schema<MediaAsset>(
   {
     url: { type: String, required: true },
     alt: { type: String },
@@ -9,7 +15,14 @@ const mediaAssetSchema = new Schema(
   { _id: false }
 );
 
-const pricingSchema = new Schema(
+export interface Pricing {
+  mrp: number;
+  price: number;
+  discountPercent?: number;
+  currency: string;
+}
+
+const PricingSchema = new Schema<Pricing>(
   {
     mrp: { type: Number, required: true },
     price: { type: Number, required: true },
@@ -19,7 +32,31 @@ const pricingSchema = new Schema(
   { _id: false }
 );
 
-function slugify(text) {
+export interface ProductAttrs {
+  shopId: Schema.Types.ObjectId;
+  title: string;
+  slug?: string;
+  description?: string;
+  images?: MediaAsset[];
+  category: string;
+  tags?: string[];
+  ratingAvg?: number;
+  ratingCount?: number;
+  pricing: Pricing;
+  status?: 'active' | 'archived';
+  isDeleted?: boolean;
+}
+
+export interface ProductDoc extends Document, ProductAttrs {
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface ProductModel extends Model<ProductDoc> {
+  exists(filter: any): Promise<any>;
+}
+
+function slugify(text: string): string {
   return text
     .toString()
     .trim()
@@ -28,18 +65,18 @@ function slugify(text) {
     .replace(/^-+|-+$/g, '');
 }
 
-const productSchema = new Schema(
+const productSchema = new Schema<ProductDoc>(
   {
     shopId: { type: Schema.Types.ObjectId, ref: 'Shop', required: true },
     title: { type: String, required: true },
     slug: { type: String, unique: true },
     description: { type: String, default: '' },
-    images: { type: [mediaAssetSchema], default: [] },
+    images: { type: [MediaAssetSchema], default: [] },
     category: { type: String, required: true },
     tags: { type: [String], default: [] },
     ratingAvg: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
-    pricing: { type: pricingSchema, required: true },
+    pricing: { type: PricingSchema, required: true },
     status: { type: String, enum: ['active', 'archived'], default: 'active' },
     isDeleted: { type: Boolean, default: false },
   },
@@ -51,7 +88,7 @@ productSchema.pre('validate', async function (next) {
     const base = slugify(this.title);
     let slug = base;
     let i = 0;
-    while (await this.constructor.exists({ slug })) {
+    while (await (this.constructor as ProductModel).exists({ slug })) {
       i += 1;
       slug = `${base}-${i}`;
     }
@@ -74,7 +111,7 @@ productSchema.index({ category: 1 });
 productSchema.index({ status: 1 });
 productSchema.index({ shopId: 1, status: 1 });
 
-const ProductModel = model('Product', productSchema);
+export const ProductModel = model<ProductDoc>('Product', productSchema);
 
-module.exports = { ProductModel };
+export default ProductModel;
 

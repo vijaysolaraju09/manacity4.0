@@ -1,5 +1,7 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const { normalizeProduct } = require('../utils/normalize');
+const { parseQuery } = require('../utils/query');
 
 exports.placeOrder = async (req, res) => {
   try {
@@ -29,16 +31,28 @@ exports.placeOrder = async (req, res) => {
 
 exports.getMyOrders = async (req, res) => {
   try {
-    let orders = await Order.find({ user: req.user._id })
+    const { status, shop, startDate, endDate, minPrice, maxPrice } = req.query;
+    const paginate =
+      req.query.page !== undefined ||
+      req.query.limit !== undefined ||
+      req.query.pageSize !== undefined;
+
+    const { limit, skip } = paginate
+      ? parseQuery(req.query)
+      : { limit: null, skip: null };
+
+    let query = Order.find({ user: req.user._id })
       .populate({
         path: 'product',
-        select: 'name image price shop',
-        populate: { path: 'shop', select: 'name' },
+        populate: { path: 'shop', select: 'name image location' },
       })
-      .populate('shop', 'name');
+      .populate('shop', 'name image location');
 
-    const { status, shop, startDate, endDate, minPrice, maxPrice } = req.query;
-    if (status) orders = orders.filter((o) => o.status === status);
+    if (status) query = query.where('status').equals(status);
+    if (paginate) query = query.skip(skip).limit(limit);
+
+    let orders = await query;
+
     if (shop) {
       const q = shop.toLowerCase();
       orders = orders.filter(
@@ -60,7 +74,21 @@ exports.getMyOrders = async (req, res) => {
     if (maxPrice)
       orders = orders.filter((o) => (o.product?.price || 0) <= Number(maxPrice));
 
-    res.json(orders);
+    const result = orders.map((o) => {
+      const item = o.toObject();
+      if (item.product) item.product = normalizeProduct(item.product);
+      if (item.shop && item.shop.name) {
+        item.shopMeta = {
+          id: item.shop._id.toString(),
+          name: item.shop.name,
+          image: item.shop.image,
+          location: item.shop.location,
+        };
+      }
+      return item;
+    });
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch orders' });
   }
@@ -68,15 +96,33 @@ exports.getMyOrders = async (req, res) => {
 
 exports.getReceivedOrders = async (req, res) => {
   try {
-    let orders = await Order.find({ business: req.user._id })
-      .populate('user', 'name phone')
-      .populate('product', 'name category price');
-
     const { status, category, minPrice, maxPrice, search } = req.query;
-    if (status) orders = orders.filter((o) => o.status === status);
-    if (category) orders = orders.filter((o) => o.product?.category === category);
-    if (minPrice) orders = orders.filter((o) => (o.product?.price || 0) >= Number(minPrice));
-    if (maxPrice) orders = orders.filter((o) => (o.product?.price || 0) <= Number(maxPrice));
+    const paginate =
+      req.query.page !== undefined ||
+      req.query.limit !== undefined ||
+      req.query.pageSize !== undefined;
+    const { limit, skip } = paginate
+      ? parseQuery(req.query)
+      : { limit: null, skip: null };
+
+    let query = Order.find({ business: req.user._id })
+      .populate('user', 'name phone')
+      .populate({
+        path: 'product',
+        select: 'name category price mrp images shop rating',
+        populate: { path: 'shop', select: 'name image location' },
+      });
+
+    if (status) query = query.where('status').equals(status);
+    if (category) query = query.where('product.category').equals(category);
+    if (paginate) query = query.skip(skip).limit(limit);
+
+    let orders = await query;
+
+    if (minPrice)
+      orders = orders.filter((o) => (o.product?.price || 0) >= Number(minPrice));
+    if (maxPrice)
+      orders = orders.filter((o) => (o.product?.price || 0) <= Number(maxPrice));
     if (search) {
       const q = search.toLowerCase();
       orders = orders.filter((o) => (o.product?.name || '').toLowerCase().includes(q));
@@ -84,6 +130,7 @@ exports.getReceivedOrders = async (req, res) => {
 
     const result = orders.map((o) => {
       const item = o.toObject();
+      if (item.product) item.product = normalizeProduct(item.product);
       if (item.status !== 'accepted' && item.user) {
         delete item.user.phone;
       }
@@ -93,6 +140,43 @@ exports.getReceivedOrders = async (req, res) => {
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+};
+
+exports.getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('user', 'name phone')
+      .populate({
+        path: 'product',
+        populate: { path: 'shop', select: 'name image location' },
+      })
+      .populate('shop', 'name image location');
+
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    const isOwner =
+      order.user._id.toString() === req.user._id.toString() ||
+      order.business.toString() === req.user._id.toString();
+    if (!isOwner) return res.status(403).json({ error: 'Not authorized' });
+
+    const item = order.toObject();
+    if (item.product) item.product = normalizeProduct(item.product);
+    if (item.status !== 'accepted' && item.user) {
+      delete item.user.phone;
+    }
+    if (item.shop && item.shop.name) {
+      item.shopMeta = {
+        id: item.shop._id.toString(),
+        name: item.shop.name,
+        image: item.shop.image,
+        location: item.shop.location,
+      };
+    }
+
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch order' });
   }
 };
 

@@ -61,6 +61,7 @@ h6 {
 /* Image responsiveness */
 img {
   max-width: 100%;
+  height: auto;
   display: block;
 }
 
@@ -71,6 +72,13 @@ select,
 button {
   font: inherit;
   color: inherit;
+}
+
+/* Ensure tappable elements meet minimum target size */
+button,
+a {
+  min-width: 44px;
+  min-height: 44px;
 }
 
 /* Focus states */

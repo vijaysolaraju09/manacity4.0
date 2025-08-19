@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import api from "../../api/client";
 import { sampleEvents } from "../../data/sampleHomeData";
 import Shimmer from "../../components/Shimmer";
-import EventCard, { EventItem } from "../../components/ui/EventCard/EventCard";
+import EventCard from "../../components/ui/EventCard/EventCard";
+import type { EventItem } from "../../components/ui/EventCard/EventCard";
 import "./Events.scss";
 
 const Events = () => {

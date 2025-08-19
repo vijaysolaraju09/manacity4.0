@@ -82,10 +82,23 @@ const Home = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         onClick={() => banner.link && navigate(banner.link)}
+        role={banner.link ? 'button' : undefined}
+        tabIndex={banner.link ? 0 : undefined}
+        aria-label={banner.title}
+        onKeyDown={(e) => {
+          if (banner.link && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            navigate(banner.link);
+          }
+        }}
       >
         <img
           src={banner.image || fallbackImage}
           alt="Admin Update"
+          loading="lazy"
+          width={1200}
+          height={300}
+          style={{ objectFit: 'cover' }}
           onError={(e) => (e.currentTarget.src = fallbackImage)}
         />
         <div className="banner-text">
@@ -177,18 +190,35 @@ const Section = ({ title, data, type, loading, seeAll, navigate }: SectionProps)
               key={item._id}
               className="card"
               whileHover={{ scale: 1.03 }}
-            >
-              <img
-                src={item.image || fallbackImage}
-                alt={item.name || item.title}
-                onError={(e) => (e.currentTarget.src = fallbackImage)}
-                onClick={() =>
+              role="button"
+              tabIndex={0}
+              aria-label={`View ${item.name || item.title}`}
+              onClick={() =>
+                navigate(
+                  type === 'user'
+                    ? `/verified-users/${item._id}`
+                    : `/events/${item._id}`,
+                )
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
                   navigate(
                     type === 'user'
                       ? `/verified-users/${item._id}`
                       : `/events/${item._id}`,
-                  )
+                  );
                 }
+              }}
+            >
+              <img
+                src={item.image || fallbackImage}
+                alt={item.name || item.title}
+                loading="lazy"
+                width={150}
+                height={150}
+                style={{ objectFit: 'cover', aspectRatio: '1 / 1' }}
+                onError={(e) => (e.currentTarget.src = fallbackImage)}
               />
               <div className="card-info">
                 <h4>{item.name || item.title}</h4>

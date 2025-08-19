@@ -21,9 +21,31 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, ctaLabel, onCtaClick, onClick, className = '' }: ProductCardProps) => {
   return (
-    <div className={`${styles.card} ${className}`} onClick={onClick}>
+    <div
+      className={`${styles.card} ${className}`}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      aria-label={onClick ? `View ${product.title}` : undefined}
+    >
       <div className={styles.imageWrapper}>
-        <img src={product.image} alt={product.title} loading="lazy" />
+        <img
+          src={product.image}
+          alt={product.title}
+          loading="lazy"
+          width={300}
+          height={400}
+        />
         {product.discount && <span className={styles.badge}>{product.discount}% OFF</span>}
         <div className={styles.wishlist}>
           <WishlistHeart />

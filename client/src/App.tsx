@@ -1,47 +1,49 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, Suspense, lazy } from 'react';
 import { useDispatch } from 'react-redux';
-import Landing from './pages/Landing/Landing';
-import Login from './pages/auth/Login/Login';
-import Signup from './pages/auth/Signup/Signup';
 import ProtectedRoute from './components/ProtectedRoute';
-import './styles/main.scss';
-import OTP from './pages/auth/OTP/OTP';
-import Profile from './pages/Profile/Profile';
-import Home from './pages/Home/Home';
-import Shops from './pages/Shops/Shops';
-import ShopDetails from './pages/ShopDetails/ShopDetails';
-import ProductDetails from './pages/ProductDetails/ProductDetails';
-import EventDetails from './pages/EventDetails/EventDetails';
-import VerifiedDetails from './pages/Verified/Details';
-import VerifiedList from './pages/Verified/List';
-import SpecialShop from './pages/SpecialShop/SpecialShop';
-import Settings from './pages/Settings/Settings';
-import Cart from './pages/Cart/Cart';
-import Events from './pages/Events/Events';
-import VoiceOrder from './pages/VoiceOrder/VoiceOrder';
-import OrderNow from './pages/OrderNow/OrderNow';
-import ManageProducts from './pages/ManageProducts/ManageProducts';
-import ReceivedOrders from './pages/Orders/ReceivedOrders';
-import MyOrders from './pages/Orders/MyOrders';
-import OrderDetail from './pages/Orders/OrderDetail';
-import Notifications from './pages/Notifications/Notifications';
-import TabLayout from './layouts/TabLayout';
-import AdminLogin from './pages/AdminLogin/AdminLogin';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminShops from './pages/AdminShops';
-import AdminProducts from './pages/AdminProducts';
-import AdminEvents from './pages/AdminEvents';
-import VerificationRequests from './pages/VerificationRequests';
-import BusinessRequests from './pages/BusinessRequests';
-import AdminUsers from './pages/AdminUsers';
-import AdminAnalytics from './pages/AdminAnalytics';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
+import TabLayout from './layouts/TabLayout';
 import AdminLayout from './layouts/AdminLayout';
+import './styles/main.scss';
 import { setUser } from './store/slices/userSlice';
 import { setAdminToken } from './store/slices/adminSlice';
 import type { AppDispatch } from './store';
-import UiPreview from './pages/UiPreview';
+import Loader from './components/Loader';
+
+const Landing = lazy(() => import('./pages/Landing/Landing'));
+const Login = lazy(() => import('./pages/auth/Login/Login'));
+const Signup = lazy(() => import('./pages/auth/Signup/Signup'));
+const OTP = lazy(() => import('./pages/auth/OTP/OTP'));
+const Profile = lazy(() => import('./pages/Profile/Profile'));
+const Home = lazy(() => import('./pages/Home/Home'));
+const Shops = lazy(() => import('./pages/Shops/Shops'));
+const ShopDetails = lazy(() => import('./pages/ShopDetails/ShopDetails'));
+const ProductDetails = lazy(() => import('./pages/ProductDetails/ProductDetails'));
+const EventDetails = lazy(() => import('./pages/EventDetails/EventDetails'));
+const VerifiedDetails = lazy(() => import('./pages/Verified/Details'));
+const VerifiedList = lazy(() => import('./pages/Verified/List'));
+const SpecialShop = lazy(() => import('./pages/SpecialShop/SpecialShop'));
+const Settings = lazy(() => import('./pages/Settings/Settings'));
+const Cart = lazy(() => import('./pages/Cart/Cart'));
+const Events = lazy(() => import('./pages/Events/Events'));
+const VoiceOrder = lazy(() => import('./pages/VoiceOrder/VoiceOrder'));
+const OrderNow = lazy(() => import('./pages/OrderNow/OrderNow'));
+const ManageProducts = lazy(() => import('./pages/ManageProducts/ManageProducts'));
+const ReceivedOrders = lazy(() => import('./pages/Orders/ReceivedOrders'));
+const MyOrders = lazy(() => import('./pages/Orders/MyOrders'));
+const OrderDetail = lazy(() => import('./pages/Orders/OrderDetail'));
+const Notifications = lazy(() => import('./pages/Notifications/Notifications'));
+const AdminLogin = lazy(() => import('./pages/AdminLogin/AdminLogin'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminShops = lazy(() => import('./pages/AdminShops'));
+const AdminProducts = lazy(() => import('./pages/AdminProducts'));
+const AdminEvents = lazy(() => import('./pages/AdminEvents'));
+const VerificationRequests = lazy(() => import('./pages/VerificationRequests'));
+const BusinessRequests = lazy(() => import('./pages/BusinessRequests'));
+const AdminUsers = lazy(() => import('./pages/AdminUsers'));
+const AdminAnalytics = lazy(() => import('./pages/AdminAnalytics'));
+const UiPreview = lazy(() => import('./pages/UiPreview'));
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -64,7 +66,8 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
+      <Suspense fallback={<Loader />}>
+        <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
@@ -108,7 +111,8 @@ function App() {
           <Route path="/orders/:id" element={<OrderDetail />} />
           <Route path="/cart" element={<Cart />} />
         </Route>
-      </Routes>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

@@ -46,6 +46,7 @@ exports.createProduct = async (req, res) => {
     const product = await Product.create({
       shop: shop._id,
       createdBy: req.user._id,
+      updatedBy: req.user._id,
       name,
       description,
       price,
@@ -54,6 +55,7 @@ exports.createProduct = async (req, res) => {
       images,
       stock,
       status,
+      city: shop.location,
     });
     res.status(201).json(normalize(product));
   } catch (err) {
@@ -64,7 +66,8 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ error: 'Product not found' });
+    if (!product || product.isDeleted)
+      return res.status(404).json({ error: 'Product not found' });
     if (req.user.role !== 'admin') {
       const shop = await Shop.findOne({ _id: product.shop, owner: req.user._id });
       if (!shop) return res.status(403).json({ error: 'Not authorized' });
@@ -89,6 +92,7 @@ exports.updateProduct = async (req, res) => {
     if (images !== undefined) product.images = images;
     if (stock !== undefined) product.stock = stock;
     if (status !== undefined) product.status = status;
+    product.updatedBy = req.user._id;
     await product.save();
     res.json(normalize(product));
   } catch (err) {
@@ -99,13 +103,17 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ error: 'Product not found' });
+    if (!product || product.isDeleted)
+      return res.status(404).json({ error: 'Product not found' });
     if (req.user.role !== 'admin') {
       const shop = await Shop.findOne({ _id: product.shop, owner: req.user._id });
       if (!shop) return res.status(403).json({ error: 'Not authorized' });
     }
 
-    await product.deleteOne();
+    product.isDeleted = true;
+    product.deletedAt = new Date();
+    product.updatedBy = req.user._id;
+    await product.save();
     res.json({ message: 'Product deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete product' });
@@ -121,15 +129,17 @@ exports.getProducts = async (req, res) => {
       status,
       minPrice,
       maxPrice,
+      city,
       page = 1,
       pageSize = 20,
       sort = '-updatedAt',
     } = req.query;
 
-    const filter = {};
+    const filter = { isDeleted: false };
     if (shopId) filter.shop = shopId;
     if (category) filter.category = category;
     if (status) filter.status = status;
+    if (city) filter.city = city;
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
@@ -163,7 +173,7 @@ exports.getMyProducts = async (req, res) => {
   try {
     const shops = await Shop.find({ owner: req.user._id });
     const shopIds = shops.map((s) => s._id);
-    const products = await Product.find({ shop: { $in: shopIds } });
+    const products = await Product.find({ shop: { $in: shopIds }, isDeleted: false });
     res.json(products.map(normalize));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch products' });
@@ -172,7 +182,7 @@ exports.getMyProducts = async (req, res) => {
 
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({ _id: req.params.id, isDeleted: false });
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(normalize(product));
   } catch (err) {

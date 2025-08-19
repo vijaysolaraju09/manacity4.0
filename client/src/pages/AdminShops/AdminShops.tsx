@@ -5,7 +5,8 @@ import {
   deleteShop as apiDeleteShop,
   type ShopQueryParams,
 } from '../../api/admin';
-import Loader from '../../components/Loader';
+import DataTable, { type Column } from '../../components/admin/DataTable';
+import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
 import './AdminShops.scss';
 
@@ -19,6 +20,8 @@ interface Shop {
   productsCount: number;
   createdAt: string;
 }
+
+type ShopRow = Shop & { actions?: string };
 
 const AdminShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
@@ -103,7 +106,36 @@ const AdminShops = () => {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const columns: Column<ShopRow>[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'owner', label: 'Owner' },
+    { key: 'category', label: 'Category' },
+    { key: 'location', label: 'Location' },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (s) => <StatusChip status={s.status} />,
+    },
+    { key: 'productsCount', label: 'Products' },
+    {
+      key: 'createdAt',
+      label: 'Created',
+      render: (s) => new Date(s.createdAt).toLocaleDateString(),
+    },
+    {
+      key: 'actions',
+      label: '',
+      render: (s) => (
+        <div className="actions">
+          <button onClick={() => setEdit(s)}>Edit</button>
+          <button onClick={() => handleToggleStatus(s)}>
+            {s.status === 'active' ? 'Suspend' : 'Activate'}
+          </button>
+          <button onClick={() => handleDelete(s._id)}>Delete</button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="admin-shops">
@@ -142,58 +174,15 @@ const AdminShops = () => {
           <option value="createdAt">Oldest</option>
         </select>
       </div>
-      {loading ? (
-        <Loader />
-      ) : (
-        <table className="shops-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Owner</th>
-              <th>Category</th>
-              <th>Location</th>
-              <th>Status</th>
-              <th>Products</th>
-              <th>Created</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {shops.map((s) => (
-              <tr key={s._id}>
-                <td>{s.name}</td>
-                <td>{s.owner}</td>
-                <td>{s.category}</td>
-                <td>{s.location}</td>
-                <td>{s.status}</td>
-                <td>{s.productsCount}</td>
-                <td>{new Date(s.createdAt).toLocaleDateString()}</td>
-                <td className="actions">
-                  <button onClick={() => setEdit(s)}>Edit</button>
-                  <button onClick={() => handleToggleStatus(s)}>
-                    {s.status === 'active' ? 'Suspend' : 'Activate'}
-                  </button>
-                  <button onClick={() => handleDelete(s._id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      <div className="pagination">
-        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          Prev
-        </button>
-        <span>
-          {page}/{totalPages}
-        </span>
-        <button
-          disabled={page >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
-        </button>
-      </div>
+      <DataTable<ShopRow>
+        columns={columns}
+        rows={shops as ShopRow[]}
+        page={page}
+        pageSize={pageSize}
+        total={total}
+        onPageChange={setPage}
+        loading={loading}
+      />
       {edit && (
         <div className="modal">
           <form className="modal-content" onSubmit={handleSave}>

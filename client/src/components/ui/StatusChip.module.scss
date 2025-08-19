@@ -7,18 +7,25 @@
   text-transform: capitalize;
 }
 
-.pending {
+.pending,
+.upcoming {
   background: var(--blue-100);
   color: var(--blue-700);
 }
 
-.accepted {
+.accepted,
+.approved,
+.active,
+.ongoing {
   background: var(--blue-600);
   color: var(--white);
 }
 
 .rejected,
-.cancelled {
+.cancelled,
+.suspended,
+.inactive,
+.past {
   background: var(--color-danger);
   color: var(--white);
 }

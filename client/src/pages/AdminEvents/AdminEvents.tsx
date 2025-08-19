@@ -6,7 +6,8 @@ import {
   deleteEvent as apiDeleteEvent,
   type EventQueryParams,
 } from '../../api/admin';
-import Loader from '../../components/Loader';
+import DataTable, { type Column } from '../../components/admin/DataTable';
+import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
 import './AdminEvents.scss';
 import useFocusTrap from '../../hooks/useFocusTrap';
@@ -20,6 +21,8 @@ interface EventItem {
   capacity: number;
   registered: number;
 }
+
+type EventRow = EventItem & { actions?: string };
 
 interface FormState {
   title: string;
@@ -76,8 +79,6 @@ const AdminEvents = () => {
   useEffect(() => {
     load();
   }, [load]);
-
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +139,41 @@ const AdminEvents = () => {
     }
   };
 
+  const columns: Column<EventRow>[] = [
+    { key: 'title', label: 'Title' },
+    {
+      key: 'startAt',
+      label: 'Start',
+      render: (ev) => new Date(ev.startAt).toLocaleString(),
+    },
+    {
+      key: 'endAt',
+      label: 'End',
+      render: (ev) => new Date(ev.endAt).toLocaleString(),
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (ev) => <StatusChip status={ev.status as any} />,
+    },
+    { key: 'capacity', label: 'Capacity' },
+    { key: 'registered', label: 'Registered' },
+    {
+      key: 'actions',
+      label: '',
+      render: (ev) => (
+        <div className="actions" data-label="Actions">
+          <button aria-label={`Edit ${ev.title}`} onClick={() => openEdit(ev)}>
+            Edit
+          </button>
+          <button aria-label={`Delete ${ev.title}`} onClick={() => handleDelete(ev._id)}>
+            Delete
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="admin-events">
       <h2>Events</h2>
@@ -154,62 +190,15 @@ const AdminEvents = () => {
         </select>
         <button onClick={() => setCreateOpen(true)}>Add Event</button>
       </div>
-      {loading ? (
-        <Loader />
-      ) : (
-        <table className="events-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Start</th>
-              <th>End</th>
-              <th>Status</th>
-              <th>Capacity</th>
-              <th>Registered</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.map((ev) => (
-              <tr key={ev._id}>
-                <td data-label="Title">{ev.title}</td>
-                <td data-label="Start">{new Date(ev.startAt).toLocaleString()}</td>
-                <td data-label="End">{new Date(ev.endAt).toLocaleString()}</td>
-                <td data-label="Status">
-                  <span className={`status-chip status-${ev.status}`}>{ev.status}</span>
-                </td>
-                <td data-label="Capacity">{ev.capacity}</td>
-                <td data-label="Registered">{ev.registered}</td>
-                <td className="actions" data-label="Actions">
-                  <button aria-label={`Edit ${ev.title}`} onClick={() => openEdit(ev)}>
-                    Edit
-                  </button>
-                  <button
-                    aria-label={`Delete ${ev.title}`}
-                    onClick={() => handleDelete(ev._id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      <div className="pagination">
-        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          Prev
-        </button>
-        <span>
-          {page}/{totalPages}
-        </span>
-        <button
-          disabled={page >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
-        </button>
-      </div>
+      <DataTable<EventRow>
+        columns={columns}
+        rows={events as EventRow[]}
+        page={page}
+        pageSize={pageSize}
+        total={total}
+        onPageChange={setPage}
+        loading={loading}
+      />
 
       {createOpen && (
         <div className="modal" role="dialog" aria-modal="true">

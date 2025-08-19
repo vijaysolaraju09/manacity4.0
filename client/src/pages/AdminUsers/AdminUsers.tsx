@@ -6,7 +6,7 @@ import {
   deleteUser as apiDeleteUser,
   type UserQueryParams,
 } from '../../api/admin';
-import Loader from '../../components/Loader';
+import DataTable, { type Column } from '../../components/admin/DataTable';
 import showToast from '../../components/ui/Toast';
 import './AdminUsers.scss';
 
@@ -20,6 +20,8 @@ interface User {
   ordersCount: number;
   createdAt: string;
 }
+
+type UserRow = User & { actions?: string };
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -102,7 +104,50 @@ const AdminUsers = () => {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const columns: Column<UserRow>[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'phone', label: 'Phone' },
+    {
+      key: 'role',
+      label: 'Role',
+      render: (u) => (
+        <select
+          value={u.role}
+          onChange={(e) => handleRoleChange(u._id, e.target.value)}
+        >
+          <option value="customer">Customer</option>
+          <option value="verified">Verified</option>
+          <option value="business">Business</option>
+          <option value="admin">Admin</option>
+        </select>
+      ),
+    },
+    {
+      key: 'isVerified',
+      label: 'Verified',
+      render: (u) => (u.isVerified ? 'Yes' : 'No'),
+    },
+    { key: 'ordersCount', label: 'Orders' },
+    {
+      key: 'createdAt',
+      label: 'Created',
+      render: (u) => new Date(u.createdAt).toLocaleDateString(),
+    },
+    {
+      key: 'actions',
+      label: '',
+      render: (u) => (
+        <div className="actions">
+          <button onClick={() => handleToggleActive(u)}>
+            {u.isActive ? 'Deactivate' : 'Reactivate'}
+          </button>
+          <button className="danger" onClick={() => handleDelete(u._id)}>
+            Delete
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="admin-users">
@@ -145,75 +190,16 @@ const AdminUsers = () => {
           <option value="createdAt">Oldest</option>
         </select>
       </div>
-      {loading ? (
-        <Loader />
-      ) : (
-        <table className="users-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Role</th>
-              <th>Verified</th>
-              <th>Orders</th>
-              <th>Created</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u._id}>
-                <td>{u.name}</td>
-                <td>{u.phone}</td>
-                <td>
-                  <select
-                    value={u.role}
-                    onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                  >
-                    <option value="customer">Customer</option>
-                    <option value="verified">Verified</option>
-                    <option value="business">Business</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </td>
-                <td>{u.isVerified ? 'Yes' : 'No'}</td>
-                <td>{u.ordersCount}</td>
-                <td>{new Date(u.createdAt).toLocaleDateString()}</td>
-                <td className="actions">
-                  <button onClick={() => handleToggleActive(u)}>
-                    {u.isActive ? 'Deactivate' : 'Reactivate'}
-                  </button>
-                  <button
-                    className="danger"
-                    onClick={() => handleDelete(u._id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      <nav className="pagination" aria-label="Pagination">
-        <button
-          type="button"
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page <= 1}
-        >
-          Prev
-        </button>
-        <span>
-          {page} / {totalPages}
-        </span>
-        <button
-          type="button"
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page >= totalPages}
-        >
-          Next
-        </button>
-      </nav>
+      <DataTable<UserRow>
+        columns={columns}
+        rows={users as UserRow[]}
+        page={page}
+        pageSize={pageSize}
+        total={total}
+        onPageChange={setPage}
+        onSort={(key, dir) => setSort(dir === 'asc' ? key : `-${key}`)}
+        loading={loading}
+      />
     </div>
   );
 };

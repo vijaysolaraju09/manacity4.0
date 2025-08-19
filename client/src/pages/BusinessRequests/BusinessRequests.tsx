@@ -6,6 +6,8 @@ import {
   rejectShop,
   type BusinessRequestParams,
 } from '../../api/admin';
+import DataTable, { type Column } from '../../components/admin/DataTable';
+import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
 import './BusinessRequests.scss';
 
@@ -23,6 +25,8 @@ interface ShopRequest {
     phone: string;
   };
 }
+
+type RequestRow = ShopRequest & { actions?: string };
 
 const BusinessRequests = () => {
   const [requests, setRequests] = useState<ShopRequest[]>([]);
@@ -87,6 +91,48 @@ const BusinessRequests = () => {
     }
   };
 
+  const columns: Column<RequestRow>[] = [
+    {
+      key: 'owner',
+      label: 'User',
+      render: (r) => r.owner?.name,
+    },
+    { key: 'name', label: 'Shop Name' },
+    { key: 'category', label: 'Category' },
+    { key: 'location', label: 'Location' },
+    { key: 'address', label: 'Address' },
+    {
+      key: 'createdAt',
+      label: 'Requested At',
+      render: (r) => new Date(r.createdAt).toLocaleDateString(),
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (r) => <StatusChip status={r.status as any} />,
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (r) => (
+        <>
+          <button
+            onClick={() => handleAction(r._id, 'approved')}
+            disabled={actionId === r._id}
+          >
+            Approve
+          </button>
+          <button
+            onClick={() => handleAction(r._id, 'rejected')}
+            disabled={actionId === r._id}
+          >
+            Reject
+          </button>
+        </>
+      ),
+    },
+  ];
+
   return (
     <div className="business-requests">
       <h1>Business Requests</h1>
@@ -113,51 +159,15 @@ const BusinessRequests = () => {
           onChange={(e) => updateParam('location', e.target.value)}
         />
       </div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Shop Name</th>
-              <th>Category</th>
-              <th>Location</th>
-              <th>Address</th>
-              <th>Requested At</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map((req) => (
-              <tr key={req._id}>
-                <td>{req.owner?.name}</td>
-                <td>{req.name}</td>
-                <td>{req.category}</td>
-                <td>{req.location}</td>
-                <td>{req.address}</td>
-                <td>{new Date(req.createdAt).toLocaleDateString()}</td>
-                <td>{req.status}</td>
-                <td>
-                  <button
-                    onClick={() => handleAction(req._id, 'approved')}
-                    disabled={actionId === req._id}
-                  >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => handleAction(req._id, 'rejected')}
-                    disabled={actionId === req._id}
-                  >
-                    Reject
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <DataTable<RequestRow>
+        columns={columns}
+        rows={requests as RequestRow[]}
+        page={1}
+        pageSize={requests.length || 1}
+        total={requests.length}
+        onPageChange={() => {}}
+        loading={loading}
+      />
     </div>
   );
 };

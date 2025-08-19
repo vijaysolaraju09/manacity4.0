@@ -1,20 +1,33 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
+
+const ctaSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true },
+    href: { type: String, required: true },
+  },
+  { _id: false }
+);
 
 const notificationSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
-    message: { type: String, required: true },
-    image: { type: String },
-    link: { type: String },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     type: {
       type: String,
-      enum: ["order", "admin", "offer", "system"],
-      default: "system",
+      enum: ['order', 'system', 'offer', 'event'],
+      required: true,
     },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // null = global
-    viewedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    title: { type: String, required: true },
+    body: { type: String, required: true },
+    cta: ctaSchema,
+    isRead: { type: Boolean, default: false },
+    readAt: { type: Date },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Notification", notificationSchema);
+notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
+
+const NotificationModel = mongoose.model('Notification', notificationSchema);
+
+module.exports = { NotificationModel };
+module.exports.default = NotificationModel;

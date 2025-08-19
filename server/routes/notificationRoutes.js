@@ -4,16 +4,16 @@ const protect = require("../middleware/authMiddleware");
 const {
   createNotification,
   getUserNotifications,
-  markAsViewed,
+  markAsRead,
 } = require("../controllers/notificationController");
 
-// Admin: add global or user notification
+// Admin: add notification for a user
 router.post("/", createNotification);
 
 // User: get relevant notifications
 router.get("/", protect, getUserNotifications);
 
-// User: mark one as viewed
-router.post("/view/:id", protect, markAsViewed);
+// User: mark one as read
+router.post("/read/:id", protect, markAsRead);
 
 module.exports = router;

@@ -1,65 +1,71 @@
-const Notification = require("../models/Notification");
+const { NotificationModel } = require("../models/Notification");
 
-// Admin: Create notification
+// Admin: Create notification for a user
 exports.createNotification = async (req, res) => {
   try {
-    const { title, message, image, link, type, user } = req.body;
-
-    const newNotif = await Notification.create({
-      title,
-      message,
-      image,
-      link,
+    const { userId, type, title, body, cta } = req.body;
+    const notification = await NotificationModel.create({
+      userId,
       type,
-      user: user || null,
+      title,
+      body,
+      cta,
     });
-
-    res
-      .status(201)
-      .json({ message: "Notification created", notification: newNotif });
+    res.status(201).json(notification);
   } catch (err) {
     res.status(500).json({ error: "Failed to create notification" });
   }
 };
 
-// User: Get all relevant notifications (global + personal)
+// User: Get notifications with pagination and filters
 exports.getUserNotifications = async (req, res) => {
   try {
     const userId = req.user._id;
+    const {
+      page = 1,
+      limit = 10,
+      type,
+      unread,
+    } = req.query;
+    const query = { userId };
+    if (type) query.type = type;
+    if (unread === "true") query.isRead = false;
 
-    const notifs = await Notification.find({
-      $or: [
-        { user: null }, // global
-        { user: userId }, // personal
-      ],
-    }).sort({ createdAt: -1 });
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
 
-    const mapped = notifs.map((n) => ({
-      ...n.toObject(),
-      isRead: n.viewedBy.includes(userId),
-    }));
+    const [notifications, total] = await Promise.all([
+      NotificationModel.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum),
+      NotificationModel.countDocuments(query),
+    ]);
 
-    res.json(mapped);
+    res.json({
+      notifications,
+      hasMore: skip + notifications.length < total,
+    });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch notifications" });
   }
 };
 
-// User: Mark one as viewed
-exports.markAsViewed = async (req, res) => {
+// User: Mark a notification as read
+exports.markAsRead = async (req, res) => {
   try {
-    const notif = await Notification.findById(req.params.id);
-    if (!notif)
-      return res.status(404).json({ error: "Notification not found" });
-
     const userId = req.user._id;
-    if (!notif.viewedBy.includes(userId)) {
-      notif.viewedBy.push(userId);
-      await notif.save();
+    const { id } = req.params;
+    const result = await NotificationModel.updateOne(
+      { _id: id, userId },
+      { $set: { isRead: true, readAt: new Date() } }
+    );
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "Notification not found" });
     }
-
-    res.json({ message: "Notification marked as viewed" });
+    res.json({ message: "Notification marked as read" });
   } catch (err) {
-    res.status(500).json({ error: "Failed to mark as viewed" });
+    res.status(500).json({ error: "Failed to mark as read" });
   }
 };

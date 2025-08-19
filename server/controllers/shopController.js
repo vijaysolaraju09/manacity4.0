@@ -1,6 +1,6 @@
 const Shop = require("../models/Shop");
 const Product = require("../models/Product");
-const Notification = require("../models/Notification");
+const { NotificationModel } = require("../models/Notification");
 const { promoteToBusiness } = require("./userController");
 const { normalizeProduct } = require("../utils/normalize");
 
@@ -185,11 +185,11 @@ exports.approveShop = async (req, res) => {
 
     await promoteToBusiness(shop.owner);
 
-    await Notification.create({
+    await NotificationModel.create({
+      userId: shop.owner,
+      type: "system",
       title: "Business request approved",
-      message: "Your business request has been approved.",
-      type: "shop",
-      user: shop.owner,
+      body: "Your business request has been approved.",
     });
 
     res.json({ message: "Shop approved" });
@@ -205,11 +205,11 @@ exports.rejectShop = async (req, res) => {
     shop.status = "rejected";
     await shop.save();
 
-    await Notification.create({
+    await NotificationModel.create({
+      userId: shop.owner,
+      type: "system",
       title: "Business request rejected",
-      message: "Your business request has been rejected.",
-      type: "shop",
-      user: shop.owner,
+      body: "Your business request has been rejected.",
     });
 
     res.json({ message: "Shop rejected" });

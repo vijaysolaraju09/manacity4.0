@@ -1,0 +1,30 @@
+@import '../../../styles/variables';
+
+.sheet {
+  padding: 1rem;
+  text-align: center;
+
+  h4 {
+    margin-bottom: 1rem;
+  }
+
+  .name,
+  .shop,
+  .price {
+    margin: 0.25rem 0;
+  }
+
+  .actions {
+    margin-top: 1rem;
+
+    button {
+      width: 100%;
+      padding: 0.6rem;
+      background: $primary-color;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  }
+}

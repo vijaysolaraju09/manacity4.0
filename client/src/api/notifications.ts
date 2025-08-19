@@ -2,13 +2,14 @@ import api from './client';
 
 export interface Notification {
   _id: string;
+  userId: string;
+  type: 'order' | 'system' | 'offer' | 'event';
   title: string;
-  message: string;
-  image?: string;
-  link?: string;
-  type: string;
+  body: string;
+  cta?: { label: string; href: string };
+  isRead: boolean;
+  readAt?: string;
   createdAt: string;
-  isRead?: boolean;
 }
 
 export interface NotificationsResponse {
@@ -21,10 +22,11 @@ export const fetchNotifications = async (
     page = 1,
     limit = 10,
     type,
-  }: { page?: number; limit?: number; type?: string } = {},
+    unread,
+  }: { page?: number; limit?: number; type?: string; unread?: boolean } = {},
 ): Promise<NotificationsResponse> => {
   const res = await api.get('/notifications', {
-    params: { page, limit, type },
+    params: { page, limit, type, unread },
   });
   if (Array.isArray(res.data)) {
     return { notifications: res.data, hasMore: res.data.length === limit };
@@ -33,6 +35,5 @@ export const fetchNotifications = async (
 };
 
 export const markNotificationRead = async (id: string) => {
-  await api.post(`/notifications/view/${id}`);
+  await api.post(`/notifications/read/${id}`);
 };
-

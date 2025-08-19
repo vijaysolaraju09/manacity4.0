@@ -1,5 +1,6 @@
 import { Schema, Document, model, Model } from 'mongoose';
 import { Address, AddressSchema } from './shared/Address';
+import { generateSlug } from '../utils/slug';
 
 export interface DayHours {
   open: string;
@@ -78,26 +79,9 @@ shopSchema.index({ category: 1 });
 shopSchema.index({ ratingAvg: -1 });
 shopSchema.index({ geo: '2dsphere' });
 
-function slugify(text: string): string {
-  return text
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 shopSchema.pre('validate', async function (next) {
   if (!this.slug && this.name) {
-    const base = slugify(this.name);
-    let slug = base;
-    let i = 0;
-    const Shop = this.constructor as Model<ShopDoc>;
-    while (await Shop.exists({ slug })) {
-      i += 1;
-      slug = `${base}-${i}`;
-    }
-    this.slug = slug;
+    this.slug = await generateSlug(this.constructor as Model<ShopDoc>, this.name);
   }
   next();
 });

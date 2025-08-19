@@ -1,6 +1,14 @@
-const { Schema, model } = require('mongoose');
+import { Schema, Document, model, Model, Types } from 'mongoose';
 
-const cartItemSchema = new Schema(
+export interface CartItem {
+  productId: Schema.Types.ObjectId;
+  variantId?: Schema.Types.ObjectId;
+  qty: number;
+  unitPrice: number;
+  appliedDiscount?: number;
+}
+
+const CartItemSchema = new Schema<CartItem>(
   {
     productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
     variantId: { type: Schema.Types.ObjectId, ref: 'ProductVariant' },
@@ -11,7 +19,31 @@ const cartItemSchema = new Schema(
   { _id: false }
 );
 
-function computeTotals(cart) {
+export interface CartAttrs {
+  userId: Schema.Types.ObjectId;
+  items: CartItem[];
+  currency: string;
+  subtotal: number;
+  discountTotal: number;
+  grandTotal: number;
+}
+
+export interface CartDoc extends Document, CartAttrs {
+  createdAt: Date;
+  updatedAt: Date;
+  computeTotals(): void;
+}
+
+interface CartModel extends Model<CartDoc> {
+  upsertItem(userId: Types.ObjectId, item: CartItem): Promise<CartDoc>;
+  removeItem(
+    userId: Types.ObjectId,
+    productId: Types.ObjectId,
+    variantId?: Types.ObjectId
+  ): Promise<CartDoc | null>;
+}
+
+function computeTotals(cart: CartDoc) {
   let subtotal = 0;
   let discountTotal = 0;
   for (const item of cart.items) {
@@ -23,10 +55,10 @@ function computeTotals(cart) {
   cart.grandTotal = subtotal - discountTotal;
 }
 
-const cartSchema = new Schema(
+const cartSchema = new Schema<CartDoc>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    items: { type: [cartItemSchema], default: [] },
+    items: { type: [CartItemSchema], default: [] },
     currency: { type: String, default: 'USD' },
     subtotal: { type: Number, default: 0 },
     discountTotal: { type: Number, default: 0 },
@@ -35,13 +67,18 @@ const cartSchema = new Schema(
   { timestamps: true }
 );
 
+cartSchema.methods.computeTotals = function () {
+  computeTotals(this as CartDoc);
+};
+
 cartSchema.pre('validate', function (next) {
-  computeTotals(this);
+  computeTotals(this as CartDoc);
   next();
 });
 
 cartSchema.statics.upsertItem = async function (userId, item) {
-  const cart = (await this.findOne({ userId })) || new this({ userId });
+  const Cart = this as CartModel;
+  const cart = (await Cart.findOne({ userId })) || new Cart({ userId });
   const idx = cart.items.findIndex(
     (i) =>
       i.productId.equals(item.productId) &&
@@ -62,13 +99,16 @@ cartSchema.statics.upsertItem = async function (userId, item) {
 };
 
 cartSchema.statics.removeItem = async function (userId, productId, variantId) {
-  const cart = await this.findOne({ userId });
+  const Cart = this as CartModel;
+  const cart = await Cart.findOne({ userId });
   if (!cart) return null;
   cart.items = cart.items.filter(
     (i) =>
       !(
         i.productId.equals(productId) &&
-        (variantId ? i.variantId && i.variantId.equals(variantId) : !i.variantId)
+        (variantId
+          ? i.variantId && i.variantId.equals(variantId)
+          : !i.variantId)
       )
   );
   await cart.save();
@@ -77,7 +117,7 @@ cartSchema.statics.removeItem = async function (userId, productId, variantId) {
 
 cartSchema.index({ userId: 1 });
 
-const CartModel = model('Cart', cartSchema);
+export const CartModel = model<CartDoc, CartModel>('Cart', cartSchema);
 
-module.exports = { CartModel };
+export default CartModel;
 

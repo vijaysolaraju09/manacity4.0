@@ -1,20 +1,24 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { verifyOtp, resendOtp as resendOtpApi } from '../../../api/auth';
+import { verifyOtpCode, sendOtpToPhone } from '../../../lib/firebase';
+import { verifyFirebase } from '../../../api/auth';
 import Loader from '../../../components/Loader';
+import showToast from '../../../components/ui/Toast';
+import { mapFirebaseError } from '../../../lib/firebaseErrors';
+import type { SignupDraft } from '../../../api/auth';
 import './OTP.scss';
 
 const OTP = () => {
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
-  const [timer, setTimer] = useState(30);
-  const [message, setMessage] = useState('');
+  const [timer, setTimer] = useState(60);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const location = useLocation();
-  const phone = (location.state as { phone?: string })?.phone || '';
+  const [searchParams] = useSearchParams();
+  const phone = searchParams.get('phone') || '';
+  const purpose = (searchParams.get('purpose') as 'signup' | 'reset') || 'signup';
 
   useEffect(() => {
     if (timer <= 0) return;
@@ -27,7 +31,6 @@ const OTP = () => {
       const updated = [...otp];
       updated[index] = value;
       setOtp(updated);
-
       if (value && index < otp.length - 1) {
         const nextInput = document.getElementById(`otp-${index + 1}`);
         nextInput?.focus();
@@ -48,11 +51,27 @@ const OTP = () => {
       try {
         setVerifying(true);
         setError('');
-        await verifyOtp(phone, code);
-        setMessage('Verified successfully');
-        setTimeout(() => navigate('/login'), 800);
-      } catch {
-        setError('OTP verification failed');
+        const idToken = await verifyOtpCode(code);
+        const payload: any = { idToken, purpose };
+        if (purpose === 'signup') {
+          const raw = sessionStorage.getItem('signupDraft');
+          if (!raw) {
+            setError('Signup data missing');
+            return;
+          }
+          payload.signupDraft = JSON.parse(raw) as SignupDraft;
+        }
+        const res = await verifyFirebase(payload);
+        showToast('Verified successfully', 'success');
+        if (purpose === 'signup') {
+          navigate('/login');
+        } else {
+          navigate(`/set-new-password?token=${encodeURIComponent(res.token)}`);
+        }
+      } catch (err: any) {
+        const message = err.response?.data?.error || mapFirebaseError(err?.code);
+        setError(message);
+        showToast(message, 'error');
       } finally {
         setVerifying(false);
       }
@@ -63,11 +82,13 @@ const OTP = () => {
     try {
       setResending(true);
       setError('');
-      await resendOtpApi(phone);
-      setMessage(`OTP resent to ${phone}`);
-      setTimer(30);
-    } catch {
-      setError('Failed to resend OTP');
+      await sendOtpToPhone(phone);
+      showToast(`OTP resent to ${phone}`, 'success');
+      setTimer(60);
+    } catch (err: any) {
+      const message = mapFirebaseError(err?.code);
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setResending(false);
     }
@@ -90,6 +111,8 @@ const OTP = () => {
               key={i}
               id={`otp-${i}`}
               type="text"
+              inputMode="numeric"
+              aria-label={`Digit ${i + 1}`}
               maxLength={1}
               value={digit}
               onChange={(e) => handleChange(i, e.target.value)}
@@ -98,7 +121,6 @@ const OTP = () => {
           ))}
         </div>
 
-        {message && <div className="feedback success">{message}</div>}
         {error && <div className="feedback error">{error}</div>}
 
         <motion.button
@@ -119,7 +141,7 @@ const OTP = () => {
         </button>
 
         <button type="button" className="link back" onClick={() => navigate('/signup')}>
-          ← Back to Signup
+          ← Back
         </button>
       </motion.div>
     </div>

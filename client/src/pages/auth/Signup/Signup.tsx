@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import './Signup.scss';
 import logo from '../../../assets/logo.png';
 import fallbackImage from '../../../assets/no-image.svg';
-import { signup } from '../../../api/auth';
 import Loader from '../../../components/Loader';
+import showToast from '../../../components/ui/Toast';
+import { createInvisibleRecaptcha, sendOtpToPhone } from '../../../lib/firebase';
+import { mapFirebaseError } from '../../../lib/firebaseErrors';
+import type { SignupDraft } from '../../../api/auth';
 
 const Signup = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<SignupDraft>({
     name: '',
     phone: '',
     password: '',
@@ -19,6 +22,10 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  useEffect(() => {
+    createInvisibleRecaptcha('recaptcha-container');
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -26,8 +33,9 @@ const Signup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { name?: string; phone?: string; password?: string; location?: string } = {};
+    const phoneE164 = `+91${form.phone}`;
     if (!form.name.trim()) newErrors.name = 'Name is required';
-    if (!/^\d{10,}$/.test(form.phone)) newErrors.phone = 'Enter a valid phone number';
+    if (!/^\+91\d{10}$/.test(phoneE164)) newErrors.phone = 'Enter a valid phone number';
     if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
     if (!form.location) newErrors.location = 'Location is required';
     setErrors(newErrors);
@@ -35,17 +43,14 @@ const Signup = () => {
 
     try {
       setLoading(true);
-      await signup(form);
-      navigate('/otp', { state: { phone: form.phone } });
+      await sendOtpToPhone(phoneE164);
+      sessionStorage.setItem('signupDraft', JSON.stringify({ ...form, phone: phoneE164 }));
+      showToast(`OTP sent to ${phoneE164}`, 'success');
+      navigate(`/otp?purpose=signup&phone=${encodeURIComponent(phoneE164)}`);
     } catch (err: any) {
-      const data = err.response?.data;
-      const fieldErrors = data?.errors;
-      if (fieldErrors && typeof fieldErrors === 'object') {
-        setErrors(fieldErrors);
-      } else {
-        const message = data?.message || 'Signup failed';
-        setErrors({ general: message });
-      }
+      const message = mapFirebaseError(err?.code);
+      setErrors({ general: message });
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -53,6 +58,7 @@ const Signup = () => {
 
   return (
     <div className="signup-page">
+      <div id="recaptcha-container" />
       <motion.div
         className="form-card"
         initial={{ opacity: 0, y: 30 }}

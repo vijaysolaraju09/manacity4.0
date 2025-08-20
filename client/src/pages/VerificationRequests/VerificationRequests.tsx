@@ -19,7 +19,11 @@ interface Request {
   createdAt: string;
 }
 
-type RequestRow = Request & { actions?: string };
+type RequestRow = Request & {
+  name: string;
+  phone: string;
+  actions?: string;
+};
 
 interface RequestResponse {
   requests: Request[];
@@ -103,9 +107,15 @@ const VerificationRequests = () => {
     }
   };
 
+  const rows: RequestRow[] = requests.map((r) => ({
+    ...r,
+    name: r.user.name,
+    phone: r.user.phone,
+  }));
+
   const columns: Column<RequestRow>[] = [
-    { key: 'name', label: 'Name', render: (r) => r.user.name },
-    { key: 'phone', label: 'Phone', render: (r) => r.user.phone },
+    { key: 'name', label: 'Name' },
+    { key: 'phone', label: 'Phone' },
     { key: 'profession', label: 'Profession' },
     { key: 'bio', label: 'Bio' },
     {
@@ -163,9 +173,9 @@ const VerificationRequests = () => {
       </div>
       <DataTable<RequestRow>
         columns={columns}
-        rows={requests as RequestRow[]}
+        rows={rows}
         page={page}
-        pageSize={requests.length || 1}
+        pageSize={rows.length || 1}
         total={total}
         onPageChange={changePage}
         loading={loading}

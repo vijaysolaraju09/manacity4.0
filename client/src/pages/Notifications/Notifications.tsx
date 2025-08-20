@@ -133,14 +133,13 @@ const Notifications = () => {
               {items.map((n) => (
                 <NotificationCard
                   key={n._id}
-                  icon={n.image}
                   title={n.title}
-                  message={n.message}
+                  message={n.body}
                   timestamp={n.createdAt}
                   read={n.isRead}
-                  ctaLabel={n.link ? 'View' : undefined}
-                  onClick={() => n.link && navigate(n.link)}
-                  onCtaClick={() => n.link && navigate(n.link)}
+                  ctaLabel={n.cta?.label}
+                  onClick={() => n.cta && navigate(n.cta.href)}
+                  onCtaClick={() => n.cta && navigate(n.cta.href)}
                   onSwipeLeft={() => handleMarkRead(n._id)}
                 />
               ))}

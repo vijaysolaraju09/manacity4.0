@@ -76,10 +76,15 @@ productSchema.pre('validate', async function (next) {
   next();
 });
 
+// Fetch all products belonging to a shop quickly
 productSchema.index({ shopId: 1 });
+// Fast lookups using unique slugs
 productSchema.index({ slug: 1 }, { unique: true });
+// Allow efficient filtering by category
 productSchema.index({ category: 1 });
+// Support queries on product availability
 productSchema.index({ status: 1 });
+// Retrieve shop products filtered by status (e.g. active/archived)
 productSchema.index({ shopId: 1, status: 1 });
 
 export const ProductModel = model<ProductDoc>('Product', productSchema);

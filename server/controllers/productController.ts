@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import { LeanDocument } from 'mongoose';
 import { ProductModel, ProductDoc } from '../models/Product';
 import { createProductSchema, updateProductSchema, CreateProductDTO, UpdateProductDTO } from '../validators/productSchemas';
 
@@ -13,7 +14,7 @@ interface ProductResponseDTO {
   availability: 'active' | 'archived';
 }
 
-const normalizeProduct = (p: ProductDoc): ProductResponseDTO => ({
+const normalizeProduct = (p: ProductDoc | LeanDocument<ProductDoc>): ProductResponseDTO => ({
   id: p._id.toString(),
   slug: p.slug,
   title: p.title,
@@ -47,8 +48,8 @@ export const updateProduct = async (req: Request, res: Response) => {
     return res.status(400).json({ errors });
   }
   try {
-    const product = await ProductModel.findById(paramResult.data.id);
-    if (!product || product.isDeleted) {
+    const product = await ProductModel.findOne({ _id: paramResult.data.id, isDeleted: false });
+    if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
     Object.assign(product, bodyResult.data as UpdateProductDTO);
@@ -79,7 +80,7 @@ export const getProducts = async (req: Request, res: Response) => {
   const skip = (page - 1) * pageSize;
   try {
     const [items, total] = await Promise.all([
-      ProductModel.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(pageSize),
+      ProductModel.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(pageSize).lean(),
       ProductModel.countDocuments(filter),
     ]);
     res.json({ items: items.map(normalizeProduct), total });
@@ -94,7 +95,7 @@ export const getProductById = async (req: Request, res: Response) => {
     return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   }
   try {
-    const product = await ProductModel.findOne({ _id: result.data.id, isDeleted: false });
+    const product = await ProductModel.findOne({ _id: result.data.id, isDeleted: false }).lean();
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }

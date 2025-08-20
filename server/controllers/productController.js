@@ -65,9 +65,8 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product || product.isDeleted)
-      return res.status(404).json({ error: 'Product not found' });
+    const product = await Product.findOne({ _id: req.params.id, isDeleted: false });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
     if (req.user.role !== 'admin') {
       const shop = await Shop.findOne({ _id: product.shop, owner: req.user._id });
       if (!shop) return res.status(403).json({ error: 'Not authorized' });
@@ -102,9 +101,8 @@ exports.updateProduct = async (req, res) => {
 
 exports.deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product || product.isDeleted)
-      return res.status(404).json({ error: 'Product not found' });
+    const product = await Product.findOne({ _id: req.params.id, isDeleted: false });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
     if (req.user.role !== 'admin') {
       const shop = await Shop.findOne({ _id: product.shop, owner: req.user._id });
       if (!shop) return res.status(403).json({ error: 'Not authorized' });
@@ -159,7 +157,8 @@ exports.getProducts = async (req, res) => {
         .populate('shop', 'name')
         .sort(sortObj)
         .skip(skip)
-        .limit(Number(pageSize)),
+        .limit(Number(pageSize))
+        .lean(),
       Product.countDocuments(filter),
     ]);
 
@@ -173,7 +172,7 @@ exports.getMyProducts = async (req, res) => {
   try {
     const shops = await Shop.find({ owner: req.user._id });
     const shopIds = shops.map((s) => s._id);
-    const products = await Product.find({ shop: { $in: shopIds }, isDeleted: false });
+    const products = await Product.find({ shop: { $in: shopIds }, isDeleted: false }).lean();
     res.json(products.map(normalize));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch products' });
@@ -182,7 +181,7 @@ exports.getMyProducts = async (req, res) => {
 
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findOne({ _id: req.params.id, isDeleted: false });
+    const product = await Product.findOne({ _id: req.params.id, isDeleted: false }).lean();
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(normalize(product));
   } catch (err) {

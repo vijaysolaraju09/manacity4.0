@@ -1,61 +1,38 @@
-# React + TypeScript + Vite
+# Manacity Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Environment variables
 
-Currently, two official plugins are available:
+Copy `.env.example` to `.env` and fill in your Firebase project settings:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```
+VITE_API_URL=http://localhost:5000/api
+VITE_FIREBASE_API_KEY=AIza...
+VITE_FIREBASE_AUTH_DOMAIN=mana-city-98fa0.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=mana-city-98fa0
+VITE_FIREBASE_STORAGE_BUCKET=mana-city-98fa0.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=1011241089335
+VITE_FIREBASE_APP_ID=1:1011241089335:web:2ba85628781c7af1f502b2
+VITE_FIREBASE_MEASUREMENT_ID=G-JMXQCQ7FC8
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## OTP flow
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+**Signup**
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
 ```
-# Backend API configuration
+Phone → Firebase OTP → Verify code → POST /auth/verify-firebase (purpose=signup) → Account created → Redirect to login
+```
 
-The frontend relies on a backend API defined by the `VITE_API_URL` environment variable. Copy `.env.example` to `.env` and adjust the URL to match your API server. All requests made through `src/api/client.ts` will use this base URL and automatically include the stored authentication token.
+**Reset password**
 
-Authentication endpoints are prefixed with `/auth`, so login, signup and related actions will request URLs like `${VITE_API_URL}/auth/login`.
+```
+Phone → Firebase OTP → Verify code → POST /auth/verify-firebase (purpose=reset) → Receive reset token → Set new password
+```
 
-# manacity-web
+The client only initiates OTP via Firebase; the server validates the Firebase ID token before creating or updating accounts.
+
+## Backend API configuration
+
+The frontend relies on a backend API defined by the `VITE_API_URL` environment variable. Requests made through `src/api/client.ts` use this base URL and automatically include the stored authentication token.
+
+Authentication endpoints are prefixed with `/auth`, so login and related actions request URLs like `${VITE_API_URL}/auth/login`.

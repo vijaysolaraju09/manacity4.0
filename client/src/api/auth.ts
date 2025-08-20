@@ -1,13 +1,12 @@
 import api from './client';
 import type { UserState } from '../store/slices/userSlice';
 
-
 interface Credentials {
   phone: string;
   password: string;
 }
 
-interface SignupData extends Credentials {
+export interface SignupDraft extends Credentials {
   name: string;
   location: string;
 }
@@ -24,14 +23,15 @@ export async function login(creds: Credentials): Promise<UserState> {
   return user;
 }
 
-export async function signup(data: SignupData): Promise<void> {
-  await api.post('/auth/signup', data);
+export async function verifyFirebase(payload: {
+  idToken: string;
+  purpose: 'signup' | 'reset';
+  signupDraft?: SignupDraft;
+}): Promise<any> {
+  const res = await api.post('/auth/verify-firebase', payload);
+  return res.data;
 }
 
-export async function verifyOtp(phone: string, code: string): Promise<void> {
-  await api.post('/auth/verify-otp', { phone, code });
-}
-
-export async function resendOtp(phone: string): Promise<void> {
-  await api.post('/auth/resend-otp', { phone });
+export async function setNewPassword(token: string, newPassword: string): Promise<void> {
+  await api.post('/auth/set-password', { token, newPassword });
 }

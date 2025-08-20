@@ -122,7 +122,7 @@ const Login = () => {
 
         <div className="links">
           <span onClick={() => navigate('/signup')}>Create Account</span>
-          <Link to="/reset-password">Forgot Password?</Link>
+          <Link to="/forgot-password">Forgot Password?</Link>
         </div>
 
         <div className="back" onClick={() => navigate('/')}>← Back to Landing</div>

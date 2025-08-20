@@ -1,0 +1,53 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+
+async function createUserIfNew({ name, phone, password, location }) {
+  const existing = await User.findOne({ phone });
+  if (existing) {
+    return { existing: true };
+  }
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = await User.create({
+    name,
+    phone,
+    password: hashedPassword,
+    location,
+    address: '',
+  });
+  const token = jwt.sign(
+    { userId: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+  const profile = {
+    id: user._id,
+    name: user.name,
+    phone: user.phone,
+    location: user.location,
+    address: user.address,
+    role: user.role,
+    isVerified: user.isVerified,
+    verificationStatus: user.verificationStatus,
+    profession: user.profession,
+    bio: user.bio,
+  };
+  return { user: profile, token };
+}
+
+async function issueResetTokenForPhone(phone) {
+  const user = await User.findOne({ phone });
+  if (!user) {
+    const err = new Error('User not found');
+    err.status = 404;
+    throw err;
+  }
+  const token = jwt.sign(
+    { userId: user._id, phone },
+    process.env.JWT_SECRET,
+    { expiresIn: '10m' }
+  );
+  return token;
+}
+
+module.exports = { createUserIfNew, issueResetTokenForPhone };

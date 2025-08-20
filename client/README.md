@@ -5,7 +5,7 @@
 Copy `.env.example` to `.env` and fill in your Firebase project settings:
 
 ```
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=https://manacity4-0.onrender.com/api
 VITE_FIREBASE_API_KEY=AIza...
 VITE_FIREBASE_AUTH_DOMAIN=mana-city-98fa0.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=mana-city-98fa0

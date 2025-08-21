@@ -1,10 +1,11 @@
 const User = require("../models/User");
+const AppError = require("../utils/AppError");
 
 exports.getProfile = async (req, res) => {
   res.status(200).json({ user: req.user });
 };
 
-exports.updateProfile = async (req, res) => {
+exports.updateProfile = async (req, res, next) => {
   try {
     const { name, location, address } = req.body;
 
@@ -30,7 +31,7 @@ exports.updateProfile = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: "Failed to update profile" });
+    next(AppError.internal('PROFILE_UPDATE_FAILED', 'Failed to update profile'));
   }
 };
 

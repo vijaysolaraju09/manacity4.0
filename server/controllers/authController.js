@@ -1,14 +1,15 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const AppError = require("../utils/AppError");
 
-exports.signup = async (req, res) => {
+exports.signup = async (req, res, next) => {
   try {
     const { name, phone, password, location, role } = req.body;
 
     const existingUser = await User.findOne({ phone });
     if (existingUser) {
-      return res.status(400).json({ error: "Phone already registered" });
+      throw AppError.badRequest('PHONE_EXISTS', 'Phone already registered');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -18,7 +19,7 @@ exports.signup = async (req, res) => {
       password: hashedPassword,
       location,
       role,
-      address: "", // ✅ Optional, default to empty
+      address: "",
     });
 
     const token = jwt.sign(
@@ -46,19 +47,19 @@ exports.signup = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: "Signup failed" });
+    next(AppError.internal('SIGNUP_FAILED', 'Signup failed'));
   }
 };
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     const { phone, password } = req.body;
 
     const user = await User.findOne({ phone });
-    if (!user) return res.status(404).json({ error: "Phone not registered" });
+    if (!user) throw AppError.notFound('USER_NOT_FOUND', 'Phone not registered');
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ error: "Incorrect password" });
+    if (!isMatch) throw AppError.badRequest('INVALID_PASSWORD', 'Incorrect password');
 
     const token = jwt.sign(
       { userId: user._id, role: user.role },
@@ -85,11 +86,11 @@ exports.login = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: "Login failed" });
+    next(AppError.internal('LOGIN_FAILED', 'Login failed'));
   }
 };
 
-exports.adminLogin = async (req, res) => {
+exports.adminLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     if (
@@ -101,8 +102,8 @@ exports.adminLogin = async (req, res) => {
       });
       return res.json({ token });
     }
-    res.status(401).json({ error: 'Invalid credentials' });
+    throw AppError.unauthorized('INVALID_CREDENTIALS', 'Invalid credentials');
   } catch (err) {
-    res.status(500).json({ error: 'Login failed' });
+    next(AppError.internal('LOGIN_FAILED', 'Login failed'));
   }
 };

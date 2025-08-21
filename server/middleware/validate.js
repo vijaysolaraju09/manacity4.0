@@ -1,16 +1,24 @@
 const { ZodError } = require('zod');
+const AppError = require('../utils/AppError');
 
-const validate = (schema) => (req, res, next) => {
+const validate = (schema) => (req, _res, next) => {
   try {
     if (schema.body) req.body = schema.body.parse(req.body);
     if (schema.params) req.params = schema.params.parse(req.params);
     if (schema.query) req.query = schema.query.parse(req.query);
-    return next();
+    next();
   } catch (err) {
     if (err instanceof ZodError) {
-      return res.status(400).json({ error: err.errors.map(e => e.message).join(', ') });
+      const fieldErrors = {};
+      err.errors.forEach((e) => {
+        const field = e.path.join('.');
+        fieldErrors[field] = e.message;
+      });
+      return next(
+        AppError.unprocessable('VALIDATION_ERROR', 'Invalid input', fieldErrors)
+      );
     }
-    return res.status(400).json({ error: 'Invalid request' });
+    next(AppError.badRequest('INVALID_REQUEST', 'Invalid request'));
   }
 };
 

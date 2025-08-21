@@ -1,13 +1,14 @@
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
+const AppError = require("../utils/AppError");
 
-exports.addToCart = async (req, res) => {
+exports.addToCart = async (req, res, next) => {
   try {
     const { productId, quantity } = req.body;
     const user = req.user._id;
 
     const product = await Product.findById(productId).populate("shop");
-    if (!product) return res.status(404).json({ error: "Product not found" });
+    if (!product) throw AppError.notFound('PRODUCT_NOT_FOUND', 'Product not found');
 
     const existing = await Cart.findOne({ user, product: productId });
     if (existing) {
@@ -25,11 +26,11 @@ exports.addToCart = async (req, res) => {
 
     res.status(201).json({ message: "Item added to cart", cart: newItem });
   } catch (err) {
-    res.status(500).json({ error: "Failed to add to cart" });
+    next(AppError.internal('ADD_CART_FAILED', 'Failed to add to cart'));
   }
 };
 
-exports.getMyCart = async (req, res) => {
+exports.getMyCart = async (req, res, next) => {
   try {
     const items = await Cart.find({ user: req.user._id })
       .populate("product")
@@ -54,11 +55,11 @@ exports.getMyCart = async (req, res) => {
 
     res.json(grouped);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch cart" });
+    next(AppError.internal('FETCH_CART_FAILED', 'Failed to fetch cart'));
   }
 };
 
-exports.removeFromCart = async (req, res) => {
+exports.removeFromCart = async (req, res, next) => {
   try {
     const cartItem = await Cart.findOneAndDelete({
       _id: req.params.id,
@@ -66,9 +67,9 @@ exports.removeFromCart = async (req, res) => {
     });
 
     if (!cartItem)
-      return res.status(404).json({ error: "Cart item not found" });
+      throw AppError.notFound('CART_ITEM_NOT_FOUND', 'Cart item not found');
     res.json({ message: "Item removed" });
   } catch (err) {
-    res.status(500).json({ error: "Failed to remove item" });
+    next(AppError.internal('REMOVE_CART_FAILED', 'Failed to remove item'));
   }
 };

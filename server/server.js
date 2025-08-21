@@ -16,6 +16,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const productRoutes = require("./routes/productRoutes");
 const adminUserRoutes = require("./routes/adminUserRoutes");
+const AppError = require("./utils/AppError");
 
 const app = express();
 app.use(cors());
@@ -34,6 +35,10 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", adminUserRoutes);
+
+app.use('/api', (_req, _res, next) =>
+  next(AppError.notFound('ROUTE_NOT_FOUND', 'API route not found'))
+);
 
 mongoose
   .connect(process.env.MONGO_URI)

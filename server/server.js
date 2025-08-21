@@ -1,7 +1,11 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
+
+const context = require("./middleware/context");
+const errorHandler = require("./middleware/error");
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
@@ -21,6 +25,7 @@ const AppError = require("./utils/AppError");
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(context);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
@@ -36,9 +41,19 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", adminUserRoutes);
 
-app.use('/api', (_req, _res, next) =>
-  next(AppError.notFound('ROUTE_NOT_FOUND', 'API route not found'))
+app.use("/api", (_req, _res, next) =>
+  next(AppError.notFound("ROUTE_NOT_FOUND", "API route not found"))
 );
+
+if (process.env.NODE_ENV === "production") {
+  const clientPath = path.join(__dirname, "..", "client", "dist");
+  app.use(express.static(clientPath));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(clientPath, "index.html"));
+  });
+}
+
+app.use(errorHandler);
 
 mongoose
   .connect(process.env.MONGO_URI)

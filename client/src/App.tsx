@@ -17,6 +17,7 @@ const Signup = lazy(() => import('./pages/auth/Signup/Signup'));
 const OTP = lazy(() => import('./pages/auth/OTP/OTP'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword/ForgotPassword'));
 const SetNewPassword = lazy(() => import('./pages/auth/SetNewPassword/SetNewPassword'));
+const PhoneAuth = lazy(() => import('./pages/auth/PhoneAuth/PhoneAuth'));
 const Profile = lazy(() => import('./pages/Profile/Profile'));
 const Home = lazy(() => import('./pages/Home/Home'));
 const Shops = lazy(() => import('./pages/Shops/Shops'));
@@ -74,6 +75,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/otp" element={<OTP />} />
+        <Route path="/phone-auth" element={<PhoneAuth />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/set-new-password" element={<SetNewPassword />} />
         <Route path="/admin/login" element={<AdminLogin />} />

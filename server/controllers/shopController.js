@@ -38,7 +38,7 @@ exports.getAllShops = async (req, res) => {
       location,
     } = req.query;
 
-    const match = {};
+    const match = { isDeleted: false };
     const statusMap = { active: "approved", suspended: "rejected", pending: "pending" };
     if (status) match.status = statusMap[status] || status;
     if (category) match.category = category;
@@ -122,7 +122,7 @@ exports.getAllShops = async (req, res) => {
 
 exports.getShopById = async (req, res) => {
   try {
-    const shop = await Shop.findById(req.params.id);
+    const shop = await Shop.findOne({ _id: req.params.id, isDeleted: false }).lean();
     if (!shop) return res.status(404).json({ error: "Shop not found" });
     res.json(shop);
   } catch (err) {
@@ -133,10 +133,12 @@ exports.getShopById = async (req, res) => {
 exports.getProductsByShop = async (req, res) => {
   try {
     const { page, limit } = req.query;
-    let query = Product.find({ shop: req.params.id }).populate(
-      "shop",
-      "name image location"
-    );
+    let query = Product.find({
+      shop: req.params.id,
+      isDeleted: false,
+    })
+      .populate("shop", "name image location")
+      .lean();
 
     if (page !== undefined || limit !== undefined) {
       const p = parseInt(page || 1, 10);
@@ -154,12 +156,14 @@ exports.getProductsByShop = async (req, res) => {
 exports.getPendingShops = async (req, res) => {
   try {
     const { status, category, location } = req.query;
-    const filters = {};
+    const filters = { isDeleted: false };
     if (status) filters.status = status;
     if (category) filters.category = category;
     if (location) filters.location = location;
 
-    const shops = await Shop.find(filters).populate("owner", "name phone");
+    const shops = await Shop.find(filters)
+      .populate("owner", "name phone")
+      .lean();
     res.json(shops);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch shop requests" });
@@ -168,7 +172,7 @@ exports.getPendingShops = async (req, res) => {
 
 exports.getMyShop = async (req, res) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const shop = await Shop.findOne({ owner: req.user._id, isDeleted: false }).lean();
     if (!shop) return res.status(404).json({ message: "No shop request" });
     res.json(shop);
   } catch (err) {
@@ -178,7 +182,7 @@ exports.getMyShop = async (req, res) => {
 
 exports.approveShop = async (req, res) => {
   try {
-    const shop = await Shop.findById(req.params.id);
+    const shop = await Shop.findOne({ _id: req.params.id, isDeleted: false });
     if (!shop) return res.status(404).json({ error: "Shop not found" });
     shop.status = "approved";
     await shop.save();
@@ -200,7 +204,7 @@ exports.approveShop = async (req, res) => {
 
 exports.rejectShop = async (req, res) => {
   try {
-    const shop = await Shop.findById(req.params.id);
+    const shop = await Shop.findOne({ _id: req.params.id, isDeleted: false });
     if (!shop) return res.status(404).json({ error: "Shop not found" });
     shop.status = "rejected";
     await shop.save();
@@ -226,7 +230,11 @@ exports.updateShop = async (req, res) => {
       const map = { active: "approved", suspended: "rejected", pending: "pending" };
       updates.status = map[updates.status] || updates.status;
     }
-    const shop = await Shop.findByIdAndUpdate(id, updates, { new: true });
+    const shop = await Shop.findOneAndUpdate(
+      { _id: id, isDeleted: false },
+      updates,
+      { new: true }
+    );
     if (!shop) return res.status(404).json({ error: "Shop not found" });
     res.json({ message: "Shop updated" });
   } catch (err) {
@@ -237,9 +245,13 @@ exports.updateShop = async (req, res) => {
 exports.deleteShop = async (req, res) => {
   try {
     const { id } = req.params;
-    const shop = await Shop.findByIdAndDelete(id);
+    const shop = await Shop.findOneAndUpdate(
+      { _id: id, isDeleted: false },
+      { isDeleted: true },
+      { new: true }
+    );
     if (!shop) return res.status(404).json({ error: "Shop not found" });
-    await Product.deleteMany({ shop: id });
+    await Product.updateMany({ shop: id }, { isDeleted: true });
     res.json({ message: "Shop deleted" });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete shop" });
@@ -248,7 +260,11 @@ exports.deleteShop = async (req, res) => {
 
 exports.getMyProducts = async (req, res) => {
   try {
-    const products = await Product.find({ createdBy: req.user._id });
+    const products = await Product.find({
+      createdBy: req.user._id,
+      isDeleted: false,
+    })
+      .lean();
     res.status(200).json(products.map(normalizeProduct));
   } catch (err) {
     res.status(500).json({ message: "Server error fetching products." });

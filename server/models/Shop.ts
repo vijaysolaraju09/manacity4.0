@@ -73,11 +73,11 @@ const shopSchema = new Schema<ShopDoc>(
   { timestamps: true }
 );
 
-shopSchema.index({ ownerId: 1 });
-shopSchema.index({ slug: 1 }, { unique: true });
-shopSchema.index({ category: 1 });
-shopSchema.index({ ratingAvg: -1 });
-shopSchema.index({ geo: '2dsphere' });
+shopSchema.index({ ownerId: 1 }); // quick lookup of shops by owner
+shopSchema.index({ slug: 1 }, { unique: true }); // ensure unique slugs for URLs
+shopSchema.index({ category: 1 }); // filter shops by category
+shopSchema.index({ ratingAvg: -1 }); // sort shops by average rating
+shopSchema.index({ geo: '2dsphere' }); // enable geospatial queries
 
 shopSchema.pre('validate', async function (next) {
   if (!this.slug && this.name) {

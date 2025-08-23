@@ -1,14 +1,14 @@
 const admin = require('firebase-admin');
 
 const serviceAccount = {
-  projectId: 'mana-city-98fa0',
-  clientEmail: 'firebase-adminsdk@mana-city-98fa0.iam.gserviceaccount.com',
-  privateKey: `-----BEGIN PRIVATE KEY-----\nFAKEPRIVATEKEY\n-----END PRIVATE KEY-----\n`
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
 };
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+    credential: admin.credential.cert(serviceAccount),
   });
 }
 

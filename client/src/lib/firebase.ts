@@ -2,13 +2,13 @@ import { initializeApp } from "firebase/app";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
 const app = initializeApp({
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIza...",
+  authDomain: "mana-city-98fa0.firebaseapp.com",
+  projectId: "mana-city-98fa0",
+  storageBucket: "mana-city-98fa0.appspot.com",
+  messagingSenderId: "1011241089335",
+  appId: "1:1011241089335:web:2ba85628781c7af1f502b2",
+  measurementId: "G-JMXQCQ7FC8"
 });
 
 export const auth = getAuth(app);

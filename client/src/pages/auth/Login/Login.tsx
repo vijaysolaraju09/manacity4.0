@@ -41,13 +41,10 @@ const Login = () => {
       dispatch(setUser(user));
       navigate('/home');
     } catch (err: any) {
-      const data = err.response?.data;
-      const fieldErrors = data?.errors;
-      if (fieldErrors && typeof fieldErrors === 'object') {
-        setErrors(fieldErrors);
+      if (err.fieldErrors) {
+        setErrors(err.fieldErrors);
       } else {
-        const message = data?.message || 'Login failed';
-        setErrors({ general: message });
+        setErrors({ general: err.message || 'Login failed' });
       }
     } finally {
       setLoading(false);

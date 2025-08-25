@@ -6,14 +6,25 @@ interface Credentials {
   password: string;
 }
 
-export interface SignupDraft extends Credentials {
+export interface SignupDraft {
   name: string;
+  phone: string;
+  password: string;
   location: string;
+  role?: string;
+}
+
+export async function signup(data: SignupDraft): Promise<void> {
+  await api.post('/auth/signup', data);
+}
+
+export async function verifyOtp(payload: { phone: string; otp: string }): Promise<void> {
+  await api.post('/auth/verify-otp', payload);
 }
 
 export async function login(creds: Credentials): Promise<UserState> {
   const res = await api.post('/auth/login', creds);
-  const { token, user } = res.data;
+  const { token, user } = res.data.data;
   if (token) {
     localStorage.setItem('token', token);
   }
@@ -21,17 +32,4 @@ export async function login(creds: Credentials): Promise<UserState> {
     localStorage.setItem('user', JSON.stringify(user));
   }
   return user;
-}
-
-export async function verifyFirebase(payload: {
-  idToken: string;
-  purpose: 'signup' | 'reset';
-  signupDraft?: SignupDraft;
-}): Promise<any> {
-  const res = await api.post('/auth/verify-firebase', payload);
-  return res.data;
-}
-
-export async function setNewPassword(token: string, newPassword: string): Promise<void> {
-  await api.post('/auth/set-password', { token, newPassword });
 }

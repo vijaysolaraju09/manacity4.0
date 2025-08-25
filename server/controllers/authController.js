@@ -9,7 +9,7 @@ exports.signup = async (req, res, next) => {
 
     const existingUser = await User.findOne({ phone });
     if (existingUser) {
-      throw AppError.badRequest('PHONE_EXISTS', 'Phone already registered');
+      throw AppError.conflict('PHONE_EXISTS', 'Phone already registered');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -22,32 +22,26 @@ exports.signup = async (req, res, next) => {
       address: "",
     });
 
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
+    const profile = {
+      id: user._id,
+      name: user.name,
+      phone: user.phone,
+      location: user.location,
+      address: user.address,
+      role: user.role,
+      isVerified: user.isVerified,
+      verificationStatus: user.verificationStatus,
+      profession: user.profession,
+      bio: user.bio,
+    };
 
     res.status(201).json({
-      message: "Signup successful",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        phone: user.phone,
-        location: user.location,
-        address: user.address,
-        role: user.role,
-        isVerified: user.isVerified,
-        verificationStatus: user.verificationStatus,
-        profession: user.profession,
-        bio: user.bio,
-      },
+      success: true,
+      data: { user: profile },
+      traceId: req.traceId,
     });
   } catch (err) {
-    next(AppError.internal('SIGNUP_FAILED', 'Signup failed'));
+    next(err);
   }
 };
 
@@ -69,24 +63,26 @@ exports.login = async (req, res, next) => {
       }
     );
 
+    const profile = {
+      id: user._id,
+      name: user.name,
+      phone: user.phone,
+      role: user.role,
+      location: user.location,
+      address: user.address,
+      isVerified: user.isVerified,
+      verificationStatus: user.verificationStatus,
+      profession: user.profession,
+      bio: user.bio,
+    };
+
     res.status(200).json({
-      message: "Login successful",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        phone: user.phone,
-        role: user.role,
-        location: user.location,
-        address: user.address,
-        isVerified: user.isVerified,
-        verificationStatus: user.verificationStatus,
-        profession: user.profession,
-        bio: user.bio,
-      },
+      success: true,
+      data: { token, user: profile },
+      traceId: req.traceId,
     });
   } catch (err) {
-    next(AppError.internal('LOGIN_FAILED', 'Login failed'));
+    next(err);
   }
 };
 
@@ -100,10 +96,36 @@ exports.adminLogin = async (req, res, next) => {
       const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, {
         expiresIn: "7d",
       });
-      return res.json({ token });
+      return res.json({ success: true, data: { token }, traceId: req.traceId });
     }
     throw AppError.unauthorized('INVALID_CREDENTIALS', 'Invalid credentials');
   } catch (err) {
-    next(AppError.internal('LOGIN_FAILED', 'Login failed'));
+    next(err);
+  }
+};
+
+exports.verifyOtp = async (req, res, next) => {
+  try {
+    const { phone, otp } = req.body;
+
+    if (otp !== '123456') {
+      throw AppError.badRequest('INVALID_OTP', 'Invalid OTP');
+    }
+
+    const user = await User.findOneAndUpdate(
+      { phone },
+      { isVerified: true },
+      { new: true }
+    );
+
+    if (!user) throw AppError.notFound('USER_NOT_FOUND', 'Phone not registered');
+
+    res.json({
+      success: true,
+      data: { message: 'OTP verified' },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
   }
 };

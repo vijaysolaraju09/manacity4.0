@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { verifyOtpCode, sendOtpToPhone } from '../../../lib/firebase';
-import { verifyFirebase } from '../../../api/auth';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
-import { mapFirebaseError } from '../../../lib/firebaseErrors';
-import type { SignupDraft } from '../../../api/auth';
+import { verifyOtp } from '../../../api/auth';
 import './OTP.scss';
 
 const OTP = () => {
@@ -18,7 +15,6 @@ const OTP = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const phone = searchParams.get('phone') || '';
-  const purpose = (searchParams.get('purpose') as 'signup' | 'reset') || 'signup';
 
   useEffect(() => {
     if (timer <= 0) return;
@@ -47,34 +43,22 @@ const OTP = () => {
 
   const handleVerify = async () => {
     const code = otp.join('');
-    if (code.length === 6) {
-      try {
-        setVerifying(true);
-        setError('');
-        const idToken = await verifyOtpCode(code);
-        const payload: any = { idToken, purpose };
-        if (purpose === 'signup') {
-          const raw = sessionStorage.getItem('signupDraft');
-          if (!raw) {
-            setError('Signup data missing');
-            return;
-          }
-          payload.signupDraft = JSON.parse(raw) as SignupDraft;
-        }
-        const res = await verifyFirebase(payload);
-        showToast('Verified successfully', 'success');
-        if (purpose === 'signup') {
-          navigate('/login');
-        } else {
-          navigate(`/set-new-password?token=${encodeURIComponent(res.token)}`);
-        }
-      } catch (err: any) {
-        const message = err.response?.data?.error || mapFirebaseError(err?.code);
-        setError(message);
-        showToast(message, 'error');
-      } finally {
-        setVerifying(false);
-      }
+    if (code.length !== 6) {
+      setError('Invalid OTP');
+      return;
+    }
+    try {
+      setVerifying(true);
+      setError('');
+      await verifyOtp({ phone, otp: code });
+      showToast('Verified successfully', 'success');
+      navigate('/login');
+    } catch (err: any) {
+      const message = err.message || 'Verification failed';
+      setError(message);
+      showToast(message, 'error');
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -82,13 +66,8 @@ const OTP = () => {
     try {
       setResending(true);
       setError('');
-      await sendOtpToPhone(phone);
       showToast(`OTP resent to ${phone}`, 'success');
       setTimer(60);
-    } catch (err: any) {
-      const message = mapFirebaseError(err?.code);
-      setError(message);
-      showToast(message, 'error');
     } finally {
       setResending(false);
     }

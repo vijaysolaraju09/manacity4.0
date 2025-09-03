@@ -22,6 +22,11 @@ export async function verifyOtp(payload: { phone: string; otp: string }): Promis
   await api.post('/auth/verify-otp', payload);
 }
 
+export async function verifyFirebase(payload: { idToken: string; purpose: string; signupDraft?: SignupDraft }): Promise<any> {
+  const res = await api.post('/auth/verify-firebase', payload);
+  return res.data;
+}
+
 export async function login(creds: Credentials): Promise<UserState> {
   const res = await api.post('/auth/login', creds);
   const { token, user } = res.data.data;

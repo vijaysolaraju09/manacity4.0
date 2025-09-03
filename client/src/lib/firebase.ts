@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { mapFirebaseError } from "./firebaseErrors";
 
 const app = initializeApp({
   apiKey: "AIza...",
@@ -14,16 +15,10 @@ const app = initializeApp({
 export const auth = getAuth(app);
 
 // Invisible reCAPTCHA creator/ensurer
-export function ensureInvisibleRecaptcha(containerId: string) {
-  if (!auth || (window as any).recaptchaVerifier) {
-    return (window as any).recaptchaVerifier;
-  }
-  const verifier = new RecaptchaVerifier(auth, containerId, {
-    size: "invisible",
-    callback: () => {
-      /* auto-fired on success */
-    }
-  });
+export function ensureInvisibleRecaptcha(containerId = "recaptcha-container") {
+  const existing = (window as any).recaptchaVerifier;
+  if (existing) return existing;
+  const verifier = new RecaptchaVerifier(auth, containerId, { size: "invisible" });
   (window as any).recaptchaVerifier = verifier;
   return verifier;
 }
@@ -37,12 +32,13 @@ export async function sendOtpToPhone(phoneE164: string) {
     (window as any).confirmationResult = confirmation; // temp store
     return true;
   } catch (err: any) {
+    const code = err?.code || "unknown";
     console.error("signInWithPhoneNumber failed", {
-      code: err?.code,
+      code,
       message: err?.message,
       response: err?.customData
     });
-    throw err;
+    throw { code, message: mapFirebaseError(code) };
   }
 }
 
@@ -55,11 +51,12 @@ export async function verifyOtpCode(code: string): Promise<string> {
     const idToken = await cred.user.getIdToken(/* forceRefresh */ true);
     return idToken;
   } catch (err: any) {
+    const code = err?.code || "unknown";
     console.error("OTP confirmation failed", {
-      code: err?.code,
+      code,
       message: err?.message,
       response: err?.customData
     });
-    throw err;
+    throw { code, message: mapFirebaseError(code) };
   }
 }

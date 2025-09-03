@@ -20,6 +20,7 @@ const OTP = () => {
   const phone = searchParams.get('phone') || '';
   const purpose = searchParams.get('purpose') || '';
   const dispatch = useDispatch<AppDispatch>();
+  const backPath = purpose === 'login' ? '/login' : '/signup';
 
   useEffect(() => {
     if (timer <= 0) return;
@@ -62,7 +63,7 @@ const OTP = () => {
       }
       const { token, user } = await verifyOtp(payload);
       showToast('Verified successfully', 'success');
-      if (purpose === 'signup') {
+      if (purpose === 'signup' || purpose === 'login') {
         dispatch(setUser(user));
         navigate('/home');
       } else if (purpose === 'reset') {
@@ -71,7 +72,7 @@ const OTP = () => {
         navigate('/login');
       }
     } catch (err: any) {
-      const message = err.message || 'Verification failed';
+      const message = err.message || "That code didn't look right. Try again.";
       setError(message);
       showToast(message, 'error');
     } finally {
@@ -138,11 +139,15 @@ const OTP = () => {
           onClick={resendOtp}
           disabled={timer > 0 || resending}
         >
-          {resending ? 'Sending...' : timer > 0 ? `Resend in ${timer}s` : 'Resend OTP'}
+          {resending
+            ? 'Sending...'
+            : timer > 0
+            ? `Resend in 00:${String(timer).padStart(2, '0')}`
+            : 'Resend OTP'}
         </button>
 
-        <button type="button" className="link back" onClick={() => navigate('/signup')}>
-          ← Back
+        <button type="button" className="link back" onClick={() => navigate(backPath)}>
+          Change phone
         </button>
       </motion.div>
     </div>

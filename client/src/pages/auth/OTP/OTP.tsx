@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
 import { verifyFirebase } from '../../../api/auth';
-import { sendOtpToPhone, verifyOtpCode } from '../../../lib/firebase';
+import { auth } from '../../../services/firebase.config';
+import { mapFirebaseError } from '../../../lib/firebaseErrors';
 import './OTP.scss';
 
 const OTP = () => {
@@ -17,6 +19,20 @@ const OTP = () => {
   const [searchParams] = useSearchParams();
   const phone = searchParams.get('phone') || '';
   const purpose = searchParams.get('purpose') || '';
+
+  const onCaptchVerify = () => {
+    if (!(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(
+        'recaptcha-container',
+        {
+          size: 'invisible',
+          callback: () => {},
+          'expired-callback': () => {},
+        },
+        auth
+      );
+    }
+  };
 
   useEffect(() => {
     if (timer <= 0) return;
@@ -52,7 +68,10 @@ const OTP = () => {
     try {
       setVerifying(true);
       setError('');
-      const idToken = await verifyOtpCode(code);
+      const confirmation = (window as any).confirmationResult;
+      if (!confirmation) throw new Error('OTP session not found');
+      const cred = await confirmation.confirm(code);
+      const idToken = await cred.user.getIdToken();
       const payload: any = { idToken, purpose };
       if (purpose === 'signup') {
         const draft = sessionStorage.getItem('signupDraft');
@@ -74,11 +93,14 @@ const OTP = () => {
     try {
       setResending(true);
       setError('');
-      await sendOtpToPhone(phone);
+      onCaptchVerify();
+      const appVerifier = (window as any).recaptchaVerifier;
+      const confirmation = await signInWithPhoneNumber(auth, phone, appVerifier);
+      (window as any).confirmationResult = confirmation;
       showToast(`OTP resent to ${phone}`, 'success');
       setTimer(60);
     } catch (err: any) {
-      const message = err.message || 'Failed to resend OTP';
+      const message = mapFirebaseError(err?.code) || 'Failed to resend OTP';
       setError(message);
       showToast(message, 'error');
     } finally {

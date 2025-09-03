@@ -32,7 +32,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("/*", cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(context);
 
@@ -57,7 +57,7 @@ app.use("/api", (_req, _res, next) =>
 if (process.env.NODE_ENV === "production") {
   const clientPath = path.join(__dirname, "..", "client", "dist");
   app.use(express.static(clientPath));
-  app.get("/*", (_req, res) => {
+  app.get("*", (_req, res) => {
     res.sendFile(path.join(clientPath, "index.html"));
   });
 }

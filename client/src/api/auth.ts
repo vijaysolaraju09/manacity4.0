@@ -38,3 +38,7 @@ export async function login(creds: Credentials): Promise<UserState> {
   }
   return user;
 }
+
+export async function setNewPassword(token: string, password: string): Promise<void> {
+  await api.post('/auth/set-new-password', { token, password });
+}

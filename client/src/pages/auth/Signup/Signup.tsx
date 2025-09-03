@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import './Signup.scss';
 import logo from '../../../assets/logo.png';
 import fallbackImage from '../../../assets/no-image.svg';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
 import type { SignupDraft } from '../../../api/auth';
-import { ensureInvisibleRecaptcha, sendOtpToPhone } from '../../../lib/firebase';
+import { auth } from '../../../services/firebase.config';
+import { mapFirebaseError } from '../../../lib/firebaseErrors';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -20,6 +22,20 @@ const Signup = () => {
   const [errors, setErrors] = useState<{ name?: string; phone?: string; password?: string; location?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const onCaptchVerify = () => {
+    if (!(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(
+        'recaptcha-container',
+        {
+          size: 'invisible',
+          callback: () => {},
+          'expired-callback': () => {},
+        },
+        auth
+      );
+    }
+  };
 
   const normalizePhone = (phone: string): string | null => {
     const digits = phone.replace(/\D/g, '');
@@ -45,16 +61,17 @@ const Signup = () => {
 
     try {
       setLoading(true);
-      ensureInvisibleRecaptcha();
+      onCaptchVerify();
       const phoneE164 = normalizePhone(form.phone)!;
-      await sendOtpToPhone(phoneE164);
+      const appVerifier = (window as any).recaptchaVerifier;
+      const confirmation = await signInWithPhoneNumber(auth, phoneE164, appVerifier);
+      (window as any).confirmationResult = confirmation;
       sessionStorage.setItem('signupDraft', JSON.stringify({ ...form, phone: phoneE164 }));
       showToast(`OTP sent to ${form.phone}`, 'success');
       navigate(`/otp?purpose=signup&phone=${encodeURIComponent(phoneE164)}`);
     } catch (err: any) {
-      const code = err.code;
-      const message = err.message || 'Signup failed';
-      if (code === 'auth/invalid-phone-number') {
+      const message = mapFirebaseError(err?.code);
+      if (err?.code === 'auth/invalid-phone-number') {
         setErrors({ phone: message });
       } else {
         setErrors({ general: message });

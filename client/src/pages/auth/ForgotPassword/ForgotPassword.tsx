@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import './ForgotPassword.scss';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
-import { createInvisibleRecaptcha, sendOtpToPhone } from '../../../lib/firebase';
+import { sendOtpToPhone } from '../../../lib/firebase';
 import { mapFirebaseError } from '../../../lib/firebaseErrors';
 
 const ForgotPassword = () => {
@@ -12,10 +12,6 @@ const ForgotPassword = () => {
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    createInvisibleRecaptcha('recaptcha-container');
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +36,6 @@ const ForgotPassword = () => {
 
   return (
     <div className="forgot-page">
-      <div id="recaptcha-container" />
       <motion.div
         className="form-card"
         initial={{ opacity: 0, y: 30 }}

@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
-import { verifyOtp } from '../../../api/auth';
+import { verifyFirebase } from '../../../api/auth';
+import { sendOtpToPhone, verifyOtpCode } from '../../../lib/firebase';
 import './OTP.scss';
 
 const OTP = () => {
@@ -15,6 +16,7 @@ const OTP = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const phone = searchParams.get('phone') || '';
+  const purpose = searchParams.get('purpose') || '';
 
   useEffect(() => {
     if (timer <= 0) return;
@@ -50,7 +52,13 @@ const OTP = () => {
     try {
       setVerifying(true);
       setError('');
-      await verifyOtp({ phone, otp: code });
+      const idToken = await verifyOtpCode(code);
+      const payload: any = { idToken, purpose };
+      if (purpose === 'signup') {
+        const draft = sessionStorage.getItem('signupDraft');
+        if (draft) payload.signupDraft = JSON.parse(draft);
+      }
+      await verifyFirebase(payload);
       showToast('Verified successfully', 'success');
       navigate('/login');
     } catch (err: any) {
@@ -66,8 +74,13 @@ const OTP = () => {
     try {
       setResending(true);
       setError('');
+      await sendOtpToPhone(phone);
       showToast(`OTP resent to ${phone}`, 'success');
       setTimer(60);
+    } catch (err: any) {
+      const message = err.message || 'Failed to resend OTP';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setResending(false);
     }

@@ -15,6 +15,23 @@ VITE_FIREBASE_APP_ID=1:1011241089335:web:2ba85628781c7af1f502b2
 VITE_FIREBASE_MEASUREMENT_ID=G-JMXQCQ7FC8
 ```
 
+## Firebase Phone Auth prerequisites
+
+Before OTP can be sent from the client, ensure the Firebase project is configured:
+
+1. **Authentication → Sign-in method**
+   - Enable the **Phone** provider.
+   - Disable **reCAPTCHA Enterprise** for Web so the default reCAPTCHA v2 is used.
+2. **Authentication → Settings → Authorized domains**
+   - Add `localhost`, `127.0.0.1` and `manacity4-0-1.onrender.com`.
+3. **Project settings → General**
+   - Confirm the Web API key here matches the one in the client.
+4. **Google Cloud Console → APIs & Services**
+   - Ensure **Identity Toolkit API** is enabled.
+   - If the API key is restricted by HTTP referrer, allow:
+     - `http://localhost:5173/*`
+     - `https://manacity4-0-1.onrender.com/*`
+
 ## OTP flow
 
 **Signup**

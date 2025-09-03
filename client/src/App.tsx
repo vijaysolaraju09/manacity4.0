@@ -10,6 +10,7 @@ import { setUser } from './store/slices/userSlice';
 import { setAdminToken } from './store/slices/adminSlice';
 import type { AppDispatch } from './store';
 import Loader from './components/Loader';
+import { ensureInvisibleRecaptcha } from './lib/firebase';
 
 const Landing = lazy(() => import('./pages/Landing/Landing'));
 const Login = lazy(() => import('./pages/auth/Login/Login'));
@@ -65,6 +66,8 @@ function App() {
     if (adminToken) {
       dispatch(setAdminToken(adminToken));
     }
+
+    ensureInvisibleRecaptcha('recaptcha-container');
   }, [dispatch]);
 
   return (

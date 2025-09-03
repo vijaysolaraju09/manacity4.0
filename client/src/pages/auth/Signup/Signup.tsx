@@ -7,7 +7,7 @@ import fallbackImage from '../../../assets/no-image.svg';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
 import type { SignupDraft } from '../../../api/auth';
-import { signup } from '../../../api/auth';
+import { ensureInvisibleRecaptcha, sendOtpToPhone } from '../../../lib/firebase';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -21,6 +21,13 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const normalizePhone = (phone: string): string | null => {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length === 10) return `+91${digits}`;
+    if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
+    return null;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -29,7 +36,8 @@ const Signup = () => {
     e.preventDefault();
     const newErrors: { name?: string; phone?: string; password?: string; location?: string } = {};
     if (!form.name.trim()) newErrors.name = 'Name is required';
-    if (!/^\d{10,15}$/.test(form.phone)) newErrors.phone = 'Enter a valid phone number';
+    const phoneE164 = normalizePhone(form.phone);
+    if (!phoneE164) newErrors.phone = 'Enter a valid phone number with country code (e.g., +91…)';
     if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
     if (!form.location) newErrors.location = 'Location is required';
     setErrors(newErrors);
@@ -37,17 +45,21 @@ const Signup = () => {
 
     try {
       setLoading(true);
-      await signup(form);
+      ensureInvisibleRecaptcha();
+      const phoneE164 = normalizePhone(form.phone)!;
+      await sendOtpToPhone(phoneE164);
+      sessionStorage.setItem('signupDraft', JSON.stringify({ ...form, phone: phoneE164 }));
       showToast(`OTP sent to ${form.phone}`, 'success');
-      navigate(`/otp?phone=${encodeURIComponent(form.phone)}`);
+      navigate(`/otp?purpose=signup&phone=${encodeURIComponent(phoneE164)}`);
     } catch (err: any) {
-      if (err.fieldErrors) {
-        setErrors(err.fieldErrors);
+      const code = err.code;
+      const message = err.message || 'Signup failed';
+      if (code === 'auth/invalid-phone-number') {
+        setErrors({ phone: message });
       } else {
-        const message = err.message || 'Signup failed';
         setErrors({ general: message });
-        showToast(message, 'error');
       }
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }

@@ -1,8 +1,8 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { mapFirebaseError } from "./firebaseErrors";
 
-const app = initializeApp({
+const firebaseConfig = {
   apiKey: "AIza...",
   authDomain: "mana-city-98fa0.firebaseapp.com",
   projectId: "mana-city-98fa0",
@@ -10,7 +10,10 @@ const app = initializeApp({
   messagingSenderId: "1011241089335",
   appId: "1:1011241089335:web:2ba85628781c7af1f502b2",
   measurementId: "G-JMXQCQ7FC8"
-});
+};
+
+// Avoid initializing Firebase multiple times in development (e.g. hot reload)
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 

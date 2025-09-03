@@ -2,34 +2,24 @@
 
 ## Environment Variables
 
-Server requires the following variables in a `.env` file:
+Create a `.env` inside the `server` directory with:
 
 - `MONGO_URI` – MongoDB connection string
 - `JWT_SECRET` – secret used to sign JSON Web Tokens
-- `PORT` – server port (optional, defaults to 5000)
-- `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` – only if integrating a real OTP service
+- `PORT` – optional server port (defaults to 5000)
+- `TWILIO_ACCOUNT_SID` – Twilio account SID
+- `TWILIO_AUTH_TOKEN` – Twilio auth token
+- `TWILIO_VERIFY_SERVICE_SID` – Twilio Verify service SID
+- `DEFAULT_COUNTRY_CODE` – e.g. `+91`
 
-## Signup & Login
+## Signup & Login with OTP
 
-1. **Signup**: `POST /api/auth/signup`
-   - Body: `{ name, phone, password, location }`
-   - Saves the user and sends an OTP (mocked as `123456`).
-2. **Verify OTP**: `POST /api/auth/verify-otp`
-   - Body: `{ phone, otp }`
-   - For this mock implementation the OTP is always `123456`.
-3. **Login**: `POST /api/auth/login`
-   - Body: `{ phone, password }`
-   - Returns `{ token, user }`.
-4. **Profile**: `GET /api/user/profile` with `Authorization: Bearer <token>`
+1. **Send OTP**: `POST /api/auth/otp/send`
+   - Body: `{ phone }`
+2. **Verify OTP**: `POST /api/auth/otp/verify`
+   - Body: `{ phone, code, ...optional user fields }`
+   - Returns `{ success, token, user }`
 
-All API responses follow the shape:
+The client submits a phone number which triggers `sendOtp` and navigates to `/otp?phone=...`. Upon verifying the code, the JWT is stored in `localStorage`, Redux state is updated and the user is redirected to `/home`.
 
-```json
-{
-  "success": true,
-  "data": {},
-  "traceId": "..."
-}
-```
-
-Errors return `success: false` with an `error` object and `traceId` for debugging.
+All API responses contain a `traceId` for debugging. Errors return `success: false` with an `error` object and `traceId`.

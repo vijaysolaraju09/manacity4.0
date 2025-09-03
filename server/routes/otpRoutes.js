@@ -29,7 +29,8 @@ router.post('/send', validate(sendSchema), async (req, res, next) => {
     await client.verify.v2.services(serviceSid).verifications.create({ to, channel: 'sms' });
     res.json({ success: true, message: 'OTP sent', traceId: req.traceId });
   } catch (err) {
-    next(AppError.badRequest('OTP_SEND_FAILED', 'Failed to send OTP'));
+    const message = err.message || 'Failed to send OTP';
+    next(AppError.badRequest('OTP_SEND_FAILED', message));
   }
 });
 
@@ -94,7 +95,8 @@ router.post('/verify', validate(verifySchema), async (req, res, next) => {
 
     res.json({ success: true, token, user: profile, traceId: req.traceId });
   } catch (err) {
-    next(err);
+    const message = err.message || 'Failed to verify OTP';
+    next(AppError.badRequest('OTP_VERIFY_FAILED', message));
   }
 });
 

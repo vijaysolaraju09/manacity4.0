@@ -1,51 +1,43 @@
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { login } from '../../../api/auth';
-import { setUser } from '../../../store/slices/userSlice';
-import type { AppDispatch } from '../../../store';
 import './Login.scss';
 import logo from '../../../assets/logo.png';
 import fallbackImage from '../../../assets/no-image.svg';
 import Loader from '../../../components/Loader';
+import showToast from '../../../components/ui/Toast';
+import { sendOtp } from '../../../api/auth';
 
 const Login = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
-  const [form, setForm] = useState({ phone: '', password: '' });
-  const [errors, setErrors] = useState<{ phone?: string; password?: string; general?: string }>({});
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const normalizePhone = (value: string): string | null => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length === 10) return `+91${digits}`;
+    if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
+    return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const newErrors: { phone?: string; password?: string } = {};
-    if (!/^\d{10,}$/.test(form.phone)) {
-      newErrors.phone = 'Enter a valid phone number';
+    const phoneE164 = normalizePhone(phone);
+    if (!phoneE164) {
+      setError('Enter a valid phone number');
+      return;
     }
-    if (form.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
-
     try {
       setLoading(true);
-      const user = await login(form);
-      dispatch(setUser(user));
-      navigate('/home');
+      setError('');
+      await sendOtp(phoneE164);
+      showToast(`OTP sent to ${phone}`, 'success');
+      navigate(`/otp?purpose=login&phone=${encodeURIComponent(phoneE164)}`);
     } catch (err: any) {
-      if (err.fieldErrors) {
-        setErrors(err.fieldErrors);
-      } else {
-        setErrors({ general: err.message || 'Login failed' });
-      }
+      const message = err.message || 'Failed to send OTP';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -66,7 +58,7 @@ const Login = () => {
       >
         <img src={logo} alt="Manacity Logo" className="logo" onError={(e) => (e.currentTarget.src = fallbackImage)} />
 
-        <h2>Login to Your Account</h2>
+        <h2>Login with Phone</h2>
 
         <form onSubmit={handleSubmit} noValidate>
           <label>
@@ -75,36 +67,12 @@ const Login = () => {
               type="tel"
               name="phone"
               placeholder="Enter your phone"
-              value={form.phone}
-              onChange={handleChange}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               required
             />
-            {errors.phone && <span className="error">{errors.phone}</span>}
+            {error && <span className="error">{error}</span>}
           </label>
-
-          <label>
-            Password
-            <div className="password-field">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                placeholder="Enter your password"
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
-              <button
-                type="button"
-                className="toggle"
-                onClick={() => setShowPassword((s) => !s)}
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
-            </div>
-            {errors.password && <span className="error">{errors.password}</span>}
-          </label>
-
-          {errors.general && <div className="error general">{errors.general}</div>}
 
           <motion.button
             type="submit"
@@ -113,7 +81,7 @@ const Login = () => {
             whileTap={{ scale: 0.96 }}
             disabled={loading}
           >
-            {loading ? <Loader /> : 'Login'}
+            {loading ? <Loader /> : 'Send Code'}
           </motion.button>
         </form>
 

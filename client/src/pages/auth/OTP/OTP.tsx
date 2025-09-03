@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
-import { verifyFirebase } from '../../../api/auth';
-import { auth } from '../../../services/firebase.config';
-import { mapFirebaseError } from '../../../lib/firebaseErrors';
+import { sendOtp, verifyOtp } from '../../../api/auth';
+import { useDispatch } from 'react-redux';
+import type { AppDispatch } from '../../../store';
+import { setUser } from '../../../store/slices/userSlice';
 import './OTP.scss';
 
 const OTP = () => {
@@ -19,20 +19,7 @@ const OTP = () => {
   const [searchParams] = useSearchParams();
   const phone = searchParams.get('phone') || '';
   const purpose = searchParams.get('purpose') || '';
-
-  const onCaptchVerify = () => {
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(
-        'recaptcha-container',
-        {
-          size: 'invisible',
-          callback: () => {},
-          'expired-callback': () => {},
-        },
-        auth
-      );
-    }
-  };
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     if (timer <= 0) return;
@@ -68,18 +55,21 @@ const OTP = () => {
     try {
       setVerifying(true);
       setError('');
-      const confirmation = (window as any).confirmationResult;
-      if (!confirmation) throw new Error('OTP session not found');
-      const cred = await confirmation.confirm(code);
-      const idToken = await cred.user.getIdToken();
-      const payload: any = { idToken, purpose };
+      const payload: any = { phone, code };
       if (purpose === 'signup') {
         const draft = sessionStorage.getItem('signupDraft');
-        if (draft) payload.signupDraft = JSON.parse(draft);
+        if (draft) Object.assign(payload, JSON.parse(draft));
       }
-      await verifyFirebase(payload);
+      const { token, user } = await verifyOtp(payload);
       showToast('Verified successfully', 'success');
-      navigate('/login');
+      if (purpose === 'signup') {
+        dispatch(setUser(user));
+        navigate('/home');
+      } else if (purpose === 'reset') {
+        navigate(`/set-new-password?token=${token}`);
+      } else {
+        navigate('/login');
+      }
     } catch (err: any) {
       const message = err.message || 'Verification failed';
       setError(message);
@@ -93,14 +83,11 @@ const OTP = () => {
     try {
       setResending(true);
       setError('');
-      onCaptchVerify();
-      const appVerifier = (window as any).recaptchaVerifier;
-      const confirmation = await signInWithPhoneNumber(auth, phone, appVerifier);
-      (window as any).confirmationResult = confirmation;
+      await sendOtp(phone);
       showToast(`OTP resent to ${phone}`, 'success');
       setTimer(60);
     } catch (err: any) {
-      const message = mapFirebaseError(err?.code) || 'Failed to resend OTP';
+      const message = err.message || 'Failed to resend OTP';
       setError(message);
       showToast(message, 'error');
     } finally {

@@ -14,17 +14,29 @@ export interface SignupDraft {
   role?: string;
 }
 
-export async function signup(data: SignupDraft): Promise<void> {
-  await api.post('/auth/signup', data);
+export async function sendOtp(phone: string): Promise<void> {
+  await api.post('/auth/otp/send', { phone });
 }
 
-export async function verifyOtp(payload: { phone: string; otp: string }): Promise<void> {
-  await api.post('/auth/verify-otp', payload);
+export interface VerifyOtpPayload {
+  phone: string;
+  code: string;
+  name?: string;
+  password?: string;
+  location?: string;
+  role?: string;
 }
 
-export async function verifyFirebase(payload: { idToken: string; purpose: string; signupDraft?: SignupDraft }): Promise<any> {
-  const res = await api.post('/auth/verify-firebase', payload);
-  return res.data;
+export async function verifyOtp(payload: VerifyOtpPayload): Promise<{ token: string; user: UserState }> {
+  const res = await api.post('/auth/otp/verify', payload);
+  const { token, user } = res.data;
+  if (token) {
+    localStorage.setItem('token', token);
+  }
+  if (user) {
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+  return { token, user };
 }
 
 export async function login(creds: Credentials): Promise<UserState> {

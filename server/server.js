@@ -8,6 +8,7 @@ const context = require("./middleware/context");
 const errorHandler = require("./middleware/error");
 
 const authRoutes = require("./routes/authRoutes");
+const otpRoutes = require("./routes/otpRoutes");
 const userRoutes = require("./routes/userRoutes");
 const homeRoutes = require("./routes/homeRoutes");
 const shopRoutes = require("./routes/shopRoutes");
@@ -37,6 +38,7 @@ app.use(express.json());
 app.use(context);
 
 app.use("/api/auth", authRoutes);
+app.use("/api/auth/otp", otpRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/home", homeRoutes);
 app.use("/api/shops", shopRoutes);

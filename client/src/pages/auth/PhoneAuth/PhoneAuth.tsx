@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { createInvisibleRecaptcha, sendOtpToPhone, verifyOtpCode } from '../../../lib/firebase';
+import { sendOtpToPhone, verifyOtpCode } from '../../../lib/firebase';
 import { loginSuccess, setOtpVerified, addPhoneNumber } from '../../../store/slices/authSlice';
 import type { AppDispatch, RootState } from '../../../store';
 import showToast from '../../../components/ui/Toast';
 import Loader from '../../../components/Loader';
+import { mapFirebaseError } from '../../../lib/firebaseErrors';
 import './PhoneAuth.scss';
 
 const PhoneAuth = () => {
@@ -15,10 +16,6 @@ const PhoneAuth = () => {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
-
-  useEffect(() => {
-    createInvisibleRecaptcha('recaptcha-container');
-  }, []);
 
   const handleSendOtp = async () => {
     if (!/^\d{10}$/.test(phone)) {
@@ -33,7 +30,8 @@ const PhoneAuth = () => {
       showToast(`OTP sent to ${phoneE164}`, 'success');
       setShowOtpInput(true);
     } catch (err: any) {
-      showToast(err?.message || 'Failed to send OTP', 'error');
+      const message = mapFirebaseError(err?.code);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -48,7 +46,8 @@ const PhoneAuth = () => {
       dispatch(setOtpVerified(true));
       showToast('OTP verified successfully', 'success');
     } catch (err: any) {
-      showToast(err?.message || 'Invalid OTP', 'error');
+      const message = mapFirebaseError(err?.code);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -56,7 +55,6 @@ const PhoneAuth = () => {
 
   return (
     <div className="phone-auth-page">
-      <div id="recaptcha-container" />
       {!user && (
         <motion.div
           className="form-card"

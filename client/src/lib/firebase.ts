@@ -13,12 +13,16 @@ const app = initializeApp({
 
 export const auth = getAuth(app);
 
-// Invisible reCAPTCHA creator
-export function createInvisibleRecaptcha(containerId: string) {
-  if (!auth || (window as any).recaptchaVerifier) return (window as any).recaptchaVerifier;
+// Invisible reCAPTCHA creator/ensurer
+export function ensureInvisibleRecaptcha(containerId: string) {
+  if (!auth || (window as any).recaptchaVerifier) {
+    return (window as any).recaptchaVerifier;
+  }
   const verifier = new RecaptchaVerifier(auth, containerId, {
     size: "invisible",
-    callback: () => { /* auto-fired on success */ }
+    callback: () => {
+      /* auto-fired on success */
+    }
   });
   (window as any).recaptchaVerifier = verifier;
   return verifier;
@@ -26,18 +30,36 @@ export function createInvisibleRecaptcha(containerId: string) {
 
 // Initiate OTP
 export async function sendOtpToPhone(phoneE164: string) {
-  const verifier = (window as any).recaptchaVerifier;
+  const verifier = ensureInvisibleRecaptcha("recaptcha-container");
   if (!verifier) throw new Error("Recaptcha not initialized");
-  const confirmation = await signInWithPhoneNumber(auth, phoneE164, verifier);
-  (window as any).confirmationResult = confirmation; // temp store
-  return true;
+  try {
+    const confirmation = await signInWithPhoneNumber(auth, phoneE164, verifier);
+    (window as any).confirmationResult = confirmation; // temp store
+    return true;
+  } catch (err: any) {
+    console.error("signInWithPhoneNumber failed", {
+      code: err?.code,
+      message: err?.message,
+      response: err?.customData
+    });
+    throw err;
+  }
 }
 
 // Verify OTP code -> returns Firebase ID token
 export async function verifyOtpCode(code: string): Promise<string> {
   const confirmation = (window as any).confirmationResult;
   if (!confirmation) throw new Error("OTP session not found");
-  const cred = await confirmation.confirm(code);
-  const idToken = await cred.user.getIdToken(/* forceRefresh */ true);
-  return idToken;
+  try {
+    const cred = await confirmation.confirm(code);
+    const idToken = await cred.user.getIdToken(/* forceRefresh */ true);
+    return idToken;
+  } catch (err: any) {
+    console.error("OTP confirmation failed", {
+      code: err?.code,
+      message: err?.message,
+      response: err?.customData
+    });
+    throw err;
+  }
 }

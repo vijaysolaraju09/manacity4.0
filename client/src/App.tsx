@@ -69,6 +69,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <div id="recaptcha-container" style={{ display: 'none' }} />
       <Suspense fallback={<Loader />}>
         <Routes>
         <Route path="/" element={<Landing />} />

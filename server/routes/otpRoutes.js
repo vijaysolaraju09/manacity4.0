@@ -5,7 +5,12 @@ const { z } = require('zod');
 const User = require('../models/User');
 const validate = require('../middleware/validate');
 const AppError = require('../utils/AppError');
-const { client, verifyServiceSid, toE164 } = require('../src/services/twilio');
+const {
+  client,
+  verifyServiceSid,
+  toE164,
+  isConfigured,
+} = require('../src/services/twilio');
 
 const router = express.Router();
 
@@ -17,6 +22,9 @@ const sendSchema = {
 
 router.post('/send', validate(sendSchema), async (req, res, next) => {
   try {
+    if (!isConfigured) {
+      throw AppError.internal('OTP_SERVICE_UNCONFIGURED', 'OTP service not configured');
+    }
     const { phone } = req.body;
     const to = toE164(phone);
     await client.verify.v2.services(verifyServiceSid).verifications.create({ to, channel: 'sms' });
@@ -40,6 +48,9 @@ const verifySchema = {
 
 router.post('/verify', validate(verifySchema), async (req, res, next) => {
   try {
+    if (!isConfigured) {
+      throw AppError.internal('OTP_SERVICE_UNCONFIGURED', 'OTP service not configured');
+    }
     const { phone, code, name, password, location, role } = req.body;
     const to = toE164(phone);
     const result = await client.verify.v2

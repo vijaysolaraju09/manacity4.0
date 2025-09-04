@@ -12,6 +12,9 @@ Create a `.env` inside the `server` directory with:
 - `TWILIO_VERIFY_SERVICE_SID` – Twilio Verify service SID
 - `DEFAULT_COUNTRY_CODE` – e.g. `+91`
 
+If the Twilio variables (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_VERIFY_SERVICE_SID`) are missing,
+the server will still run but OTP endpoints will report that the service is not configured.
+
 ## Signup & Login with OTP
 
 1. **Send OTP**: `POST /api/auth/otp/send`

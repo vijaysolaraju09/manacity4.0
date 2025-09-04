@@ -38,7 +38,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.options("/(.*)", cors(corsOptions));
 app.use(express.json());
 app.use(context);
 
@@ -57,14 +57,14 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", adminUserRoutes);
 
-app.use("/api", (_req, _res, next) =>
+app.use("/api/(.*)", (_req, _res, next) =>
   next(AppError.notFound("ROUTE_NOT_FOUND", "API route not found"))
 );
 
 if (process.env.NODE_ENV === "production") {
   const clientPath = path.join(__dirname, "..", "client", "dist");
   app.use(express.static(clientPath));
-  app.use((_req, res) => {
+  app.get("/(.*)", (_req, res) => {
     res.sendFile(path.join(clientPath, "index.html"));
   });
 }

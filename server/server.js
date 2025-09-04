@@ -5,7 +5,6 @@ const path = require("path");
 require("dotenv").config();
 
 const context = require("./middleware/context");
-const errorHandler = require("./middleware/error");
 
 const authRoutes = require("./routes/authRoutes");
 const otpRoutes = require("./routes/otpRoutes");
@@ -68,8 +67,6 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.join(clientPath, "index.html"));
   });
 }
-
-app.use(errorHandler);
 
 mongoose
   .connect(process.env.MONGO_URI)

@@ -1,21 +1,13 @@
 const express = require('express');
-const twilio = require('twilio');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { z } = require('zod');
 const User = require('../models/User');
 const validate = require('../middleware/validate');
 const AppError = require('../utils/AppError');
+const { client, verifyServiceSid, toE164 } = require('../src/services/twilio');
 
 const router = express.Router();
-
-const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
-
-const normalizePhone = (phone) => {
-  const trimmed = phone.trim();
-  return trimmed.startsWith('+') ? trimmed : `${process.env.DEFAULT_COUNTRY_CODE}${trimmed}`;
-};
 
 const sendSchema = {
   body: z.object({
@@ -25,8 +17,9 @@ const sendSchema = {
 
 router.post('/send', validate(sendSchema), async (req, res, next) => {
   try {
-    const to = normalizePhone(req.body.phone);
-    await client.verify.v2.services(serviceSid).verifications.create({ to, channel: 'sms' });
+    const { phone } = req.body;
+    const to = toE164(phone);
+    await client.verify.v2.services(verifyServiceSid).verifications.create({ to, channel: 'sms' });
     res.json({ success: true, message: 'OTP sent', traceId: req.traceId });
   } catch (err) {
     const message = err.message || 'Failed to send OTP';
@@ -48,9 +41,9 @@ const verifySchema = {
 router.post('/verify', validate(verifySchema), async (req, res, next) => {
   try {
     const { phone, code, name, password, location, role } = req.body;
-    const to = normalizePhone(phone);
+    const to = toE164(phone);
     const result = await client.verify.v2
-      .services(serviceSid)
+      .services(verifyServiceSid)
       .verificationChecks.create({ to, code });
 
     if (result.status !== 'approved') {

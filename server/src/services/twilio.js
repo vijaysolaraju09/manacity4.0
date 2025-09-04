@@ -7,12 +7,18 @@ const {
   DEFAULT_COUNTRY_CODE = '+91',
 } = process.env;
 
-if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_VERIFY_SERVICE_SID) {
-  throw new Error('Twilio env vars missing');
-}
+const isConfigured =
+  TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_VERIFY_SERVICE_SID;
 
-const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
-const verifyServiceSid = TWILIO_VERIFY_SERVICE_SID;
+let client;
+let verifyServiceSid;
+
+if (isConfigured) {
+  client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+  verifyServiceSid = TWILIO_VERIFY_SERVICE_SID;
+} else {
+  console.warn('Twilio environment variables are missing; OTP routes disabled');
+}
 
 const toE164 = (raw) => {
   const trimmed = (raw || '').replace(/\s+/g, '');
@@ -21,4 +27,4 @@ const toE164 = (raw) => {
   return `${DEFAULT_COUNTRY_CODE}${trimmed}`;
 };
 
-module.exports = { client, verifyServiceSid, toE164 };
+module.exports = { client, verifyServiceSid, toE164, isConfigured };

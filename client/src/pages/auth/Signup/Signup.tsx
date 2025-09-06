@@ -7,17 +7,25 @@ import fallbackImage from '../../../assets/no-image.svg';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
 import type { SignupDraft } from '../../../api/auth';
-import { sendOtp } from '../../../api/auth';
+import { signup } from '../../../api/auth';
 
 const Signup = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState<SignupDraft>({
     name: '',
     phone: '',
+    email: '',
     password: '',
     location: '',
   });
-  const [errors, setErrors] = useState<{ name?: string; phone?: string; password?: string; location?: string; general?: string }>({});
+  const [errors, setErrors] = useState<{
+    name?: string;
+    phone?: string;
+    email?: string;
+    password?: string;
+    location?: string;
+    general?: string;
+  }>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -34,24 +42,35 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: { name?: string; phone?: string; password?: string; location?: string } = {};
+    const newErrors: {
+      name?: string;
+      phone?: string;
+      email?: string;
+      password?: string;
+      location?: string;
+    } = {};
     if (!form.name.trim()) newErrors.name = 'Name is required';
-    const phoneE164 = normalizePhone(form.phone);
-    if (!phoneE164) newErrors.phone = 'Enter a valid phone number with country code (e.g., +91…)';
-    if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    const phoneE164 = form.phone ? normalizePhone(form.phone) : null;
+    if (form.phone && !phoneE164)
+      newErrors.phone = 'Enter a valid phone number with country code (e.g., +91…)';
+    if (!form.phone && !form.email)
+      newErrors.phone = 'Phone or email is required';
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      newErrors.email = 'Enter a valid email';
+    if (form.password.length < 6)
+      newErrors.password = 'Password must be at least 6 characters';
     if (!form.location) newErrors.location = 'Location is required';
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
     try {
       setLoading(true);
-      const phoneE164 = normalizePhone(form.phone)!;
-      await sendOtp(phoneE164);
-      sessionStorage.setItem('signupDraft', JSON.stringify({ ...form, phone: phoneE164 }));
-      showToast(`OTP sent to ${form.phone}`, 'success');
-      navigate(`/otp?purpose=signup&phone=${encodeURIComponent(phoneE164)}`);
+      const payload = { ...form, phone: phoneE164 || undefined };
+      await signup(payload);
+      showToast('Account created. Please login.', 'success');
+      navigate('/login');
     } catch (err: any) {
-      const message = err.message || 'Failed to send OTP';
+      const message = err.message || 'Failed to create account';
       setErrors({ general: message });
       showToast(message, 'error');
     } finally {
@@ -79,8 +98,14 @@ const Signup = () => {
 
           <label>
             Phone Number
-            <input type="tel" name="phone" required value={form.phone} onChange={handleChange} />
+            <input type="tel" name="phone" value={form.phone} onChange={handleChange} />
             {errors.phone && <span className="error">{errors.phone}</span>}
+          </label>
+
+          <label>
+            Email
+            <input type="email" name="email" value={form.email} onChange={handleChange} />
+            {errors.email && <span className="error">{errors.email}</span>}
           </label>
 
           <label>

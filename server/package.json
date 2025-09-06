@@ -22,8 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.14.1",
     "pino": "^9.0.0",
-    "zod": "^3.23.8",
-    "twilio": "^5.1.0"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "jest": "^29.7.0",

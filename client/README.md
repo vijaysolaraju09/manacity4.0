@@ -8,21 +8,9 @@ Copy `.env.example` to `.env` and set:
 VITE_API_URL=https://manacity4-0.onrender.com/api
 ```
 
-## OTP flow
+## Auth flow
 
-**Signup**
-
-```
-Phone → POST /auth/otp/send → POST /auth/otp/verify → Account created & token issued
-```
-
-**Reset password**
-
-```
-Phone → POST /auth/otp/send → POST /auth/otp/verify → Receive reset token → Set new password
-```
-
-The client calls the backend OTP endpoints directly for sending and verifying codes.
+Users sign up and log in with a phone number or email address and a password. Successful login stores the JWT token and user profile in `localStorage`.
 
 ## Backend API configuration
 

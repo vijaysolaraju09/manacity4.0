@@ -5,27 +5,37 @@ const AppError = require("../utils/AppError");
 
 exports.signup = async (req, res, next) => {
   try {
-    const { name, phone, password, location, role } = req.body;
+    const { name, phone, email, password, location, role } = req.body;
 
-    const existingUser = await User.findOne({ phone });
+    if (!phone && !email) {
+      throw AppError.badRequest('MISSING_CONTACT', 'Phone or email is required');
+    }
+
+    const query = [];
+    if (phone) query.push({ phone });
+    if (email) query.push({ email });
+    const existingUser = await User.findOne({ $or: query });
     if (existingUser) {
-      throw AppError.conflict('PHONE_EXISTS', 'Phone already registered');
+      throw AppError.conflict('USER_EXISTS', 'Phone or email already registered');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
       phone,
+      email,
       password: hashedPassword,
       location,
       role,
       address: "",
+      isVerified: true,
     });
 
     const profile = {
       id: user._id,
       name: user.name,
       phone: user.phone,
+      email: user.email,
       location: user.location,
       address: user.address,
       role: user.role,
@@ -47,10 +57,11 @@ exports.signup = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const { phone, password } = req.body;
+    const { phone, email, password } = req.body;
 
-    const user = await User.findOne({ phone });
-    if (!user) throw AppError.notFound('USER_NOT_FOUND', 'Phone not registered');
+    const query = phone ? { phone } : { email };
+    const user = await User.findOne(query);
+    if (!user) throw AppError.notFound('USER_NOT_FOUND', 'User not found');
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw AppError.badRequest('INVALID_PASSWORD', 'Incorrect password');
@@ -67,6 +78,7 @@ exports.login = async (req, res, next) => {
       id: user._id,
       name: user.name,
       phone: user.phone,
+      email: user.email,
       role: user.role,
       location: user.location,
       address: user.address,
@@ -104,28 +116,3 @@ exports.adminLogin = async (req, res, next) => {
   }
 };
 
-exports.verifyOtp = async (req, res, next) => {
-  try {
-    const { phone, otp } = req.body;
-
-    if (otp !== '123456') {
-      throw AppError.badRequest('INVALID_OTP', 'Invalid OTP');
-    }
-
-    const user = await User.findOneAndUpdate(
-      { phone },
-      { isVerified: true },
-      { new: true }
-    );
-
-    if (!user) throw AppError.notFound('USER_NOT_FOUND', 'Phone not registered');
-
-    res.json({
-      success: true,
-      data: { message: 'OTP verified' },
-      traceId: req.traceId,
-    });
-  } catch (err) {
-    next(err);
-  }
-};

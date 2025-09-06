@@ -33,7 +33,6 @@ interface Stats {
 
 interface Auth {
   passwordHash: string;
-  otpSecret?: string;
   lastLoginAt?: Date;
 }
 
@@ -111,7 +110,6 @@ const locationSchema = new Schema<Location>(
 const authSchema = new Schema<Auth>(
   {
     passwordHash: { type: String, required: true },
-    otpSecret: { type: String },
     lastLoginAt: { type: Date },
   },
   { _id: false }

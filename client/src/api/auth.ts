@@ -2,15 +2,13 @@ import api from './client';
 import type { UserState } from '../store/slices/userSlice';
 
 interface Credentials {
-  phone?: string;
-  email?: string;
+  phone: string;
   password: string;
 }
 
 export interface SignupDraft {
   name: string;
-  phone?: string;
-  email?: string;
+  phone: string;
   password: string;
   location: string;
   role?: string;

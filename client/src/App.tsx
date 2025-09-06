@@ -14,9 +14,6 @@ import Loader from './components/Loader';
 const Landing = lazy(() => import('./pages/Landing/Landing'));
 const Login = lazy(() => import('./pages/auth/Login/Login'));
 const Signup = lazy(() => import('./pages/auth/Signup/Signup'));
-const OTP = lazy(() => import('./pages/auth/OTP/OTP'));
-const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword/ForgotPassword'));
-const SetNewPassword = lazy(() => import('./pages/auth/SetNewPassword/SetNewPassword'));
 const Profile = lazy(() => import('./pages/Profile/Profile'));
 const Home = lazy(() => import('./pages/Home/Home'));
 const Shops = lazy(() => import('./pages/Shops/Shops'));
@@ -73,9 +70,6 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/otp" element={<OTP />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/set-new-password" element={<SetNewPassword />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/preview" element={<UiPreview />} />
         <Route path="/admin" element={<AdminProtectedRoute />}>

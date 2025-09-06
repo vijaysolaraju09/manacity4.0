@@ -1,41 +1,42 @@
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import './Login.scss';
 import logo from '../../../assets/logo.png';
 import fallbackImage from '../../../assets/no-image.svg';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
-import { sendOtp } from '../../../api/auth';
+import { login } from '../../../api/auth';
+import { setUser } from '../../../store/slices/userSlice';
+import type { AppDispatch } from '../../../store';
 
 const Login = () => {
   const navigate = useNavigate();
-  const [phone, setPhone] = useState('');
+  const dispatch = useDispatch<AppDispatch>();
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const normalizePhone = (value: string): string | null => {
-    const digits = value.replace(/\D/g, '');
-    if (digits.length === 10) return `+91${digits}`;
-    if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
-    return null;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const phoneE164 = normalizePhone(phone);
-    if (!phoneE164) {
-      setError('Enter a valid phone number');
+    if (!identifier || !password) {
+      setError('Enter your credentials');
       return;
     }
     try {
       setLoading(true);
       setError('');
-      await sendOtp(phoneE164);
-      showToast(`OTP sent to ${phone}`, 'success');
-      navigate(`/otp?purpose=login&phone=${encodeURIComponent(phoneE164)}`);
+      const creds = identifier.includes('@')
+        ? { email: identifier, password }
+        : { phone: identifier, password };
+      const user = await login(creds);
+      dispatch(setUser(user));
+      navigate('/home');
+      showToast('Logged in successfully', 'success');
     } catch (err: any) {
-      const message = err.message || 'Failed to send OTP';
+      const message = err.message || 'Login failed';
       setError(message);
       showToast(message, 'error');
     } finally {
@@ -58,21 +59,32 @@ const Login = () => {
       >
         <img src={logo} alt="Manacity Logo" className="logo" onError={(e) => (e.currentTarget.src = fallbackImage)} />
 
-        <h2>Login with Phone</h2>
+        <h2>Login</h2>
 
         <form onSubmit={handleSubmit} noValidate>
           <label>
-            Phone Number
+            Phone or Email
             <input
-              type="tel"
-              name="phone"
-              placeholder="Enter your phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
+              type="text"
+              name="identifier"
+              placeholder="Enter phone or email"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
             />
-            {error && <span className="error">{error}</span>}
           </label>
+
+          <label>
+            Password
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </label>
+
+          {error && <span className="error">{error}</span>}
 
           <motion.button
             type="submit"
@@ -81,13 +93,12 @@ const Login = () => {
             whileTap={{ scale: 0.96 }}
             disabled={loading}
           >
-            {loading ? <Loader /> : 'Send Code'}
+            {loading ? <Loader /> : 'Login'}
           </motion.button>
         </form>
 
         <div className="links">
           <span onClick={() => navigate('/signup')}>Create Account</span>
-          <Link to="/forgot-password">Forgot Password?</Link>
         </div>
 
         <div className="back" onClick={() => navigate('/')}>← Back to Landing</div>

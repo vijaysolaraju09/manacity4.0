@@ -55,20 +55,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", adminUserRoutes);
 
-// Catch-all for undefined API routes. Express 5 requires a named wildcard.
-app.use(
-  "/api/*path",
-  (_req, _res, next) =>
-    next(AppError.notFound("ROUTE_NOT_FOUND", "API route not found"))
-);
-
 if (process.env.NODE_ENV === "production") {
   const clientPath = path.join(__dirname, "..", "client", "dist");
   app.use(express.static(clientPath));
-  // Serve index.html for any non-API request in production
-  app.get("/*path", (_req, res) => {
-    res.sendFile(path.join(clientPath, "index.html"));
-  });
 }
 
 app.use(errorHandler);

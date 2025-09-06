@@ -10,7 +10,7 @@ VITE_API_URL=https://manacity4-0.onrender.com/api
 
 ## Auth flow
 
-Users sign up and log in with a phone number or email address and a password. Successful login stores the JWT token and user profile in `localStorage`.
+Users sign up and log in with a phone number and a password. Successful login stores the JWT token and user profile in `localStorage`.
 
 ## Backend API configuration
 

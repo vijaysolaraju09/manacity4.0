@@ -50,7 +50,6 @@ interface Preferences {
 
 export interface UserAttrs {
   phone: string;
-  email?: string;
   name: string;
   avatarUrl?: string;
   roles: Role[];
@@ -122,13 +121,6 @@ const userSchema = new Schema<UserDoc>(
       required: true,
       unique: true,
     },
-    email: {
-      type: String,
-      unique: true,
-      sparse: true,
-      lowercase: true,
-      trim: true,
-    },
     name: { type: String, required: true },
     avatarUrl: { type: String },
     roles: {
@@ -159,7 +151,6 @@ const userSchema = new Schema<UserDoc>(
 );
 
 userSchema.index({ phone: 1 }, { unique: true });
-userSchema.index({ email: 1 }, { unique: true, sparse: true });
 userSchema.index({ roles: 1 });
 userSchema.index({ verificationStatus: 1 });
 userSchema.index({ 'location.city': 1, roles: 1 });

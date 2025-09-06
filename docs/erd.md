@@ -42,7 +42,7 @@ erDiagram
 ## Top Access Patterns & Index Plan
 | # | Access pattern | Suggested index | Rationale |
 |---|----------------|-----------------|-----------|
-| 1 | Find user by email | `{ email: 1 }` unique | Login lookup |
+| 1 | Find user by phone | `{ phone: 1 }` unique | Login lookup |
 | 2 | List addresses for user | `{ userId: 1 }` | Frequent user detail lookup |
 | 3 | Fetch shop by slug | `{ slug: 1 }` unique | Public shop pages |
 | 4 | Query products by shop & slug | `{ shopId: 1, slug: 1 }` unique | Product pages within a shop |

@@ -14,14 +14,12 @@ const Signup = () => {
   const [form, setForm] = useState<SignupDraft>({
     name: '',
     phone: '',
-    email: '',
     password: '',
     location: '',
   });
   const [errors, setErrors] = useState<{
     name?: string;
     phone?: string;
-    email?: string;
     password?: string;
     location?: string;
     general?: string;
@@ -45,7 +43,6 @@ const Signup = () => {
     const newErrors: {
       name?: string;
       phone?: string;
-      email?: string;
       password?: string;
       location?: string;
     } = {};
@@ -53,10 +50,7 @@ const Signup = () => {
     const phoneE164 = form.phone ? normalizePhone(form.phone) : null;
     if (form.phone && !phoneE164)
       newErrors.phone = 'Enter a valid phone number with country code (e.g., +91…)';
-    if (!form.phone && !form.email)
-      newErrors.phone = 'Phone or email is required';
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      newErrors.email = 'Enter a valid email';
+    if (!form.phone) newErrors.phone = 'Phone is required';
     if (form.password.length < 6)
       newErrors.password = 'Password must be at least 6 characters';
     if (!form.location) newErrors.location = 'Location is required';
@@ -65,7 +59,7 @@ const Signup = () => {
 
     try {
       setLoading(true);
-      const payload = { ...form, phone: phoneE164 || undefined };
+      const payload = { ...form, phone: phoneE164! };
       await signup(payload);
       showToast('Account created. Please login.', 'success');
       navigate('/login');
@@ -100,12 +94,6 @@ const Signup = () => {
             Phone Number
             <input type="tel" name="phone" value={form.phone} onChange={handleChange} />
             {errors.phone && <span className="error">{errors.phone}</span>}
-          </label>
-
-          <label>
-            Email
-            <input type="email" name="email" value={form.email} onChange={handleChange} />
-            {errors.email && <span className="error">{errors.email}</span>}
           </label>
 
           <label>

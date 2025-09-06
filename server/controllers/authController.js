@@ -5,25 +5,21 @@ const AppError = require("../utils/AppError");
 
 exports.signup = async (req, res, next) => {
   try {
-    const { name, phone, email, password, location, role } = req.body;
+    const { name, phone, password, location, role } = req.body;
 
-    if (!phone && !email) {
-      throw AppError.badRequest('MISSING_CONTACT', 'Phone or email is required');
+    if (!phone) {
+      throw AppError.badRequest('MISSING_CONTACT', 'Phone is required');
     }
 
-    const query = [];
-    if (phone) query.push({ phone });
-    if (email) query.push({ email });
-    const existingUser = await User.findOne({ $or: query });
+    const existingUser = await User.findOne({ phone });
     if (existingUser) {
-      throw AppError.conflict('USER_EXISTS', 'Phone or email already registered');
+      throw AppError.conflict('USER_EXISTS', 'Phone already registered');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
       phone,
-      email,
       password: hashedPassword,
       location,
       role,
@@ -35,7 +31,6 @@ exports.signup = async (req, res, next) => {
       id: user._id,
       name: user.name,
       phone: user.phone,
-      email: user.email,
       location: user.location,
       address: user.address,
       role: user.role,
@@ -57,10 +52,9 @@ exports.signup = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const { phone, email, password } = req.body;
+    const { phone, password } = req.body;
 
-    const query = phone ? { phone } : { email };
-    const user = await User.findOne(query);
+    const user = await User.findOne({ phone });
     if (!user) throw AppError.notFound('USER_NOT_FOUND', 'User not found');
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -78,7 +72,6 @@ exports.login = async (req, res, next) => {
       id: user._id,
       name: user.name,
       phone: user.phone,
-      email: user.email,
       role: user.role,
       location: user.location,
       address: user.address,

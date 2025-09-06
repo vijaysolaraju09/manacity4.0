@@ -14,24 +14,21 @@ import type { AppDispatch } from '../../../store';
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const [identifier, setIdentifier] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!identifier || !password) {
+    if (!phone || !password) {
       setError('Enter your credentials');
       return;
     }
     try {
       setLoading(true);
       setError('');
-      const creds = identifier.includes('@')
-        ? { email: identifier, password }
-        : { phone: identifier, password };
-      const user = await login(creds);
+      const user = await login({ phone, password });
       dispatch(setUser(user));
       navigate('/home');
       showToast('Logged in successfully', 'success');
@@ -63,13 +60,13 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} noValidate>
           <label>
-            Phone or Email
+            Phone Number
             <input
               type="text"
-              name="identifier"
-              placeholder="Enter phone or email"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              name="phone"
+              placeholder="Enter phone number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
             />
           </label>
 

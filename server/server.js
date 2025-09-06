@@ -37,7 +37,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+// Use a regular expression to register the CORS preflight handler for all
+// routes. Express 5's path-to-regexp no longer supports the legacy "*" syntax
+// and "/*" can cause deployment issues, but /.*/ safely matches every path.
+app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 app.use(context);
 

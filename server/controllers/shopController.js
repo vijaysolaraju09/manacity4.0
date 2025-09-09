@@ -1,5 +1,5 @@
-const Shop = require("../models/Shop");
-const Product = require("../models/Product");
+const { ShopModel } = require("../models/Shop");
+const { ProductModel } = require("../models/Product");
 const { NotificationModel } = require("../models/Notification");
 const { promoteToBusiness } = require("./userController");
 const { normalizeProduct } = require("../utils/normalize");
@@ -9,13 +9,13 @@ exports.createShop = async (req, res) => {
     const { name, category, location, address, image, banner, description } = req.body;
     const owner = req.user._id;
 
-    const shop = await Shop.create({
+    const shop = await ShopModel.create({
       name,
       category,
       location,
       address,
       image,
-      owner,
+      ownerId: owner,
       banner,
       description,
       status: "pending",
@@ -48,7 +48,7 @@ exports.getAllShops = async (req, res) => {
       {
         $lookup: {
           from: "users",
-          localField: "owner",
+          localField: "ownerId",
           foreignField: "_id",
           as: "owner",
         },
@@ -75,7 +75,7 @@ exports.getAllShops = async (req, res) => {
         $lookup: {
           from: "products",
           localField: "_id",
-          foreignField: "shop",
+          foreignField: "shopId",
           as: "products",
         },
       },
@@ -108,8 +108,8 @@ exports.getAllShops = async (req, res) => {
     ];
 
     const [items, countRes] = await Promise.all([
-      Shop.aggregate(resultPipeline),
-      Shop.aggregate([...basePipeline, { $count: "total" }]),
+      ShopModel.aggregate(resultPipeline),
+      ShopModel.aggregate([...basePipeline, { $count: "total" }]),
     ]);
 
     const total = countRes[0]?.total || 0;
@@ -134,7 +134,7 @@ exports.getAllShops = async (req, res) => {
 
 exports.getShopById = async (req, res) => {
   try {
-    const shop = await Shop.findById(req.params.id);
+    const shop = await ShopModel.findById(req.params.id);
     if (!shop) return res.status(404).json({ error: "Shop not found" });
     res.json(shop);
   } catch (err) {
@@ -145,7 +145,7 @@ exports.getShopById = async (req, res) => {
 exports.getProductsByShop = async (req, res) => {
   try {
     const { page, limit } = req.query;
-    let query = Product.find({ shop: req.params.id }).populate(
+    let query = ProductModel.find({ shopId: req.params.id }).populate(
       "shop",
       "name image location"
     );
@@ -171,7 +171,7 @@ exports.getPendingShops = async (req, res) => {
     if (category) filters.category = category;
     if (location) filters.location = location;
 
-    const shops = await Shop.find(filters).populate("owner", "name phone");
+    const shops = await ShopModel.find(filters).populate("ownerId", "name phone");
     res.json(shops);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch shop requests" });
@@ -180,7 +180,7 @@ exports.getPendingShops = async (req, res) => {
 
 exports.getMyShop = async (req, res) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const shop = await ShopModel.findOne({ ownerId: req.user._id });
     if (!shop) return res.status(404).json({ message: "No shop request" });
     res.json(shop);
   } catch (err) {
@@ -190,15 +190,15 @@ exports.getMyShop = async (req, res) => {
 
 exports.approveShop = async (req, res) => {
   try {
-    const shop = await Shop.findById(req.params.id);
+    const shop = await ShopModel.findById(req.params.id);
     if (!shop) return res.status(404).json({ error: "Shop not found" });
     shop.status = "approved";
     await shop.save();
 
-    await promoteToBusiness(shop.owner);
+    await promoteToBusiness(shop.ownerId);
 
     await NotificationModel.create({
-      userId: shop.owner,
+      userId: shop.ownerId,
       type: "system",
       title: "Business request approved",
       body: "Your business request has been approved.",
@@ -212,13 +212,13 @@ exports.approveShop = async (req, res) => {
 
 exports.rejectShop = async (req, res) => {
   try {
-    const shop = await Shop.findById(req.params.id);
+    const shop = await ShopModel.findById(req.params.id);
     if (!shop) return res.status(404).json({ error: "Shop not found" });
     shop.status = "rejected";
     await shop.save();
 
     await NotificationModel.create({
-      userId: shop.owner,
+      userId: shop.ownerId,
       type: "system",
       title: "Business request rejected",
       body: "Your business request has been rejected.",
@@ -238,7 +238,7 @@ exports.updateShop = async (req, res) => {
       const map = { active: "approved", suspended: "rejected", pending: "pending" };
       updates.status = map[updates.status] || updates.status;
     }
-    const shop = await Shop.findByIdAndUpdate(id, updates, { new: true });
+    const shop = await ShopModel.findByIdAndUpdate(id, updates, { new: true });
     if (!shop) return res.status(404).json({ error: "Shop not found" });
     res.json({ message: "Shop updated" });
   } catch (err) {
@@ -249,9 +249,9 @@ exports.updateShop = async (req, res) => {
 exports.deleteShop = async (req, res) => {
   try {
     const { id } = req.params;
-    const shop = await Shop.findByIdAndDelete(id);
+    const shop = await ShopModel.findByIdAndDelete(id);
     if (!shop) return res.status(404).json({ error: "Shop not found" });
-    await Product.deleteMany({ shop: id });
+    await ProductModel.deleteMany({ shopId: id });
     res.json({ message: "Shop deleted" });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete shop" });
@@ -260,7 +260,7 @@ exports.deleteShop = async (req, res) => {
 
 exports.getMyProducts = async (req, res) => {
   try {
-    const products = await Product.find({ createdBy: req.user._id });
+    const products = await ProductModel.find({ createdBy: req.user._id });
     res.status(200).json(products.map(normalizeProduct));
   } catch (err) {
     res.status(500).json({ message: "Server error fetching products." });

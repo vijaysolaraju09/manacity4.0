@@ -1,29 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import api from "../../api/client";
-import { sampleShops } from "../../data/sampleData";
-import Shimmer from "../../components/Shimmer";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "@/store";
+import { fetchShops } from "@/store/shops";
+import ShopsSkeleton from "@/components/common/ShopsSkeleton";
+import ErrorCard from "@/components/common/ErrorCard";
+import Empty from "@/components/common/Empty";
 import styles from "./Shops.module.scss";
 import FacetFilterBar from "../../components/ui/FacetFilterBar/FacetFilterBar";
 import ShopCard from "../../components/ui/ShopCard/ShopCard";
 
-interface Shop {
-  _id: string;
-  name: string;
-  category: string;
-  location: string;
-  isOpen?: boolean;
-  image?: string;
-  logo?: string;
-  rating?: number;
-  distance?: number;
-  products?: { _id: string }[];
-}
-
 const Shops = () => {
-  const [shops, setShops] = useState<Shop[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
+  const dispatch = useDispatch<AppDispatch>();
+  const { items: shops, status, error } = useSelector(
+    (s: RootState) => s.shops
+  );
 
   const [category, setCategory] = useState(searchParams.get("category") || "");
   const [location, setLocation] = useState(searchParams.get("location") || "");
@@ -44,21 +36,9 @@ const Shops = () => {
   }, [search, category, location, openOnly, sort, setSearchParams]);
 
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    api
-      .get(`/shops?${params.toString()}`)
-      .then((res) => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          setShops(res.data);
-        } else {
-          setShops(sampleShops as unknown as Shop[]);
-        }
-      })
-      .catch(() => {
-        setShops(sampleShops as unknown as Shop[]);
-      })
-      .finally(() => setLoading(false));
-  }, [searchParams]);
+    const params = Object.fromEntries(searchParams.entries());
+    dispatch(fetchShops(params));
+  }, [searchParams, dispatch]);
 
   const filteredShops = shops.filter((shop) => {
     return (
@@ -99,28 +79,35 @@ const Shops = () => {
       />
 
       <div className={styles.list}>
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className={styles.card}>
-                <Shimmer className="rounded" style={{ height: 160 }} />
-                <div className={styles.info}>
-                  <Shimmer style={{ height: 16, marginTop: 8 }} />
-                  <Shimmer style={{ height: 14, width: "60%" }} />
-                </div>
-              </div>
-            ))
-          : sortedShops.map((shop) => (
-              <ShopCard
-                key={shop._id}
-                shop={{
-                  ...shop,
-                  distance: shop.distance,
-                  rating: shop.rating,
-                  isOpen: shop.isOpen,
-                }}
-                onClick={() => navigate(`/shops/${shop._id}`)}
-              />
-            ))}
+        {status === "loading" && <ShopsSkeleton />}
+        {status === "failed" && (
+          <ErrorCard
+            msg={error || "Failed to load shops"}
+            onRetry={() => dispatch(fetchShops(Object.fromEntries(searchParams.entries())))}
+          />
+        )}
+        {status === "succeeded" && shops.length === 0 && (
+          <Empty
+            msg="No shops yet."
+            ctaText="Refresh"
+            onCta={() =>
+              dispatch(fetchShops(Object.fromEntries(searchParams.entries())))
+            }
+          />
+        )}
+        {status === "succeeded" && shops.length > 0 &&
+          sortedShops.map((shop) => (
+            <ShopCard
+              key={shop._id}
+              shop={{
+                ...shop,
+                distance: shop.distance,
+                rating: shop.rating,
+                isOpen: shop.isOpen,
+              }}
+              onClick={() => navigate(`/shops/${shop._id}`)}
+            />
+          ))}
       </div>
     </div>
   );

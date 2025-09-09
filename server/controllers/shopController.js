@@ -83,7 +83,8 @@ exports.getAllShops = async (req, res) => {
         $addFields: {
           productsCount: { $size: "$products" },
           ownerName: "$owner.name",
-          ratingAvg: { $cond: [{ $isNumber: "$ratingAvg" }, "$ratingAvg", 0] },
+          // Ensure ratingAvg is always a number to avoid aggregation errors
+          ratingAvg: { $ifNull: ["$ratingAvg", 0] },
         },
       },
       { $project: { products: 0, owner: 0 } },
@@ -124,9 +125,15 @@ exports.getAllShops = async (req, res) => {
       status: statusMapOut[s.status] || s.status,
       productsCount: s.productsCount || 0,
       createdAt: s.createdAt,
+      ratingAvg: s.ratingAvg || 0,
     }));
 
-    res.json({ items: mapped, total });
+    res.json({
+      items: mapped,
+      total,
+      page: Number(page),
+      pageSize: Number(pageSize),
+    });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch shops" });
   }

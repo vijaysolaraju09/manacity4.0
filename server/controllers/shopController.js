@@ -85,12 +85,18 @@ exports.getAllShops = async (req, res) => {
 
     const basePipeline = [...pipeline];
 
-    const sortField = typeof sort === "string" && sort.startsWith("-") ? sort.slice(1) : sort;
-    const sortDir = typeof sort === "string" && sort.startsWith("-") ? -1 : 1;
+    const sortField =
+      typeof sort === "string" && sort.startsWith("-") ? sort.slice(1) : sort;
+    const sortDir =
+      typeof sort === "string" && sort.startsWith("-") ? -1 : 1;
+
+    // Map client friendly sort fields to database field names
+    const sortFieldMap = { rating: "ratingAvg" };
+    const mappedSortField = sortFieldMap[sortField] || sortField;
 
     const resultPipeline = [
       ...basePipeline,
-      { $sort: { [sortField]: sortDir } },
+      { $sort: { [mappedSortField]: sortDir } },
       { $skip: (Number(page) - 1) * Number(pageSize) },
       { $limit: Number(pageSize) },
     ];

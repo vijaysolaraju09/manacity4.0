@@ -79,7 +79,13 @@ exports.getAllShops = async (req, res) => {
           as: "products",
         },
       },
-      { $addFields: { productsCount: { $size: "$products" }, ownerName: "$owner.name" } },
+      {
+        $addFields: {
+          productsCount: { $size: "$products" },
+          ownerName: "$owner.name",
+          ratingAvg: { $cond: [{ $isNumber: "$ratingAvg" }, "$ratingAvg", 0] },
+        },
+      },
       { $project: { products: 0, owner: 0 } },
     );
 

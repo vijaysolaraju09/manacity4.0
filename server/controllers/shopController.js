@@ -85,12 +85,31 @@ exports.getAllShops = async (req, res) => {
 
     const basePipeline = [...pipeline];
 
-    const sortField = typeof sort === "string" && sort.startsWith("-") ? sort.slice(1) : sort;
-    const sortDir = typeof sort === "string" && sort.startsWith("-") ? -1 : 1;
+    const sortField =
+      typeof sort === "string" && sort.startsWith("-") ? sort.slice(1) : sort;
+    const sortDir =
+      typeof sort === "string" && sort.startsWith("-") ? -1 : 1;
+
+    // Map client friendly sort fields to database field names
+    const sortFieldMap = { rating: "ratingAvg" };
+    let mappedSortField = sortFieldMap[sortField] || sortField;
+
+    // Fallback to createdAt if the field is not whitelisted
+    const allowedSortFields = new Set([
+      "createdAt",
+      "ratingAvg",
+      "name",
+      "category",
+      "location",
+      "productsCount",
+    ]);
+    if (!allowedSortFields.has(mappedSortField)) {
+      mappedSortField = "createdAt";
+    }
 
     const resultPipeline = [
       ...basePipeline,
-      { $sort: { [sortField]: sortDir } },
+      { $sort: { [mappedSortField]: sortDir } },
       { $skip: (Number(page) - 1) * Number(pageSize) },
       { $limit: Number(pageSize) },
     ];

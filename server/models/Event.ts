@@ -48,6 +48,7 @@ export interface EventAttrs {
   registrationClosesAt: Date;
   status?: EventStatus;
   capacity: number;
+  registeredUsers?: Types.ObjectId[];
   registeredCount?: number;
   organizerId: Types.ObjectId;
   location: Location;
@@ -78,6 +79,7 @@ const eventSchema = new Schema<EventDoc>({
   registrationClosesAt: { type: Date, required: true },
   status: { type: String, enum: Object.values(EventStatus), default: EventStatus.UPCOMING },
   capacity: { type: Number, required: true },
+  registeredUsers: [{ type: Schema.Types.ObjectId, ref: 'User', default: [] }],
   registeredCount: { type: Number, default: 0 },
   organizerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   location: { type: LocationSchema, required: true },

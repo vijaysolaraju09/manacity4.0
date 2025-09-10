@@ -30,6 +30,7 @@ const eventSchema = new Schema({
   registrationClosesAt: { type: Date, required: true },
   status: { type: String, enum: ['upcoming', 'active', 'ended', 'cancelled'], default: 'upcoming' },
   capacity: { type: Number, required: true },
+  registeredUsers: [{ type: Schema.Types.ObjectId, ref: 'User', default: [] }],
   registeredCount: { type: Number, default: 0 },
   organizerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   location: { type: locationSchema, required: true },
@@ -47,6 +48,6 @@ eventSchema.index({ slug: 1 }, { unique: true });
 eventSchema.index({ status: 1, startAt: -1 });
 eventSchema.index({ category: 1, startAt: -1 });
 
-const EventModel = model('Event', eventSchema);
+const Event = model('Event', eventSchema);
 
-module.exports = { EventModel };
+module.exports = Event;

@@ -1,4 +1,4 @@
-const Shop = require("../models/Shop");
+const { ShopModel: Shop } = require("../models/Shop");
 const Product = require("../models/Product");
 const { NotificationModel } = require("../models/Notification");
 const { promoteToBusiness } = require("./userController");

@@ -1,5 +1,5 @@
 const Product = require('../models/Product');
-const Shop = require('../models/Shop');
+const { ShopModel: Shop } = require('../models/Shop');
 
 const normalize = (p) => ({
   id: p._id.toString(),

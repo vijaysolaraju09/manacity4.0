@@ -5,6 +5,7 @@ import productReducer from './slices/productSlice';
 import settingsReducer from './slices/settingsSlice';
 import adminReducer from './slices/adminSlice';
 import shopsReducer from './shops';
+import eventsReducer from './events';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     settings: settingsReducer,
     admin: adminReducer,
     shops: shopsReducer,
+    events: eventsReducer,
   },
 });
 

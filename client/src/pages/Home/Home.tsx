@@ -2,7 +2,7 @@ import './Home.scss';
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../api/client';
+import { api } from '@/config/api';
 import Shimmer from '../../components/Shimmer';
 import ProductCard from '../../components/ui/ProductCard.tsx';
 import SectionHeader from '../../components/ui/SectionHeader';

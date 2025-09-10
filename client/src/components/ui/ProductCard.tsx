@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { AiFillStar } from 'react-icons/ai';
 import { useDispatch } from 'react-redux';
-import api from '../../api/client';
+import { api } from '@/config/api';
 import { addToCart } from '../../store/slices/cartSlice';
 import fallbackImage from '../../assets/no-image.svg';
 import WishlistHeart from './WishlistHeart';

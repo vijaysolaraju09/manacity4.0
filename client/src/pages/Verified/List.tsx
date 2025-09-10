@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../api/client';
+import { api } from '@/config/api';
 import { sampleVerifiedUsers } from '../../data/sampleHomeData';
 import Shimmer from '../../components/Shimmer';
 import VerifiedCard from '../../components/ui/VerifiedCard/VerifiedCard';

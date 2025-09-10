@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { AiFillCheckCircle, AiFillStar } from 'react-icons/ai';
-import api from '../../api/client';
+import { api } from '@/config/api';
 import { sampleVerifiedUser } from '../../data/sampleData';
 import Shimmer from '../../components/Shimmer';
 import fallbackImage from '../../assets/no-image.svg';

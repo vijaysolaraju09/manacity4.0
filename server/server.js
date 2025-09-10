@@ -5,7 +5,6 @@ const path = require("path");
 require("dotenv").config();
 
 const context = require("./middleware/context");
-const errorHandler = require("./middleware/error");
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
@@ -62,8 +61,6 @@ if (process.env.NODE_ENV === "production") {
   const clientPath = path.join(__dirname, "..", "client", "dist");
   app.use(express.static(clientPath));
 }
-
-app.use(errorHandler);
 
 mongoose
   .connect(process.env.MONGO_URI)

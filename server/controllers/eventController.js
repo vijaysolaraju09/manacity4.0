@@ -38,7 +38,7 @@ exports.getAllEvents = async (req, res) => {
     const events = await cursor;
     res.json(events);
   } catch {
-    res.status(500).json({ error: "Failed to fetch events" });
+    res.status(500).json({ error: err.tostring });
   }
 };
 

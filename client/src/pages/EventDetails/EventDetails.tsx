@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { api } from "@/config/api";
+import { api } from "@/lib/http";
 import { fetchEventById } from "@/store/events";
 import type { RootState } from "@/store";
 import EventsSkeleton from "@/components/common/EventsSkeleton";

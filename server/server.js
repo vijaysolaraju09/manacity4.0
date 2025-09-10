@@ -24,10 +24,9 @@ const AppError = require("./utils/AppError");
 
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://manacity4-0-1.onrender.com',
-];
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : ['http://localhost:5173', 'https://manacity4-0-1.onrender.com'];
 
 const corsOptions = {
   origin: allowedOrigins,

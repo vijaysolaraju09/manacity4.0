@@ -1,14 +1,15 @@
 import axios from 'axios';
+import { API_BASE } from '@/config/api';
 
 const adminApi = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: API_BASE,
 });
 
 adminApi.interceptors.request.use((config) => {
   const token = localStorage.getItem('manacity_admin_token');
   if (token) {
     config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
+    (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
   }
   return config;
 });

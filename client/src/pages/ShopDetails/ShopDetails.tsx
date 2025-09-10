@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AiFillStar } from 'react-icons/ai';
 import { FiPhone, FiArrowLeft, FiShare2 } from 'react-icons/fi';
-import { api } from '@/config/api';
+import { api } from '@/lib/http';
 import Shimmer from '../../components/Shimmer';
 import ProductCard, { type Product } from '../../components/ui/ProductCard.tsx';
 import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';

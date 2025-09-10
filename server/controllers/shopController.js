@@ -135,7 +135,7 @@ exports.getAllShops = async (req, res) => {
       pageSize: Number(pageSize),
     });
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch shops" });
+    res.status(500).json({ error: err.toString() });
   }
 };
 

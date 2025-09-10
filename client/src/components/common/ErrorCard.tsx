@@ -6,10 +6,10 @@ interface Props {
 }
 
 const ErrorCard: React.FC<Props> = ({ msg, onRetry }) => (
-  <div style={{ textAlign: "center", padding: "2rem", color: "red" }}>
+  <div className="error-card" style={{ textAlign: "center", padding: "2rem" }}>
     <p>{msg}</p>
     {onRetry && (
-      <button onClick={onRetry} style={{ marginTop: "1rem" }}>
+      <button onClick={onRetry} className="btn" style={{ marginTop: "1rem" }}>
         Retry
       </button>
     )}

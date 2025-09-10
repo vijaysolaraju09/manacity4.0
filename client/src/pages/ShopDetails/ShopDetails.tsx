@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AiFillStar } from 'react-icons/ai';
 import { FiPhone, FiArrowLeft, FiShare2 } from 'react-icons/fi';
-import api from '../../api/client';
-import { sampleShops } from '../../data/sampleData';
+import { api } from '@/config/api';
 import Shimmer from '../../components/Shimmer';
 import ProductCard, { type Product } from '../../components/ui/ProductCard.tsx';
 import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
@@ -43,12 +42,12 @@ const ShopDetails = () => {
     const load = async () => {
       try {
         const shopRes = await api.get(`/shops/${id}`);
-        setShop(shopRes.data || sampleShops[0]);
+        setShop(shopRes.data);
         const prodRes = await api.get(`/shops/${id}/products`);
         setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
       } catch {
-        setShop(sampleShops[0]);
-        setProducts(sampleShops[0].products);
+        setShop(null);
+        setProducts([]);
       } finally {
         setLoading(false);
       }

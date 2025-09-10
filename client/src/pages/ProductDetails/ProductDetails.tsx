@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import api from "../../api/client";
+import { api } from "@/config/api";
 import { sampleProduct, sampleShops } from "../../data/sampleData";
 import Shimmer from "../../components/Shimmer";
 import "./ProductDetails.scss";

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import api from '../../api/client';
+import { api } from '@/config/api';
 import Shimmer from '../../components/Shimmer';
 import OrderCard from '../../components/ui/OrderCard';
 import fallbackImage from '../../assets/no-image.svg';

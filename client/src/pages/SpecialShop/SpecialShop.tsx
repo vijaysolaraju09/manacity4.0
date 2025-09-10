@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import api from '../../api/client';
+import { api } from '@/config/api';
 import { sampleSpecialProducts } from '../../data/sampleHomeData';
 import { FacetFilterBar } from '../../components/base';
 import ProductCard from '../../components/ui/ProductCard.tsx';

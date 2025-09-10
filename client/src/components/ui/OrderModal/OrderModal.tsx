@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../../store';
-import api from '../../../api/client';
+import { api } from '@/config/api';
 import ModalSheet from '../../base/ModalSheet';
 import type { Product } from '../ProductCard';
 import showToast from '../Toast';

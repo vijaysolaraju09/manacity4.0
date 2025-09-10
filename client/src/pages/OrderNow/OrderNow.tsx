@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FaMicrophone } from 'react-icons/fa';
-import api from '../../api/client';
+import { api } from '@/config/api';
 import { sampleShops } from '../../data/sampleData';
 import type { RootState } from '../../store';
 import ModalSheet from '../../components/base/ModalSheet';

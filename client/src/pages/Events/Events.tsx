@@ -1,30 +1,42 @@
-import { useEffect, useState } from "react";
-import api from "../../api/client";
-import { sampleEvents } from "../../data/sampleHomeData";
-import Shimmer from "../../components/Shimmer";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import EventCard from "../../components/ui/EventCard/EventCard";
 import type { EventItem } from "../../components/ui/EventCard/EventCard";
 import "./Events.scss";
+import { fetchEvents } from "@/store/events";
+import type { RootState } from "@/store";
+import EventsSkeleton from "@/components/common/EventsSkeleton";
+import ErrorCard from "@/components/common/ErrorCard";
+import Empty from "@/components/common/Empty";
 
 const Events = () => {
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const d = useDispatch<any>();
+  const { items, status, error } = useSelector(
+    (s: RootState) => s.events,
+  );
 
   useEffect(() => {
-    api
-      .get("/events")
-      .then((res) => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          setEvents(res.data as EventItem[]);
-        } else {
-          setEvents(sampleEvents);
-        }
-      })
-      .catch(() => setEvents(sampleEvents))
-      .finally(() => setLoading(false));
-  }, []);
+    if (status === "idle") d(fetchEvents(undefined));
+  }, [status, d]);
 
-  const upcomingEvents = events.filter((ev) => {
+  if (status === "loading") return <EventsSkeleton />;
+  if (status === "failed")
+    return (
+        <ErrorCard
+          msg={error || "Failed to load events"}
+          onRetry={() => d(fetchEvents(undefined))}
+        />
+    );
+  if (status === "succeeded" && items.length === 0)
+    return (
+        <Empty
+          msg="No events available."
+          ctaText="Refresh"
+          onCta={() => d(fetchEvents(undefined))}
+        />
+    );
+
+  const upcomingEvents = items.filter((ev) => {
     const date = ev.startDate || ev.date;
     return !date || new Date(date) >= new Date();
   });
@@ -33,27 +45,9 @@ const Events = () => {
     <div className="events">
       <h2>Events & Tournaments</h2>
       <div className="event-list">
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  background: "var(--color-surface)",
-                  borderRadius: "12px",
-                  padding: "1rem",
-                  boxShadow: "var(--shadow-sm)",
-                }}
-              >
-                <Shimmer className="rounded" style={{ height: 140 }} />
-                <Shimmer
-                  style={{ height: 16, marginTop: 8, width: "70%" }}
-                />
-                <Shimmer
-                  style={{ height: 14, marginTop: 4, width: "40%" }}
-                />
-              </div>
-            ))
-          : upcomingEvents.map((ev) => <EventCard key={ev._id} event={ev} />)}
+        {upcomingEvents.map((ev) => (
+          <EventCard key={ev._id} event={ev as EventItem} />
+        ))}
       </div>
     </div>
   );

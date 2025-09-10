@@ -1,13 +1,17 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import api from "../../api/client";
-import { sampleEvent } from "../../data/sampleData";
-import Shimmer from "../../components/Shimmer";
+import { useDispatch, useSelector } from "react-redux";
+import { api } from "@/config/api";
+import { fetchEventById } from "@/store/events";
+import type { RootState } from "@/store";
+import EventsSkeleton from "@/components/common/EventsSkeleton";
+import ErrorCard from "@/components/common/ErrorCard";
+import Empty from "@/components/common/Empty";
 import Loader from "../../components/Loader";
 import "./EventDetails.scss";
 import fallbackImage from "../../assets/no-image.svg";
 
-interface Event {
+interface EventData {
   _id: string;
   name: string;
   image?: string;
@@ -20,7 +24,7 @@ interface Event {
   registeredUsers?: { user: string }[];
 }
 
-const getCalendarUrl = (event: Event) => {
+const getCalendarUrl = (event: EventData) => {
   const date = event.startDate || event.date;
   if (!date) return "#";
   const start = new Date(date)
@@ -38,8 +42,14 @@ const getCalendarUrl = (event: Event) => {
 
 const EventDetails = () => {
   const { id } = useParams();
-  const [event, setEvent] = useState<Event | null>(null);
-  const [loading, setLoading] = useState(true);
+  const d = useDispatch<any>();
+  const { item: event, status, error } = useSelector(
+    (s: RootState) => s.events,
+  ) as {
+    item: EventData | null;
+    status: string;
+    error: string | null;
+  };
   const [countdown, setCountdown] = useState<string>("");
   const [leaderboard, setLeaderboard] = useState<Array<{ userId: string; name: string; score: number }>>([]);
   const [registered, setRegistered] = useState(false);
@@ -47,20 +57,11 @@ const EventDetails = () => {
   const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
-    api
-      .get(`/events/${id}`)
-      .then((res) => {
-        if (res.data) {
-          setEvent(res.data);
-        } else {
-          setEvent(sampleEvent);
-        }
-      })
-      .catch(() => {
-        setEvent(sampleEvent);
-      })
-      .finally(() => setLoading(false));
+    if (id) d(fetchEventById(id));
+  }, [id, d]);
 
+  useEffect(() => {
+    if (!id) return;
     api
       .get(`/events/${id}/leaderboard`)
       .then((res) => {
@@ -95,59 +96,47 @@ const EventDetails = () => {
       .then(() => {
         setRegistered(true);
         setMessage("You're registered!");
-        setEvent((prev) =>
-          prev
-            ? {
-                ...prev,
-                registeredUsers: [
-                  ...(prev.registeredUsers || []),
-                  { user: "self" },
-                ],
-              }
-            : prev
-        );
+        if (id) d(fetchEventById(id));
       })
       .catch(() => setMessage("Registration failed"))
       .finally(() => setRegistering(false));
   };
-
-  if (loading || !event)
+  if (status === "loading") return <EventsSkeleton />;
+  if (status === "failed")
     return (
-      <div className="event-details">
-        <Shimmer style={{ width: "100%", height: 300 }} className="rounded" />
-        <div className="info">
-          <Shimmer style={{ height: 32, width: "60%", margin: "1rem auto" }} />
-          <Shimmer style={{ height: 20, width: "40%", marginBottom: 16 }} />
-          <Shimmer style={{ height: 20, width: "40%", marginBottom: 16 }} />
-          <Shimmer style={{ height: 60, width: "100%" }} />
-        </div>
-      </div>
+      <ErrorCard
+        msg={error || "Failed to load event"}
+        onRetry={() => id && d(fetchEventById(id))}
+      />
     );
+  if (status === "succeeded" && !event) return <Empty msg="No event found." />;
+  if (!event) return null;
+  const ev = event;
 
   return (
     <div className="event-details">
       <img
-        src={event.image || "https://via.placeholder.com/600x300?text=Event"}
-        alt={event.name}
+        src={ev.image || fallbackImage}
+        alt={ev.name}
         className="event-img"
         onError={(e) => (e.currentTarget.src = fallbackImage)}
       />
       <div className="info">
-        <h1>{event.name}</h1>
+        <h1>{ev.name}</h1>
         <p className="meta">
-          {event.category} • {event.location}
+          {ev.category} • {ev.location}
         </p>
         <p className="countdown">Starts in: {countdown}</p>
-        <p className="description">{event.description}</p>
+        <p className="description">{ev.description}</p>
 
-        {event.adminNote && (
+        {ev.adminNote && (
           <div className="admin-note">
-            <strong>Admin Note:</strong> {event.adminNote}
+            <strong>Admin Note:</strong> {ev.adminNote}
           </div>
         )}
         <div className="participants">
           <h3>Participants</h3>
-          <p>{event.registeredUsers?.length ?? 0} registered</p>
+          <p>{ev.registeredUsers?.length ?? 0} registered</p>
         </div>
         <button
           className="register-btn"
@@ -159,7 +148,7 @@ const EventDetails = () => {
         {message && <p className="message">{message}</p>}
         {registered && (
           <a
-            href={getCalendarUrl(event)}
+            href={getCalendarUrl(ev)}
             target="_blank"
             rel="noopener noreferrer"
             className="add-calendar-btn"

@@ -7,10 +7,10 @@ interface Props {
 }
 
 const Empty: React.FC<Props> = ({ msg, ctaText, onCta }) => (
-  <div style={{ textAlign: "center", padding: "2rem" }}>
+  <div className="empty-state" style={{ textAlign: "center", padding: "2rem" }}>
     <p>{msg}</p>
     {ctaText && onCta && (
-      <button onClick={onCta} style={{ marginTop: "1rem" }}>
+      <button onClick={onCta} className="btn" style={{ marginTop: "1rem" }}>
         {ctaText}
       </button>
     )}

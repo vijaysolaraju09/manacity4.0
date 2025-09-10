@@ -1,143 +1,95 @@
 import './Home.scss';
 import { motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '@/config/api';
-import Shimmer from '../../components/Shimmer';
+import { useDispatch, useSelector } from 'react-redux';
 import ProductCard from '../../components/ui/ProductCard.tsx';
 import SectionHeader from '../../components/ui/SectionHeader';
 import HorizontalCarousel from '../../components/ui/HorizontalCarousel';
-import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
-import EmptyState from '../../components/ui/EmptyState';
-import {
-  sampleOffers,
-  sampleVerifiedUsers,
-  sampleEvents,
-  sampleSpecialProducts,
-  banner,
-} from '../../data/sampleHomeData';
+import Empty from '../../components/ui/EmptyState';
+import { fetchShops } from '@/store/shops';
+import { fetchVerified } from '@/store/verified';
+import { fetchEvents } from '@/store/events';
+import { fetchSpecialProducts } from '@/store/products';
+import type { RootState } from '@/store';
+import EventsSkeleton from '@/components/common/EventsSkeleton';
+import ShopsSkeleton from '@/components/common/ShopsSkeleton';
+import ProductsSkeleton from '@/components/common/ProductsSkeleton';
+import ErrorCard from '@/components/common/ErrorCard';
 import fallbackImage from '../../assets/no-image.svg';
-
-type NavigateFn = ReturnType<typeof useNavigate>;
-
-type SectionType = 'product' | 'user' | 'event';
 
 const Home = () => {
   const navigate = useNavigate();
+  const d = useDispatch<any>();
 
-  const [offers, setOffers] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
-  const [specialProducts, setSpecialProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const fetched = useRef(false);
+  const shops = useSelector((s: RootState) => s.shops);
+  const verified = useSelector((s: RootState) => s.verified);
+  const events = useSelector((s: RootState) => s.events);
+  const products = useSelector((s: RootState) => s.catalog);
 
   useEffect(() => {
-    if (fetched.current) return;
-    fetched.current = true;
-
-    Promise.all([
-      api.get('/home/offers'),
-      api.get('/home/verified-users'),
-      api.get('/home/events'),
-      api.get('/home/special-products'),
-    ])
-      .then(([offRes, userRes, evRes, spRes]) => {
-        setOffers(
-          Array.isArray(offRes.data) && offRes.data.length > 0
-            ? offRes.data
-            : sampleOffers,
-        );
-        setUsers(
-          Array.isArray(userRes.data) && userRes.data.length > 0
-            ? userRes.data
-            : sampleVerifiedUsers,
-        );
-        setEvents(
-          Array.isArray(evRes.data) && evRes.data.length > 0
-            ? evRes.data
-            : sampleEvents,
-        );
-        setSpecialProducts(
-          Array.isArray(spRes.data) && spRes.data.length > 0
-            ? spRes.data
-            : sampleSpecialProducts,
-        );
-      })
-      .catch(() => {
-        setOffers(sampleOffers);
-        setUsers(sampleVerifiedUsers);
-        setEvents(sampleEvents);
-        setSpecialProducts(sampleSpecialProducts);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    if (shops.status === 'idle') d(fetchShops({ sort: '-createdAt', pageSize: 10 }));
+    if (verified.status === 'idle') d(fetchVerified({ pageSize: 10 }));
+    if (events.status === 'idle') d(fetchEvents({ pageSize: 10 }));
+    if (products.status === 'idle') d(fetchSpecialProducts({ pageSize: 10 }));
+  }, [shops.status, verified.status, events.status, products.status, d]);
 
   return (
     <div className="home">
-      {/* Admin Banner */}
       <motion.div
         className="banner"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        onClick={() => banner.link && navigate(banner.link)}
-        role={banner.link ? 'button' : undefined}
-        tabIndex={banner.link ? 0 : undefined}
-        aria-label={banner.title}
-        onKeyDown={(e) => {
-          if (banner.link && (e.key === 'Enter' || e.key === ' ')) {
-            e.preventDefault();
-            navigate(banner.link);
-          }
-        }}
       >
         <img
-          src={banner.image || fallbackImage}
-          alt="Admin Update"
+          src={fallbackImage}
+          alt="Banner"
           loading="lazy"
           width={1200}
           height={300}
           style={{ objectFit: 'cover' }}
-          onError={(e) => (e.currentTarget.src = fallbackImage)}
         />
         <div className="banner-text">
-          <h3>{banner.title}</h3>
-          <p>{banner.subtitle}</p>
+          <h3>Welcome to ManaCity</h3>
+          <p>Discover shops, events and more</p>
         </div>
       </motion.div>
 
-      {/* Sections */}
       <Section
         title="Shop Offers"
-        data={offers}
+        data={shops.items}
+        status={shops.status}
+        error={shops.error}
         type="product"
-        loading={loading}
-        seeAll="/shops"
+        onRetry={() => d(fetchShops({ sort: '-createdAt', pageSize: 10 }))}
         navigate={navigate}
       />
       <Section
         title="Verified Users"
-        data={users}
+        data={verified.items}
+        status={verified.status}
+        error={verified.error}
         type="user"
-        loading={loading}
-        seeAll="/verified-users"
+        onRetry={() => d(fetchVerified({ pageSize: 10 }))}
         navigate={navigate}
       />
       <Section
         title="Events"
-        data={events}
+        data={events.items}
+        status={events.status}
+        error={events.error}
         type="event"
-        loading={loading}
-        seeAll="/events"
+        onRetry={() => d(fetchEvents({ pageSize: 10 }))}
         navigate={navigate}
       />
       <Section
         title="Special Shop Products"
-        data={specialProducts}
+        data={products.items}
+        status={products.status}
+        error={products.error}
         type="product"
-        loading={loading}
-        seeAll="/special-shop"
+        onRetry={() => d(fetchSpecialProducts({ pageSize: 10 }))}
         navigate={navigate}
       />
     </div>
@@ -147,36 +99,39 @@ const Home = () => {
 interface SectionProps {
   title: string;
   data: any[];
-  type: SectionType;
-  loading: boolean;
-  seeAll: string;
-  navigate: NavigateFn;
+  status: string;
+  error: string | null;
+  type: 'product' | 'user' | 'event';
+  onRetry: () => void;
+  navigate: ReturnType<typeof useNavigate>;
 }
 
-const Section = ({ title, data, type, loading, seeAll, navigate }: SectionProps) => (
-  <div className="section">
-    <SectionHeader title={title} onClick={() => navigate(seeAll)} />
-    {loading ? (
-      <HorizontalCarousel>
-        {Array.from({ length: 3 }).map((_, idx) =>
-          type === 'product' ? (
-            <SkeletonProductCard key={idx} />
-          ) : (
-            <div key={idx} className="card">
-              <Shimmer className="rounded" style={{ height: 150 }} />
-              <div className="card-info">
-                <Shimmer style={{ height: 16, marginTop: 8, width: '60%' }} />
-                {type === 'event' && (
-                  <Shimmer style={{ height: 14, marginTop: 4, width: '40%' }} />
-                )}
-              </div>
-            </div>
-          ),
-        )}
-      </HorizontalCarousel>
-    ) : data.length === 0 ? (
-      <EmptyState message={`No ${title.toLowerCase()}`} />
-    ) : (
+const Section = ({ title, data, status, error, type, onRetry, navigate }: SectionProps) => {
+  const loading = status === 'loading';
+  if (loading)
+    return (
+      <div className="section">
+        <SectionHeader title={title} onClick={() => navigate(`/${title.toLowerCase().replace(/ /g, '-')}`)} />
+        {type === 'product' ? <ProductsSkeleton /> : type === 'event' ? <EventsSkeleton /> : <ShopsSkeleton />}
+      </div>
+    );
+  if (status === 'failed')
+    return (
+      <div className="section">
+        <SectionHeader title={title} onClick={() => navigate(`/${title.toLowerCase().replace(/ /g, '-')}`)} />
+        <ErrorCard msg={error || `Failed to load ${title}`} onRetry={onRetry} />
+      </div>
+    );
+  if (status === 'succeeded' && data.length === 0)
+    return (
+      <div className="section">
+        <SectionHeader title={title} onClick={() => navigate(`/${title.toLowerCase().replace(/ /g, '-')}`)} />
+        <Empty message={`No ${title.toLowerCase()}`} />
+      </div>
+    );
+  return (
+    <div className="section">
+      <SectionHeader title={title} onClick={() => navigate(`/${title.toLowerCase().replace(/ /g, '-')}`)} />
       <HorizontalCarousel>
         {data.map((item: any) =>
           type === 'product' ? (
@@ -190,26 +145,13 @@ const Section = ({ title, data, type, loading, seeAll, navigate }: SectionProps)
               key={item._id}
               className="card"
               whileHover={{ scale: 1.03 }}
-              role="button"
-              tabIndex={0}
-              aria-label={`View ${item.name || item.title}`}
               onClick={() =>
                 navigate(
                   type === 'user'
                     ? `/verified-users/${item._id}`
-                    : `/events/${item._id}`,
+                    : `/events/${item._id}`
                 )
               }
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  navigate(
-                    type === 'user'
-                      ? `/verified-users/${item._id}`
-                      : `/events/${item._id}`,
-                  );
-                }
-              }}
             >
               <img
                 src={item.image || fallbackImage}
@@ -224,20 +166,16 @@ const Section = ({ title, data, type, loading, seeAll, navigate }: SectionProps)
                 <h4>{item.name || item.title}</h4>
                 {type === 'event' && (
                   <p>
-                    Ends in {Math.ceil(
-                      (new Date(item.startDate || item.date).getTime() - Date.now()) /
-                        (1000 * 60 * 60 * 24),
-                    )}{' '}
-                    days
+                    Ends in {Math.ceil((new Date(item.startDate || item.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days
                   </p>
                 )}
               </div>
             </motion.div>
-          ),
+          )
         )}
       </HorizontalCarousel>
-    )}
-  </div>
-);
+    </div>
+  );
+};
 
 export default Home;

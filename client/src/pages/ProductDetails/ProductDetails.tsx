@@ -1,68 +1,53 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { api } from "@/config/api";
-import { sampleProduct, sampleShops } from "../../data/sampleData";
-import Shimmer from "../../components/Shimmer";
-import "./ProductDetails.scss";
-import { useDispatch } from "react-redux";
-import { addToCart } from "../../store/slices/cartSlice";
-import fallbackImage from "../../assets/no-image.svg";
-import PriceBlock from "../../components/ui/PriceBlock";
-import HorizontalCarousel from "../../components/ui/HorizontalCarousel";
-import ProductCard from "../../components/ui/ProductCard.tsx";
-import SectionHeader from "../../components/ui/SectionHeader";
-import { QuantityStepper } from "../../components/base";
-
-interface Product {
-  _id: string;
-  name: string;
-  image?: string;
-  images?: string[];
-  price: number;
-  mrp?: number;
-  description: string;
-  category: string;
-  shopName?: string;
-  discount?: number;
-}
+import { useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import Shimmer from '../../components/Shimmer';
+import './ProductDetails.scss';
+import { addToCart } from '../../store/slices/cartSlice';
+import fallbackImage from '../../assets/no-image.svg';
+import PriceBlock from '../../components/ui/PriceBlock';
+import HorizontalCarousel from '../../components/ui/HorizontalCarousel';
+import ProductCard from '../../components/ui/ProductCard.tsx';
+import SectionHeader from '../../components/ui/SectionHeader';
+import { QuantityStepper } from '../../components/base';
+import { fetchProductById } from '@/store/products';
+import { fetchProductsByShop } from '@/store/shops';
+import type { RootState } from '@/store';
+import ErrorCard from '@/components/common/ErrorCard';
+import Empty from '@/components/common/Empty';
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const dispatch = useDispatch();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  const d = useDispatch<any>();
+  const { item: product, status, error } = useSelector((s: RootState) => s.catalog);
+  const { products: related } = useSelector((s: RootState) => s.shops);
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
 
   useEffect(() => {
-    api
-      .get(`/products/${id}`)
-      .then((res) => {
-        if (res.data) {
-          setProduct(res.data);
-        } else {
-          setProduct(sampleProduct);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        setProduct(sampleProduct);
-        setLoading(false);
-      });
-  }, [id]);
+    if (id) d(fetchProductById(id));
+  }, [id, d]);
 
-  if (loading || !product)
+  useEffect(() => {
+    if (product?.shop) d(fetchProductsByShop(product.shop));
+  }, [product, d]);
+
+  if (status === 'loading')
     return (
       <div className="product-details">
-        <Shimmer style={{ width: "100%", height: 300 }} className="rounded" />
+        <Shimmer style={{ width: '100%', height: 300 }} className="rounded" />
         <div className="info">
-          <Shimmer style={{ height: 32, width: "60%", margin: "1rem auto" }} />
-          <Shimmer style={{ height: 20, width: "40%", margin: "0 auto" }} />
-          <Shimmer style={{ height: 24, width: "30%", margin: "1rem auto" }} />
-          <Shimmer style={{ height: 80, width: "100%", marginTop: 16 }} />
+          <Shimmer style={{ height: 32, width: '60%', margin: '1rem auto' }} />
+          <Shimmer style={{ height: 20, width: '40%', margin: '0 auto' }} />
+          <Shimmer style={{ height: 24, width: '30%', margin: '1rem auto' }} />
+          <Shimmer style={{ height: 80, width: '100%', marginTop: 16 }} />
         </div>
       </div>
     );
+  if (status === 'failed')
+    return <ErrorCard msg={error || 'Failed to load product'} onRetry={() => id && d(fetchProductById(id))} />;
+  if (status === 'succeeded' && !product) return <Empty msg="No product found." />;
+  if (!product) return null;
 
   const images = product.images?.length
     ? product.images
@@ -70,10 +55,8 @@ const ProductDetails = () => {
     ? [product.image]
     : [];
 
-  const related = sampleShops[0].products;
-
   const handleAdd = () => {
-    dispatch(
+    d(
       addToCart({
         id: product._id,
         name: product.name,
@@ -96,14 +79,14 @@ const ProductDetails = () => {
           />
         </div>
         <div className="thumbnails">
-          {images.map((img, i) => (
+          {images.map((img: string, i: number) => (
             <img
               key={img + i}
               src={img}
               alt={`${product.name} ${i + 1}`}
               loading="lazy"
               onError={(e) => (e.currentTarget.src = fallbackImage)}
-              className={i === activeImg ? "active" : ""}
+              className={i === activeImg ? 'active' : ''}
               onClick={() => setActiveImg(i)}
             />
           ))}
@@ -132,7 +115,7 @@ const ProductDetails = () => {
       <section className="related">
         <SectionHeader title="Related Products" />
         <HorizontalCarousel>
-          {related.map((p) => (
+          {related?.map((p: any) => (
             <ProductCard key={p._id} product={p} showActions={false} />
           ))}
         </HorizontalCarousel>

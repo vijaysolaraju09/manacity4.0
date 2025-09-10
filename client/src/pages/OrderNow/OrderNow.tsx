@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FaMicrophone } from 'react-icons/fa';
+import { fetchShops } from '@/store/shops';
 import { api } from '@/config/api';
-import { sampleShops } from '../../data/sampleData';
 import type { RootState } from '../../store';
 import ModalSheet from '../../components/base/ModalSheet';
 import Loader from '../../components/Loader';
@@ -20,7 +20,7 @@ interface Product {
 interface Shop {
   _id: string;
   name: string;
-  products: Product[];
+  products?: Product[];
 }
 
 interface MatchedItem {
@@ -31,7 +31,9 @@ interface MatchedItem {
 
 const OrderNow = () => {
   const user = useSelector((state: RootState) => state.user as any);
-  const [shops, setShops] = useState<Shop[]>([]);
+  const d = useDispatch<any>();
+  const { items: shopItems, status } = useSelector((s: RootState) => s.shops);
+  const shops = shopItems as Shop[];
   const [transcript, setTranscript] = useState('');
   const [manual, setManual] = useState('');
   const [listening, setListening] = useState(false);
@@ -43,17 +45,8 @@ const OrderNow = () => {
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    api
-      .get('/shops')
-      .then((res) => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          setShops(res.data);
-        } else {
-          setShops(sampleShops as unknown as Shop[]);
-        }
-      })
-      .catch(() => setShops(sampleShops as unknown as Shop[]));
-  }, []);
+    if (status === 'idle') d(fetchShops(undefined));
+  }, [status, d]);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -95,7 +88,7 @@ const OrderNow = () => {
     const items: MatchedItem[] = [];
     const lower = text.toLowerCase();
     shops.forEach((shop) => {
-      shop.products.forEach((product) => {
+      shop.products?.forEach((product) => {
         if (lower.includes(product.name.toLowerCase())) {
           const regex = new RegExp(`(\\d+)\\s*${product.name.toLowerCase()}`);
           const match = lower.match(regex);

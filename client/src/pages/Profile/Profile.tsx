@@ -6,8 +6,9 @@ import ProfileHeader from '../../components/ui/ProfileHeader';
 import { OrderCard } from '../../components/base';
 import ProductCard from '../../components/ui/ProductCard.tsx';
 import type { RootState } from '../../store';
-import { sampleShops } from '../../data/sampleData';
 import { setUser } from '../../store/slices/userSlice';
+import { fetchMyOrders } from '@/store/orders';
+import { fetchMyProducts } from '@/store/slices/productSlice';
 import ModalSheet from '../../components/base/ModalSheet';
 import {
   requestBusiness,
@@ -23,7 +24,7 @@ import styles from './Profile.module.scss';
 const Profile = () => {
   const user = useSelector((state: RootState) => state.user as any);
   const { theme } = useTheme();
-  const dispatch = useDispatch();
+  const dispatchRedux = useDispatch<any>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'overview';
@@ -57,26 +58,28 @@ const Profile = () => {
 
   useEffect(() => {
     getCurrentUser()
-      .then((res) => dispatch(setUser(res)))
+      .then((res) => dispatchRedux(setUser(res)))
       .catch(() => undefined);
-  }, [dispatch]);
+    dispatchRedux(fetchMyOrders(undefined));
+    dispatchRedux(fetchMyProducts());
+  }, [dispatchRedux]);
 
   const avatar =
     user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`;
 
-  const orders = [
-    {
-      items: [
-        { id: '1', title: 'Sample', image: sampleShops[0].products[0].image },
-      ],
-      shop: 'Café Aroma',
-      date: new Date().toISOString(),
-      status: 'pending' as const,
-      quantity: 1,
-      total: 50,
-    },
-  ];
-  const [products, setProducts] = useState(sampleShops[0].products);
+  const { mine } = useSelector((s: RootState) => s.orders);
+  const prodState = useSelector((s: RootState) => s.products);
+  const [products, setProducts] = useState<any[]>(prodState.items as any[]);
+
+  useEffect(() => {
+    setProducts(prodState.items as any[]);
+  }, [prodState.items]);
+
+  const orders = mine.items.map((o: any) => ({
+    ...o,
+    date: o.createdAt,
+    quantity: o.items?.length || 0,
+  }));
 
   const tabItems = [
     { key: 'overview', label: 'Overview' },
@@ -99,13 +102,13 @@ const Profile = () => {
   };
 
   const handleSaveProduct = (data: ProductForm) => {
-    const withImage = { ...data, image: data.image || '' };
+    const withImage: any = { ...data, image: data.image || '' };
     if (editingProduct) {
-      setProducts((prev) =>
+      setProducts((prev: any[]) =>
         prev.map((p) => (p._id === editingProduct._id ? { ...p, ...withImage } : p))
       );
     } else {
-      setProducts((prev) => [
+      setProducts((prev: any[]) => [
         ...prev,
         { ...withImage, _id: Date.now().toString() },
       ]);
@@ -287,7 +290,7 @@ const Profile = () => {
               bio: verifyForm.bio,
               portfolio: verifyForm.portfolio.filter((p) => p),
             });
-            dispatch(
+            dispatchRedux(
               setUser({
                 ...user,
                 profession: verifyForm.profession,

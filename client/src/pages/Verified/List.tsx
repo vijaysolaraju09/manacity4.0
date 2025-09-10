@@ -1,60 +1,58 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '@/config/api';
-import { sampleVerifiedUsers } from '../../data/sampleHomeData';
+import { useDispatch, useSelector } from 'react-redux';
 import Shimmer from '../../components/Shimmer';
 import VerifiedCard from '../../components/ui/VerifiedCard/VerifiedCard';
 import styles from './List.module.scss';
-
-interface VerifiedUser {
-  _id: string;
-  name: string;
-  profession: string;
-  location: string;
-  bio: string;
-  contact?: string;
-  avatar?: string;
-  rating?: number;
-}
+import { fetchVerified } from '@/store/verified';
+import type { RootState } from '@/store';
+import ErrorCard from '@/components/common/ErrorCard';
+import Empty from '@/components/common/Empty';
 
 const VerifiedList = () => {
-  const [users, setUsers] = useState<VerifiedUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const d = useDispatch<any>();
+  const { items, status, error } = useSelector((s: RootState) => s.verified);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const navigate = useNavigate();
 
   useEffect(() => {
-    api
-      .get('/verified/all')
-      .then((res) => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          setUsers(res.data);
-        } else {
-          setUsers(sampleVerifiedUsers as unknown as VerifiedUser[]);
-        }
-      })
-      .catch(() => {
-        setUsers(sampleVerifiedUsers as unknown as VerifiedUser[]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    if (status === 'idle') d(fetchVerified(undefined));
+  }, [status, d]);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
-    users.forEach((u) => u.profession && set.add(u.profession));
+    items.forEach((u) => u.profession && set.add(u.profession));
     return ['All', ...Array.from(set)];
-  }, [users]);
+  }, [items]);
 
   const filtered = useMemo(
     () =>
-      users.filter(
+      items.filter(
         (u) =>
           (u.name ?? '').toLowerCase().includes(search.toLowerCase()) &&
           (category === 'All' || u.profession === category)
       ),
-    [users, search, category]
+    [items, search, category]
   );
+
+  if (status === 'loading')
+    return (
+      <div className={styles.grid}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className={styles.card}>
+            <Shimmer className="rounded" style={{ height: 120 }} />
+            <div style={{ marginTop: '0.5rem' }}>
+              <Shimmer style={{ height: 16, width: '60%' }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  if (status === 'failed')
+    return <ErrorCard msg={error || 'Failed to load verified users'} onRetry={() => d(fetchVerified(undefined))} />;
+  if (status === 'succeeded' && filtered.length === 0)
+    return <Empty msg='No verified professionals found.' ctaText='Refresh' onCta={() => d(fetchVerified(undefined))} />;
 
   return (
     <div className={styles.verifiedList}>
@@ -79,26 +77,14 @@ const VerifiedList = () => {
         </div>
       </div>
       <div className={styles.grid}>
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className={styles.card}>
-                <Shimmer className="rounded" style={{ height: 120 }} />
-                <div style={{ marginTop: '0.5rem' }}>
-                  <Shimmer style={{ height: 16, width: '60%' }} />
-                </div>
-              </div>
-            ))
-          : filtered.map((user) => (
-              <VerifiedCard
-                key={user._id}
-                user={user}
-                onClick={() => navigate(`/verified-users/${user._id}`)}
-              />
-            ))}
+        {filtered.map((user) => (
+          <VerifiedCard
+            key={user._id}
+            user={user}
+            onClick={() => navigate(`/verified-users/${user._id}`)}
+          />
+        ))}
       </div>
-      {!loading && filtered.length === 0 && (
-        <div className={styles.empty}>No verified professionals found.</div>
-      )}
     </div>
   );
 };

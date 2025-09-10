@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { api } from '@/config/api';
+import { api } from '@/lib/http';
 import PriceBlock from '../../components/ui/PriceBlock';
 import StatusChip, { type Status } from '../../components/ui/StatusChip';
 import styles from './OrderDetail.module.scss';

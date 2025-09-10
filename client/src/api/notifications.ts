@@ -1,4 +1,4 @@
-import { api } from '@/config/api';
+import { api } from '@/lib/http';
 
 export interface Notification {
   _id: string;

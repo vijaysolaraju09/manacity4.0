@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FaMicrophone } from 'react-icons/fa';
-import { api } from '@/config/api';
+import { api } from '@/lib/http';
 import { fetchShops } from '@/store/shops';
 import type { RootState } from '../../store';
 import styles from './VoiceOrder.module.scss';

@@ -1,4 +1,4 @@
-import { api } from '@/config/api';
+import { api } from '@/lib/http';
 import type { UserState } from '../store/slices/userSlice';
 
 interface Credentials {

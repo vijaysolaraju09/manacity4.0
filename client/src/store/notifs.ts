@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { api } from "@/config/api";
+import { api } from "@/lib/http";
 
 export interface Notif {
   _id: string;

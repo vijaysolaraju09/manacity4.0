@@ -52,6 +52,22 @@ exports.getAllVerifiedUsers = async (req, res) => {
   }
 };
 
+exports.getVerifiedUserById = async (req, res) => {
+  try {
+    const verified = await VerifiedUser.findOne({
+      _id: req.params.id,
+      status: "approved",
+    }).populate("user", "name phone location address");
+
+    if (!verified)
+      return res.status(404).json({ error: "Verified user not found" });
+
+    res.json(verified);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch verified user" });
+  }
+};
+
 exports.getMyRequests = async (req, res) => {
   try {
     const verified = await VerifiedUser.findOne({ user: req.user._id });

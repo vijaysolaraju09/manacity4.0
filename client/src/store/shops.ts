@@ -11,28 +11,60 @@ export interface Shop {
   logo?: string;
   rating?: number;
   distance?: number;
-  products?: { _id: string }[];
+  products?: Product[];
 }
+
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  image?: string;
+}
+
+type St<T> = {
+  items: T[];
+  item: T | null;
+  status: "idle" | "loading" | "succeeded" | "failed";
+  error: string | null;
+  page?: number;
+  hasMore?: boolean;
+  products?: Product[];
+};
+
+const initial: St<Shop> = {
+  items: [],
+  item: null,
+  status: "idle",
+  error: null,
+  page: 1,
+  hasMore: true,
+  products: [],
+};
 
 export const fetchShops = createAsyncThunk(
   "shops/fetchAll",
-  async (params?: Record<string, string>) => {
+  async (params?: Record<string, any>) => {
     const { data } = await api.get("/shops", { params });
-    return data;
+    return Array.isArray(data) ? { items: data } : data;
   }
 );
 
-type St = {
-  items: Shop[];
-  status: "idle" | "loading" | "succeeded" | "failed";
-  error: string | null;
-};
+export const fetchShopById = createAsyncThunk("shops/fetchById", async (id: string) => {
+  const { data } = await api.get(`/shops/${id}`);
+  return data;
+});
 
-const init: St = { items: [], status: "idle", error: null };
+export const fetchProductsByShop = createAsyncThunk(
+  "shops/fetchProducts",
+  async (id: string) => {
+    const { data } = await api.get(`/shops/${id}/products`);
+    return { id, items: Array.isArray(data) ? data : data.items };
+  }
+);
 
 const shopsSlice = createSlice({
   name: "shops",
-  initialState: init,
+  initialState: initial,
   reducers: {},
   extraReducers: (b) => {
     b.addCase(fetchShops.pending, (s) => {
@@ -42,15 +74,34 @@ const shopsSlice = createSlice({
     b.addCase(fetchShops.fulfilled, (s, a) => {
       s.status = "succeeded";
       const payload: any = a.payload;
-      s.items = Array.isArray(payload?.items)
+      const arr = Array.isArray(payload?.items)
         ? payload.items
         : Array.isArray(payload)
         ? payload
         : [];
+      s.items = arr;
     });
     b.addCase(fetchShops.rejected, (s, a) => {
       s.status = "failed";
-      s.error = a.error?.message || "Failed to load";
+      s.error = (a.error as any)?.message || "Failed to load";
+    });
+    b.addCase(fetchShopById.pending, (s) => {
+      s.status = "loading";
+      s.error = null;
+      s.item = null;
+    });
+    b.addCase(fetchShopById.fulfilled, (s, a) => {
+      s.status = "succeeded";
+      s.item = a.payload as Shop;
+    });
+    b.addCase(fetchShopById.rejected, (s, a) => {
+      s.status = "failed";
+      s.error = (a.error as any)?.message || "Failed to load";
+    });
+    b.addCase(fetchProductsByShop.fulfilled, (s, a) => {
+      if ((s.item && s.item._id === a.payload.id) || !s.products) {
+        s.products = a.payload.items as Product[];
+      }
     });
   },
 });

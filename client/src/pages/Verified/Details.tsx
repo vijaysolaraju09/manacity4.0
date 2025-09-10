@@ -1,60 +1,25 @@
 import { useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { AiFillCheckCircle, AiFillStar } from 'react-icons/ai';
-import { api } from '@/config/api';
-import { sampleVerifiedUser } from '../../data/sampleData';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchVerifiedById } from '@/store/verified';
+import type { RootState } from '@/store';
 import Shimmer from '../../components/Shimmer';
 import fallbackImage from '../../assets/no-image.svg';
 import styles from './Details.module.scss';
-
-interface Stats {
-  jobsCompleted: number;
-  yearsExperience: number;
-}
-
-interface Review {
-  _id: string;
-  reviewer: string;
-  comment: string;
-  rating: number;
-}
-
-interface VerifiedUser {
-  _id: string;
-  name: string;
-  profession: string;
-  bio: string;
-  location: string;
-  contact?: string;
-  avatar?: string;
-  rating?: number;
-  stats?: Stats;
-  reviews?: Review[];
-}
+import ErrorCard from '@/components/common/ErrorCard';
+import Empty from '@/components/common/Empty';
 
 const VerifiedDetails = () => {
   const { id } = useParams();
-  const [user, setUser] = useState<VerifiedUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const d = useDispatch<any>();
+  const { item: user, status, error } = useSelector((s: RootState) => s.verified);
 
   useEffect(() => {
-    api
-      .get(`/verified/${id}`)
-      .then((res) => {
-        if (res.data) {
-          setUser(res.data);
-        } else {
-          setUser(sampleVerifiedUser as VerifiedUser);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        setUser(sampleVerifiedUser as VerifiedUser);
-        setLoading(false);
-      });
-  }, [id]);
+    if (id) d(fetchVerifiedById(id));
+  }, [id, d]);
 
-  if (loading || !user)
+  if (status === 'loading' || !user)
     return (
       <div className={styles.details}>
         <div className={styles.header}>
@@ -70,14 +35,16 @@ const VerifiedDetails = () => {
         </div>
       </div>
     );
+  if (status === 'failed')
+    return <ErrorCard msg={error || 'Failed to load user'} onRetry={() => id && d(fetchVerifiedById(id))} />;
+  if (status === 'succeeded' && !user) return <Empty msg='No user found.' />;
 
   return (
     <div className={styles.details}>
       <div className={styles.header}>
         <img
           src={
-            user.avatar ||
-            `https://ui-avatars.com/api/?name=${user.name}&background=random`
+            user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`
           }
           alt={user.name}
           onError={(e) => (e.currentTarget.src = fallbackImage)}
@@ -88,30 +55,32 @@ const VerifiedDetails = () => {
           </h2>
           <p>{user.profession}</p>
           <p>{user.location}</p>
-          <div className={styles.rating}>
-            <AiFillStar />
-            <span>{user.rating?.toFixed(1)}</span>
-          </div>
+          {user.rating && (
+            <div className={styles.rating}>
+              <AiFillStar />
+              <span>{user.rating.toFixed(1)}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className={styles.bio}>
-        <h4>About</h4>
-        <p>{user.bio}</p>
-      </div>
+      {user.bio && (
+        <div className={styles.bio}>
+          <h4>About</h4>
+          <p>{user.bio}</p>
+        </div>
+      )}
 
       {user.stats && (
         <div className={styles.stats}>
           <h4>Stats</h4>
           <ul>
-            <li>
-              <strong>{user.stats.jobsCompleted}</strong>
-              <span>Jobs</span>
-            </li>
-            <li>
-              <strong>{user.stats.yearsExperience}</strong>
-              <span>Years</span>
-            </li>
+            {Object.entries(user.stats).map(([k, v]) => (
+              <li key={k}>
+                <strong>{v as any}</strong>
+                <span>{k}</span>
+              </li>
+            ))}
           </ul>
         </div>
       )}
@@ -119,7 +88,7 @@ const VerifiedDetails = () => {
       {user.reviews && user.reviews.length > 0 && (
         <div className={styles.reviews}>
           <h4>Reviews</h4>
-          {user.reviews.map((review) => (
+          {user.reviews.map((review: any) => (
             <div key={review._id} className={styles.review}>
               <div className={styles.reviewHeader}>
                 <span>{review.reviewer}</span>

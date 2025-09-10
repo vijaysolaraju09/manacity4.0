@@ -6,6 +6,11 @@ import settingsReducer from './slices/settingsSlice';
 import adminReducer from './slices/adminSlice';
 import shopsReducer from './shops';
 import eventsReducer from './events';
+import catalogReducer from './products';
+import verifiedReducer from './verified';
+import notifsReducer from './notifs';
+import ordersReducer from './orders';
+import userProfileReducer from './user';
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +21,11 @@ export const store = configureStore({
     admin: adminReducer,
     shops: shopsReducer,
     events: eventsReducer,
+    catalog: catalogReducer,
+    verified: verifiedReducer,
+    notifs: notifsReducer,
+    orders: ordersReducer,
+    userProfile: userProfileReducer,
   },
 });
 

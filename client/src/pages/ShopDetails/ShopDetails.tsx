@@ -43,9 +43,13 @@ const ShopDetails = () => {
     const load = async () => {
       try {
         const shopRes = await http.get(`/shops/${id}`);
-        setShop(shopRes.data);
+        setShop(shopRes.data?.data?.shop || shopRes.data?.shop || shopRes.data);
         const prodRes = await http.get(`/shops/${id}/products`);
-        setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
+        const items =
+          prodRes.data?.data?.items ||
+          prodRes.data?.items ||
+          (Array.isArray(prodRes.data) ? prodRes.data : []);
+        setProducts(items);
       } catch {
         setShop(null);
         setProducts([]);

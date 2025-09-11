@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const Order = require('../models/Order');
-const AppError = require('../utils/appError');
+const AppError = require('../utils/AppError');
 
 exports.listProfessionals = async (req, res, next) => {
   try {

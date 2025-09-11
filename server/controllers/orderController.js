@@ -1,6 +1,6 @@
 const Order = require('../models/Order');
 const User = require('../models/User');
-const AppError = require('../utils/appError');
+const AppError = require('../utils/AppError');
 
 // POST /api/orders - create order from cart
 exports.createOrder = async (req, res, next) => {

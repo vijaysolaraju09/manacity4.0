@@ -11,6 +11,7 @@ import verifiedReducer from './verified';
 import notifsReducer from './notifs';
 import ordersReducer from './orders';
 import userProfileReducer from './user';
+import { injectStore } from '@/lib/http';
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,8 @@ export const store = configureStore({
     userProfile: userProfileReducer,
   },
 });
+
+injectStore(store);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

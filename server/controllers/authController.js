@@ -66,24 +66,26 @@ exports.login = async (req, res, next) => {
   try {
     const { phone, password } = req.body;
 
-    const user = await User.findOne({ phone });
-    if (!user) throw AppError.notFound('USER_NOT_FOUND', 'User not found');
+    // 1) Pull password (likely select:false in schema)
+    const user = await User.findOne({ phone }).select('+password');
+    if (!user) return next(AppError.notFound('USER_NOT_FOUND', 'User not found'));
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw AppError.badRequest('INVALID_PASSWORD', 'Incorrect password');
-
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
+    // 2) Guard accounts without password (e.g., OTP-only accounts)
+    if (!user.password) {
+      return next(AppError.badRequest('PASSWORD_LOGIN_NOT_AVAILABLE', 'This account uses OTP login'));
     }
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      jwtSecret,
-      {
-        expiresIn: "7d",
-      }
-    );
 
+    // 3) Compare
+    const ok = await bcrypt.compare(String(password || ''), user.password);
+    if (!ok) return next(AppError.badRequest('INVALID_PASSWORD', 'Incorrect password'));
+
+    // 4) Sign
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) return next(AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured'));
+
+    const token = jwt.sign({ userId: user._id, role: user.role }, jwtSecret, { expiresIn: '7d' });
+
+    // 5) Profile payload (unchanged)
     const profile = {
       id: user._id,
       name: user.name,
@@ -99,13 +101,9 @@ exports.login = async (req, res, next) => {
       avatarUrl: user.avatarUrl,
     };
 
-    res.status(200).json({
-      ok: true,
-      data: { token, user: profile },
-      traceId: req.traceId,
-    });
+    return res.status(200).json({ ok: true, data: { token, user: profile }, traceId: req.traceId });
   } catch (err) {
-    next(err);
+    return next(err);
   }
 };
 

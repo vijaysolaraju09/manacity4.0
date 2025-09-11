@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import ShopModel from '../../models/Shop';
+import Shop from '../../models/Shop';
 import ProductModel from '../../models/Product';
 import EventModel, { EventCategory } from '../../models/Event';
 import UserModel, { Role, VerificationStatus, BusinessStatus } from '../../models/User';
@@ -29,8 +29,8 @@ async function seed() {
       auth: { passwordHash: `hash${i}` },
     });
     shopOwners.push(owner);
-    const shop = await ShopModel.create({
-      ownerId: owner._id,
+    const shop = await Shop.create({
+      owner: owner._id,
       name: `Shop ${i}`,
       category: 'general',
       address: {

@@ -1,25 +1,12 @@
-const express = require("express");
-const router = express.Router();
-const protect = require("../middleware/authMiddleware");
-const {
-  createShop,
-  getAllShops,
-  getShopById,
-  getProductsByShop,
-  updateShop,
-  deleteShop,
-} = require("../controllers/shopController");
-const { createProduct } = require("../controllers/productController");
+const r = require('express').Router();
+const ctrl = require('../controllers/shopsController');
+const auth = require('../middleware/auth');
 
-router.post("/", protect, createShop);
-router.get("/", getAllShops);
-router.get("/:id", getShopById);
-router.patch("/:id", protect, updateShop);
-router.delete("/:id", protect, deleteShop);
-router.get("/:id/products", getProductsByShop);
-router.post("/:id/products", protect, (req, res, next) => {
-  req.body.shopId = req.params.id;
-  return createProduct(req, res, next);
-});
+r.get('/', ctrl.getAllShops);
+r.get('/:id', ctrl.getShopById);
+r.get('/:id/products', ctrl.getProductsByShop);
+r.post('/', auth, ctrl.createShop);
+r.patch('/:id', auth, ctrl.updateShop);
+r.delete('/:id', auth, ctrl.deleteShop);
 
-module.exports = router;
+module.exports = r;

@@ -1,5 +1,5 @@
 const Product = require('../models/Product');
-const { ShopModel: Shop } = require('../models/Shop');
+const Shop = require('../models/Shop');
 
 const normalize = (p) => ({
   id: p._id.toString(),
@@ -19,7 +19,7 @@ const normalize = (p) => ({
   updatedAt: p.updatedAt,
 });
 
-exports.createProduct = async (req, res) => {
+exports.createProduct = async (req, res, next) => {
   try {
     const {
       name,
@@ -62,11 +62,11 @@ exports.createProduct = async (req, res) => {
     });
     res.status(201).json(normalize(product));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to add product' });
+    return next(err);
   }
 };
 
-exports.updateProduct = async (req, res) => {
+exports.updateProduct = async (req, res, next) => {
   try {
     const product = await Product.findOne({ _id: req.params.id, isDeleted: false });
     if (!product) return res.status(404).json({ error: 'Product not found' });
@@ -111,11 +111,11 @@ exports.updateProduct = async (req, res) => {
     await product.save();
     res.json(normalize(product));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update product' });
+    return next(err);
   }
 };
 
-exports.deleteProduct = async (req, res) => {
+exports.deleteProduct = async (req, res, next) => {
   try {
     const product = await Product.findOne({ _id: req.params.id, isDeleted: false });
     if (!product) return res.status(404).json({ error: 'Product not found' });
@@ -130,11 +130,11 @@ exports.deleteProduct = async (req, res) => {
     await product.save();
     res.json({ message: 'Product deleted' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete product' });
+    return next(err);
   }
 };
 
-exports.getProducts = async (req, res) => {
+exports.getProducts = async (req, res, next) => {
   try {
     const { shopId, query, category, status, minPrice, maxPrice, city, available, isSpecial } = req.query;
     const filter = { isDeleted: false };
@@ -154,27 +154,27 @@ exports.getProducts = async (req, res) => {
     const items = await Product.find(filter).populate('shop', 'name').lean();
     res.json(items.map(normalize));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch products' });
+    return next(err);
   }
 };
 
-exports.getMyProducts = async (req, res) => {
+exports.getMyProducts = async (req, res, next) => {
   try {
     const shops = await Shop.find({ owner: req.user._id });
     const shopIds = shops.map((s) => s._id);
     const products = await Product.find({ shop: { $in: shopIds }, isDeleted: false }).lean();
     res.json(products.map(normalize));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch products' });
+    return next(err);
   }
 };
 
-exports.getProductById = async (req, res) => {
+exports.getProductById = async (req, res, next) => {
   try {
     const product = await Product.findOne({ _id: req.params.id, isDeleted: false }).lean();
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(normalize(product));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch product' });
+    return next(err);
   }
 };

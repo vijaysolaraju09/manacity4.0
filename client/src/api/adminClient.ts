@@ -1,7 +1,10 @@
 import axios from 'axios';
+import { API_BASE } from '@/config/api';
 
 const adminApi = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: API_BASE,
+  withCredentials: false,
+  timeout: 20000,
 });
 
 adminApi.interceptors.request.use((config) => {
@@ -9,6 +12,9 @@ adminApi.interceptors.request.use((config) => {
   if (token) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (config.url?.startsWith('/')) {
+    config.url = config.url.slice(1);
   }
   return config;
 });

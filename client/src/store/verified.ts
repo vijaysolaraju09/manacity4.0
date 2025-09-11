@@ -33,12 +33,25 @@ const initial: St<VerifiedUser> = {
   hasMore: true,
 };
 
+const normalize = (data: any): VerifiedUser => ({
+  _id: data._id,
+  name: data.user?.name || "",
+  profession: data.profession || data.user?.profession || "",
+  location: data.user?.location || "",
+  bio: data.bio || data.user?.bio,
+  phone: data.user?.phone,
+  avatarUrl: data.avatarUrl || data.user?.avatarUrl,
+  rating: data.rating,
+  stats: data.stats,
+  reviews: data.reviews,
+});
+
 export const fetchVerified = createAsyncThunk(
   "verified/fetchAll",
   async (params?: any, { rejectWithValue }) => {
     try {
       const res = await http.get("/verified", { params });
-      return toItems(res) as VerifiedUser[];
+      return (toItems(res) as any[]).map(normalize);
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }
@@ -50,7 +63,7 @@ export const fetchVerifiedById = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       const res = await http.get(`/verified/${id}`);
-      return toItem(res) as VerifiedUser;
+      return normalize(toItem(res));
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }

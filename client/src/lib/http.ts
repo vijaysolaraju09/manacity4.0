@@ -1,7 +1,13 @@
 import axios from 'axios';
 import { API_BASE } from '@/config/api';
-import { store } from '@/store';
+import type { Store } from '@reduxjs/toolkit';
 import { logout } from '@/store/slices/authSlice';
+
+let store: Store | null = null;
+
+export const injectStore = (s: Store) => {
+  store = s;
+};
 
 export const http = axios.create({
   baseURL: API_BASE,
@@ -34,7 +40,7 @@ http.interceptors.response.use(
     }
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-      store.dispatch(logout());
+      store?.dispatch(logout());
       window.location.href = '/login';
     }
     return Promise.reject(

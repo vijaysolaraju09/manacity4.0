@@ -9,7 +9,7 @@ export interface VerifiedCardProps {
     name: string;
     profession: string;
     location: string;
-    avatar?: string;
+    avatarUrl?: string;
     rating?: number;
   };
   onClick?: () => void;
@@ -21,6 +21,10 @@ const VerifiedCard = ({ user, onClick }: VerifiedCardProps) => {
       className={styles.card}
       whileHover={{ scale: 1.03 }}
       onClick={onClick}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') onClick?.();
+      }}
     >
       <div className={styles.badge}>
         <AiFillCheckCircle />
@@ -28,7 +32,7 @@ const VerifiedCard = ({ user, onClick }: VerifiedCardProps) => {
       <img
         className={styles.avatar}
         src={
-          user.avatar ||
+          user.avatarUrl ||
           `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`
         }
         alt={user.name}

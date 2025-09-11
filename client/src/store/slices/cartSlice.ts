@@ -13,22 +13,7 @@ interface CartState {
 }
 
 const initialState: CartState = {
-  items: [
-    {
-      id: 'c1',
-      name: 'Sample Coffee',
-      price: 50,
-      quantity: 2,
-      image: 'https://source.unsplash.com/60x60/?coffee',
-    },
-    {
-      id: 'c2',
-      name: 'Organic Milk',
-      price: 65,
-      quantity: 1,
-      image: 'https://source.unsplash.com/60x60/?milk',
-    },
-  ],
+  items: [],
 };
 
 const cartSlice = createSlice({
@@ -36,7 +21,12 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart(state, action: PayloadAction<CartItem>) {
-      state.items.push(action.payload);
+      const existing = state.items.find((i) => i.id === action.payload.id);
+      if (existing) {
+        existing.quantity += action.payload.quantity;
+      } else {
+        state.items.push(action.payload);
+      }
     },
     removeFromCart(state, action: PayloadAction<string>) {
       state.items = state.items.filter((i) => i.id !== action.payload);

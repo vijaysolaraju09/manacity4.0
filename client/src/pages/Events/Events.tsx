@@ -16,7 +16,7 @@ const Events = () => {
   );
 
   useEffect(() => {
-    if (status === "idle") d(fetchEvents(undefined));
+    if (status === "idle") d(fetchEvents());
   }, [status, d]);
 
   if (status === "loading") return <EventsSkeleton />;
@@ -24,7 +24,7 @@ const Events = () => {
     return (
         <ErrorCard
           msg={error || "Failed to load events"}
-          onRetry={() => d(fetchEvents(undefined))}
+          onRetry={() => d(fetchEvents())}
         />
     );
   if (status === "succeeded" && items.length === 0)
@@ -32,20 +32,15 @@ const Events = () => {
         <Empty
           msg="No events available."
           ctaText="Refresh"
-          onCta={() => d(fetchEvents(undefined))}
+          onCta={() => d(fetchEvents())}
         />
     );
-
-  const upcomingEvents = items.filter((ev) => {
-    const date = ev.startDate || ev.date;
-    return !date || new Date(date) >= new Date();
-  });
 
   return (
     <div className="events">
       <h2>Events & Tournaments</h2>
       <div className="event-list">
-        {upcomingEvents.map((ev) => (
+        {items.map((ev) => (
           <EventCard key={ev._id} event={ev as EventItem} />
         ))}
       </div>

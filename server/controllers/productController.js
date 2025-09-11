@@ -7,11 +7,12 @@ const normalize = (p) => ({
   name: p.name,
   price: p.price,
   mrp: p.mrp,
-  discount: p.mrp ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0,
-  stock: p.stock,
-  images: p.images,
-  image: p.images?.[0] || '',
+  discount: p.discount,
+  image: p.image,
   category: p.category,
+  stock: p.stock,
+  available: p.available,
+  isSpecial: p.isSpecial,
   status: p.status,
   shopId: typeof p.shop === 'object' ? p.shop._id.toString() : p.shop.toString(),
   shopName: typeof p.shop === 'object' ? p.shop.name : undefined,
@@ -26,9 +27,11 @@ exports.createProduct = async (req, res) => {
       price,
       mrp,
       category,
-      images = [],
+      image,
       stock,
       status,
+      available,
+      isSpecial,
       shopId,
     } = req.body;
     if (!name || price === undefined || mrp === undefined) {
@@ -38,9 +41,7 @@ exports.createProduct = async (req, res) => {
       return res.status(400).json({ error: 'Price and MRP must be greater than 0' });
     }
 
-    const shop = shopId
-      ? await Shop.findOne({ _id: shopId, owner: req.user._id })
-      : await Shop.findOne({ owner: req.user._id });
+    const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
     if (!shop) return res.status(403).json({ error: 'Not authorized' });
 
     const product = await Product.create({
@@ -52,9 +53,11 @@ exports.createProduct = async (req, res) => {
       price,
       mrp,
       category,
-      images,
+      image,
       stock,
       status,
+      available,
+      isSpecial,
       city: shop.location,
     });
     res.status(201).json(normalize(product));
@@ -72,7 +75,18 @@ exports.updateProduct = async (req, res) => {
       if (!shop) return res.status(403).json({ error: 'Not authorized' });
     }
 
-    const { name, description, price, mrp, category, images, stock, status } = req.body;
+    const {
+      name,
+      description,
+      price,
+      mrp,
+      category,
+      image,
+      stock,
+      status,
+      available,
+      isSpecial,
+    } = req.body;
     if (name !== undefined) product.name = name;
     if (description !== undefined) product.description = description;
     if (price !== undefined) {
@@ -88,9 +102,11 @@ exports.updateProduct = async (req, res) => {
       product.mrp = mrp;
     }
     if (category !== undefined) product.category = category;
-    if (images !== undefined) product.images = images;
+    if (image !== undefined) product.image = image;
     if (stock !== undefined) product.stock = stock;
     if (status !== undefined) product.status = status;
+    if (available !== undefined) product.available = available;
+    if (isSpecial !== undefined) product.isSpecial = isSpecial;
     product.updatedBy = req.user._id;
     await product.save();
     res.json(normalize(product));
@@ -120,24 +136,14 @@ exports.deleteProduct = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    const {
-      shopId,
-      query,
-      category,
-      status,
-      minPrice,
-      maxPrice,
-      city,
-      page = 1,
-      pageSize = 20,
-      sort = '-updatedAt',
-    } = req.query;
-
+    const { shopId, query, category, status, minPrice, maxPrice, city, available, isSpecial } = req.query;
     const filter = { isDeleted: false };
     if (shopId) filter.shop = shopId;
     if (category) filter.category = category;
     if (status) filter.status = status;
     if (city) filter.city = city;
+    if (available !== undefined) filter.available = available === 'true';
+    if (isSpecial !== undefined) filter.isSpecial = isSpecial === 'true';
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
@@ -145,24 +151,8 @@ exports.getProducts = async (req, res) => {
     }
     if (query) filter.name = { $regex: query, $options: 'i' };
 
-    const sortField = typeof sort === 'string' ? sort : '';
-    const sortObj = sortField
-      ? { [sortField.replace('-', '')]: sortField.startsWith('-') ? -1 : 1 }
-      : {};
-
-    const skip = (Number(page) - 1) * Number(pageSize);
-
-    const [items, total] = await Promise.all([
-      Product.find(filter)
-        .populate('shop', 'name')
-        .sort(sortObj)
-        .skip(skip)
-        .limit(Number(pageSize))
-        .lean(),
-      Product.countDocuments(filter),
-    ]);
-
-    res.json({ items: items.map(normalize), total });
+    const items = await Product.find(filter).populate('shop', 'name').lean();
+    res.json(items.map(normalize));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch products' });
   }

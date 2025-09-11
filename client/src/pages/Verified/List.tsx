@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Shimmer from '../../components/Shimmer';
@@ -12,29 +12,32 @@ import Empty from '@/components/common/Empty';
 const VerifiedList = () => {
   const d = useDispatch<any>();
   const { items, status, error } = useSelector((s: RootState) => s.verified);
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All');
+  const [profession, setProfession] = useState('');
+  const [location, setLocation] = useState('');
   const navigate = useNavigate();
+
+  const cards = useMemo(
+    () =>
+      items.map((user) => (
+        <VerifiedCard
+          key={user._id}
+          user={user}
+          onClick={() => navigate(`/verified-users/${user._id}`)}
+        />
+      )),
+    [items, navigate]
+  );
 
   useEffect(() => {
     if (status === 'idle') d(fetchVerified(undefined));
   }, [status, d]);
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    items.forEach((u) => u.profession && set.add(u.profession));
-    return ['All', ...Array.from(set)];
-  }, [items]);
-
-  const filtered = useMemo(
-    () =>
-      items.filter(
-        (u) =>
-          (u.name ?? '').toLowerCase().includes(search.toLowerCase()) &&
-          (category === 'All' || u.profession === category)
-      ),
-    [items, search, category]
-  );
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      d(fetchVerified({ profession, location }));
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [profession, location, d]);
 
   if (status === 'loading')
     return (
@@ -51,7 +54,7 @@ const VerifiedList = () => {
     );
   if (status === 'failed')
     return <ErrorCard msg={error || 'Failed to load verified users'} onRetry={() => d(fetchVerified(undefined))} />;
-  if (status === 'succeeded' && filtered.length === 0)
+  if (status === 'succeeded' && items.length === 0)
     return <Empty msg='No verified professionals found.' ctaText='Refresh' onCta={() => d(fetchVerified(undefined))} />;
 
   return (
@@ -60,31 +63,18 @@ const VerifiedList = () => {
       <div className={styles.filters}>
         <input
           type="text"
-          placeholder="Search by name"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Profession"
+          value={profession}
+          onChange={(e) => setProfession(e.target.value)}
         />
-        <div className={styles.categories}>
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              className={cat === category ? styles.active : ''}
-              onClick={() => setCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        <input
+          type="text"
+          placeholder="Location"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+        />
       </div>
-      <div className={styles.grid}>
-        {filtered.map((user) => (
-          <VerifiedCard
-            key={user._id}
-            user={user}
-            onClick={() => navigate(`/verified-users/${user._id}`)}
-          />
-        ))}
-      </div>
+      <div className={styles.grid}>{cards}</div>
     </div>
   );
 };

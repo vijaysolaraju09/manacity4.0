@@ -6,10 +6,11 @@ import AdminProtectedRoute from './components/AdminProtectedRoute';
 import TabLayout from './layouts/TabLayout';
 import AdminLayout from './layouts/AdminLayout';
 import './styles/main.scss';
-import { setUser } from './store/slices/userSlice';
+import { setToken, fetchMe } from './store/slices/authSlice';
 import { setAdminToken } from './store/slices/adminSlice';
 import type { AppDispatch } from './store';
 import Loader from './components/Loader';
+import FloatingCart from './components/ui/FloatingCart';
 
 const Landing = lazy(() => import('./pages/Landing/Landing'));
 const Login = lazy(() => import('./pages/auth/Login/Login'));
@@ -31,6 +32,7 @@ const OrderNow = lazy(() => import('./pages/OrderNow/OrderNow'));
 const ManageProducts = lazy(() => import('./pages/ManageProducts/ManageProducts'));
 const ReceivedOrders = lazy(() => import('./pages/Orders/ReceivedOrders'));
 const MyOrders = lazy(() => import('./pages/Orders/MyOrders'));
+const ServiceOrders = lazy(() => import('./pages/Orders/ServiceOrders'));
 const OrderDetail = lazy(() => import('./pages/Orders/OrderDetail'));
 const Notifications = lazy(() => import('./pages/Notifications/Notifications'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin/AdminLogin'));
@@ -43,18 +45,16 @@ const BusinessRequests = lazy(() => import('./pages/BusinessRequests'));
 const AdminUsers = lazy(() => import('./pages/AdminUsers'));
 const AdminAnalytics = lazy(() => import('./pages/AdminAnalytics'));
 const UiPreview = lazy(() => import('./pages/UiPreview'));
+const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    const stored = localStorage.getItem('user');
-    if (stored) {
-      try {
-        dispatch(setUser(JSON.parse(stored)));
-      } catch {
-        // ignore parsing errors
-      }
+    const token = localStorage.getItem('token');
+    if (token) {
+      dispatch(setToken(token));
+      dispatch(fetchMe());
     }
 
     const adminToken = localStorage.getItem('manacity_admin_token');
@@ -101,17 +101,20 @@ function App() {
             <Route path="/manage-products" element={<ManageProducts />} />
             <Route path="/orders/received" element={<ReceivedOrders />} />
             <Route path="/orders/my" element={<MyOrders />} />
+            <Route path="/orders/service" element={<ServiceOrders />} />
           </Route>
           <Route path="/shops/:id" element={<ShopDetails />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/events/:id" element={<EventDetails />} />
           <Route path="/verified-users/:id" element={<VerifiedDetails />} />
-          <Route path="/orders/:id" element={<OrderDetail />} />
-          <Route path="/cart" element={<Cart />} />
+        <Route path="/orders/:id" element={<OrderDetail />} />
+        <Route path="/cart" element={<Cart />} />
         </Route>
+        <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    <FloatingCart />
+  </BrowserRouter>
   );
 }
 

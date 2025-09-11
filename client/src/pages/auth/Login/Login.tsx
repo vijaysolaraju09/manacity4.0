@@ -7,8 +7,7 @@ import logo from '../../../assets/logo.png';
 import fallbackImage from '../../../assets/no-image.svg';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
-import { login } from '../../../api/auth';
-import { setUser } from '../../../store/slices/userSlice';
+import { login as loginThunk } from '../../../store/slices/authSlice';
 import type { AppDispatch } from '../../../store';
 
 const Login = () => {
@@ -28,8 +27,7 @@ const Login = () => {
     try {
       setLoading(true);
       setError('');
-      const user = await login({ phone, password });
-      dispatch(setUser(user));
+      await dispatch(loginThunk({ phone, password })).unwrap();
       navigate('/home');
       showToast('Logged in successfully', 'success');
     } catch (err: any) {

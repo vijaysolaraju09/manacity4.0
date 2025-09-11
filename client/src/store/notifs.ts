@@ -1,13 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { api } from "@/config/api";
+import { http } from "@/lib/http";
 
 export interface Notif {
   _id: string;
-  title: string;
-  body: string;
-  isRead: boolean;
+  type: string;
+  message: string;
+  read: boolean;
   createdAt: string;
-  cta?: { label: string; href: string };
 }
 
 type St<T> = {
@@ -30,16 +29,15 @@ const initial: St<Notif> = {
 export const fetchNotifs = createAsyncThunk(
   "notifs/fetchAll",
   async (params?: any) => {
-    const { data } = await api.get("/notifications", { params });
-    if (Array.isArray(data)) return { items: data, hasMore: false };
-    return data;
+    const { data } = await http.get("/notifications", { params });
+    return data as { notifications: Notif[]; hasMore: boolean };
   }
 );
 
 export const markNotifRead = createAsyncThunk(
   "notifs/markRead",
   async (id: string) => {
-    await api.post(`/notifications/read/${id}`);
+    await http.patch(`/notifications/${id}/read`);
     return id;
   }
 );
@@ -47,7 +45,7 @@ export const markNotifRead = createAsyncThunk(
 export const removeNotif = createAsyncThunk(
   "notifs/remove",
   async (id: string) => {
-    await api.delete(`/notifications/${id}`);
+    await http.delete(`/notifications/${id}`);
     return id;
   }
 );
@@ -64,14 +62,9 @@ const notifsSlice = createSlice({
     b.addCase(fetchNotifs.fulfilled, (s, a) => {
       s.status = "succeeded";
       const payload: any = a.payload;
-      const arr = Array.isArray(payload?.items)
-        ? payload.items
-        : Array.isArray(payload)
-        ? payload
-        : [];
+      const arr = payload.notifications || [];
       s.items = s.page && s.page > 1 ? [...s.items, ...arr] : arr;
-      if (payload?.page) s.page = payload.page;
-      if (payload?.hasMore !== undefined) s.hasMore = payload.hasMore;
+      if (payload.hasMore !== undefined) s.hasMore = payload.hasMore;
     });
     b.addCase(fetchNotifs.rejected, (s, a) => {
       s.status = "failed";
@@ -79,7 +72,7 @@ const notifsSlice = createSlice({
     });
     b.addCase(markNotifRead.fulfilled, (s, a) => {
       s.items = s.items.map((n) =>
-        n._id === a.payload ? { ...n, isRead: true } : n
+        n._id === a.payload ? { ...n, read: true } : n
       );
     });
     b.addCase(removeNotif.fulfilled, (s, a) => {

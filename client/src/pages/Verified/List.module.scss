@@ -11,27 +11,7 @@
   padding: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-}
-
-.categories {
-  margin-top: 0.5rem;
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-}
-
-.categories button {
-  padding: 0.25rem 0.75rem;
-  border: none;
-  border-radius: 9999px;
-  background: #f3f3f3;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.categories button.active {
-  background: #000;
-  color: #fff;
+  margin-bottom: 0.5rem;
 }
 
 .grid {

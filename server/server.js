@@ -2,6 +2,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
+const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
+const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 
 const context = require("./middleware/context");
@@ -14,20 +17,23 @@ const shopRoutes = require("./routes/shopRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const verifiedUserRoutes = require("./routes/verifiedUserRoutes");
 const eventRoutes = require("./routes/eventRoutes");
-const specialShopRoutes = require("./routes/specialShopRoutes");
+const specialRoutes = require("./routes/specialRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const productRoutes = require("./routes/productRoutes");
 const adminUserRoutes = require("./routes/adminUserRoutes");
+const proRoutes = require("./routes/proRoutes");
 const AppError = require("./utils/AppError");
 
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://manacity4-0-1.onrender.com',
-];
+const allowedOrigins = (
+  process.env.CORS_ORIGIN ||
+  'http://localhost:5173,https://manacity4-0-1.onrender.com'
+)
+  .split(',')
+  .map((o) => o.trim());
 
 const corsOptions = {
   origin: allowedOrigins,
@@ -37,6 +43,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(helmet());
+app.use(mongoSanitize());
 // Use a regular expression to register the CORS preflight handler for all
 // routes. Express 5's path-to-regexp no longer supports the legacy "*" syntax
 // and "/*" can cause deployment issues, but /.*/ safely matches every path.
@@ -44,24 +52,38 @@ app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 app.use(context);
 
-app.use("/api/auth", authRoutes);
-app.use("/api/user", userRoutes);
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api/health", (_req, res) => res.json({ ok: true }));
+
+app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/home", homeRoutes);
 app.use("/api/shops", shopRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/verified", verifiedUserRoutes);
 app.use("/api/events", eventRoutes);
-app.use("/api/special-shop", specialShopRoutes);
+app.use("/api/special", specialRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/users", adminUserRoutes);
+app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/pros", proRoutes);
 
 if (process.env.NODE_ENV === "production") {
   const clientPath = path.join(__dirname, "..", "client", "dist");
   app.use(express.static(clientPath));
 }
+
+app.use((req, _res, next) => {
+  next(AppError.notFound("NOT_FOUND", "Route not found"));
+});
 
 app.use(errorHandler);
 

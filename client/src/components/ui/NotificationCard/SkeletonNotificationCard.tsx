@@ -5,8 +5,7 @@ const SkeletonNotificationCard = () => (
   <div className={styles.card}>
     <Shimmer width={40} height={40} className={styles.icon} />
     <div className={styles.info}>
-      <Shimmer style={{ height: 14, width: '60%', marginBottom: 6 }} />
-      <Shimmer style={{ height: 12, width: '80%' }} />
+      <Shimmer style={{ height: 14, width: '70%' }} />
     </div>
   </div>
 );

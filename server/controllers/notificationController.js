@@ -1,71 +1,36 @@
-const { NotificationModel } = require("../models/Notification");
+const Notification = require('../models/Notification');
 
-// Admin: Create notification for a user
-exports.createNotification = async (req, res) => {
+exports.getNotifications = async (req, res) => {
   try {
-    const { userId, type, title, body, cta } = req.body;
-    const notification = await NotificationModel.create({
-      userId,
-      type,
-      title,
-      body,
-      cta,
-    });
-    res.status(201).json(notification);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to create notification" });
-  }
-};
-
-// User: Get notifications with pagination and filters
-exports.getUserNotifications = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const {
-      page = 1,
-      limit = 10,
-      type,
-      unread,
-    } = req.query;
-    const query = { userId };
-    if (type) query.type = type;
-    if (unread === "true") query.isRead = false;
-
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const skip = (pageNum - 1) * limitNum;
-
-    const [notifications, total] = await Promise.all([
-      NotificationModel.find(query)
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const [items, total] = await Promise.all([
+      Notification.find({ userId: req.user._id })
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limitNum),
-      NotificationModel.countDocuments(query),
+        .limit(Number(limit))
+        .lean(),
+      Notification.countDocuments({ userId: req.user._id }),
     ]);
-
     res.json({
-      notifications,
-      hasMore: skip + notifications.length < total,
+      notifications: items,
+      hasMore: skip + items.length < total,
     });
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch notifications" });
+    res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 };
 
-// User: Mark a notification as read
 exports.markAsRead = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const { id } = req.params;
-    const result = await NotificationModel.updateOne(
-      { _id: id, userId },
-      { $set: { isRead: true, readAt: new Date() } }
-    );
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ error: "Notification not found" });
-    }
-    res.json({ message: "Notification marked as read" });
+    const result = await Notification.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id },
+      { read: true },
+      { new: true }
+    ).lean();
+    if (!result) return res.status(404).json({ error: 'Notification not found' });
+    res.json(result);
   } catch (err) {
-    res.status(500).json({ error: "Failed to mark as read" });
+    res.status(500).json({ error: 'Failed to mark as read' });
   }
 };

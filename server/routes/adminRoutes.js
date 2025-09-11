@@ -7,6 +7,7 @@ const {
   verifyUser,
   getAllOrders,
 } = require('../controllers/adminController');
+const { getAdminMessages } = require('../controllers/adminMessageController');
 const protect = require('../middleware/authMiddleware');
 const isAdmin = require('../middleware/isAdmin');
 const validate = require('../middleware/validate');
@@ -17,6 +18,7 @@ const {
 
 const router = express.Router();
 
+router.get('/messages', getAdminMessages);
 router.get('/users', protect, isAdmin, getUsers);
 router.put(
   '/users/:id/role',

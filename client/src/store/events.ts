@@ -1,15 +1,16 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { api } from "@/config/api";
+import { http } from "@/lib/http";
 
 export interface Event {
   _id: string;
-  name: string;
-  image?: string;
-  category?: string;
-  location?: string;
-  startDate?: string;
-  date?: string;
-  description?: string;
+  title: string;
+  cover?: string;
+  startsAt: string;
+  endsAt: string;
+  price?: number;
+  registered: string[];
+  status: "draft" | "open" | "closed" | "finished";
+  leaderboard?: Array<{ userId: string; score: number; name?: string }>;
 }
 
 type St<T> = {
@@ -32,17 +33,25 @@ const initial: St<Event> = {
 
 export const fetchEvents = createAsyncThunk(
   "events/fetchAll",
-  async (params?: any) => {
-    const { data } = await api.get("/events", { params });
-    return Array.isArray(data) ? { items: data } : data;
+  async () => {
+    const res = await http.get("/events");
+    return res.data.data as Event[];
   }
 );
 
 export const fetchEventById = createAsyncThunk(
   "events/fetchById",
   async (id: string) => {
-    const { data } = await api.get(`/events/${id}`);
-    return data;
+    const res = await http.get(`/events/${id}`);
+    return res.data.data as Event;
+  }
+);
+
+export const registerForEvent = createAsyncThunk(
+  "events/register",
+  async (id: string) => {
+    const res = await http.post(`/events/${id}/register`);
+    return res.data.data as Event;
   }
 );
 
@@ -57,12 +66,7 @@ const eventsSlice = createSlice({
     });
     b.addCase(fetchEvents.fulfilled, (s, a) => {
       s.status = "succeeded";
-      const payload: any = a.payload;
-      s.items = Array.isArray(payload?.items)
-        ? payload.items
-        : Array.isArray(payload)
-        ? payload
-        : [];
+      s.items = a.payload as Event[];
     });
     b.addCase(fetchEvents.rejected, (s, a) => {
       s.status = "failed";
@@ -80,6 +84,11 @@ const eventsSlice = createSlice({
     b.addCase(fetchEventById.rejected, (s, a) => {
       s.status = "failed";
       s.error = (a.error as any)?.message || "Failed to load";
+    });
+    b.addCase(registerForEvent.fulfilled, (s, a) => {
+      s.item = a.payload as Event;
+      const idx = s.items.findIndex((e) => e._id === a.payload._id);
+      if (idx !== -1) s.items[idx] = a.payload as Event;
     });
   },
 });

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { api } from "@/config/api";
+import { http } from "@/lib/http";
 
 export interface Shop {
   _id: string;
@@ -19,6 +19,7 @@ interface Product {
   name: string;
   price: number;
   image?: string;
+  available?: boolean;
 }
 
 type St<T> = {
@@ -44,20 +45,20 @@ const initial: St<Shop> = {
 export const fetchShops = createAsyncThunk(
   "shops/fetchAll",
   async (params?: Record<string, any>) => {
-    const { data } = await api.get("/shops", { params });
+    const { data } = await http.get("/shops", { params });
     return Array.isArray(data) ? { items: data } : data;
   }
 );
 
 export const fetchShopById = createAsyncThunk("shops/fetchById", async (id: string) => {
-  const { data } = await api.get(`/shops/${id}`);
+  const { data } = await http.get(`/shops/${id}`);
   return data;
 });
 
 export const fetchProductsByShop = createAsyncThunk(
   "shops/fetchProducts",
   async (id: string) => {
-    const { data } = await api.get(`/shops/${id}/products`);
+    const { data } = await http.get(`/shops/${id}/products`);
     return { id, items: Array.isArray(data) ? data : data.items };
   }
 );

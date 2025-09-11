@@ -1,94 +1,84 @@
-const Event = require("../models/Event");
+const Event = require('../models/Event');
+const AppError = require('../utils/AppError');
 
-exports.createEvent = async (req, res) => {
+function computeStatus(event) {
+  const now = new Date();
+  if (event.status === 'finished') return 'finished';
+  if (now >= event.endsAt) return 'finished';
+  if (now >= event.startsAt) return 'closed';
+  return event.status === 'draft' ? 'draft' : 'open';
+}
+
+exports.listEvents = async (req, res, next) => {
   try {
-    const { title, startAt, endAt, capacity } = req.body;
-    const event = await Event.create({ title, startAt, endAt, capacity });
-    res.status(201).json(event);
-  } catch {
-    res.status(500).json({ error: "Failed to create event" });
+    const events = await Event.find().sort({ startsAt: 1 });
+    const updated = await Promise.all(
+      events.map(async (e) => {
+        const status = computeStatus(e);
+        if (status !== e.status) {
+          e.status = status;
+          await e.save();
+        }
+        return e;
+      })
+    );
+    res.json({ ok: true, data: updated, traceId: req.traceId });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.getAllEvents = async (req, res) => {
+exports.createEvent = async (req, res, next) => {
   try {
-    const { status, page, pageSize, sort } = req.query;
-    const query = {};
-    const now = new Date();
-    if (status === "upcoming") query.startAt = { $gt: now };
-    else if (status === "ongoing") {
-      query.startAt = { $lte: now };
-      query.endAt = { $gte: now };
-    } else if (status === "past") query.endAt = { $lt: now };
-
-    const sortObj = {};
-    if (sort) {
-      const field = sort.replace(/^-/, "");
-      sortObj[field] = sort.startsWith("-") ? -1 : 1;
-    }
-
-    const cursor = Event.find(query).sort(sortObj);
-    if (page && pageSize) {
-      const pageNum = parseInt(page, 10) || 1;
-      const size = parseInt(pageSize, 10) || 10;
-      const total = await Event.countDocuments(query);
-      const items = await cursor.skip((pageNum - 1) * size).limit(size);
-      return res.json({ items, total });
-    }
-    const events = await cursor;
-    res.json(events);
-  } catch {
-    res.status(500).json({ error: err.tostring });
+    const event = await Event.create(req.body);
+    res.status(201).json({ ok: true, data: event, traceId: req.traceId });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.getEventById = async (req, res) => {
+exports.getEvent = async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ error: "Event not found" });
-    res.json(event);
-  } catch {
-    res.status(500).json({ error: "Failed to fetch event" });
+    if (!event) throw AppError.notFound('EVENT_NOT_FOUND', 'Event not found');
+    const status = computeStatus(event);
+    if (status !== event.status) {
+      event.status = status;
+      await event.save();
+    }
+    res.json({ ok: true, data: event, traceId: req.traceId });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.updateEvent = async (req, res) => {
+exports.register = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const update = req.body;
-    const event = await Event.findByIdAndUpdate(id, update, { new: true });
-    if (!event) return res.status(404).json({ error: "Event not found" });
-    res.json(event);
-  } catch {
-    res.status(500).json({ error: "Failed to update event" });
-  }
-};
-
-exports.deleteEvent = async (req, res) => {
-  try {
-    const event = await Event.findByIdAndDelete(req.params.id);
-    if (!event) return res.status(404).json({ error: "Event not found" });
-    res.json({ message: "Event deleted" });
-  } catch {
-    res.status(500).json({ error: "Failed to delete event" });
-  }
-};
-
-exports.registerForEvent = async (req, res) => {
-  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) throw AppError.notFound('EVENT_NOT_FOUND', 'Event not found');
+    const status = computeStatus(event);
+    if (status !== 'open')
+      throw AppError.badRequest('REGISTRATION_CLOSED', 'Registration closed');
     const userId = req.user._id;
-    const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ error: "Event not found" });
-    if (event.registeredUsers.some((u) => u.toString() === userId.toString()))
-      return res.status(400).json({ error: "Already registered" });
-    if (event.registeredUsers.length >= event.capacity)
-      return res.status(400).json({ error: "Event full" });
-    if (new Date() > event.startAt)
-      return res.status(400).json({ error: "Registration closed" });
-    event.registeredUsers.push(userId);
+    if (event.registered.some((id) => id.toString() === userId.toString()))
+      throw AppError.badRequest('ALREADY_REGISTERED', 'Already registered');
+    event.registered.push(userId);
     await event.save();
-    res.json({ message: "Registered successfully" });
-  } catch {
-    res.status(500).json({ error: "Failed to register" });
+    res.json({ ok: true, data: event, traceId: req.traceId });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.setLeaderboard = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) throw AppError.notFound('EVENT_NOT_FOUND', 'Event not found');
+    event.leaderboard = Array.isArray(req.body) ? req.body : req.body.entries;
+    event.status = 'finished';
+    await event.save();
+    res.json({ ok: true, data: event, traceId: req.traceId });
+  } catch (err) {
+    next(err);
   }
 };

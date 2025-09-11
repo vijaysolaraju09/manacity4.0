@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AiFillStar } from 'react-icons/ai';
 import { FiPhone, FiArrowLeft, FiShare2 } from 'react-icons/fi';
-import { api } from '@/config/api';
+import { http } from '@/lib/http';
 import Shimmer from '../../components/Shimmer';
 import ProductCard, { type Product } from '../../components/ui/ProductCard.tsx';
 import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
@@ -37,13 +37,14 @@ const ShopDetails = () => {
   const [sort, setSort] = useState('relevance');
   const [selected, setSelected] = useState<Product | null>(null);
   const [orderOpen, setOrderOpen] = useState(false);
+  const [tab, setTab] = useState<'all' | 'available'>('all');
 
   useEffect(() => {
     const load = async () => {
       try {
-        const shopRes = await api.get(`/shops/${id}`);
+        const shopRes = await http.get(`/shops/${id}`);
         setShop(shopRes.data);
-        const prodRes = await api.get(`/shops/${id}/products`);
+        const prodRes = await http.get(`/shops/${id}/products`);
         setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
       } catch {
         setShop(null);
@@ -53,27 +54,18 @@ const ShopDetails = () => {
       }
     };
     load();
-    const refresh = async () => {
-      try {
-        const prodRes = await api.get(`/shops/${id}/products`);
-        setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
-      } catch {
-        // ignore
-      }
-    };
-    window.addEventListener('productsUpdated', refresh);
-    return () => window.removeEventListener('productsUpdated', refresh);
   }, [id]);
 
   const filtered = useMemo(() => {
     const bySearch = products.filter((p) =>
       p.name.toLowerCase().includes(search.toLowerCase()),
     );
-    const sorted = [...bySearch];
+    const byTab = tab === 'available' ? bySearch.filter((p) => p.available) : bySearch;
+    const sorted = [...byTab];
     if (sort === 'priceAsc') sorted.sort((a, b) => a.price - b.price);
     if (sort === 'priceDesc') sorted.sort((a, b) => b.price - a.price);
     return sorted;
-  }, [products, search, sort]);
+  }, [products, search, sort, tab]);
 
   if (loading || !shop)
     return (
@@ -142,6 +134,21 @@ const ShopDetails = () => {
         </div>
       </div>
 
+      <div className="tabs">
+        <button
+          className={tab === 'all' ? 'active' : ''}
+          onClick={() => setTab('all')}
+        >
+          All Products
+        </button>
+        <button
+          className={tab === 'available' ? 'active' : ''}
+          onClick={() => setTab('available')}
+        >
+          Available
+        </button>
+      </div>
+
       <div className="filters">
         <input
           type="text"
@@ -164,7 +171,6 @@ const ShopDetails = () => {
             <ProductCard
               key={product._id}
               product={product}
-              showActions={false}
               onClick={() => {
                 setSelected(product);
                 setOrderOpen(true);

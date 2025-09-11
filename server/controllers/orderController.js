@@ -1,229 +1,144 @@
 const Order = require('../models/Order');
-const Product = require('../models/Product');
-const { normalizeProduct } = require('../utils/normalize');
-const { parseQuery } = require('../utils/query');
+const User = require('../models/User');
+const AppError = require('../utils/appError');
 
-exports.placeOrder = async (req, res) => {
+// POST /api/orders - create order from cart
+exports.createOrder = async (req, res, next) => {
   try {
-    let { productId, quantity, businessId, shopId } = req.body;
-    productId = productId || req.params.productId;
-    if (!productId) return res.status(400).json({ error: 'Product ID required' });
+    const { type = 'product', targetId, items } = req.body;
+    if (!targetId || !Array.isArray(items) || items.length === 0) {
+      throw AppError.badRequest('INVALID_ORDER', 'Invalid order payload');
+    }
 
-    const product = await Product.findById(productId);
-    if (!product) return res.status(404).json({ error: 'Product not found' });
-
-    businessId = businessId || product.createdBy;
-    shopId = shopId || product.shop;
+    const subtotal = items.reduce(
+      (sum, item) => sum + Number(item.price) * Number(item.quantity),
+      0
+    );
+    const discount = items.reduce(
+      (sum, item) => sum + Number(item.discount || 0),
+      0
+    );
+    const total = subtotal - discount;
 
     const order = await Order.create({
-      user: req.user._id,
-      business: businessId,
-      product: productId,
-      shop: shopId,
-      quantity,
-      status: 'pending',
+      type,
+      customerId: req.user._id,
+      targetId,
+      items: items.map((i) => ({
+        productId: i.productId,
+        name: i.name,
+        image: i.image,
+        price: i.price,
+        quantity: i.quantity,
+        total: Number(i.price) * Number(i.quantity),
+      })),
+      totals: { subtotal, discount, total },
     });
-    res.status(201).json(order);
+
+    res.status(201).json({
+      ok: true,
+      data: { order },
+      traceId: req.traceId,
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to place order' });
+    next(err);
   }
 };
 
-exports.getMyOrders = async (req, res) => {
+// GET /api/orders/mine - current user's orders
+exports.getMyOrders = async (req, res, next) => {
   try {
-    const { status, shop, startDate, endDate, minPrice, maxPrice } = req.query;
-    const paginate =
-      req.query.page !== undefined ||
-      req.query.limit !== undefined ||
-      req.query.pageSize !== undefined;
+    const orders = await Order.find({ customerId: req.user._id })
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json({ ok: true, data: orders, traceId: req.traceId });
+  } catch (err) {
+    next(err);
+  }
+};
 
-    const { limit, skip } = paginate
-      ? parseQuery(req.query)
-      : { limit: null, skip: null };
+// GET /api/orders/received - orders for business user
+exports.getReceivedOrders = async (req, res, next) => {
+  try {
+    const orders = await Order.find({ targetId: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate('customerId', 'name phone')
+      .lean();
 
-    let query = Order.find({ user: req.user._id })
-      .populate({
-        path: 'product',
-        populate: { path: 'shop', select: 'name image location' },
-      })
-      .populate('shop', 'name image location');
-
-    if (status) query = query.where('status').equals(status);
-    if (paginate) query = query.skip(skip).limit(limit);
-
-    let orders = await query;
-
-    if (shop) {
-      const q = shop.toLowerCase();
-      orders = orders.filter(
-        (o) =>
-          (o.product?.shop?.name || '').toLowerCase().includes(q) ||
-          (o.shop?.name || '').toLowerCase().includes(q)
-      );
-    }
-    if (startDate) {
-      const start = new Date(startDate);
-      orders = orders.filter((o) => new Date(o.createdAt) >= start);
-    }
-    if (endDate) {
-      const end = new Date(endDate);
-      orders = orders.filter((o) => new Date(o.createdAt) <= end);
-    }
-    if (minPrice)
-      orders = orders.filter((o) => (o.product?.price || 0) >= Number(minPrice));
-    if (maxPrice)
-      orders = orders.filter((o) => (o.product?.price || 0) <= Number(maxPrice));
-
-    const result = orders.map((o) => {
-      const item = o.toObject();
-      if (item.product) item.product = normalizeProduct(item.product);
-      if (item.shop && item.shop.name) {
-        item.shopMeta = {
-          id: item.shop._id.toString(),
-          name: item.shop.name,
-          image: item.shop.image,
-          location: item.shop.location,
-        };
+    orders.forEach((o) => {
+      if (o.status !== 'accepted' && o.customerId) {
+        delete o.customerId.phone;
       }
-      return item;
     });
 
-    res.json(result);
+    res.json({ ok: true, data: orders, traceId: req.traceId });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch orders' });
+    next(err);
   }
 };
 
-exports.getReceivedOrders = async (req, res) => {
+// PATCH /api/orders/:id - update order status
+exports.updateOrderStatus = async (req, res, next) => {
   try {
-    const { status, category, minPrice, maxPrice, search } = req.query;
-    const paginate =
-      req.query.page !== undefined ||
-      req.query.limit !== undefined ||
-      req.query.pageSize !== undefined;
-    const { limit, skip } = paginate
-      ? parseQuery(req.query)
-      : { limit: null, skip: null };
+    const { action } = req.body;
+    const order = await Order.findById(req.params.id)
+      .populate('customerId', 'name phone')
+      .lean();
+    if (!order) throw AppError.notFound('ORDER_NOT_FOUND', 'Order not found');
 
-    let query = Order.find({ business: req.user._id })
-      .populate('user', 'name phone')
-      .populate({
-        path: 'product',
-        select: 'name category price mrp images shop rating',
-        populate: { path: 'shop', select: 'name image location' },
-      });
+    // Permission checks
+    const isCustomer = order.customerId._id
+      ? order.customerId._id.toString() === req.user._id.toString()
+      : order.customerId.toString() === req.user._id.toString();
+    const isTarget = order.targetId.toString() === req.user._id.toString();
 
-    if (status) query = query.where('status').equals(status);
-    if (category) query = query.where('product.category').equals(category);
-    if (paginate) query = query.skip(skip).limit(limit);
-
-    let orders = await query;
-
-    if (minPrice)
-      orders = orders.filter((o) => (o.product?.price || 0) >= Number(minPrice));
-    if (maxPrice)
-      orders = orders.filter((o) => (o.product?.price || 0) <= Number(maxPrice));
-    if (search) {
-      const q = search.toLowerCase();
-      orders = orders.filter((o) => (o.product?.name || '').toLowerCase().includes(q));
+    if (action === 'accept') {
+      if (!isTarget)
+        throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized');
+      const updated = await Order.findByIdAndUpdate(
+        req.params.id,
+        { status: 'accepted', contactSharedAt: new Date() },
+        { new: true }
+      ).populate('customerId', 'name phone');
+      return res.json({ ok: true, data: updated, traceId: req.traceId });
     }
 
-    const result = orders.map((o) => {
-      const item = o.toObject();
-      if (item.product) item.product = normalizeProduct(item.product);
-      if (item.status !== 'accepted' && item.user) {
-        delete item.user.phone;
-      }
-      return item;
-    });
-
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch orders' });
-  }
-};
-
-exports.getOrderById = async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id)
-      .populate('user', 'name phone')
-      .populate({
-        path: 'product',
-        populate: { path: 'shop', select: 'name image location' },
-      })
-      .populate('shop', 'name image location');
-
-    if (!order) return res.status(404).json({ error: 'Order not found' });
-
-    const isOwner =
-      order.user._id.toString() === req.user._id.toString() ||
-      order.business.toString() === req.user._id.toString();
-    if (!isOwner) return res.status(403).json({ error: 'Not authorized' });
-
-    const item = order.toObject();
-    if (item.product) item.product = normalizeProduct(item.product);
-    if (item.status !== 'accepted' && item.user) {
-      delete item.user.phone;
-    }
-    if (item.shop && item.shop.name) {
-      item.shopMeta = {
-        id: item.shop._id.toString(),
-        name: item.shop.name,
-        image: item.shop.image,
-        location: item.shop.location,
-      };
+    if (action === 'reject') {
+      if (!isTarget)
+        throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized');
+      const updated = await Order.findByIdAndUpdate(
+        req.params.id,
+        { status: 'cancelled' },
+        { new: true }
+      ).populate('customerId', 'name phone');
+      return res.json({ ok: true, data: updated, traceId: req.traceId });
     }
 
-    res.json(item);
+    if (action === 'complete') {
+      if (!isTarget)
+        throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized');
+      const updated = await Order.findByIdAndUpdate(
+        req.params.id,
+        { status: 'completed' },
+        { new: true }
+      ).populate('customerId', 'name phone');
+      return res.json({ ok: true, data: updated, traceId: req.traceId });
+    }
+
+    if (action === 'cancel') {
+      if (!isCustomer)
+        throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized');
+      const updated = await Order.findByIdAndUpdate(
+        req.params.id,
+        { status: 'cancelled' },
+        { new: true }
+      ).populate('customerId', 'name phone');
+      return res.json({ ok: true, data: updated, traceId: req.traceId });
+    }
+
+    throw AppError.badRequest('INVALID_ACTION', 'Unknown action');
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch order' });
+    next(err);
   }
 };
 
-exports.acceptOrder = async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id)
-      .populate('user', 'name phone')
-      .populate('product', 'name category price image');
-    if (!order) return res.status(404).json({ error: 'Order not found' });
-    if (order.business.toString() !== req.user._id.toString())
-      return res.status(403).json({ error: 'Not authorized' });
-    order.status = 'accepted';
-    await order.save();
-    res.json(order);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to accept order' });
-  }
-};
-
-exports.rejectOrder = async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id)
-      .populate('user', 'name')
-      .populate('product', 'name category price image');
-    if (!order) return res.status(404).json({ error: 'Order not found' });
-    if (order.business.toString() !== req.user._id.toString())
-      return res.status(403).json({ error: 'Not authorized' });
-    order.status = 'rejected';
-    await order.save();
-    res.json(order);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to reject order' });
-  }
-};
-
-exports.cancelOrder = async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ error: 'Order not found' });
-    if (order.user.toString() !== req.user._id.toString())
-      return res.status(403).json({ error: 'Not authorized' });
-    if (order.status !== 'pending')
-      return res.status(400).json({ error: 'Cannot cancel now' });
-    order.status = 'cancelled';
-    await order.save();
-    res.json(order);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to cancel order' });
-  }
-};

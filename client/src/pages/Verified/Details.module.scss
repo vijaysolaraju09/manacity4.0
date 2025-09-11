@@ -68,20 +68,13 @@
   gap: 1rem;
 }
 
-.contactButtons a {
+.contactButtons button {
   flex: 1;
-  text-align: center;
   padding: 0.75rem;
   border-radius: 8px;
-  color: #fff;
-}
-
-.contactButtons a:first-child {
-  background: #25d366;
-}
-
-.contactButtons a:last-child {
-  background: #1e40af;
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
 }
 
 .review {

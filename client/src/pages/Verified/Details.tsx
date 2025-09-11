@@ -9,6 +9,8 @@ import fallbackImage from '../../assets/no-image.svg';
 import styles from './Details.module.scss';
 import ErrorCard from '@/components/common/ErrorCard';
 import Empty from '@/components/common/Empty';
+import { http } from '@/lib/http';
+import showToast from '@/components/ui/Toast';
 
 const VerifiedDetails = () => {
   const { id } = useParams();
@@ -39,12 +41,24 @@ const VerifiedDetails = () => {
     return <ErrorCard msg={error || 'Failed to load user'} onRetry={() => id && d(fetchVerifiedById(id))} />;
   if (status === 'succeeded' && !user) return <Empty msg='No user found.' />;
 
+  const handleOrder = async () => {
+    if (!user) return;
+    try {
+      await http.post('/pros/orders', { targetId: user._id });
+      showToast('Request sent', 'success');
+      window.location.href = `tel:${user.phone}`;
+    } catch {
+      showToast('Failed to send request', 'error');
+    }
+  };
+
   return (
     <div className={styles.details}>
       <div className={styles.header}>
         <img
           src={
-            user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`
+            user.avatarUrl ||
+            `https://ui-avatars.com/api/?name=${user.name}&background=random`
           }
           alt={user.name}
           onError={(e) => (e.currentTarget.src = fallbackImage)}
@@ -103,18 +117,11 @@ const VerifiedDetails = () => {
         </div>
       )}
 
-      {user.contact && (
-        <div className={styles.contactButtons}>
-          <a
-            href={`https://wa.me/${user.contact}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            WhatsApp
-          </a>
-          <a href={`tel:${user.contact}`}>Call</a>
-        </div>
-      )}
+      <div className={styles.contactButtons}>
+        <button type="button" onClick={handleOrder}>
+          Call to Order
+        </button>
+      </div>
     </div>
   );
 };

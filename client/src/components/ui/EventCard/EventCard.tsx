@@ -1,16 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import fallbackImage from "../../../assets/no-image.svg";
 import styles from "./EventCard.module.scss";
+import { formatSchedule } from "@/utils/date";
 
 export interface EventItem {
   _id: string;
-  title?: string;
-  name?: string;
-  startDate?: string;
-  date?: string;
-  banner?: string;
-  image?: string;
-  location?: string;
+  title: string;
+  cover?: string;
+  startsAt: string;
+  endsAt: string;
+  price?: number;
+  registered: string[];
+  status: string;
 }
 
 interface Props {
@@ -19,16 +20,7 @@ interface Props {
 
 const EventCard = ({ event }: Props) => {
   const navigate = useNavigate();
-  const date = event.startDate || event.date;
-
-  if (date && new Date(date) < new Date()) return null;
-
-  const formattedDate = date
-    ? new Date(date).toLocaleString(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
-    : "";
+  const schedule = formatSchedule(event.startsAt, event.endsAt);
 
   return (
     <div
@@ -36,24 +28,15 @@ const EventCard = ({ event }: Props) => {
       onClick={() => navigate(`/events/${event._id}`)}
     >
       <img
-        src={event.banner || event.image || fallbackImage}
-        alt={event.title || event.name}
+        src={event.cover || fallbackImage}
+        alt={event.title}
         onError={(e) => (e.currentTarget.src = fallbackImage)}
       />
-      <h3>{event.title || event.name}</h3>
-      {formattedDate && <p className={styles.date}>{formattedDate}</p>}
-      {event.location && (
-        <p className={styles.location}>{event.location}</p>
-      )}
-      <button
-        className={styles.registerBtn}
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/events/${event._id}`);
-        }}
-      >
-        Register
-      </button>
+      <h3>{event.title}</h3>
+      <p className={styles.date}>{schedule}</p>
+      <p className={styles.meta}>
+        Registered: {event.registered.length} | {event.price ? `₹${event.price}` : "Free"}
+      </p>
     </div>
   );
 };

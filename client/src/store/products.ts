@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { api } from "@/config/api";
+import { http } from "@/lib/http";
 
 export interface Product {
   _id: string;
@@ -12,6 +12,8 @@ export interface Product {
   mrp?: number;
   discount?: number;
   ratingAvg?: number;
+  available?: boolean;
+  isSpecial?: boolean;
   shop?: string;
 }
 
@@ -36,7 +38,7 @@ const initial: St<Product> = {
 export const fetchSpecialProducts = createAsyncThunk(
   "products/fetchSpecial",
   async (params?: any) => {
-    const { data } = await api.get("/special-shop", { params });
+    const { data } = await http.get("/special", { params });
     return Array.isArray(data) ? { items: data } : data;
   }
 );
@@ -44,7 +46,7 @@ export const fetchSpecialProducts = createAsyncThunk(
 export const fetchProductById = createAsyncThunk(
   "products/fetchById",
   async (id: string) => {
-    const { data } = await api.get(`/products/${id}`);
+    const { data } = await http.get(`/products/${id}`);
     return data;
   }
 );

@@ -1,33 +1,19 @@
-const mongoose = require('mongoose');
+const { Schema, model } = require('mongoose');
 
-const ctaSchema = new mongoose.Schema(
+const notificationSchema = new Schema(
   {
-    label: { type: String, required: true },
-    href: { type: String, required: true },
-  },
-  { _id: false }
-);
-
-const notificationSchema = new mongoose.Schema(
-  {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     type: {
       type: String,
       enum: ['order', 'system', 'offer', 'event'],
       required: true,
     },
-    title: { type: String, required: true },
-    body: { type: String, required: true },
-    cta: ctaSchema,
-    isRead: { type: Boolean, default: false },
-    readAt: { type: Date },
+    message: { type: String, required: true },
+    read: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: { createdAt: true, updatedAt: false } }
 );
 
-notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
+notificationSchema.index({ userId: 1, read: 1, createdAt: -1 });
 
-const NotificationModel = mongoose.model('Notification', notificationSchema);
-
-module.exports = { NotificationModel };
-module.exports.default = NotificationModel;
+module.exports = model('Notification', notificationSchema);

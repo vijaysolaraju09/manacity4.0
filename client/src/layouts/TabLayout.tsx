@@ -1,8 +1,9 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { useSelector } from "react-redux";
-import type { RootState } from "../store";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "../store";
+import { fetchNotifs } from "@/store/notifs";
 import {
   AiFillHome,
   AiOutlineShop,
@@ -20,6 +21,17 @@ const TabLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const cartItems = useSelector((state: RootState) => state.cart.items);
+  const unread = useSelector(
+    (state: RootState) => state.notifs.items.filter((n) => !n.read).length
+  );
+  const notifStatus = useSelector((state: RootState) => state.notifs.status);
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    if (notifStatus === 'idle') {
+      dispatch(fetchNotifs(undefined));
+    }
+  }, [notifStatus, dispatch]);
 
   const tabs = [
     { name: "Home", icon: <AiFillHome />, path: "/home" },
@@ -65,6 +77,7 @@ const TabLayout = () => {
             onClick={() => navigate('/notifications')}
           >
             <AiOutlineBell />
+            {unread > 0 && <span className="count">{unread}</span>}
           </button>
           <button
             className="profile-btn"
@@ -118,6 +131,7 @@ const TabLayout = () => {
           onClick={() => navigate('/notifications')}
         >
           <AiOutlineBell />
+          {unread > 0 && <span className="count">{unread}</span>}
         </button>
         <button
           className="sidebar-profile"

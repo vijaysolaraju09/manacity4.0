@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { AiFillStar } from 'react-icons/ai';
 import { useDispatch } from 'react-redux';
-import { api } from '@/config/api';
+import { http } from '@/lib/http';
 import { addToCart } from '../../store/slices/cartSlice';
 import fallbackImage from '../../assets/no-image.svg';
 import WishlistHeart from './WishlistHeart';
@@ -19,6 +19,7 @@ export interface Product {
   rating?: number;
   description?: string;
   stock?: number;
+  available?: boolean;
 }
 
 interface Props {
@@ -40,7 +41,7 @@ const ProductCard = ({
 
   const handleAdd = async () => {
     try {
-      await api.post('/cart', { productId: product._id, quantity: 1 });
+      await http.post('/cart', { productId: product._id, quantity: 1 });
       dispatch(
         addToCart({
           id: product._id,

@@ -1,32 +1,27 @@
-import { api } from '@/config/api';
-import type { UserState } from '../store/slices/userSlice';
+import { http } from '@/lib/http';
+import type { AuthUser, SignupDraft } from '@/store/slices/authSlice';
 
-interface Credentials {
+export interface Credentials {
   phone: string;
   password: string;
 }
 
-export interface SignupDraft {
-  name: string;
-  phone: string;
-  password: string;
-  location: string;
-  role?: string;
+export async function signup(data: SignupDraft) {
+  const res = await http.post('/auth/signup', data);
+  return res.data.data as { user: AuthUser; token: string };
 }
 
-export async function signup(data: SignupDraft): Promise<UserState> {
-  const res = await api.post('/auth/signup', data);
-  return res.data.data.user as UserState;
+export async function login(creds: Credentials) {
+  const res = await http.post('/auth/login', creds);
+  return res.data.data as { user: AuthUser; token: string };
 }
 
-export async function login(creds: Credentials): Promise<UserState> {
-  const res = await api.post('/auth/login', creds);
-  const { token, user } = res.data.data;
-  if (token) {
-    localStorage.setItem('token', token);
-  }
-  if (user) {
-    localStorage.setItem('user', JSON.stringify(user));
-  }
-  return user as UserState;
+export async function fetchMe() {
+  const res = await http.get('/auth/me');
+  return res.data.data.user as AuthUser;
 }
+
+export async function logoutApi() {
+  await http.post('/auth/logout');
+}
+

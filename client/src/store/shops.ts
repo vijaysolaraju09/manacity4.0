@@ -45,21 +45,29 @@ const initial: St<Shop> = {
 export const fetchShops = createAsyncThunk(
   "shops/fetchAll",
   async (params?: Record<string, any>) => {
-    const { data } = await http.get("/shops", { params });
-    return Array.isArray(data) ? { items: data } : data;
+    const res = await http.get("/shops", { params });
+    const items =
+      res.data?.data?.items ||
+      res.data?.items ||
+      (Array.isArray(res.data) ? res.data : []);
+    return { items };
   }
 );
 
 export const fetchShopById = createAsyncThunk("shops/fetchById", async (id: string) => {
-  const { data } = await http.get(`/shops/${id}`);
-  return data;
+  const res = await http.get(`/shops/${id}`);
+  return res.data?.data?.shop || res.data?.shop || res.data;
 });
 
 export const fetchProductsByShop = createAsyncThunk(
   "shops/fetchProducts",
   async (id: string) => {
-    const { data } = await http.get(`/shops/${id}/products`);
-    return { id, items: Array.isArray(data) ? data : data.items };
+    const res = await http.get(`/shops/${id}/products`);
+    const items =
+      res.data?.data?.items ||
+      res.data?.items ||
+      (Array.isArray(res.data) ? res.data : []);
+    return { id, items };
   }
 );
 
@@ -74,13 +82,7 @@ const shopsSlice = createSlice({
     });
     b.addCase(fetchShops.fulfilled, (s, a) => {
       s.status = "succeeded";
-      const payload: any = a.payload;
-      const arr = Array.isArray(payload?.items)
-        ? payload.items
-        : Array.isArray(payload)
-        ? payload
-        : [];
-      s.items = arr;
+      s.items = a.payload.items as Shop[];
     });
     b.addCase(fetchShops.rejected, (s, a) => {
       s.status = "failed";

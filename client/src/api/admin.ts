@@ -129,7 +129,7 @@ export interface ShopQueryParams {
 
 export const fetchShops = async (params: ShopQueryParams = {}) => {
   const res = await adminApi.get('/shops', { params });
-  return res.data;
+  return res.data?.data || res.data;
 };
 
 export const updateShop = async (
@@ -137,7 +137,7 @@ export const updateShop = async (
   data: Partial<{ name: string; category: string; location: string; status: string }>,
 ) => {
   const res = await adminApi.put(`/shops/${id}`, data);
-  return res.data;
+  return res.data?.data || res.data;
 };
 
 export const deleteShop = async (id: string) => {
@@ -158,7 +158,7 @@ export interface ProductQueryParams {
 
 export const fetchProducts = async (params: ProductQueryParams = {}) => {
   const res = await adminApi.get('/products', { params });
-  return res.data as { items: any[]; total: number };
+  return (res.data?.data || res.data) as { items: any[]; total: number };
 };
 
 export const updateProduct = async (
@@ -190,7 +190,7 @@ export interface EventQueryParams {
 
 export const fetchEvents = async (params: EventQueryParams = {}) => {
   const res = await adminApi.get('/events', { params });
-  return res.data as { items: any[]; total: number };
+  return (res.data?.data || res.data) as { items: any[]; total: number };
 };
 
 export const createEvent = async (data: {
@@ -200,7 +200,7 @@ export const createEvent = async (data: {
   capacity: number;
 }) => {
   const res = await adminApi.post('/events', data);
-  return res.data;
+  return res.data?.data || res.data;
 };
 
 export const updateEvent = async (
@@ -208,7 +208,7 @@ export const updateEvent = async (
   data: Partial<{ title: string; startAt: string; endAt: string; capacity: number }>,
 ) => {
   const res = await adminApi.put(`/events/${id}`, data);
-  return res.data;
+  return res.data?.data || res.data;
 };
 
 export const deleteEvent = async (id: string) => {

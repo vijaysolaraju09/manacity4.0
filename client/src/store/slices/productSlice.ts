@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { api } from '@/config/api';
+import { http } from '@/lib/http';
 
 export interface Product {
   _id: string;
@@ -13,6 +13,7 @@ export interface Product {
   discount?: number;
   stock: number;
   shop: string;
+  available?: boolean;
 }
 
 interface ProductState {
@@ -23,25 +24,25 @@ interface ProductState {
 const initialState: ProductState = { items: [], loading: false };
 
 export const fetchMyProducts = createAsyncThunk('products/fetchMy', async () => {
-  const res = await api.get('/products/my');
+  const res = await http.get('/products/my');
   return res.data as Product[];
 });
 
 export const createProduct = createAsyncThunk('products/create', async (data: Partial<Product>) => {
-  const res = await api.post('/products', data);
+  const res = await http.post('/products', data);
   return res.data as Product;
 });
 
 export const updateProduct = createAsyncThunk(
   'products/update',
   async ({ id, data }: { id: string; data: Partial<Product> }) => {
-    const res = await api.put(`/products/${id}`, data);
+    const res = await http.patch(`/products/${id}`, data);
     return res.data as Product;
   }
 );
 
 export const deleteProduct = createAsyncThunk('products/delete', async (id: string) => {
-  await api.delete(`/products/${id}`);
+  await http.delete(`/products/${id}`);
   return id;
 });
 

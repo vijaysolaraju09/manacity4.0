@@ -5,7 +5,7 @@ module.exports = (err, req, res, _next) => {
   if (err instanceof AppError) {
     const { statusCode, code, message, details, fieldErrors } = err;
     res.status(statusCode).json({
-      success: false,
+      ok: false,
       error: {
         code,
         message,
@@ -24,7 +24,7 @@ module.exports = (err, req, res, _next) => {
       fieldErrors[field] = issue.message;
     });
     res.status(422).json({
-      success: false,
+      ok: false,
       error: {
         code: 'VALIDATION_ERROR',
         message: 'Invalid input',
@@ -37,7 +37,7 @@ module.exports = (err, req, res, _next) => {
 
   req.log?.error(err);
   res.status(500).json({
-    success: false,
+    ok: false,
     error: {
       code: 'INTERNAL_ERROR',
       message: 'Something went wrong',

@@ -1,4 +1,4 @@
-import { api } from '@/config/api';
+import { http } from '@/lib/http';
 
 export interface ProductData {
   _id?: string;
@@ -10,7 +10,7 @@ export interface ProductData {
 export interface UpdateProfileData {
   name?: string;
   location?: string;
-  address?: string;
+  avatarUrl?: string;
 }
 
 export interface BusinessRequest {
@@ -28,69 +28,69 @@ export interface VerifyRequest {
 }
 
 export const getCurrentUser = async () => {
-  const res = await api.get('/user/profile');
-  return res.data;
+  const res = await http.get('/users/me');
+  return res.data.data.user;
 };
 
 export const updateProfile = async (data: UpdateProfileData) => {
-  const res = await api.put('/user/profile', data);
-  return res.data;
+  const res = await http.patch('/users/me', data);
+  return res.data.data.user;
 };
 
 export const requestVerification = async (data: VerifyRequest) => {
-  const res = await api.post('/verified/apply', data);
+  const res = await http.post('/verified/apply', data);
   return res.data;
 };
 
 export const requestBusiness = async (data: BusinessRequest) => {
-  await api.post('/shops', data);
+  await http.post('/shops', data);
 };
 
 export const getMyBusinessRequest = async () => {
-  const res = await api.get('/shops/my');
+  const res = await http.get('/shops/my');
   return res.data;
 };
 
 export const getMyProducts = async () => {
-  const res = await api.get('/shops/my-products');
+  const res = await http.get('/shops/my-products');
   return res.data;
 };
 
 export const addProduct = async (data: ProductData) => {
-  const res = await api.post('/products', data);
+  const res = await http.post('/products', data);
   return res.data;
 };
 
 export const updateProduct = async (id: string, data: ProductData) => {
-  await api.patch(`/products/${id}`, data);
+  await http.patch(`/products/${id}`, data);
 };
 
 export const deleteProduct = async (id: string) => {
-  await api.delete(`/products/${id}`);
+  await http.delete(`/products/${id}`);
 };
 
 export const getBusinessOrders = async () => {
-  const res = await api.get('/orders/received');
+  const res = await http.get('/orders/received');
   return res.data;
 };
 
 export const getVerifiedServiceRequests = async () => {
-  const res = await api.get('/verified/requests');
+  const res = await http.get('/verified/requests');
   return res.data;
 };
 
 export const getUserOrders = async () => {
-  const res = await api.get('/orders/my');
+  const res = await http.get('/orders/mine');
   return res.data;
 };
 
 export const getServiceHistory = async () => {
-  const res = await api.get('/history/services');
+  const res = await http.get('/history/services');
   return res.data;
 };
 
 export const getFeedback = async (shopId: string) => {
-  const res = await api.get('/feedback', { params: { shopId } });
+  const res = await http.get('/feedback', { params: { shopId } });
   return res.data;
 };
 

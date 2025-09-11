@@ -1,97 +1,142 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { api } from "@/config/api";
+import {
+  createAsyncThunk,
+  createEntityAdapter,
+  createSlice,
+  type EntityState,
+} from '@reduxjs/toolkit';
+import { http } from '@/lib/http';
+import type { RootState } from './index';
+
+export interface OrderItem {
+  productId?: string;
+  name: string;
+  image?: string;
+  price: number;
+  quantity: number;
+  total: number;
+}
 
 export interface Order {
   _id: string;
-  shop: string;
-  items: any[];
-  total: number;
-  status: string;
+  type: 'product' | 'service';
+  customerId: string | { _id: string; name: string; phone?: string };
+  targetId: string;
+  items: OrderItem[];
+  status: 'pending' | 'accepted' | 'cancelled' | 'completed';
+  totals: { subtotal: number; discount: number; total: number };
+  contactSharedAt?: string;
   createdAt: string;
 }
 
-type St<T> = {
-  items: T[];
-  item?: T | null;
-  status: "idle" | "loading" | "succeeded" | "failed";
-  error: string | null;
-  page?: number;
-  hasMore?: boolean;
-};
-
-interface OrdersState {
-  mine: St<Order>;
-  received: St<Order>;
-}
-
-const base: St<Order> = {
-  items: [],
-  status: "idle",
-  error: null,
-  page: 1,
-  hasMore: true,
-};
-
-const initial: OrdersState = {
-  mine: { ...base },
-  received: { ...base },
-};
-
-export const fetchMyOrders = createAsyncThunk("orders/fetchMy", async (params?: any) => {
-  const { data } = await api.get("/orders/my", { params });
-  return Array.isArray(data) ? { items: data } : data;
+const ordersAdapter = createEntityAdapter<Order, string>({
+  selectId: (order) => order._id,
+  sortComparer: (a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
 });
 
+interface OrdersSliceState {
+  mine: EntityState<Order, string> & { status: string; error: string | null };
+  received: EntityState<Order, string> & { status: string; error: string | null };
+}
+
+const initialState: OrdersSliceState = {
+  mine: ordersAdapter.getInitialState({ status: 'idle', error: null }),
+  received: ordersAdapter.getInitialState({ status: 'idle', error: null }),
+};
+
+export const fetchMyOrders = createAsyncThunk(
+  'orders/fetchMine',
+  async () => {
+    const res = await http.get('/orders/mine');
+    return res.data.data as Order[];
+  }
+);
+
 export const fetchReceivedOrders = createAsyncThunk(
-  "orders/fetchReceived",
-  async (params?: any) => {
-    const { data } = await api.get("/orders/received", { params });
-    return Array.isArray(data) ? { items: data } : data;
+  'orders/fetchReceived',
+  async () => {
+    const res = await http.get('/orders/received');
+    return res.data.data as Order[];
+  }
+);
+
+export const updateOrderStatus = createAsyncThunk(
+  'orders/updateStatus',
+  async ({ id, action }: { id: string; action: string }) => {
+    const res = await http.patch(`/orders/${id}`, { action });
+    return res.data.data as Order;
+  }
+);
+
+export const updateServiceOrderStatus = createAsyncThunk(
+  'orders/updateServiceStatus',
+  async ({ id, action }: { id: string; action: string }) => {
+    const res = await http.patch(`/pros/orders/${id}`, { action });
+    return res.data.data as Order;
   }
 );
 
 const ordersSlice = createSlice({
-  name: "orders",
-  initialState: initial,
+  name: 'orders',
+  initialState,
   reducers: {},
-  extraReducers: (b) => {
-    b.addCase(fetchMyOrders.pending, (s) => {
-      s.mine.status = "loading";
-      s.mine.error = null;
-    });
-    b.addCase(fetchMyOrders.fulfilled, (s, a) => {
-      s.mine.status = "succeeded";
-      const payload: any = a.payload;
-      const arr = Array.isArray(payload?.items)
-        ? payload.items
-        : Array.isArray(payload)
-        ? payload
-        : [];
-      s.mine.items = arr;
-    });
-    b.addCase(fetchMyOrders.rejected, (s, a) => {
-      s.mine.status = "failed";
-      s.mine.error = (a.error as any)?.message || "Failed to load";
-    });
-    b.addCase(fetchReceivedOrders.pending, (s) => {
-      s.received.status = "loading";
-      s.received.error = null;
-    });
-    b.addCase(fetchReceivedOrders.fulfilled, (s, a) => {
-      s.received.status = "succeeded";
-      const payload: any = a.payload;
-      const arr = Array.isArray(payload?.items)
-        ? payload.items
-        : Array.isArray(payload)
-        ? payload
-        : [];
-      s.received.items = arr;
-    });
-    b.addCase(fetchReceivedOrders.rejected, (s, a) => {
-      s.received.status = "failed";
-      s.received.error = (a.error as any)?.message || "Failed to load";
-    });
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchMyOrders.pending, (state) => {
+        state.mine.status = 'loading';
+        state.mine.error = null;
+      })
+      .addCase(fetchMyOrders.fulfilled, (state, action) => {
+        state.mine.status = 'succeeded';
+        ordersAdapter.setAll(state.mine, action.payload);
+      })
+      .addCase(fetchMyOrders.rejected, (state, action) => {
+        state.mine.status = 'failed';
+        state.mine.error = action.error.message || 'Failed to load';
+      })
+      .addCase(fetchReceivedOrders.pending, (state) => {
+        state.received.status = 'loading';
+        state.received.error = null;
+      })
+      .addCase(fetchReceivedOrders.fulfilled, (state, action) => {
+        state.received.status = 'succeeded';
+        ordersAdapter.setAll(state.received, action.payload);
+      })
+      .addCase(fetchReceivedOrders.rejected, (state, action) => {
+        state.received.status = 'failed';
+        state.received.error = action.error.message || 'Failed to load';
+      })
+      .addCase(updateOrderStatus.fulfilled, (state, action) => {
+        ordersAdapter.upsertOne(state.mine, action.payload);
+        ordersAdapter.upsertOne(state.received, action.payload);
+      })
+      .addCase(updateServiceOrderStatus.fulfilled, (state, action) => {
+        ordersAdapter.upsertOne(state.mine, action.payload);
+        ordersAdapter.upsertOne(state.received, action.payload);
+      });
   },
 });
 
 export default ordersSlice.reducer;
+
+// Selectors
+const selectMineState = (state: RootState) => state.orders.mine;
+const selectReceivedState = (state: RootState) => state.orders.received;
+
+export const {
+  selectAll: selectMyOrders,
+} = ordersAdapter.getSelectors(selectMineState);
+
+export const {
+  selectAll: selectReceivedOrders,
+} = ordersAdapter.getSelectors(selectReceivedState);
+
+export const selectOrdersByStatus = (
+  state: RootState,
+  role: 'mine' | 'received',
+  status: Order['status']
+) => {
+  const source = role === 'mine' ? selectMyOrders(state) : selectReceivedOrders(state);
+  return source.filter((o) => o.status === status);
+};
+

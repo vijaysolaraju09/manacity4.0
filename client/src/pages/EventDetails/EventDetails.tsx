@@ -1,163 +1,73 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { api } from "@/config/api";
-import { fetchEventById } from "@/store/events";
-import type { RootState } from "@/store";
-import EventsSkeleton from "@/components/common/EventsSkeleton";
-import ErrorCard from "@/components/common/ErrorCard";
-import Empty from "@/components/common/Empty";
-import Loader from "../../components/Loader";
-import "./EventDetails.scss";
-import fallbackImage from "../../assets/no-image.svg";
-
-interface EventData {
-  _id: string;
-  name: string;
-  image?: string;
-  category: string;
-  location: string;
-  startDate?: string;
-  date?: string;
-  description: string;
-  adminNote?: string;
-  registeredUsers?: { user: string }[];
-}
-
-const getCalendarUrl = (event: EventData) => {
-  const date = event.startDate || event.date;
-  if (!date) return "#";
-  const start = new Date(date)
-    .toISOString()
-    .replace(/-|:|\.\d\d\d/g, "");
-  const end = new Date(new Date(date).getTime() + 60 * 60 * 1000)
-    .toISOString()
-    .replace(/-|:|\.\d\d\d/g, "");
-  return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-    event.name
-  )}&dates=${start}/${end}&details=${encodeURIComponent(
-    event.description
-  )}&location=${encodeURIComponent(event.location)}`;
-};
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState, AppDispatch } from '@/store';
+import { fetchEventById, registerForEvent } from '@/store/events';
+import fallbackImage from '@/assets/no-image.svg';
+import { formatSchedule, getCountdown } from '@/utils/date';
+import showToast from '@/components/ui/Toast';
+import './EventDetails.scss';
 
 const EventDetails = () => {
   const { id } = useParams();
-  const d = useDispatch<any>();
-  const { item: event, status, error } = useSelector(
-    (s: RootState) => s.events,
-  ) as {
-    item: EventData | null;
-    status: string;
-    error: string | null;
-  };
-  const [countdown, setCountdown] = useState<string>("");
-  const [leaderboard, setLeaderboard] = useState<Array<{ userId: string; name: string; score: number }>>([]);
-  const [registered, setRegistered] = useState(false);
-  const [registering, setRegistering] = useState(false);
-  const [message, setMessage] = useState<string>("");
+  const dispatch = useDispatch<AppDispatch>();
+  const { item: event, status } = useSelector((s: RootState) => s.events);
+  const user = useSelector((s: RootState) => s.auth.user);
+  const [timer, setTimer] = useState(getCountdown(event?.startsAt || new Date()));
 
   useEffect(() => {
-    if (id) d(fetchEventById(id));
-  }, [id, d]);
-
-  useEffect(() => {
-    if (!id) return;
-    api
-      .get(`/events/${id}/leaderboard`)
-      .then((res) => {
-        if (Array.isArray(res.data)) setLeaderboard(res.data);
-      })
-      .catch(() => setLeaderboard([]));
-  }, [id]);
+    if (id) dispatch(fetchEventById(id));
+  }, [id, dispatch]);
 
   useEffect(() => {
     if (!event) return;
-    const eventDate = event.startDate || event.date;
-    if (!eventDate) return;
+    setTimer(getCountdown(event.startsAt));
     const interval = setInterval(() => {
-      const distance = new Date(eventDate).getTime() - Date.now();
-      if (distance < 0) {
-        clearInterval(interval);
-        setCountdown("Started");
-      } else {
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hrs = Math.floor((distance / (1000 * 60 * 60)) % 24);
-        const mins = Math.floor((distance / (1000 * 60)) % 60);
-        setCountdown(`${days}d ${hrs}h ${mins}m`);
-      }
+      setTimer(getCountdown(event.startsAt));
     }, 1000);
     return () => clearInterval(interval);
   }, [event]);
 
-  const handleRegister = () => {
-    setRegistering(true);
-    api
-      .post(`/events/${id}/register`)
-      .then(() => {
-        setRegistered(true);
-        setMessage("You're registered!");
-        if (id) d(fetchEventById(id));
-      })
-      .catch(() => setMessage("Registration failed"))
-      .finally(() => setRegistering(false));
+  if (status === 'loading' || !event) {
+    return <div className="event-details" style={{ padding: '1rem' }}>Loading...</div>;
+  }
+
+  const schedule = formatSchedule(event.startsAt, event.endsAt);
+  const isRegistered = !!user && event.registered.includes((user as any)._id || (user as any).id);
+  const countdownLabel = `${timer.days}d ${timer.hours}h ${timer.minutes}m ${timer.seconds}s`;
+
+  const handleRegister = async () => {
+    if (!id) return;
+    try {
+      await dispatch(registerForEvent(id)).unwrap();
+      showToast('Registered for event', 'success');
+    } catch {
+      showToast('Registration failed', 'error');
+    }
   };
-  if (status === "loading") return <EventsSkeleton />;
-  if (status === "failed")
-    return (
-      <ErrorCard
-        msg={error || "Failed to load event"}
-        onRetry={() => id && d(fetchEventById(id))}
-      />
-    );
-  if (status === "succeeded" && !event) return <Empty msg="No event found." />;
-  if (!event) return null;
-  const ev = event;
 
   return (
     <div className="event-details">
       <img
-        src={ev.image || fallbackImage}
-        alt={ev.name}
+        src={event.cover || fallbackImage}
+        alt={event.title}
         className="event-img"
         onError={(e) => (e.currentTarget.src = fallbackImage)}
       />
       <div className="info">
-        <h1>{ev.name}</h1>
-        <p className="meta">
-          {ev.category} • {ev.location}
-        </p>
-        <p className="countdown">Starts in: {countdown}</p>
-        <p className="description">{ev.description}</p>
-
-        {ev.adminNote && (
-          <div className="admin-note">
-            <strong>Admin Note:</strong> {ev.adminNote}
-          </div>
+        <h1>{event.title}</h1>
+        <p className="meta">{schedule}</p>
+        <p className="meta">Status: {event.status}</p>
+        {event.status === 'open' && <p className="countdown">Registration closes in: {countdownLabel}</p>}
+        <p className="description">Price: {event.price ? `₹${event.price}` : 'Free'}</p>
+        <p className="participants">Registered: {event.registered.length}</p>
+        {event.status === 'open' && !isRegistered && (
+          <button className="register-btn" onClick={handleRegister}>
+            Register
+          </button>
         )}
-        <div className="participants">
-          <h3>Participants</h3>
-          <p>{ev.registeredUsers?.length ?? 0} registered</p>
-        </div>
-        <button
-          className="register-btn"
-          onClick={handleRegister}
-          disabled={registered || registering}
-        >
-          {registering ? <Loader /> : registered ? 'Registered' : 'Register Now'}
-        </button>
-        {message && <p className="message">{message}</p>}
-        {registered && (
-          <a
-            href={getCalendarUrl(ev)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="add-calendar-btn"
-          >
-            Add to Calendar
-          </a>
-        )}
-
-        {leaderboard.length > 0 && (
+        {isRegistered && <p className="message">You're registered!</p>}
+        {event.status === 'finished' && event.leaderboard && event.leaderboard.length > 0 && (
           <div className="leaderboard">
             <h3>Leaderboard</h3>
             <table>
@@ -169,10 +79,10 @@ const EventDetails = () => {
                 </tr>
               </thead>
               <tbody>
-                {leaderboard.map((entry, i) => (
-                  <tr key={entry.userId} className={i < 3 ? "winner" : ""}>
-                    <td>{i + 1}</td>
-                    <td>{entry.name}</td>
+                {event.leaderboard.map((entry, idx) => (
+                  <tr key={entry.userId}>
+                    <td>{idx + 1}</td>
+                    <td>{entry.name || entry.userId}</td>
                     <td>{entry.score}</td>
                   </tr>
                 ))}

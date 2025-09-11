@@ -1,363 +1,141 @@
-@import "../../styles/variables";
-@import "../../styles/mixins";
-
 .profile {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem;
-  min-height: 100vh;
-
-  &.colorful {
-    background: #fff;
-  }
-
-  &.light {
-    background: var(--color-bg);
-    color: var(--color-text);
-  }
-
-  &.dark {
-    background: var(--color-bg);
-    color: var(--color-text);
-  }
-
-  .userCard {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    padding: 1.5rem;
-    text-align: center;
-    @include glass-card;
-
-    .logout {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      cursor: pointer;
-    }
-
-    .themeSelect {
-      position: absolute;
-      top: 1rem;
-      left: 1rem;
-    }
-
-    .avatar {
-      width: 96px;
-      height: 96px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid $primary-color;
-      margin-bottom: 0.5rem;
-    }
-
-    .editBtn {
-      margin-top: 0.5rem;
-      @include button-style($primary-color, var(--color-on-primary));
-    }
-
-    .status {
-      font-weight: 600;
-      margin-top: 0.5rem;
-
-      &.verified {
-        color: var(--color-success);
-      }
-      &.pending {
-        color: var(--color-warning);
-      }
-      &.rejected {
-        color: var(--color-danger);
-      }
-    }
-  }
-
-  .actionsGrid {
-    margin-top: 2rem;
-    width: 100%;
-    max-width: 720px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 1rem;
-  }
-
-  .action {
-    @include glass-card;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    transition: transform 0.2s;
-
-    svg {
-      font-size: 1.6rem;
-    }
-
-    &:hover {
-      transform: translateY(-4px);
-    }
-  }
-
-  .modal {
-    position: fixed;
-    inset: 0;
-    background: var(--overlay-bg);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    .modalContent {
-      @include glass-card;
-      padding: 2rem;
-      text-align: center;
-      width: 90%;
-      max-width: 400px;
-
-      h3 {
-        margin-bottom: 1rem;
-      }
-
-      .editForm {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-
-        label {
-          text-align: left;
-          font-size: 0.9rem;
-          font-weight: 600;
-
-          input,
-          textarea {
-            width: 100%;
-            padding: 0.6rem;
-            margin-top: 0.3rem;
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
-            font-size: 1rem;
-
-            &:focus {
-              border-color: $primary-color;
-              outline: none;
-            }
-          }
-        }
-
-        .modalActions {
-          display: flex;
-          justify-content: flex-end;
-          gap: 1rem;
-
-          button {
-            @include button-style($primary-color, var(--color-on-primary));
-            padding: 0.5rem 1rem;
-
-            &.cancel {
-              background: var(--color-surface);
-              color: var(--color-text);
-
-              &:hover {
-                background: var(--color-muted);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-.list {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
   gap: 1rem;
-}
-
-.settings {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.themes {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.logout {
-  align-self: flex-start;
-}
-
-.prefs {
-  font-size: 0.9rem;
-  color: var(--color-muted);
-}
-
-.statusIndicator {
-  font-weight: 600;
-  margin: 0.5rem 0;
-  &.approved {
-    color: var(--color-success);
-  }
-  &.pending {
-    color: var(--color-warning);
-  }
-  &.rejected {
-    color: var(--color-danger);
-  }
-}
-
-.businessForm {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
   padding: 1rem;
-
-  h3 {
-    margin-bottom: 0.5rem;
-  }
-
-  label {
-    display: flex;
-    flex-direction: column;
-    font-size: 0.9rem;
-    font-weight: 600;
-
-    input,
-    textarea {
-      width: 100%;
-      padding: 0.6rem;
-      margin-top: 0.3rem;
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      font-size: 1rem;
-
-      &:focus {
-        border-color: $primary-color;
-        outline: none;
-      }
-    }
-  }
-
-  .modalActions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-
-    button {
-      @include button-style($primary-color, var(--color-on-primary));
-      padding: 0.5rem 1rem;
-
-      &:first-child {
-        background: var(--color-surface);
-        color: var(--color-text);
-
-        &:hover {
-          background: var(--color-muted);
-        }
-      }
-    }
-  }
 }
 
-.tabs {
+.card {
   width: 100%;
-  max-width: 720px;
-  margin-top: 1rem;
-  display: flex;
-  gap: 1rem;
-  position: relative;
-}
-
-.tabButton {
-  background: transparent;
-  border: none;
-  padding: 0.75rem 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  position: relative;
-  color: var(--color-text-secondary);
-}
-
-.tabButtonActive {
-  color: var(--color-text);
-}
-
-.underline {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--color-primary);
-}
-
-.productsTab {
-  width: 100%;
-}
-
-.productItem {
-  position: relative;
-}
-
-.productActions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.productActions button {
-  flex: 1;
-}
-
-.productForm {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
-
-  h3 {
-    margin-bottom: 0.5rem;
-  }
-
-  label {
-    display: flex;
-    flex-direction: column;
-    font-size: 0.9rem;
-    font-weight: 600;
-
-    input {
-      width: 100%;
-      padding: 0.6rem;
-      margin-top: 0.3rem;
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      font-size: 1rem;
-    }
-  }
-
-  .modalActions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 0.5rem;
-  }
-}
-
-.confirm {
+  max-width: 400px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
   padding: 1rem;
   text-align: center;
+  box-shadow: var(--shadow-sm);
+}
 
-  .modalActions {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 0.5rem;
+}
+
+.avatarFallback {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  margin: 0 auto 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-muted);
+  color: var(--color-on-primary);
+  font-size: 2rem;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.phone {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.roles {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.role {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+.editBtn {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.actions button {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  cursor: pointer;
+}
+
+.modalContent {
+  padding: 1rem;
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.editForm label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.editForm input {
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.modalActions button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.modalActions .cancel {
+  background: var(--color-muted);
+  color: var(--color-on-primary);
+}
+
+.modalActions button:not(.cancel) {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
 }
 

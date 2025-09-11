@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { api } from "@/config/api";
+import { http } from "@/lib/http";
 
 export interface UserProfile {
   _id: string;
@@ -25,15 +25,15 @@ const initial: St<UserProfile> = {
 };
 
 export const fetchProfile = createAsyncThunk("user/fetchProfile", async () => {
-  const { data } = await api.get("/profile");
-  return data;
+  const { data } = await http.get("/users/me");
+  return data.data.user as UserProfile;
 });
 
 export const updateProfile = createAsyncThunk(
   "user/updateProfile",
   async (payload: Partial<UserProfile>) => {
-    const { data } = await api.put("/profile", payload);
-    return data;
+    const { data } = await http.patch("/users/me", payload);
+    return data.data.user as UserProfile;
   }
 );
 

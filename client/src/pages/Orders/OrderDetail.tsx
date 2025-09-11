@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { api } from '@/config/api';
+import { http } from '@/lib/http';
 import PriceBlock from '../../components/ui/PriceBlock';
 import StatusChip, { type Status } from '../../components/ui/StatusChip';
 import styles from './OrderDetail.module.scss';
@@ -29,7 +29,7 @@ const OrderDetail = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await api.get(`/orders/${id}`);
+        const res = await http.get(`/orders/${id}`);
         const data = res.data;
         const items = data.items || [
           {

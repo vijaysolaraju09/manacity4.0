@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import './Signup.scss';
 import logo from '../../../assets/logo.png';
 import fallbackImage from '../../../assets/no-image.svg';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
-import type { SignupDraft } from '../../../api/auth';
-import { signup } from '../../../api/auth';
+import type { SignupDraft } from '../../../store/slices/authSlice';
+import { signup as signupThunk } from '../../../store/slices/authSlice';
+import type { AppDispatch } from '../../../store';
 
 const Signup = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const [form, setForm] = useState<SignupDraft>({
     name: '',
     phone: '',
@@ -60,9 +63,9 @@ const Signup = () => {
     try {
       setLoading(true);
       const payload = { ...form, phone: phoneE164! };
-      await signup(payload);
-      showToast('Account created. Please login.', 'success');
-      navigate('/login');
+      await dispatch(signupThunk(payload)).unwrap();
+      showToast('Account created.', 'success');
+      navigate('/home');
     } catch (err: any) {
       const message = err.message || 'Failed to create account';
       setErrors({ general: message });

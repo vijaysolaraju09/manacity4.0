@@ -1,160 +1,120 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { api } from '@/config/api';
-import Shimmer from '../../components/Shimmer';
-import OrderCard from '../../components/ui/OrderCard';
-import fallbackImage from '../../assets/no-image.svg';
-import { type Status } from '../../components/ui/StatusChip';
-import showToast from '../../components/ui/Toast';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchReceivedOrders, updateOrderStatus, selectOrdersByStatus } from '@/store/orders';
+import type { RootState, AppDispatch } from '@/store';
+import { OrderCard } from '@/components/base';
+import Shimmer from '@/components/Shimmer';
+import showToast from '@/components/ui/Toast';
 import styles from './ReceivedOrders.module.scss';
 
-interface Order {
-  _id: string;
-  user: { name: string; phone?: string };
-  product: { name: string; price: number; image?: string };
-  quantity: number;
-  status: Status;
-  createdAt: string;
-}
+const statuses = ['all', 'pending', 'accepted', 'cancelled', 'completed'] as const;
 
 const ReceivedOrders = () => {
-  const [list, setList] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const dispatch = useDispatch<AppDispatch>();
+  const [status, setStatus] = useState<(typeof statuses)[number]>('all');
+  const [category, setCategory] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.get(`/orders/received?${searchParams.toString()}`);
-      setList(res.data);
-    } catch {
-      setList([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchParams]);
+  const { status: loadStatus } = useSelector((s: RootState) => s.orders.received);
+  const orders = useSelector((state: RootState) =>
+    status === 'all'
+      ? (state.orders.received.ids as string[]).map(
+          (id) => state.orders.received.entities[id]!
+        )
+      : selectOrdersByStatus(state, 'received', status as any)
+  ) as any[];
 
   useEffect(() => {
-    load();
-  }, [load]);
+    dispatch(fetchReceivedOrders());
+  }, [dispatch]);
 
-  const updateFilter = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams);
-    if (value) params.set(key, value);
-    else params.delete(key);
-    setSearchParams(params);
-  };
+  const filtered = orders.filter((o) => {
+    const item = o.items[0];
+    const withinCategory = category
+      ? item.name?.toLowerCase().includes(category.toLowerCase())
+      : true;
+    const price = item.price;
+    const withinMin = minPrice ? price >= Number(minPrice) : true;
+    const withinMax = maxPrice ? price <= Number(maxPrice) : true;
+    return withinCategory && withinMin && withinMax;
+  });
 
-  const clearFilters = (...keys: string[]) => {
-    const params = new URLSearchParams(searchParams);
-    keys.forEach((k) => params.delete(k));
-    setSearchParams(params);
-  };
-
-  const act = async (id: string, action: 'accept' | 'reject') => {
-    const prev = list;
-    setList((curr) =>
-      curr.map((o) =>
-        o._id === id
-          ? { ...o, status: action === 'accept' ? 'accepted' : 'cancelled' }
-          : o
-      )
-    );
+  const act = async (id: string, action: 'accept' | 'reject' | 'complete') => {
     try {
-      const res = await api.post(`/orders/${action}/${id}`);
-      setList((curr) => curr.map((o) => (o._id === id ? { ...o, ...res.data } : o)));
-      showToast(
-        action === 'accept' ? 'Order accepted' : 'Order cancelled',
-        'success'
-      );
+      await dispatch(updateOrderStatus({ id, action })).unwrap();
+      showToast(`Order ${action}ed`, 'success');
     } catch {
       showToast(`Failed to ${action} order`, 'error');
-      setList(prev);
     }
   };
-
-  const status = searchParams.get('status') ?? '';
-  const startDate = searchParams.get('startDate') ?? '';
-  const endDate = searchParams.get('endDate') ?? '';
-
-  const chips = [
-    status && { label: `Status: ${status}`, onRemove: () => clearFilters('status') },
-    (startDate || endDate) && {
-      label:
-        startDate && endDate
-          ? `Date: ${startDate} - ${endDate}`
-          : startDate
-          ? `From: ${startDate}`
-          : `Until: ${endDate}`,
-      onRemove: () => clearFilters('startDate', 'endDate'),
-    },
-  ].filter(Boolean) as { label: string; onRemove: () => void }[];
 
   return (
     <div className={styles.receivedOrders}>
       <h2>Received Orders</h2>
+      <div className={styles.tabs}>
+        {statuses.map((s) => (
+          <button
+            key={s}
+            className={s === status ? styles.active : ''}
+            onClick={() => setStatus(s)}
+          >
+            {s.charAt(0).toUpperCase() + s.slice(1)}
+          </button>
+        ))}
+      </div>
       <div className={styles.filters}>
-        <select value={status} onChange={(e) => updateFilter('status', e.target.value)}>
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="accepted">Accepted</option>
-          <option value="cancelled">Cancelled</option>
-          <option value="completed">Completed</option>
-        </select>
         <input
-          type="date"
-          value={startDate}
-          onChange={(e) => updateFilter('startDate', e.target.value)}
+          type="text"
+          placeholder="Category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
         />
         <input
-          type="date"
-          value={endDate}
-          onChange={(e) => updateFilter('endDate', e.target.value)}
+          type="number"
+          placeholder="Min Price"
+          value={minPrice}
+          onChange={(e) => setMinPrice(e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="Max Price"
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
         />
       </div>
-      {chips.length > 0 && (
-        <div className={styles.chips}>
-          {chips.map((c) => (
-            <button key={c.label} className={styles.chip} onClick={c.onRemove}>
-              {c.label} ✕
-            </button>
-          ))}
-        </div>
-      )}
-      {loading ? (
+      {loadStatus === 'loading' ? (
         [1, 2, 3].map((n) => (
-          <Shimmer key={n} className={`${styles.card} shimmer rounded`} style={{ height: 80 }} />
+          <Shimmer
+            key={n}
+            className={`${styles.card} shimmer rounded`}
+            style={{ height: 80 }}
+          />
         ))
-      ) : list.length === 0 ? (
-        <div className={styles.empty}>
-          <img src={fallbackImage} alt="No orders" />
-          <p>You haven't received any orders yet.</p>
-        </div>
+      ) : filtered.length === 0 ? (
+        <p className={styles.empty}>No orders.</p>
       ) : (
-        list.map((i) => (
+        filtered.map((o) => (
           <OrderCard
-            key={i._id}
-            items={[
-              {
-                id: i._id,
-                title: i.product.name,
-                image: i.product.image || fallbackImage,
-              },
-            ]}
-            shop={i.user.name}
-            date={i.createdAt}
-            status={i.status}
-            quantity={i.quantity}
-            total={i.product.price * i.quantity}
-            onAccept={i.status === 'pending' ? () => act(i._id, 'accept') : undefined}
-            onReject={i.status === 'pending' ? () => act(i._id, 'reject') : undefined}
-            phone={i.user.phone}
+            key={o._id}
+            items={o.items.map((i: any) => ({
+              id: i.productId || i.name,
+              title: i.name,
+              image: i.image,
+            }))}
+            shop={o.customerId.name}
+            date={o.createdAt}
+            status={o.status}
+            quantity={o.items.reduce((s: number, it: any) => s + it.quantity, 0)}
+            total={o.totals.total}
+            phone={o.customerId.phone}
             onCall={
-              i.status === 'accepted' && i.user.phone
-                ? () => (window.location.href = `tel:${i.user.phone}`)
+              o.status === 'accepted' && o.customerId.phone
+                ? () => (window.location.href = `tel:${o.customerId.phone}`)
                 : undefined
             }
-            to={`/orders/${i._id}`}
+            onAccept={o.status === 'pending' ? () => act(o._id, 'accept') : undefined}
+            onReject={o.status === 'pending' ? () => act(o._id, 'reject') : undefined}
           />
         ))
       )}
@@ -163,3 +123,4 @@ const ReceivedOrders = () => {
 };
 
 export default ReceivedOrders;
+

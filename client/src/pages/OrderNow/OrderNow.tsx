@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FaMicrophone } from 'react-icons/fa';
 import { fetchShops } from '@/store/shops';
-import { api } from '@/config/api';
+import { http } from '@/lib/http';
 import type { RootState } from '../../store';
 import ModalSheet from '../../components/base/ModalSheet';
 import Loader from '../../components/Loader';
@@ -30,7 +30,6 @@ interface MatchedItem {
 }
 
 const OrderNow = () => {
-  const user = useSelector((state: RootState) => state.user as any);
   const d = useDispatch<any>();
   const { items: shopItems, status } = useSelector((s: RootState) => s.shops);
   const shops = shopItems as Shop[];
@@ -117,11 +116,17 @@ const OrderNow = () => {
       setPlacing(true);
       await Promise.all(
         matched.map((m) =>
-          api.post(`/orders/place/${m.product._id}`, {
-            quantity: m.quantity,
-            userId: user?._id,
-            shopId: m.shop._id,
-            source: 'voice-order',
+          http.post('/orders', {
+            targetId: m.shop._id,
+            items: [
+              {
+                productId: m.product._id,
+                name: m.product.name,
+                image: m.product.image,
+                price: m.product.price,
+                quantity: m.quantity,
+              },
+            ],
           })
         )
       );

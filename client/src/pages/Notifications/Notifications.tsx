@@ -1,26 +1,30 @@
 import './Notifications.scss';
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   fetchNotifications,
-  markNotificationRead,
   type Notification,
 } from '../../api/notifications';
 import NotificationCard, {
   SkeletonNotificationCard,
 } from '../../components/ui/NotificationCard';
+import { useDispatch } from 'react-redux';
+import type { AppDispatch } from '@/store';
+import { markNotifRead as markNotifReadAction } from '@/store/notifs';
 
 const filterLabels: Record<string, string> = {
   all: 'All',
-  orders: 'Orders',
-  offers: 'Offers',
+  order: 'Orders',
+  offer: 'Offers',
   system: 'System',
+  event: 'Events',
 };
 
 const filters = Object.keys(filterLabels);
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
@@ -28,7 +32,6 @@ const Notifications = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const loaderRef = useRef<HTMLDivElement | null>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const urlFilter = searchParams.get('type');
@@ -44,14 +47,15 @@ const Notifications = () => {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchNotifications({
-      page,
-      type: activeFilter === 'all' ? undefined : activeFilter,
-    })
+    fetchNotifications({ page })
       .then((data) => {
         if (cancelled) return;
+        const items =
+          activeFilter === 'all'
+            ? data.notifications
+            : data.notifications.filter((n) => n.type === activeFilter);
         setNotifications((prev) =>
-          page === 1 ? data.notifications : [...prev, ...data.notifications],
+          page === 1 ? items : [...prev, ...items],
         );
         setHasMore(data.hasMore);
       })
@@ -81,13 +85,13 @@ const Notifications = () => {
 
   const handleMarkRead = async (id: string) => {
     setNotifications((prev) =>
-      prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)),
+      prev.map((n) => (n._id === id ? { ...n, read: true } : n)),
     );
     try {
-      await markNotificationRead(id);
+      await dispatch(markNotifReadAction(id));
     } catch {
       setNotifications((prev) =>
-        prev.map((n) => (n._id === id ? { ...n, isRead: false } : n)),
+        prev.map((n) => (n._id === id ? { ...n, read: false } : n)),
       );
     }
   };
@@ -133,13 +137,9 @@ const Notifications = () => {
               {items.map((n) => (
                 <NotificationCard
                   key={n._id}
-                  title={n.title}
-                  message={n.body}
+                  message={n.message}
                   timestamp={n.createdAt}
-                  read={n.isRead}
-                  ctaLabel={n.cta?.label}
-                  onClick={() => n.cta && navigate(n.cta.href)}
-                  onCtaClick={() => n.cta && navigate(n.cta.href)}
+                  read={n.read}
                   onSwipeLeft={() => handleMarkRead(n._id)}
                 />
               ))}

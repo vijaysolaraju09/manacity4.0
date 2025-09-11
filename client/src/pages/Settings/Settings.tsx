@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { ModalSheet } from '../../components/base';
-import { clearUser } from '../../store/slices/userSlice';
+import { logout as logoutAction } from '../../store/slices/authSlice';
+import { logoutApi } from '../../api/auth';
 import { setLanguage, setNotificationPrefs } from '../../store/slices/settingsSlice';
 import type { RootState } from '../../store';
 import { useTheme, type Theme } from '../../theme/ThemeProvider';
@@ -24,8 +25,10 @@ const Settings = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    dispatch(clearUser());
-    navigate('/login');
+    logoutApi().finally(() => {
+      dispatch(logoutAction());
+      navigate('/login');
+    });
   };
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

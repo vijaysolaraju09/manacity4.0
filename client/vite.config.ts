@@ -9,4 +9,13 @@ export default defineConfig({
       '@': '/src',
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // Silence Sass @import deprecation warnings
+        // @ts-expect-error: non-standard option
+        silenceDeprecations: ['all'],
+      },
+    },
+  },
 })

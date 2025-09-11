@@ -27,6 +27,12 @@ exports.signup = async (req, res, next) => {
       isVerified: true,
     });
 
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
     const profile = {
       id: user._id,
       name: user.name,
@@ -38,11 +44,13 @@ exports.signup = async (req, res, next) => {
       verificationStatus: user.verificationStatus,
       profession: user.profession,
       bio: user.bio,
+      avatar: user.avatarUrl,
+      avatarUrl: user.avatarUrl,
     };
 
     res.status(201).json({
-      success: true,
-      data: { user: profile },
+      ok: true,
+      data: { user: profile, token },
       traceId: req.traceId,
     });
   } catch (err) {
@@ -79,10 +87,12 @@ exports.login = async (req, res, next) => {
       verificationStatus: user.verificationStatus,
       profession: user.profession,
       bio: user.bio,
+      avatar: user.avatarUrl,
+      avatarUrl: user.avatarUrl,
     };
 
     res.status(200).json({
-      success: true,
+      ok: true,
       data: { token, user: profile },
       traceId: req.traceId,
     });
@@ -101,9 +111,41 @@ exports.adminLogin = async (req, res, next) => {
       const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, {
         expiresIn: "7d",
       });
-      return res.json({ success: true, data: { token }, traceId: req.traceId });
+      return res.json({ ok: true, data: { token }, traceId: req.traceId });
     }
     throw AppError.unauthorized('INVALID_CREDENTIALS', 'Invalid credentials');
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.me = async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (!user) throw AppError.unauthorized('UNAUTHORIZED', 'Unauthorized');
+    const profile = {
+      id: user._id,
+      name: user.name,
+      phone: user.phone,
+      location: user.location,
+      address: user.address,
+      role: user.role,
+      isVerified: user.isVerified,
+      verificationStatus: user.verificationStatus,
+      profession: user.profession,
+      bio: user.bio,
+      avatar: user.avatarUrl,
+      avatarUrl: user.avatarUrl,
+    };
+    res.json({ ok: true, data: { user: profile }, traceId: req.traceId });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.logout = async (req, res, next) => {
+  try {
+    res.json({ ok: true, traceId: req.traceId });
   } catch (err) {
     next(err);
   }

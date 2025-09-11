@@ -1,154 +1,123 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { api } from '@/config/api';
-import Shimmer from '../../components/Shimmer';
-import OrderCard from '../../components/ui/OrderCard';
-import fallbackImage from '../../assets/no-image.svg';
-import { type Status } from '../../components/ui/StatusChip';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { fetchMyOrders, selectOrdersByStatus } from '@/store/orders';
+import type { RootState, AppDispatch } from '@/store';
+import { clearCart, addToCart } from '@/store/slices/cartSlice';
+import { OrderCard } from '@/components/base';
+import Shimmer from '@/components/Shimmer';
 import styles from './MyOrders.module.scss';
 
-interface Order {
-  _id: string;
-  product: { name: string; image?: string; price: number; shop?: { name: string } };
-  quantity: number;
-  status: Status;
-  createdAt: string;
-}
+const statuses = ['all', 'pending', 'accepted', 'cancelled', 'completed'] as const;
 
 const MyOrders = () => {
-  const [list, setList] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const [status, setStatus] = useState<(typeof statuses)[number]>('all');
+  const [category, setCategory] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.get(`/orders/my?${searchParams.toString()}`);
-      setList(res.data);
-    } catch {
-      setList([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchParams]);
+  const { status: loadStatus } = useSelector((s: RootState) => s.orders.mine);
+  const orders = useSelector((state: RootState) =>
+    status === 'all'
+      ? (state.orders.mine.ids as string[]).map(
+          (id) => state.orders.mine.entities[id]!
+        )
+      : selectOrdersByStatus(state, 'mine', status as any)
+  ) as any[];
 
   useEffect(() => {
-    load();
-  }, [load]);
+    dispatch(fetchMyOrders());
+  }, [dispatch]);
 
-  const updateFilter = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams);
-    if (value) params.set(key, value);
-    else params.delete(key);
-    setSearchParams(params);
+  const filtered = orders.filter((o) => {
+    const item = o.items[0];
+    const withinCategory = category
+      ? item.name?.toLowerCase().includes(category.toLowerCase())
+      : true;
+    const price = item.price;
+    const withinMin = minPrice ? price >= Number(minPrice) : true;
+    const withinMax = maxPrice ? price <= Number(maxPrice) : true;
+    return withinCategory && withinMin && withinMax;
+  });
+
+  const reorder = (order: any) => {
+    dispatch(clearCart());
+    order.items.forEach((i: any) =>
+      dispatch(
+        addToCart({
+          id: i.productId || i.name,
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+          image: i.image,
+        })
+      )
+    );
+    navigate('/cart');
   };
-
-  const clearFilters = (...keys: string[]) => {
-    const params = new URLSearchParams(searchParams);
-    keys.forEach((k) => params.delete(k));
-    setSearchParams(params);
-  };
-
-  const cancel = async (id: string) => {
-    await api.post(`/orders/cancel/${id}`);
-    load();
-  };
-
-  const groups = useMemo(() => {
-    const map = new Map<string, Order[]>();
-    list.forEach((o) => {
-      const month = new Date(o.createdAt).toLocaleDateString(undefined, {
-        month: 'long',
-        year: 'numeric',
-      });
-      if (!map.has(month)) map.set(month, []);
-      map.get(month)!.push(o);
-    });
-    return Array.from(map.entries());
-  }, [list]);
-
-  const status = searchParams.get('status') ?? '';
-  const startDate = searchParams.get('startDate') ?? '';
-  const endDate = searchParams.get('endDate') ?? '';
-
-  const chips = [
-    status && { label: `Status: ${status}`, onRemove: () => clearFilters('status') },
-    (startDate || endDate) && {
-      label:
-        startDate && endDate
-          ? `Date: ${startDate} - ${endDate}`
-          : startDate
-          ? `From: ${startDate}`
-          : `Until: ${endDate}`,
-      onRemove: () => clearFilters('startDate', 'endDate'),
-    },
-  ].filter(Boolean) as { label: string; onRemove: () => void }[];
 
   return (
     <div className={styles.myOrders}>
       <h2>My Orders</h2>
+      <div className={styles.tabs}>
+        {statuses.map((s) => (
+          <button
+            key={s}
+            className={s === status ? styles.active : ''}
+            onClick={() => setStatus(s)}
+          >
+            {s.charAt(0).toUpperCase() + s.slice(1)}
+          </button>
+        ))}
+      </div>
       <div className={styles.filters}>
-        <select value={status} onChange={(e) => updateFilter('status', e.target.value)}>
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="accepted">Accepted</option>
-          <option value="cancelled">Cancelled</option>
-          <option value="completed">Completed</option>
-        </select>
         <input
-          type="date"
-          value={startDate}
-          onChange={(e) => updateFilter('startDate', e.target.value)}
+          type="text"
+          placeholder="Category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
         />
         <input
-          type="date"
-          value={endDate}
-          onChange={(e) => updateFilter('endDate', e.target.value)}
+          type="number"
+          placeholder="Min Price"
+          value={minPrice}
+          onChange={(e) => setMinPrice(e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="Max Price"
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
         />
       </div>
-      {chips.length > 0 && (
-        <div className={styles.chips}>
-          {chips.map((c) => (
-            <button key={c.label} className={styles.chip} onClick={c.onRemove}>
-              {c.label} ✕
-            </button>
-          ))}
-        </div>
-      )}
-      {loading ? (
+      {loadStatus === 'loading' ? (
         [1, 2, 3].map((n) => (
-          <Shimmer key={n} className={`${styles.card} shimmer rounded`} style={{ height: 80 }} />
+          <Shimmer
+            key={n}
+            className={`${styles.card} shimmer rounded`}
+            style={{ height: 80 }}
+          />
         ))
-      ) : list.length === 0 ? (
-        <div className={styles.empty}>
-          <img src={fallbackImage} alt="No orders" />
-          <p>You haven’t placed any orders yet.</p>
-          <a href="/shops" className={styles.browse}>Browse Shops</a>
-        </div>
+      ) : filtered.length === 0 ? (
+        <p className={styles.empty}>No orders found.</p>
       ) : (
-        groups.map(([month, orders]) => (
-          <div key={month} className={styles.group}>
-            <div className={styles.month}>{month}</div>
-            {orders.map((i) => (
-              <OrderCard
-                key={i._id}
-                items={[
-                  {
-                    id: i._id,
-                    title: i.product.name,
-                    image: i.product.image || fallbackImage,
-                  },
-                ]}
-                shop={i.product.shop?.name || ''}
-                date={i.createdAt}
-                status={i.status}
-                quantity={i.quantity}
-                total={i.product.price * i.quantity}
-                onCancel={i.status === 'pending' ? () => cancel(i._id) : undefined}
-                to={`/orders/${i._id}`}
-              />
-            ))}
-          </div>
+        filtered.map((o) => (
+          <OrderCard
+            key={o._id}
+            items={o.items.map((i: any) => ({
+              id: i.productId || i.name,
+              title: i.name,
+              image: i.image,
+            }))}
+            shop={o.targetName || 'Shop'}
+            date={o.createdAt}
+            status={o.status}
+            quantity={o.items.reduce((s: number, it: any) => s + it.quantity, 0)}
+            total={o.totals.total}
+            onReorder={() => reorder(o)}
+          />
         ))
       )}
     </div>
@@ -156,3 +125,4 @@ const MyOrders = () => {
 };
 
 export default MyOrders;
+

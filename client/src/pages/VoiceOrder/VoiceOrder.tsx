@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FaMicrophone } from 'react-icons/fa';
-import { api } from '@/config/api';
+import { http } from '@/lib/http';
 import { fetchShops } from '@/store/shops';
 import type { RootState } from '../../store';
 import styles from './VoiceOrder.module.scss';
@@ -29,7 +29,6 @@ interface MatchedItem {
 }
 
 const VoiceOrder = () => {
-  const user = useSelector((state: RootState) => state.user as any);
   const d = useDispatch<any>();
   const { items: shopItems, status } = useSelector((s: RootState) => s.shops);
   const shops = shopItems as Shop[];
@@ -104,12 +103,17 @@ const VoiceOrder = () => {
     if (!confirmItem) return;
     try {
       setLoading(true);
-      await api.post('/orders/place', {
-        userId: user._id,
-        productId: confirmItem.product._id,
-        quantity: confirmItem.quantity,
-        shopId: confirmItem.shop._id,
-        source: 'voice-order',
+      await http.post('/orders', {
+        targetId: confirmItem.shop._id,
+        items: [
+          {
+            productId: confirmItem.product._id,
+            name: confirmItem.product.name,
+            image: confirmItem.product.image,
+            price: confirmItem.product.price,
+            quantity: confirmItem.quantity,
+          },
+        ],
       });
       showToast('Order placed');
       setConfirmOpen(false);

@@ -20,6 +20,7 @@ export interface OrderCardProps {
   onReject?: () => void;
   onCancel?: () => void;
   onCall?: () => void;
+  onReorder?: () => void;
   className?: string;
 }
 
@@ -35,6 +36,7 @@ const OrderCard = ({
   onReject,
   onCancel,
   onCall,
+  onReorder,
   className = '',
 }: OrderCardProps) => (
   <div className={`${styles.card} ${className}`}>
@@ -50,12 +52,17 @@ const OrderCard = ({
       <PriceBlock price={total} />
     </div>
     <StatusChip status={status} className={styles.status} />
-    {(onAccept || onReject || onCancel || onCall || phone) && (
+    {(onAccept || onReject || onCancel || onCall || onReorder || phone) && (
       <div className={styles.actions}>
         {phone && <span className={styles.phone}>{phone}</span>}
         {onCall && (
           <button type="button" onClick={onCall} aria-label="Call buyer">
             Call
+          </button>
+        )}
+        {onReorder && (
+          <button type="button" onClick={onReorder} aria-label="Reorder">
+            Reorder
           </button>
         )}
         {onAccept && (

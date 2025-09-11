@@ -1,34 +1,38 @@
 const User = require("../models/User");
 const AppError = require("../utils/AppError");
 
-exports.getProfile = async (req, res) => {
-  res.status(200).json({ user: req.user });
+const buildProfile = (user) => ({
+  id: user._id,
+  name: user.name,
+  phone: user.phone,
+  location: user.location,
+  role: user.role,
+  avatarUrl: user.avatarUrl,
+  isVerified: user.isVerified,
+  verificationStatus: user.verificationStatus,
+});
+
+exports.getMe = async (req, res, next) => {
+  try {
+    if (!req.user) throw AppError.unauthorized('UNAUTHORIZED', 'Unauthorized');
+    res.json({ ok: true, data: { user: buildProfile(req.user) }, traceId: req.traceId });
+  } catch (err) {
+    next(err);
+  }
 };
 
-exports.updateProfile = async (req, res, next) => {
+exports.updateMe = async (req, res, next) => {
   try {
-    const { name, location, address } = req.body;
-
-    if (name) req.user.name = name;
-    if (location) req.user.location = location;
-    if (address !== undefined) req.user.address = address;
+    const { name, location, avatarUrl } = req.body;
+    if (name !== undefined) req.user.name = name;
+    if (location !== undefined) req.user.location = location;
+    if (avatarUrl !== undefined) req.user.avatarUrl = avatarUrl;
 
     const updatedUser = await req.user.save();
-
-    res.status(200).json({
-      message: "Profile updated successfully",
-      user: {
-        id: updatedUser._id,
-        name: updatedUser.name,
-        phone: updatedUser.phone,
-        location: updatedUser.location,
-        address: updatedUser.address,
-        role: updatedUser.role,
-        isVerified: updatedUser.isVerified,
-        verificationStatus: updatedUser.verificationStatus,
-        profession: updatedUser.profession,
-        bio: updatedUser.bio,
-      },
+    res.json({
+      ok: true,
+      data: { user: buildProfile(updatedUser) },
+      traceId: req.traceId,
     });
   } catch (err) {
     next(AppError.internal('PROFILE_UPDATE_FAILED', 'Failed to update profile'));

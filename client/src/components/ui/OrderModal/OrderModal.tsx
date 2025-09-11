@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../../../store';
-import { api } from '@/config/api';
+import { http } from '@/lib/http';
 import ModalSheet from '../../base/ModalSheet';
 import type { Product } from '../ProductCard';
 import showToast from '../Toast';
@@ -16,7 +14,6 @@ interface OrderModalProps {
 }
 
 const OrderModal = ({ open, onClose, product, shopId }: OrderModalProps) => {
-  const user = useSelector((state: RootState) => state.user as any);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -31,12 +28,17 @@ const OrderModal = ({ open, onClose, product, shopId }: OrderModalProps) => {
     if (!product) return;
     try {
       setLoading(true);
-      await api.post('/orders/place', {
-        userId: user?._id,
-        productId: product._id,
-        quantity,
-        shopId,
-        source: 'shop-details',
+      await http.post('/orders', {
+        targetId: shopId,
+        items: [
+          {
+            productId: product._id,
+            name: product.name,
+            image: product.image,
+            price: product.price,
+            quantity,
+          },
+        ],
       });
       showToast('Order placed', 'success');
       onClose();

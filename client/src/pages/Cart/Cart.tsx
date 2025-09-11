@@ -4,8 +4,10 @@ import QuantityStepper from '../../components/ui/QuantityStepper/QuantityStepper
 import PriceBlock from '../../components/ui/PriceBlock';
 import EmptyState from '../../components/ui/EmptyState';
 import fallbackImage from '../../assets/no-image.svg';
-import { removeFromCart, updateQuantity } from '../../store/slices/cartSlice';
+import { removeFromCart, updateQuantity, clearCart } from '../../store/slices/cartSlice';
 import type { RootState } from '../../store';
+import { http } from '@/lib/http';
+import showToast from '../../components/ui/Toast';
 import styles from './Cart.module.scss';
 
 const Cart = () => {
@@ -13,13 +15,23 @@ const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const subtotal = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discount = 0;
   const fee = items.length > 0 && subtotal <= 200 ? 40 : 0;
   const total = subtotal - discount + fee;
+
+  const handleCheckout = async () => {
+    try {
+      await http.post('/orders', {
+        items: items.map((it) => ({ productId: it.id, quantity: it.quantity })),
+      });
+      dispatch(clearCart());
+      showToast('Order placed', 'success');
+      navigate('/orders/my');
+    } catch {
+      showToast('Failed to place order', 'error');
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -46,9 +58,7 @@ const Cart = () => {
               <div className={styles.controls}>
                 <QuantityStepper
                   value={it.quantity}
-                  onChange={(q) =>
-                    dispatch(updateQuantity({ id: it.id, quantity: q }))
-                  }
+                  onChange={(q) => dispatch(updateQuantity({ id: it.id, quantity: q }))}
                   min={1}
                 />
                 <button
@@ -80,7 +90,7 @@ const Cart = () => {
             <span>Total</span>
             <span>₹{total}</span>
           </div>
-          <button type="button" className={styles.checkout}>
+          <button type="button" className={styles.checkout} onClick={handleCheckout}>
             Checkout
           </button>
         </div>

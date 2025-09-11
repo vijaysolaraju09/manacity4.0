@@ -28,21 +28,15 @@
     color: var(--color-primary);
   }
 
-  .date,
-  .location {
+  .date {
     margin: 0.2rem 0;
     color: var(--color-text-secondary);
     font-size: 0.9rem;
   }
 
-  .registerBtn {
-    margin-top: 0.5rem;
-    padding: 0.4rem 0.8rem;
-    @include button-style(var(--color-primary), var(--color-on-primary));
-    font-weight: 600;
-
-    &:hover {
-      background: var(--color-primary-hover);
-    }
+  .meta {
+    margin: 0.3rem 0 0;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
   }
 }

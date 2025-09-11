@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { api } from "@/config/api";
+import { http } from "@/lib/http";
 
 export interface VerifiedUser {
   _id: string;
@@ -7,8 +7,8 @@ export interface VerifiedUser {
   profession: string;
   location: string;
   bio?: string;
-  contact?: string;
-  avatar?: string;
+  phone?: string;
+  avatarUrl?: string;
   rating?: number;
   stats?: Record<string, any>;
   reviews?: Array<Record<string, any>>;
@@ -35,7 +35,7 @@ const initial: St<VerifiedUser> = {
 export const fetchVerified = createAsyncThunk(
   "verified/fetchAll",
   async (params?: any) => {
-    const { data } = await api.get("/verified", { params });
+    const { data } = await http.get("/pros", { params });
     return Array.isArray(data) ? { items: data } : data;
   }
 );
@@ -43,7 +43,7 @@ export const fetchVerified = createAsyncThunk(
 export const fetchVerifiedById = createAsyncThunk(
   "verified/fetchById",
   async (id: string) => {
-    const { data } = await api.get(`/verified/${id}`);
+    const { data } = await http.get(`/pros/${id}`);
     return data;
   }
 );

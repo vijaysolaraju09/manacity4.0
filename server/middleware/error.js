@@ -3,11 +3,23 @@ module.exports = (err, req, res, _next) => {
 
   const status = err.statusCode || 500;
   const code = err.code || 'INTERNAL_ERROR';
-  const isProd = process.env.NODE_ENV === 'production';
+
+  const error = {
+    code,
+    message: err.message || 'Error',
+    stack: err.stack,
+  };
+
+  if (err.details) {
+    error.details = err.details;
+  }
+  if (err.fieldErrors) {
+    error.fieldErrors = err.fieldErrors;
+  }
 
   return res.status(status).json({
     ok: false,
-    error: { code, message: isProd ? 'Something went wrong' : (err.message || 'Error') },
+    error,
     traceId: req.traceId,
   });
 };

@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const AppError = require('../utils/AppError');
 
 async function createUserIfNew({ name, phone, password, location }) {
   const existing = await User.findOne({ phone });
@@ -15,9 +16,13 @@ async function createUserIfNew({ name, phone, password, location }) {
     location,
     address: '',
   });
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
+  }
   const token = jwt.sign(
     { userId: user._id, role: user.role },
-    process.env.JWT_SECRET,
+    jwtSecret,
     { expiresIn: '7d' }
   );
   const profile = {
@@ -42,9 +47,13 @@ async function issueResetTokenForPhone(phone) {
     err.status = 404;
     throw err;
   }
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
+  }
   const token = jwt.sign(
     { userId: user._id, phone },
-    process.env.JWT_SECRET,
+    jwtSecret,
     { expiresIn: '10m' }
   );
   return token;

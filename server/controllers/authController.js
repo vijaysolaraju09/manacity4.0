@@ -27,9 +27,13 @@ exports.signup = async (req, res, next) => {
       isVerified: true,
     });
 
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
+    }
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
+      jwtSecret,
       { expiresIn: "7d" }
     );
 
@@ -68,9 +72,13 @@ exports.login = async (req, res, next) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw AppError.badRequest('INVALID_PASSWORD', 'Incorrect password');
 
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
+    }
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
+      jwtSecret,
       {
         expiresIn: "7d",
       }
@@ -108,7 +116,11 @@ exports.adminLogin = async (req, res, next) => {
       email === process.env.ADMIN_EMAIL &&
       password === process.env.ADMIN_PASSWORD
     ) {
-      const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, {
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
+      }
+      const token = jwt.sign({ role: "admin" }, jwtSecret, {
         expiresIn: "7d",
       });
       return res.json({ ok: true, data: { token }, traceId: req.traceId });

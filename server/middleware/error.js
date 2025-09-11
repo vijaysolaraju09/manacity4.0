@@ -1,47 +1,13 @@
-const { ZodError } = require('zod');
-const AppError = require('../utils/AppError');
-
 module.exports = (err, req, res, _next) => {
-  if (err instanceof AppError) {
-    const { statusCode, code, message, details, fieldErrors } = err;
-    res.status(statusCode).json({
-      ok: false,
-      error: {
-        code,
-        message,
-        ...(details && { details }),
-        ...(fieldErrors && { fieldErrors }),
-      },
-      traceId: req.traceId,
-    });
-    return;
-  }
+  console.error('ERR', req.method, req.originalUrl, '-', err?.message, '\n', err?.stack);
 
-  if (err instanceof ZodError) {
-    const fieldErrors = {};
-    err.errors.forEach((issue) => {
-      const field = issue.path.join('.');
-      fieldErrors[field] = issue.message;
-    });
-    res.status(422).json({
-      ok: false,
-      error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Invalid input',
-        fieldErrors,
-      },
-      traceId: req.traceId,
-    });
-    return;
-  }
+  const status = err.statusCode || 500;
+  const code = err.code || 'INTERNAL_ERROR';
+  const isProd = process.env.NODE_ENV === 'production';
 
-  req.log?.error(err);
-  res.status(500).json({
+  return res.status(status).json({
     ok: false,
-    error: {
-      code: 'INTERNAL_ERROR',
-      message: 'Something went wrong',
-    },
+    error: { code, message: isProd ? 'Something went wrong' : (err.message || 'Error') },
     traceId: req.traceId,
   });
 };

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import ShopModel from '../../models/Shop';
+import Shop from '../../models/Shop';
 import ProductModel from '../../models/Product';
 import EventModel from '../../models/Event';
 import { generateSlug } from '../../utils/slug';
@@ -9,7 +9,7 @@ async function backfillSlugs() {
   await mongoose.connect(uri);
 
   const tasks = [
-    { model: ShopModel, field: 'name' as const },
+    { model: Shop, field: 'name' as const },
     { model: ProductModel, field: 'title' as const },
     { model: EventModel, field: 'title' as const },
   ];

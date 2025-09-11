@@ -23,6 +23,9 @@ http.interceptors.request.use((config) => {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
   }
+  if (config.url?.startsWith('/')) {
+    config.url = config.url.slice(1);
+  }
   return config;
 });
 

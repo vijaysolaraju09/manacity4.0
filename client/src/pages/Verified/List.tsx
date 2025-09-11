@@ -34,7 +34,10 @@ const VerifiedList = () => {
 
   useEffect(() => {
     const handle = setTimeout(() => {
-      d(fetchVerified({ profession, location }));
+      const params: Record<string, string> = {};
+      if (profession) params.profession = profession;
+      if (location) params.location = location;
+      d(fetchVerified(params));
     }, 300);
     return () => clearTimeout(handle);
   }, [profession, location, d]);

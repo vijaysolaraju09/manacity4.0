@@ -44,7 +44,7 @@ const VerifiedDetails = () => {
   const handleOrder = async () => {
     if (!user) return;
     try {
-      await http.post('/pros/orders', { targetId: user._id });
+      await http.post('/verified/orders', { targetId: user._id });
       showToast('Request sent', 'success');
       window.location.href = `tel:${user.phone}`;
     } catch {

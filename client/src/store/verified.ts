@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { http } from "@/lib/http";
+import { toItems, toItem, toErrorMessage } from "@/lib/response";
 
 export interface VerifiedUser {
   _id: string;
@@ -34,17 +35,25 @@ const initial: St<VerifiedUser> = {
 
 export const fetchVerified = createAsyncThunk(
   "verified/fetchAll",
-  async (params?: any) => {
-    const { data } = await http.get("/pros", { params });
-    return Array.isArray(data) ? { items: data } : data;
+  async (params?: any, { rejectWithValue }) => {
+    try {
+      const res = await http.get("/verified", { params });
+      return toItems(res) as VerifiedUser[];
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
 export const fetchVerifiedById = createAsyncThunk(
   "verified/fetchById",
-  async (id: string) => {
-    const { data } = await http.get(`/pros/${id}`);
-    return data;
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await http.get(`/verified/${id}`);
+      return toItem(res) as VerifiedUser;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
@@ -59,17 +68,11 @@ const verifiedSlice = createSlice({
     });
     b.addCase(fetchVerified.fulfilled, (s, a) => {
       s.status = "succeeded";
-      const payload: any = a.payload;
-      const arr = Array.isArray(payload?.items)
-        ? payload.items
-        : Array.isArray(payload)
-        ? payload
-        : [];
-      s.items = arr;
+      s.items = a.payload as VerifiedUser[];
     });
     b.addCase(fetchVerified.rejected, (s, a) => {
       s.status = "failed";
-      s.error = (a.error as any)?.message || "Failed to load";
+      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
     });
     b.addCase(fetchVerifiedById.pending, (s) => {
       s.status = "loading";
@@ -82,7 +85,7 @@ const verifiedSlice = createSlice({
     });
     b.addCase(fetchVerifiedById.rejected, (s, a) => {
       s.status = "failed";
-      s.error = (a.error as any)?.message || "Failed to load";
+      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
     });
   },
 });

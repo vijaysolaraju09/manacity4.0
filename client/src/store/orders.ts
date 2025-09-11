@@ -71,7 +71,7 @@ export const updateOrderStatus = createAsyncThunk(
 export const updateServiceOrderStatus = createAsyncThunk(
   'orders/updateServiceStatus',
   async ({ id, action }: { id: string; action: string }) => {
-    const res = await http.patch(`/pros/orders/${id}`, { action });
+    const res = await http.patch(`/verified/orders/${id}`, { action });
     return res.data.data as Order;
   }
 );

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { http } from "@/lib/http";
+import { toItems, toItem, toErrorMessage } from "@/lib/response";
 
 export interface Shop {
   _id: string;
@@ -44,30 +45,37 @@ const initial: St<Shop> = {
 
 export const fetchShops = createAsyncThunk(
   "shops/fetchAll",
-  async (params?: Record<string, any>) => {
-    const res = await http.get("/shops", { params });
-    const items =
-      res.data?.data?.items ||
-      res.data?.items ||
-      (Array.isArray(res.data) ? res.data : []);
-    return { items };
+  async (params?: Record<string, any>, { rejectWithValue }) => {
+    try {
+      const res = await http.get("/shops", { params });
+      return toItems(res) as Shop[];
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
-export const fetchShopById = createAsyncThunk("shops/fetchById", async (id: string) => {
-  const res = await http.get(`/shops/${id}`);
-  return res.data?.data?.shop || res.data?.shop || res.data;
-});
+export const fetchShopById = createAsyncThunk(
+  "shops/fetchById",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await http.get(`/shops/${id}`);
+      return toItem(res) as Shop;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
+  }
+);
 
 export const fetchProductsByShop = createAsyncThunk(
   "shops/fetchProducts",
-  async (id: string) => {
-    const res = await http.get(`/shops/${id}/products`);
-    const items =
-      res.data?.data?.items ||
-      res.data?.items ||
-      (Array.isArray(res.data) ? res.data : []);
-    return { id, items };
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await http.get(`/shops/${id}/products`);
+      return { id, items: toItems(res) };
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
@@ -82,11 +90,11 @@ const shopsSlice = createSlice({
     });
     b.addCase(fetchShops.fulfilled, (s, a) => {
       s.status = "succeeded";
-      s.items = a.payload.items as Shop[];
+      s.items = a.payload as Shop[];
     });
     b.addCase(fetchShops.rejected, (s, a) => {
       s.status = "failed";
-      s.error = (a.error as any)?.message || "Failed to load";
+      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
     });
     b.addCase(fetchShopById.pending, (s) => {
       s.status = "loading";
@@ -99,12 +107,15 @@ const shopsSlice = createSlice({
     });
     b.addCase(fetchShopById.rejected, (s, a) => {
       s.status = "failed";
-      s.error = (a.error as any)?.message || "Failed to load";
+      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
     });
     b.addCase(fetchProductsByShop.fulfilled, (s, a) => {
       if ((s.item && s.item._id === a.payload.id) || !s.products) {
         s.products = a.payload.items as Product[];
       }
+    });
+    b.addCase(fetchProductsByShop.rejected, (s, a) => {
+      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
     });
   },
 });

@@ -44,7 +44,15 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(helmet());
-app.use(mongoSanitize());
+// express-mongo-sanitize's built-in middleware attempts to reassign `req.query`,
+// which is a read-only getter in Express 5 and causes an error. Instead of
+// using the default middleware, manually sanitize request objects in-place.
+app.use((req, _res, next) => {
+  if (req.body) mongoSanitize.sanitize(req.body);
+  if (req.params) mongoSanitize.sanitize(req.params);
+  if (req.query) mongoSanitize.sanitize(req.query);
+  next();
+});
 // Use a regular expression to register the CORS preflight handler for all
 // routes. Express 5's path-to-regexp no longer supports the legacy "*" syntax
 // and "/*" can cause deployment issues, but /.*/ safely matches every path.

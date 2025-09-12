@@ -48,7 +48,10 @@ const normalize = (data: any): VerifiedUser => ({
 
 export const fetchVerified = createAsyncThunk(
   "verified/fetchAll",
-  async (params?: any, { rejectWithValue }) => {
+  async (
+    params: any | undefined,
+    { rejectWithValue }: { rejectWithValue: (value: any) => any }
+  ) => {
     try {
       const res = await http.get("/verified", { params });
       return (toItems(res) as any[]).map(normalize);

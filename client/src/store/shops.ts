@@ -45,7 +45,10 @@ const initial: St<Shop> = {
 
 export const fetchShops = createAsyncThunk(
   "shops/fetchAll",
-  async (params?: Record<string, any>, { rejectWithValue }) => {
+  async (
+    params: Record<string, any> | undefined,
+    { rejectWithValue }: { rejectWithValue: (value: any) => any }
+  ) => {
     try {
       const res = await http.get("/shops", { params });
       return toItems(res) as Shop[];

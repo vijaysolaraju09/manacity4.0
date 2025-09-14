@@ -85,7 +85,12 @@ exports.login = async (req, res, next) => {
 
     const token = jwt.sign({ userId: user._id, role: user.role }, jwtSecret, { expiresIn: '7d' });
 
-    // 5) Profile payload (unchanged)
+    // 5) Update login metadata
+    user.lastLoginAt = new Date();
+    user.loginCount = (user.loginCount || 0) + 1;
+    await user.save();
+
+    // 6) Profile payload (unchanged)
     const profile = {
       id: user._id,
       name: user.name,

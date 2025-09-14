@@ -4,7 +4,7 @@ import { AiFillStar } from 'react-icons/ai';
 import { FiPhone, FiArrowLeft, FiShare2 } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '@/store';
-import { fetchShopById, fetchProductsByShop, type Shop } from '@/store/shops';
+import { fetchShopById, fetchProductsByShop } from '@/store/shops';
 import Shimmer from '../../components/Shimmer';
 import ProductCard, { type Product } from '../../components/ui/ProductCard.tsx';
 import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
@@ -17,9 +17,12 @@ import fallbackImage from '../../assets/no-image.svg';
 const ShopDetails = () => {
   const { id } = useParams();
   const dispatch = useDispatch<AppDispatch>();
-  const { item: shop, products, status, error } = useSelector(
-    (s: RootState) => s.shops
-  );
+  const {
+    item: shop,
+    products = [],
+    status,
+    error,
+  } = useSelector((s: RootState) => s.shops);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('relevance');
   const [selected, setSelected] = useState<Product | null>(null);

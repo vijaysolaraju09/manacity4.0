@@ -1,4 +1,5 @@
 import { http } from '@/lib/http';
+import type { User } from '@/types/user';
 
 export interface ProductData {
   _id?: string;
@@ -9,8 +10,13 @@ export interface ProductData {
 
 export interface UpdateProfileData {
   name?: string;
+  email?: string;
   location?: string;
+  address?: string;
+  profession?: string;
+  bio?: string;
   avatarUrl?: string;
+  preferences?: { theme?: 'light' | 'dark' | 'colored' };
 }
 
 export interface BusinessRequest {
@@ -28,13 +34,13 @@ export interface VerifyRequest {
 }
 
 export const getCurrentUser = async () => {
-  const res = await http.get('/users/me');
-  return res.data.data.user;
+  const res = await http.get('/auth/me');
+  return res.data.data.user as User;
 };
 
 export const updateProfile = async (data: UpdateProfileData) => {
   const res = await http.patch('/users/me', data);
-  return res.data.data.user;
+  return res.data.data.user as User;
 };
 
 export const requestVerification = async (data: VerifyRequest) => {

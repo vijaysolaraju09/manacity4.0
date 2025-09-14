@@ -1,36 +1,23 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import { http } from '@/lib/http';
-
-export interface AuthUser {
-  id?: string;
-  name: string;
-  phone: string;
-  location: string;
-  role: string;
-  address?: string;
-  isVerified?: boolean;
-  verificationStatus?: string;
-  profession?: string;
-  bio?: string;
-  avatar?: string;
-  avatarUrl?: string;
-}
+import type { User } from '@/types/user';
 
 export interface SignupDraft {
   name: string;
   phone: string;
   password: string;
-  location: string;
-  role?: string;
+  location?: string;
+  role?: 'customer' | 'business';
+  email?: string;
 }
 
 interface AuthResponse {
-  user: AuthUser;
+  user: User;
   token: string;
 }
 
 interface AuthState {
-  user: AuthUser | null;
+  user: User | null;
   token: string | null;
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
@@ -39,7 +26,7 @@ interface AuthState {
 const storedUser = localStorage.getItem('user');
 
 const initialState: AuthState = {
-  user: storedUser ? (JSON.parse(storedUser) as AuthUser) : null,
+  user: storedUser ? (JSON.parse(storedUser) as User) : null,
   token: localStorage.getItem('token'),
   status: 'idle',
   error: null,
@@ -63,14 +50,14 @@ export const signup = createAsyncThunk(
 
 export const fetchMe = createAsyncThunk('auth/me', async () => {
   const res = await http.get('/auth/me');
-  return res.data.data.user as AuthUser;
+  return res.data.data.user as User;
 });
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setUser(state, action: PayloadAction<AuthUser>) {
+    setUser(state, action: PayloadAction<User>) {
       state.user = action.payload;
       localStorage.setItem('user', JSON.stringify(action.payload));
     },

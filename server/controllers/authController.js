@@ -5,15 +5,22 @@ const AppError = require("../utils/AppError");
 
 exports.signup = async (req, res, next) => {
   try {
-    const { name, phone, password, location, role } = req.body;
+    const { name, phone, password, location, role, email } = req.body;
 
     if (!phone) {
       throw AppError.badRequest('MISSING_CONTACT', 'Phone is required');
     }
 
-    const existingUser = await User.findOne({ phone });
-    if (existingUser) {
+    const existingPhone = await User.findOne({ phone });
+    if (existingPhone) {
       throw AppError.conflict('USER_EXISTS', 'Phone already registered');
+    }
+
+    if (email) {
+      const existingEmail = await User.findOne({ email: email.toLowerCase() });
+      if (existingEmail) {
+        throw AppError.conflict('EMAIL_EXISTS', 'Email already registered');
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -23,8 +30,10 @@ exports.signup = async (req, res, next) => {
       password: hashedPassword,
       location,
       role,
-      address: "",
-      isVerified: true,
+      email,
+      address: '',
+      isVerified: false,
+      verificationStatus: 'none',
     });
 
     const jwtSecret = process.env.JWT_SECRET;
@@ -34,27 +43,12 @@ exports.signup = async (req, res, next) => {
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       jwtSecret,
-      { expiresIn: "7d" }
+      { expiresIn: '7d' }
     );
-
-    const profile = {
-      id: user._id,
-      name: user.name,
-      phone: user.phone,
-      location: user.location,
-      address: user.address,
-      role: user.role,
-      isVerified: user.isVerified,
-      verificationStatus: user.verificationStatus,
-      profession: user.profession,
-      bio: user.bio,
-      avatar: user.avatarUrl,
-      avatarUrl: user.avatarUrl,
-    };
 
     res.status(201).json({
       ok: true,
-      data: { user: profile, token },
+      data: { user: user.toProfileJSON(), token },
       traceId: req.traceId,
     });
   } catch (err) {
@@ -85,23 +79,10 @@ exports.login = async (req, res, next) => {
 
     const token = jwt.sign({ userId: user._id, role: user.role }, jwtSecret, { expiresIn: '7d' });
 
-    // 5) Profile payload (unchanged)
-    const profile = {
-      id: user._id,
-      name: user.name,
-      phone: user.phone,
-      role: user.role,
-      location: user.location,
-      address: user.address,
-      isVerified: user.isVerified,
-      verificationStatus: user.verificationStatus,
-      profession: user.profession,
-      bio: user.bio,
-      avatar: user.avatarUrl,
-      avatarUrl: user.avatarUrl,
-    };
-
-    return res.status(200).json({ ok: true, data: { token, user: profile }, traceId: req.traceId });
+    // 5) Profile payload
+    return res
+      .status(200)
+      .json({ ok: true, data: { token, user: user.toProfileJSON() }, traceId: req.traceId });
   } catch (err) {
     return next(err);
   }
@@ -133,21 +114,7 @@ exports.me = async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) throw AppError.unauthorized('UNAUTHORIZED', 'Unauthorized');
-    const profile = {
-      id: user._id,
-      name: user.name,
-      phone: user.phone,
-      location: user.location,
-      address: user.address,
-      role: user.role,
-      isVerified: user.isVerified,
-      verificationStatus: user.verificationStatus,
-      profession: user.profession,
-      bio: user.bio,
-      avatar: user.avatarUrl,
-      avatarUrl: user.avatarUrl,
-    };
-    res.json({ ok: true, data: { user: profile }, traceId: req.traceId });
+    res.json({ ok: true, data: { user: user.toProfileJSON() }, traceId: req.traceId });
   } catch (err) {
     next(err);
   }

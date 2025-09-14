@@ -88,7 +88,7 @@ exports.updateUserStatus = async (req, res) => {
       }
     }
 
-    user.isActive = active;
+    user.status = active ? 'active' : 'suspended';
     await user.save();
     res.json({ message: 'Status updated' });
   } catch (err) {

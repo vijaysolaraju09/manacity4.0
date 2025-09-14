@@ -9,6 +9,7 @@ import Empty from "@/components/common/Empty";
 import styles from "./Shops.module.scss";
 import FacetFilterBar from "../../components/ui/FacetFilterBar/FacetFilterBar";
 import ShopCard from "../../components/ui/ShopCard/ShopCard";
+import useDebounce from "@/hooks/useDebounce";
 
 const Shops = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -20,6 +21,7 @@ const Shops = () => {
   const [category, setCategory] = useState(searchParams.get("category") || "");
   const [location, setLocation] = useState(searchParams.get("location") || "");
   const [search, setSearch] = useState(searchParams.get("q") || "");
+  const debouncedSearch = useDebounce(search, 300);
   const [openOnly, setOpenOnly] = useState(searchParams.get("open") === "true");
   const [sort, setSort] = useState(searchParams.get("sort") || "rating");
 
@@ -27,13 +29,13 @@ const Shops = () => {
 
   useEffect(() => {
     const params: Record<string, string> = {};
-    if (search) params.q = search;
+    if (debouncedSearch) params.q = debouncedSearch;
     if (category) params.category = category;
     if (location) params.location = location;
     if (openOnly) params.open = "true";
     if (sort) params.sort = sort;
     setSearchParams(params, { replace: true });
-  }, [search, category, location, openOnly, sort, setSearchParams]);
+  }, [debouncedSearch, category, location, openOnly, sort, setSearchParams]);
 
   useEffect(() => {
     const params = Object.fromEntries(searchParams.entries());
@@ -44,7 +46,7 @@ const Shops = () => {
     return (
       (!category || shop.category === category) &&
       (!location || shop.location === location) &&
-      (!search || shop.name.toLowerCase().includes(search.toLowerCase())) &&
+      (!debouncedSearch || shop.name.toLowerCase().includes(debouncedSearch.toLowerCase())) &&
       (!openOnly || shop.isOpen)
     );
   });

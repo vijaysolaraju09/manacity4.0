@@ -11,8 +11,8 @@ const ShopSchema = new mongoose.Schema(
     category: { type: String, required: true },
     location: { type: String, required: true },
     address: { type: String, default: '' },
-    image: { type: String, default: null },
-    banner: { type: String, default: null },
+    image: { type: String },
+    banner: { type: String },
     description: { type: String, default: '', maxlength: 1000 },
     status: {
       type: String,

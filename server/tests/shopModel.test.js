@@ -6,7 +6,13 @@ describe('Shop schema', () => {
     const shop = new Shop({ category: 'general' });
     await expect(shop.validate()).rejects.toThrow();
 
-    const valid = new Shop({ owner: new mongoose.Types.ObjectId(), name: 'Test' });
+    const valid = new Shop({
+      owner: new mongoose.Types.ObjectId(),
+      name: 'Test',
+      category: 'cat',
+      location: 'loc',
+    });
     await expect(valid.validate()).resolves.toBeUndefined();
+    expect(valid.toCardJSON()).toHaveProperty('name', 'Test');
   });
 });

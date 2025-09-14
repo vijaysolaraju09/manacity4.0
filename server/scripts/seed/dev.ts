@@ -4,7 +4,7 @@ import ProductModel from '../../models/Product';
 import EventModel, { EventCategory } from '../../models/Event';
 import UserModel, { Role, VerificationStatus, BusinessStatus } from '../../models/User';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const VerifiedUser = require('../../models/VerifiedUser');
+const Verified = require('../../models/Verified');
 
 async function seed() {
   const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/manacity';
@@ -80,7 +80,7 @@ async function seed() {
       location: { city, pincode: `2000${i}` },
       auth: { passwordHash: `prohash${i}` },
     });
-    await VerifiedUser.create({
+    await Verified.create({
       user: user._id,
       profession: `Profession ${i}`,
       bio: 'Experienced professional',

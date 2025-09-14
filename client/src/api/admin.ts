@@ -1,4 +1,5 @@
 import adminApi from './adminClient';
+import { http } from '@/lib/http';
 
 export interface AdminCreds {
   identifier: string;
@@ -106,16 +107,18 @@ export interface VerificationRequestParams {
 export const fetchVerificationRequests = async (
   params: VerificationRequestParams = {},
 ) => {
-  const res = await adminApi.get('/verified/requests', { params });
-  return res.data;
+  const res = await http.get('/verified', {
+    params: { status: 'pending', ...params },
+  });
+  return res.data?.data || res.data;
 };
 
 export const acceptVerification = async (id: string) => {
-  await adminApi.post(`/verified/accept/${id}`);
+  await adminApi.post(`/verified/${id}/approve`);
 };
 
 export const rejectVerification = async (id: string) => {
-  await adminApi.post(`/verified/reject/${id}`);
+  await adminApi.post(`/verified/${id}/reject`);
 };
 
 export interface ShopQueryParams {

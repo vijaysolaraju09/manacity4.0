@@ -29,7 +29,7 @@ export interface BusinessRequest {
 
 export interface VerifyRequest {
   profession: string;
-  bio: string;
+  bio?: string;
   portfolio?: string[];
 }
 
@@ -44,7 +44,12 @@ export const updateProfile = async (data: UpdateProfileData) => {
 };
 
 export const requestVerification = async (data: VerifyRequest) => {
-  const res = await http.post('/verified/apply', data);
+  const res = await http.post('/verified/request', data);
+  return res.data;
+};
+
+export const updateMyVerified = async (data: VerifyRequest) => {
+  const res = await http.patch('/verified/me', data);
   return res.data;
 };
 
@@ -77,11 +82,6 @@ export const deleteProduct = async (id: string) => {
 
 export const getBusinessOrders = async () => {
   const res = await http.get('/orders/received');
-  return res.data;
-};
-
-export const getVerifiedServiceRequests = async () => {
-  const res = await http.get('/verified/requests');
   return res.data;
 };
 

@@ -1,19 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { http } from "@/lib/http";
 import { toItems, toItem, toErrorMessage } from "@/lib/response";
-
-export interface VerifiedUser {
-  _id: string;
-  name: string;
-  profession: string;
-  location: string;
-  bio?: string;
-  phone?: string;
-  avatarUrl?: string;
-  rating?: number;
-  stats?: Record<string, any>;
-  reviews?: Array<Record<string, any>>;
-}
+import type { VerifiedCard } from "@/types/verified";
 
 type St<T> = {
   items: T[];
@@ -24,7 +12,7 @@ type St<T> = {
   hasMore?: boolean;
 };
 
-const initial: St<VerifiedUser> = {
+const initial: St<VerifiedCard> = {
   items: [],
   item: null,
   status: "idle",
@@ -33,18 +21,7 @@ const initial: St<VerifiedUser> = {
   hasMore: true,
 };
 
-const normalize = (data: any): VerifiedUser => ({
-  _id: data._id,
-  name: data.user?.name || "",
-  profession: data.profession || data.user?.profession || "",
-  location: data.user?.location || "",
-  bio: data.bio || data.user?.bio,
-  phone: data.user?.phone,
-  avatarUrl: data.avatarUrl || data.user?.avatarUrl,
-  rating: data.rating,
-  stats: data.stats,
-  reviews: data.reviews,
-});
+const normalize = (data: any): VerifiedCard => data as VerifiedCard;
 
 export const fetchVerified = createAsyncThunk(
   "verified/fetchAll",
@@ -84,7 +61,7 @@ const verifiedSlice = createSlice({
     });
     b.addCase(fetchVerified.fulfilled, (s, a) => {
       s.status = "succeeded";
-      s.items = a.payload as VerifiedUser[];
+      s.items = a.payload as VerifiedCard[];
     });
     b.addCase(fetchVerified.rejected, (s, a) => {
       s.status = "failed";
@@ -97,7 +74,7 @@ const verifiedSlice = createSlice({
     });
     b.addCase(fetchVerifiedById.fulfilled, (s, a) => {
       s.status = "succeeded";
-      s.item = a.payload as VerifiedUser;
+      s.item = a.payload as VerifiedCard;
     });
     b.addCase(fetchVerifiedById.rejected, (s, a) => {
       s.status = "failed";

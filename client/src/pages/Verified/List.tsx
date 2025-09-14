@@ -18,11 +18,11 @@ const VerifiedList = () => {
 
   const cards = useMemo(
     () =>
-      items.map((user) => (
+      items.map((v) => (
         <VerifiedCard
-          key={user._id}
-          user={user}
-          onClick={() => navigate(`/verified-users/${user._id}`)}
+          key={v._id}
+          card={v}
+          onClick={() => navigate(`/verified-users/${v._id}`)}
         />
       )),
     [items, navigate]
@@ -35,7 +35,7 @@ const VerifiedList = () => {
   useEffect(() => {
     const handle = setTimeout(() => {
       const params: Record<string, string> = {};
-      if (profession) params.profession = profession;
+      if (profession) params.q = profession;
       if (location) params.location = location;
       d(fetchVerified(params));
     }, 300);

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import ModalSheet from '@/components/base/ModalSheet';
 import showToast from '@/components/ui/Toast';
-import { getCurrentUser, updateProfile } from '@/api/profile';
+import { getCurrentUser, updateProfile, requestVerification } from '@/api/profile';
 import { setUser } from '@/store/slices/authSlice';
 import type { RootState, AppDispatch } from '@/store';
 import styles from './Profile.module.scss';
@@ -14,6 +14,7 @@ const Profile = () => {
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
   const [form, setForm] = useState({
     name: user.name,
     email: user.email || '',
@@ -23,6 +24,11 @@ const Profile = () => {
     bio: user.bio || '',
     avatarUrl: user.avatarUrl || '',
     theme: user.preferences?.theme || 'light',
+  });
+  const [verify, setVerify] = useState({
+    profession: user.profession || '',
+    bio: user.bio || '',
+    portfolio: '',
   });
 
   useEffect(() => {
@@ -36,6 +42,11 @@ const Profile = () => {
       avatarUrl: user.avatarUrl || '',
       theme: user.preferences?.theme || 'light',
     });
+    setVerify({
+      profession: user.profession || '',
+      bio: user.bio || '',
+      portfolio: '',
+    });
   }, [user]);
 
   const handleChange = (
@@ -43,6 +54,13 @@ const Profile = () => {
   ) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const handleVerifyChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setVerify((v) => ({ ...v, [name]: value }));
   };
 
   const handleSave = async () => {
@@ -73,6 +91,32 @@ const Profile = () => {
       dispatch(setUser(refreshed));
       showToast('Profile updated', 'success');
       setOpen(false);
+    } catch (err: any) {
+      showToast(err.toString(), 'error');
+    }
+  };
+
+  const handleVerifySubmit = async () => {
+    if (!verify.profession.trim()) {
+      showToast('Profession is required', 'error');
+      return;
+    }
+    try {
+      const payload = {
+        profession: verify.profession,
+        bio: verify.bio || undefined,
+        portfolio: verify.portfolio
+          ? verify.portfolio
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : undefined,
+      };
+      await requestVerification(payload);
+      const refreshed = await getCurrentUser();
+      dispatch(setUser(refreshed));
+      showToast('Verification request submitted', 'success');
+      setVerifyOpen(false);
     } catch (err: any) {
       showToast(err.toString(), 'error');
     }
@@ -118,13 +162,21 @@ const Profile = () => {
         </div>
         <div className={styles.roles}>
           <span className={styles.role}>{user.role}</span>
-          {user.isVerified && (
-            <span className={styles.role}>verified</span>
+          {user.verificationStatus !== 'none' && (
+            <span className={styles.role}>{user.verificationStatus}</span>
           )}
         </div>
         <button className={styles.editBtn} onClick={() => setOpen(true)}>
           Edit Profile
         </button>
+        {user.verificationStatus !== 'approved' && (
+          <button
+            className={styles.editBtn}
+            onClick={() => setVerifyOpen(true)}
+          >
+            Request Verification
+          </button>
+        )}
       </div>
 
       <div className={styles.actions}>
@@ -221,6 +273,55 @@ const Profile = () => {
                 Cancel
               </button>
               <button type="submit">Save</button>
+            </div>
+          </form>
+        </div>
+      </ModalSheet>
+      <ModalSheet open={verifyOpen} onClose={() => setVerifyOpen(false)}>
+        <div className={styles.modalContent}>
+          <h3>Request Verification</h3>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleVerifySubmit();
+            }}
+            className={styles.editForm}
+          >
+            <label>
+              Profession
+              <input
+                name="profession"
+                value={verify.profession}
+                onChange={handleVerifyChange}
+                required
+              />
+            </label>
+            <label>
+              Bio
+              <textarea
+                name="bio"
+                value={verify.bio}
+                onChange={handleVerifyChange}
+                maxLength={500}
+              />
+            </label>
+            <label>
+              Portfolio URLs (comma separated)
+              <textarea
+                name="portfolio"
+                value={verify.portfolio}
+                onChange={handleVerifyChange}
+              />
+            </label>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.cancel}
+                onClick={() => setVerifyOpen(false)}
+              >
+                Cancel
+              </button>
+              <button type="submit">Submit</button>
             </div>
           </form>
         </div>

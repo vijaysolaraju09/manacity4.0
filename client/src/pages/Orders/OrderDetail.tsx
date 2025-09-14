@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { http } from '@/lib/http';
+import { toItem, toErrorMessage } from '@/lib/response';
 import PriceBlock from '../../components/ui/PriceBlock';
 import StatusChip, { type Status } from '../../components/ui/StatusChip';
 import styles from './OrderDetail.module.scss';
@@ -25,32 +26,24 @@ const OrderDetail = () => {
   const { id } = useParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const load = async () => {
       try {
         const res = await http.get(`/orders/${id}`);
-        const data = res.data;
-        const items = data.items || [
-          {
-            _id: data.product?._id || 'item',
-            name: data.product?.name || 'Item',
-            image: data.product?.image,
-            price: data.product?.price || 0,
-            quantity: data.quantity || 1,
-          },
-        ];
-        setOrder({ ...data, items });
-      } catch {
+        setOrder(toItem(res) as Order);
+      } catch (err) {
+        setError(toErrorMessage(err));
         setOrder(null);
       } finally {
         setLoading(false);
       }
     };
-    load();
+    if (id) load();
   }, [id]);
-
   if (loading) return <p className={styles.orderDetail}>Loading...</p>;
+  if (error) return <p className={styles.orderDetail}>{error}</p>;
   if (!order) return <p className={styles.orderDetail}>Order not found.</p>;
 
   const total = order.items.reduce(

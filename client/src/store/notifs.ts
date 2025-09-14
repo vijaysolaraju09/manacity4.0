@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { http } from "@/lib/http";
+import { toItems, toErrorMessage } from "@/lib/response";
 
 export interface Notif {
   _id: string;
@@ -28,9 +29,15 @@ const initial: St<Notif> = {
 
 export const fetchNotifs = createAsyncThunk(
   "notifs/fetchAll",
-  async (params?: any) => {
-    const { data } = await http.get("/notifications", { params });
-    return data as { notifications: Notif[]; hasMore: boolean };
+  async (params: any | undefined, { rejectWithValue }) => {
+    try {
+      const res = await http.get("/notifications", { params });
+      const items = toItems(res) as Notif[];
+      const hasMore = res.data?.hasMore ?? false;
+      return { items, hasMore };
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
@@ -62,13 +69,13 @@ const notifsSlice = createSlice({
     b.addCase(fetchNotifs.fulfilled, (s, a) => {
       s.status = "succeeded";
       const payload: any = a.payload;
-      const arr = payload.notifications || [];
+      const arr = payload.items || [];
       s.items = s.page && s.page > 1 ? [...s.items, ...arr] : arr;
       if (payload.hasMore !== undefined) s.hasMore = payload.hasMore;
     });
     b.addCase(fetchNotifs.rejected, (s, a) => {
       s.status = "failed";
-      s.error = (a.error as any)?.message || "Failed to load";
+      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
     });
     b.addCase(markNotifRead.fulfilled, (s, a) => {
       s.items = s.items.map((n) =>

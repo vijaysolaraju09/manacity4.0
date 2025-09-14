@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AiFillStar } from 'react-icons/ai';
 import { FiPhone, FiArrowLeft, FiShare2 } from 'react-icons/fi';
-import { http } from '@/lib/http';
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState, AppDispatch } from '@/store';
+import { fetchShopById, fetchProductsByShop, type Shop } from '@/store/shops';
 import Shimmer from '../../components/Shimmer';
 import ProductCard, { type Product } from '../../components/ui/ProductCard.tsx';
 import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
@@ -12,27 +14,12 @@ import showToast from '../../components/ui/Toast';
 import './ShopDetails.scss';
 import fallbackImage from '../../assets/no-image.svg';
 
-interface Shop {
-  _id: string;
-  name: string;
-  category: string;
-  location: string;
-  address: string;
-  image?: string;
-  banner?: string;
-  description?: string;
-  owner?: string;
-  rating?: number;
-  contact?: string;
-  isOpen?: boolean;
-}
-
 const ShopDetails = () => {
   const { id } = useParams();
-
-  const [shop, setShop] = useState<Shop | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch<AppDispatch>();
+  const { item: shop, products, status, error } = useSelector(
+    (s: RootState) => s.shops
+  );
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('relevance');
   const [selected, setSelected] = useState<Product | null>(null);
@@ -40,25 +27,11 @@ const ShopDetails = () => {
   const [tab, setTab] = useState<'all' | 'available'>('all');
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const shopRes = await http.get(`/shops/${id}`);
-        setShop(shopRes.data?.data?.shop || shopRes.data?.shop || shopRes.data);
-        const prodRes = await http.get(`/shops/${id}/products`);
-        const items =
-          prodRes.data?.data?.items ||
-          prodRes.data?.items ||
-          (Array.isArray(prodRes.data) ? prodRes.data : []);
-        setProducts(items);
-      } catch {
-        setShop(null);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [id]);
+    if (id) {
+      dispatch(fetchShopById(id));
+      dispatch(fetchProductsByShop(id));
+    }
+  }, [id, dispatch]);
 
   const filtered = useMemo(() => {
     const bySearch = products.filter((p) =>
@@ -71,7 +44,7 @@ const ShopDetails = () => {
     return sorted;
   }, [products, search, sort, tab]);
 
-  if (loading || !shop)
+  if (status === 'loading' || !shop)
     return (
       <div className="shop-details">
         <div className="hero">
@@ -85,6 +58,13 @@ const ShopDetails = () => {
             <SkeletonProductCard key={i} />
           ))}
         </div>
+      </div>
+    );
+
+  if (status === 'failed' || !shop)
+    return (
+      <div className="shop-details">
+        <EmptyState message={error || 'Failed to load shop'} />
       </div>
     );
 
@@ -123,10 +103,10 @@ const ShopDetails = () => {
         />
         <div className="overlay">
           <h2>{shop.name}</h2>
-          {shop.rating && (
+          {shop.ratingAvg !== undefined && (
             <div className="rating">
               <AiFillStar color="var(--color-warning)" />
-              <span>{shop.rating.toFixed(1)}</span>
+              <span>{shop.ratingAvg.toFixed(1)}</span>
             </div>
           )}
           <p className="address">{shop.address || shop.location}</p>

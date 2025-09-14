@@ -9,6 +9,7 @@ const {
 } = require('../controllers/adminController');
 const { adminUpdate } = require('../controllers/userController');
 const { getAdminMessages } = require('../controllers/adminMessageController');
+const { approveShop, rejectShop } = require('../controllers/shopsController');
 const protect = require('../middleware/authMiddleware');
 const isAdmin = require('../middleware/isAdmin');
 const validate = require('../middleware/validate');
@@ -39,5 +40,8 @@ router.put(
 router.delete('/users/:id', protect, isAdmin, deleteUser);
 router.put('/user/:id/verify', protect, isAdmin, verifyUser);
 router.get('/orders', protect, isAdmin, getAllOrders);
+
+router.post('/shops/:id/approve', protect, isAdmin, approveShop);
+router.post('/shops/:id/reject', protect, isAdmin, rejectShop);
 
 module.exports = router;

@@ -3,14 +3,22 @@ import { http } from "@/lib/http";
 import { toItems, toItem, toErrorMessage } from "@/lib/response";
 
 export interface Shop {
+  id: string;
   _id: string;
+  owner: string;
   name: string;
   category: string;
   location: string;
+  address: string;
+  image?: string | null;
+  banner?: string | null;
+  description?: string;
+  status: "pending" | "approved" | "rejected";
+  ratingAvg?: number;
+  ratingCount?: number;
+  createdAt?: string;
+  contact?: string;
   isOpen?: boolean;
-  image?: string;
-  logo?: string;
-  rating?: number;
   distance?: number;
   products?: Product[];
 }
@@ -50,7 +58,12 @@ export const fetchShops = createAsyncThunk(
     { rejectWithValue }: { rejectWithValue: (value: any) => any }
   ) => {
     try {
-      const res = await http.get("/shops", { params });
+      const p = { ...(params || {}) };
+      if (p.status) {
+        const map: Record<string, string> = { active: "approved", suspended: "rejected" };
+        p.status = map[p.status] || p.status;
+      }
+      const res = await http.get("/shops", { params: p });
       return toItems(res) as Shop[];
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));

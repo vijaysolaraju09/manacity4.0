@@ -10,7 +10,11 @@ export const toItems = (res: any): any[] => {
 export const toItem = (res: any): any => {
   const d = res?.data ?? res;
   if (d && typeof d === 'object') {
-    if (d.data && typeof d.data === 'object') return d.data;
+    if (d.data && typeof d.data === 'object') {
+      if (d.data.shop && typeof d.data.shop === 'object') return d.data.shop;
+      return d.data;
+    }
+    if (d.shop && typeof d.shop === 'object') return d.shop;
     if (d.item && typeof d.item === 'object') return d.item;
   }
   return d;

@@ -19,7 +19,7 @@ const Shops = () => {
 
   const [category, setCategory] = useState(searchParams.get("category") || "");
   const [location, setLocation] = useState(searchParams.get("location") || "");
-  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [search, setSearch] = useState(searchParams.get("q") || "");
   const [openOnly, setOpenOnly] = useState(searchParams.get("open") === "true");
   const [sort, setSort] = useState(searchParams.get("sort") || "rating");
 
@@ -27,7 +27,7 @@ const Shops = () => {
 
   useEffect(() => {
     const params: Record<string, string> = {};
-    if (search) params.search = search;
+    if (search) params.q = search;
     if (category) params.category = category;
     if (location) params.location = location;
     if (openOnly) params.open = "true";
@@ -50,7 +50,7 @@ const Shops = () => {
   });
 
   const sortedShops = [...filteredShops].sort((a, b) => {
-    if (sort === "rating") return (b.rating || 0) - (a.rating || 0);
+    if (sort === "rating") return (b.ratingAvg || 0) - (a.ratingAvg || 0);
     if (sort === "distance") return (a.distance || 0) - (b.distance || 0);
     if (sort === "productCount")
       return (b.products?.length || 0) - (a.products?.length || 0);
@@ -100,9 +100,13 @@ const Shops = () => {
             <ShopCard
               key={shop._id}
               shop={{
-                ...shop,
+                _id: shop._id,
+                name: shop.name,
+                category: shop.category,
+                image: shop.image || undefined,
+                logo: shop.image || undefined,
+                rating: shop.ratingAvg,
                 distance: shop.distance,
-                rating: shop.rating,
                 isOpen: shop.isOpen,
               }}
               onClick={() => navigate(`/shops/${shop._id}`)}

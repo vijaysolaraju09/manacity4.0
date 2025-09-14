@@ -12,10 +12,13 @@ export const toItem = (res: any): any => {
   if (d && typeof d === 'object') {
     if (d.data && typeof d.data === 'object') {
       if (d.data.shop && typeof d.data.shop === 'object') return d.data.shop;
+      if (d.data.verified && typeof d.data.verified === 'object')
+        return d.data.verified;
       return d.data;
     }
     if (d.shop && typeof d.shop === 'object') return d.shop;
     if (d.item && typeof d.item === 'object') return d.item;
+      if (d.verified && typeof d.verified === 'object') return d.verified;
   }
   return d;
 };

@@ -15,13 +15,13 @@ import showToast from '@/components/ui/Toast';
 const VerifiedDetails = () => {
   const { id } = useParams();
   const d = useDispatch<any>();
-  const { item: user, status, error } = useSelector((s: RootState) => s.verified);
+  const { item: verified, status, error } = useSelector((s: RootState) => s.verified);
 
   useEffect(() => {
     if (id) d(fetchVerifiedById(id));
   }, [id, d]);
 
-  if (status === 'loading' || !user)
+  if (status === 'loading' || !verified)
     return (
       <div className={styles.details}>
         <div className={styles.header}>
@@ -39,14 +39,14 @@ const VerifiedDetails = () => {
     );
   if (status === 'failed')
     return <ErrorCard msg={error || 'Failed to load user'} onRetry={() => id && d(fetchVerifiedById(id))} />;
-  if (status === 'succeeded' && !user) return <Empty msg='No user found.' />;
+  if (status === 'succeeded' && !verified) return <Empty msg='No user found.' />;
 
   const handleOrder = async () => {
-    if (!user) return;
+    if (!verified) return;
     try {
-      await http.post('/verified/orders', { targetId: user._id });
+      await http.post('/verified/orders', { targetId: verified._id });
       showToast('Request sent', 'success');
-      window.location.href = `tel:${user.phone}`;
+      window.location.href = `tel:${verified.user.phone}`;
     } catch {
       showToast('Failed to send request', 'error');
     }
@@ -57,63 +57,30 @@ const VerifiedDetails = () => {
       <div className={styles.header}>
         <img
           src={
-            user.avatarUrl ||
-            `https://ui-avatars.com/api/?name=${user.name}&background=random`
+            `https://ui-avatars.com/api/?name=${verified.user.name}&background=random`
           }
-          alt={user.name}
+          alt={verified.user.name}
           onError={(e) => (e.currentTarget.src = fallbackImage)}
         />
         <div className={styles.info}>
           <h2>
-            {user.name} <AiFillCheckCircle className={styles.badge} />
+            {verified.user.name} <AiFillCheckCircle className={styles.badge} />
           </h2>
-          <p>{user.profession}</p>
-          <p>{user.location}</p>
-          {user.rating && (
+          <p>{verified.profession}</p>
+          <p>{verified.user.location}</p>
+          {verified.ratingAvg && (
             <div className={styles.rating}>
               <AiFillStar />
-              <span>{user.rating.toFixed(1)}</span>
+              <span>{verified.ratingAvg.toFixed(1)}</span>
             </div>
           )}
         </div>
       </div>
 
-      {user.bio && (
+      {verified.bio && (
         <div className={styles.bio}>
           <h4>About</h4>
-          <p>{user.bio}</p>
-        </div>
-      )}
-
-      {user.stats && (
-        <div className={styles.stats}>
-          <h4>Stats</h4>
-          <ul>
-            {Object.entries(user.stats).map(([k, v]) => (
-              <li key={k}>
-                <strong>{v as any}</strong>
-                <span>{k}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {user.reviews && user.reviews.length > 0 && (
-        <div className={styles.reviews}>
-          <h4>Reviews</h4>
-          {user.reviews.map((review: any) => (
-            <div key={review._id} className={styles.review}>
-              <div className={styles.reviewHeader}>
-                <span>{review.reviewer}</span>
-                <div className={styles.reviewRating}>
-                  <AiFillStar />
-                  <span>{review.rating}</span>
-                </div>
-              </div>
-              <p>{review.comment}</p>
-            </div>
-          ))}
+          <p>{verified.bio}</p>
         </div>
       )}
 

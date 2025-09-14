@@ -2,20 +2,15 @@ import { AiFillCheckCircle, AiFillStar } from 'react-icons/ai';
 import { motion } from 'framer-motion';
 import fallbackImage from '../../../assets/no-image.svg';
 import styles from './VerifiedCard.module.scss';
+import type { VerifiedCard as VCard } from '@/types/verified';
 
 export interface VerifiedCardProps {
-  user: {
-    _id: string;
-    name: string;
-    profession: string;
-    location: string;
-    avatarUrl?: string;
-    rating?: number;
-  };
+  card: VCard;
   onClick?: () => void;
 }
 
-const VerifiedCard = ({ user, onClick }: VerifiedCardProps) => {
+const VerifiedCard = ({ card, onClick }: VerifiedCardProps) => {
+  const u = card.user;
   return (
     <motion.div
       className={styles.card}
@@ -31,20 +26,21 @@ const VerifiedCard = ({ user, onClick }: VerifiedCardProps) => {
       </div>
       <img
         className={styles.avatar}
-        src={
-          user.avatarUrl ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`
-        }
-        alt={user.name}
+        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random`}
+        alt={u.name}
         onError={(e) => (e.currentTarget.src = fallbackImage)}
       />
       <div className={styles.info}>
-        <h3>{user.name}</h3>
-        <p className={styles.profession}>{user.profession}</p>
-        <p className={styles.location}>{user.location}</p>
+        <h3>{u.name}</h3>
+        <p className={styles.profession}>{card.profession}</p>
+        <p className={styles.location}>{u.location}</p>
         <div className={styles.rating}>
           <AiFillStar />
-          <span>{user.rating?.toFixed(1) ?? 'N/A'}</span>
+          <span>{
+            card.ratingAvg !== undefined
+              ? card.ratingAvg.toFixed(1)
+              : 'N/A'
+          }</span>
         </div>
       </div>
     </motion.div>

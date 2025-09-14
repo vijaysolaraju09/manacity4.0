@@ -20,6 +20,7 @@ import ProductsSkeleton from '@/components/common/ProductsSkeleton';
 import ErrorCard from '@/components/common/ErrorCard';
 import fallbackImage from '../../assets/no-image.svg';
 import { formatSchedule } from '@/utils/date';
+import VerifiedCard from '@/components/ui/VerifiedCard/VerifiedCard';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -159,18 +160,18 @@ const Section = ({ title, data, status, error, type, onRetry, navigate }: Sectio
               product={item}
               onClick={() => navigate(`/product/${item._id}`)}
             />
+          ) : type === 'user' ? (
+            <VerifiedCard
+              key={item._id}
+              card={item}
+              onClick={() => navigate(`/verified-users/${item._id}`)}
+            />
           ) : (
             <motion.div
               key={item._id}
               className="card"
               whileHover={{ scale: 1.03 }}
-              onClick={() =>
-                navigate(
-                  type === 'user'
-                    ? `/verified-users/${item._id}`
-                    : `/events/${item._id}`
-                )
-              }
+              onClick={() => navigate(`/events/${item._id}`)}
             >
               <img
                 src={item.cover || fallbackImage}
@@ -183,7 +184,9 @@ const Section = ({ title, data, status, error, type, onRetry, navigate }: Sectio
               />
               <div className="card-info">
                 <h4>{item.title || item.name}</h4>
-                {type === 'event' && <p>{formatSchedule(item.startsAt, item.endsAt)}</p>}
+                {type === 'event' && (
+                  <p>{formatSchedule(item.startsAt, item.endsAt)}</p>
+                )}
               </div>
             </motion.div>
           )

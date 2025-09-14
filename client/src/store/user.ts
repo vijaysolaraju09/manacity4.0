@@ -1,14 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { http } from "@/lib/http";
-
-export interface UserProfile {
-  _id: string;
-  name: string;
-  phone?: string;
-  location?: string;
-  role?: string;
-  avatar?: string;
-}
+import type { User } from "@/types/user";
 
 type St<T> = {
   items: T[];
@@ -17,7 +9,7 @@ type St<T> = {
   error: string | null;
 };
 
-const initial: St<UserProfile> = {
+const initial: St<User> = {
   items: [],
   item: null,
   status: "idle",
@@ -25,15 +17,15 @@ const initial: St<UserProfile> = {
 };
 
 export const fetchProfile = createAsyncThunk("user/fetchProfile", async () => {
-  const { data } = await http.get("/users/me");
-  return data.data.user as UserProfile;
+  const { data } = await http.get("/auth/me");
+  return data.data.user as User;
 });
 
 export const updateProfile = createAsyncThunk(
   "user/updateProfile",
-  async (payload: Partial<UserProfile>) => {
+  async (payload: Partial<User>) => {
     const { data } = await http.patch("/users/me", payload);
-    return data.data.user as UserProfile;
+    return data.data.user as User;
   }
 );
 
@@ -48,14 +40,14 @@ const userSlice = createSlice({
     });
     b.addCase(fetchProfile.fulfilled, (s, a) => {
       s.status = "succeeded";
-      s.item = a.payload as UserProfile;
+      s.item = a.payload as User;
     });
     b.addCase(fetchProfile.rejected, (s, a) => {
       s.status = "failed";
       s.error = (a.error as any)?.message || "Failed to load";
     });
     b.addCase(updateProfile.fulfilled, (s, a) => {
-      s.item = a.payload as UserProfile;
+      s.item = a.payload as User;
     });
   },
 });

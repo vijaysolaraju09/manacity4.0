@@ -7,6 +7,7 @@ const {
   verifyUser,
   getAllOrders,
 } = require('../controllers/adminController');
+const { adminUpdate } = require('../controllers/userController');
 const { getAdminMessages } = require('../controllers/adminMessageController');
 const protect = require('../middleware/authMiddleware');
 const isAdmin = require('../middleware/isAdmin');
@@ -20,6 +21,7 @@ const router = express.Router();
 
 router.get('/messages', getAdminMessages);
 router.get('/users', protect, isAdmin, getUsers);
+router.patch('/users/:id', protect, isAdmin, adminUpdate);
 router.put(
   '/users/:id/role',
   protect,

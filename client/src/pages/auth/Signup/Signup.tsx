@@ -19,12 +19,14 @@ const Signup = () => {
     phone: '',
     password: '',
     location: '',
+    email: '',
   });
   const [errors, setErrors] = useState<{
     name?: string;
     phone?: string;
     password?: string;
     location?: string;
+    email?: string;
     general?: string;
   }>({});
   const [loading, setLoading] = useState(false);
@@ -48,6 +50,7 @@ const Signup = () => {
       phone?: string;
       password?: string;
       location?: string;
+      email?: string;
     } = {};
     if (!form.name.trim()) newErrors.name = 'Name is required';
     const phoneE164 = form.phone ? normalizePhone(form.phone) : null;
@@ -57,12 +60,13 @@ const Signup = () => {
     if (form.password.length < 6)
       newErrors.password = 'Password must be at least 6 characters';
     if (!form.location) newErrors.location = 'Location is required';
+    if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) newErrors.email = 'Invalid email';
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
     try {
       setLoading(true);
-      const payload = { ...form, phone: phoneE164! };
+      const payload = { ...form, phone: phoneE164!, email: form.email || undefined };
       await dispatch(signupThunk(payload)).unwrap();
       showToast('Account created.', 'success');
       navigate('/home');
@@ -97,6 +101,12 @@ const Signup = () => {
             Phone Number
             <input type="tel" name="phone" value={form.phone} onChange={handleChange} />
             {errors.phone && <span className="error">{errors.phone}</span>}
+          </label>
+
+          <label>
+            Email (optional)
+            <input type="email" name="email" value={form.email || ''} onChange={handleChange} />
+            {errors.email && <span className="error">{errors.email}</span>}
           </label>
 
           <label>

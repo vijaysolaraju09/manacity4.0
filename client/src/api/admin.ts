@@ -11,7 +11,7 @@ export const adminLogin = async ({ identifier, password }: AdminCreds) => {
     email: identifier,
     password,
   });
-  const { token } = res.data;
+  const token = res.data?.data?.token;
   if (token) {
     localStorage.setItem('manacity_admin_token', token);
   }

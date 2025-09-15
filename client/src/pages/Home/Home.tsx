@@ -78,6 +78,7 @@ const Home = () => {
 
       <Section
         title="Shop Offers"
+        path="/shops"
         data={shops.items}
         status={shops.status}
         error={shops.error}
@@ -87,6 +88,7 @@ const Home = () => {
       />
       <Section
         title="Verified Users"
+        path="/verified-users"
         data={verified.items}
         status={verified.status}
         error={verified.error}
@@ -96,6 +98,7 @@ const Home = () => {
       />
       <Section
         title="Events"
+        path="/events"
         data={events.items}
         status={events.status}
         error={events.error}
@@ -105,6 +108,7 @@ const Home = () => {
       />
       <Section
         title="Special Shop Products"
+        path="/special-shop"
         data={products.items}
         status={products.status}
         error={products.error}
@@ -118,6 +122,7 @@ const Home = () => {
 
 interface SectionProps {
   title: string;
+  path: string;
   data: any[];
   status: string;
   error: string | null;
@@ -126,32 +131,32 @@ interface SectionProps {
   navigate: ReturnType<typeof useNavigate>;
 }
 
-const Section = ({ title, data, status, error, type, onRetry, navigate }: SectionProps) => {
+const Section = ({ title, path, data, status, error, type, onRetry, navigate }: SectionProps) => {
   const loading = status === 'loading';
   if (loading)
     return (
       <div className="section">
-        <SectionHeader title={title} onClick={() => navigate(`/${title.toLowerCase().replace(/ /g, '-')}`)} />
+        <SectionHeader title={title} onClick={() => navigate(path)} />
         {type === 'product' ? <ProductsSkeleton /> : type === 'event' ? <EventsSkeleton /> : <ShopsSkeleton />}
       </div>
     );
   if (status === 'failed')
     return (
       <div className="section">
-        <SectionHeader title={title} onClick={() => navigate(`/${title.toLowerCase().replace(/ /g, '-')}`)} />
+        <SectionHeader title={title} onClick={() => navigate(path)} />
         <ErrorCard msg={error || `Failed to load ${title}`} onRetry={onRetry} />
       </div>
     );
   if (status === 'succeeded' && data.length === 0)
     return (
       <div className="section">
-        <SectionHeader title={title} onClick={() => navigate(`/${title.toLowerCase().replace(/ /g, '-')}`)} />
+        <SectionHeader title={title} onClick={() => navigate(path)} />
         <Empty message={`No ${title.toLowerCase()}`} />
       </div>
     );
   return (
     <div className="section">
-      <SectionHeader title={title} onClick={() => navigate(`/${title.toLowerCase().replace(/ /g, '-')}`)} />
+      <SectionHeader title={title} onClick={() => navigate(path)} />
       <HorizontalCarousel>
         {data.map((item: any) =>
           type === 'product' ? (

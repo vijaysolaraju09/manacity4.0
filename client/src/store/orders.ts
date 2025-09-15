@@ -5,6 +5,7 @@ import {
   type EntityState,
 } from '@reduxjs/toolkit';
 import { http } from '@/lib/http';
+import { toItems, toItem, toErrorMessage } from '@/lib/response';
 import type { RootState } from './index';
 
 export interface OrderItem {
@@ -46,33 +47,55 @@ const initialState: OrdersSliceState = {
 
 export const fetchMyOrders = createAsyncThunk(
   'orders/fetchMine',
-  async () => {
-    const res = await http.get('/orders/mine');
-    return res.data.data as Order[];
+  async (_: void, { rejectWithValue }) => {
+    try {
+      const res = await http.get('/orders/mine');
+      return toItems(res) as Order[];
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
 export const fetchReceivedOrders = createAsyncThunk(
   'orders/fetchReceived',
-  async () => {
-    const res = await http.get('/orders/received');
-    return res.data.data as Order[];
+  async (_: void, { rejectWithValue }) => {
+    try {
+      const res = await http.get('/orders/received');
+      return toItems(res) as Order[];
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
 export const updateOrderStatus = createAsyncThunk(
   'orders/updateStatus',
-  async ({ id, action }: { id: string; action: string }) => {
-    const res = await http.patch(`/orders/${id}`, { action });
-    return res.data.data as Order;
+  async (
+    { id, action }: { id: string; action: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await http.patch(`/orders/${id}`, { action });
+      return toItem(res) as Order;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
 export const updateServiceOrderStatus = createAsyncThunk(
   'orders/updateServiceStatus',
-  async ({ id, action }: { id: string; action: string }) => {
-    const res = await http.patch(`/verified/orders/${id}`, { action });
-    return res.data.data as Order;
+  async (
+    { id, action }: { id: string; action: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await http.patch(`/verified/orders/${id}`, { action });
+      return toItem(res) as Order;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
@@ -88,11 +111,12 @@ const ordersSlice = createSlice({
       })
       .addCase(fetchMyOrders.fulfilled, (state, action) => {
         state.mine.status = 'succeeded';
-        ordersAdapter.setAll(state.mine, action.payload);
+        ordersAdapter.setAll(state.mine, action.payload as Order[]);
       })
       .addCase(fetchMyOrders.rejected, (state, action) => {
         state.mine.status = 'failed';
-        state.mine.error = action.error.message || 'Failed to load';
+        state.mine.error =
+          (action.payload as string) || action.error.message || 'Failed to load';
       })
       .addCase(fetchReceivedOrders.pending, (state) => {
         state.received.status = 'loading';
@@ -100,11 +124,12 @@ const ordersSlice = createSlice({
       })
       .addCase(fetchReceivedOrders.fulfilled, (state, action) => {
         state.received.status = 'succeeded';
-        ordersAdapter.setAll(state.received, action.payload);
+        ordersAdapter.setAll(state.received, action.payload as Order[]);
       })
       .addCase(fetchReceivedOrders.rejected, (state, action) => {
         state.received.status = 'failed';
-        state.received.error = action.error.message || 'Failed to load';
+        state.received.error =
+          (action.payload as string) || action.error.message || 'Failed to load';
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         ordersAdapter.upsertOne(state.mine, action.payload);

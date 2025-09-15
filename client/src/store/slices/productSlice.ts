@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import { http } from '@/lib/http';
+import { toItems, toItem, toErrorMessage } from '@/lib/response';
 
 export interface Product {
   _id: string;
@@ -23,21 +24,42 @@ interface ProductState {
 
 const initialState: ProductState = { items: [], loading: false };
 
-export const fetchMyProducts = createAsyncThunk('products/fetchMy', async () => {
-  const res = await http.get('/products/my');
-  return res.data as Product[];
-});
+export const fetchMyProducts = createAsyncThunk(
+  'products/fetchMy',
+  async (_: void, { rejectWithValue }) => {
+    try {
+      const res = await http.get('/products/my');
+      return toItems(res) as Product[];
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
+  }
+);
 
-export const createProduct = createAsyncThunk('products/create', async (data: Partial<Product>) => {
-  const res = await http.post('/products', data);
-  return res.data as Product;
-});
+export const createProduct = createAsyncThunk(
+  'products/create',
+  async (data: Partial<Product>, { rejectWithValue }) => {
+    try {
+      const res = await http.post('/products', data);
+      return toItem(res) as Product;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
+  }
+);
 
 export const updateProduct = createAsyncThunk(
   'products/update',
-  async ({ id, data }: { id: string; data: Partial<Product> }) => {
-    const res = await http.patch(`/products/${id}`, data);
-    return res.data as Product;
+  async (
+    { id, data }: { id: string; data: Partial<Product> },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await http.patch(`/products/${id}`, data);
+      return toItem(res) as Product;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 

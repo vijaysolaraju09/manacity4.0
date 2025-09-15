@@ -44,7 +44,6 @@ const VerificationRequests = lazy(() => import('./pages/VerificationRequests'));
 const BusinessRequests = lazy(() => import('./pages/BusinessRequests'));
 const AdminUsers = lazy(() => import('./pages/AdminUsers'));
 const AdminAnalytics = lazy(() => import('./pages/AdminAnalytics'));
-const UiPreview = lazy(() => import('./pages/UiPreview'));
 const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
 
 function App() {
@@ -71,7 +70,6 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/preview" element={<UiPreview />} />
         <Route path="/admin" element={<AdminProtectedRoute />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />

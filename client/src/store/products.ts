@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { http } from "@/lib/http";
+import { toItems, toItem, toErrorMessage } from "@/lib/response";
 
 export interface Product {
   _id: string;
@@ -37,17 +38,25 @@ const initial: St<Product> = {
 
 export const fetchSpecialProducts = createAsyncThunk(
   "products/fetchSpecial",
-  async (params?: any) => {
-    const { data } = await http.get("/special", { params });
-    return Array.isArray(data) ? { items: data } : data;
+  async (params: any | undefined, { rejectWithValue }) => {
+    try {
+      const res = await http.get("/special", { params });
+      return toItems(res) as Product[];
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
 export const fetchProductById = createAsyncThunk(
   "products/fetchById",
-  async (id: string) => {
-    const { data } = await http.get(`/products/${id}`);
-    return data;
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await http.get(`/products/${id}`);
+      return toItem(res) as Product;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
@@ -66,17 +75,11 @@ const productsSlice = createSlice({
     });
     b.addCase(fetchSpecialProducts.fulfilled, (s, a) => {
       s.status = "succeeded";
-      const payload: any = a.payload;
-      const arr = Array.isArray(payload?.items)
-        ? payload.items
-        : Array.isArray(payload)
-        ? payload
-        : [];
-      s.items = arr;
+      s.items = a.payload as Product[];
     });
     b.addCase(fetchSpecialProducts.rejected, (s, a) => {
       s.status = "failed";
-      s.error = (a.error as any)?.message || "Failed to load";
+      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
     });
     b.addCase(fetchProductById.pending, (s) => {
       s.status = "loading";
@@ -89,7 +92,7 @@ const productsSlice = createSlice({
     });
     b.addCase(fetchProductById.rejected, (s, a) => {
       s.status = "failed";
-      s.error = (a.error as any)?.message || "Failed to load";
+      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
     });
   },
 });

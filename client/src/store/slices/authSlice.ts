@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import { http } from '@/lib/http';
+import { toItem, toErrorMessage } from '@/lib/response';
 import type { User } from '@/types/user';
 
 export interface SignupDraft {
@@ -34,24 +35,42 @@ const initialState: AuthState = {
 
 export const login = createAsyncThunk(
   'auth/login',
-  async (creds: { phone: string; password: string }) => {
-    const res = await http.post('/auth/login', creds);
-    return res.data.data as AuthResponse;
+  async (
+    creds: { phone: string; password: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await http.post('/auth/login', creds);
+      return toItem(res) as AuthResponse;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
 export const signup = createAsyncThunk(
   'auth/signup',
-  async (payload: SignupDraft) => {
-    const res = await http.post('/auth/signup', payload);
-    return res.data.data as AuthResponse;
+  async (payload: SignupDraft, { rejectWithValue }) => {
+    try {
+      const res = await http.post('/auth/signup', payload);
+      return toItem(res) as AuthResponse;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
   }
 );
 
-export const fetchMe = createAsyncThunk('auth/me', async () => {
-  const res = await http.get('/auth/me');
-  return res.data.data.user as User;
-});
+export const fetchMe = createAsyncThunk(
+  'auth/me',
+  async (_: void, { rejectWithValue }) => {
+    try {
+      const res = await http.get('/auth/me');
+      return toItem(res) as User;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: 'auth',
@@ -89,7 +108,8 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message || 'Login failed';
+        state.error =
+          (action.payload as string) || action.error.message || 'Login failed';
       })
       .addCase(signup.pending, (state) => {
         state.status = 'loading';
@@ -104,7 +124,8 @@ const authSlice = createSlice({
       })
       .addCase(signup.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message || 'Signup failed';
+        state.error =
+          (action.payload as string) || action.error.message || 'Signup failed';
       })
       .addCase(fetchMe.pending, (state) => {
         state.status = 'loading';
@@ -117,7 +138,8 @@ const authSlice = createSlice({
       })
       .addCase(fetchMe.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message || 'Failed to fetch user';
+        state.error =
+          (action.payload as string) || action.error.message || 'Failed to fetch user';
       });
   },
 });

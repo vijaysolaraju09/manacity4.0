@@ -49,7 +49,7 @@ const computeLifecycleStatus = (start, end, currentStatus) => {
 
 exports.listEvents = async (req, res, next) => {
   try {
-    const { status, page = 1, pageSize = 10, sort = '-startAt' } = req.query;
+    const { status, page = 1, pageSize = 10, sort = '-startAt', query } = req.query;
     const pageNumber = Math.max(1, parseInt(page, 10) || 1);
     const size = Math.min(
       MAX_PAGE_SIZE,
@@ -88,6 +88,10 @@ exports.listEvents = async (req, res, next) => {
         { status: { $in: ['completed', 'canceled'] } },
         { endAt: { $lt: now } },
       ];
+    }
+
+    if (typeof query === 'string' && query.trim()) {
+      filter.title = { $regex: query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     }
 
     const [events, total] = await Promise.all([

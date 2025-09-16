@@ -366,6 +366,7 @@ export interface EventQueryParams {
   page?: number;
   pageSize?: number;
   sort?: string;
+  query?: string;
 }
 
 export const fetchEvents = async (params: EventQueryParams = {}) => {

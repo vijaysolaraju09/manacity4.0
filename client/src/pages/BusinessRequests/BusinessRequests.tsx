@@ -32,6 +32,7 @@ const BusinessRequests = () => {
   const [requests, setRequests] = useState<ShopRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionId, setActionId] = useState('');
+  const [total, setTotal] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const status = searchParams.get('status') || '';
@@ -46,10 +47,18 @@ const BusinessRequests = () => {
         if (status) params.status = status;
         if (category) params.category = category;
         if (location) params.location = location;
-        const data: ShopRequest[] = await fetchBusinessRequests(params);
-        setRequests(data);
+        const result = await fetchBusinessRequests(params);
+        const items = Array.isArray(result.items)
+          ? (result.items as ShopRequest[])
+          : Array.isArray((result as any).requests)
+          ? ((result as any).requests as ShopRequest[])
+          : [];
+        setRequests(items);
+        setTotal(typeof result.total === 'number' ? result.total : items.length);
       } catch {
         setRequests([]);
+        setTotal(0);
+        showToast('Failed to load requests', 'error');
       } finally {
         setLoading(false);
       }
@@ -69,6 +78,7 @@ const BusinessRequests = () => {
     newStatus: 'approved' | 'rejected',
   ) => {
     const prev = [...requests];
+    const prevTotal = total;
     let updated = requests.map((r) =>
       r._id === id ? { ...r, status: newStatus } : r,
     );
@@ -77,6 +87,9 @@ const BusinessRequests = () => {
     }
     setRequests(updated);
     setActionId(id);
+    if (status && status !== newStatus) {
+      setTotal((t) => Math.max(0, t - 1));
+    }
     try {
       if (newStatus === 'approved') await approveShop(id);
       else await rejectShop(id);
@@ -85,6 +98,7 @@ const BusinessRequests = () => {
       );
     } catch {
       setRequests(prev);
+      setTotal(prevTotal);
       showToast('Failed to update request', 'error');
     } finally {
       setActionId('');
@@ -164,7 +178,7 @@ const BusinessRequests = () => {
         rows={requests as RequestRow[]}
         page={1}
         pageSize={requests.length || 1}
-        total={requests.length}
+        total={total}
         onPageChange={() => {}}
         loading={loading}
       />

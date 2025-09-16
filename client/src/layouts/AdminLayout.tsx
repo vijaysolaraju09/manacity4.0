@@ -1,4 +1,4 @@
-import { Link, Outlet } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import './AdminLayout.scss';
 
 const AdminLayout = () => {
@@ -7,14 +7,41 @@ const AdminLayout = () => {
       <aside className="admin-sidebar">
         <nav>
           <ul>
-            <li><Link to="/admin">Dashboard</Link></li>
-            <li><Link to="/admin/requests/business">Business Requests</Link></li>
-            <li><Link to="/admin/requests/verification">Verification Requests</Link></li>
-            <li><Link to="/admin/shops">Shops</Link></li>
-            <li><Link to="/admin/products">Products</Link></li>
-            <li><span>Events</span></li>
-            <li><Link to="/admin/users">Users</Link></li>
-            <li><Link to="/admin/analytics">Analytics</Link></li>
+            <li>
+              <NavLink to="/admin" end>
+                Dashboard
+              </NavLink>
+            </li>
+            <li className="nav-group">
+              <span className="nav-group__label">Requests</span>
+              <ul>
+                <li>
+                  <NavLink to="/admin/requests/business">
+                    Business Requests
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/requests/verification">
+                    Verification Requests
+                  </NavLink>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <NavLink to="/admin/shops">Shops</NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/products">Products</NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/events">Events</NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/users">Users</NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/analytics">Analytics</NavLink>
+            </li>
           </ul>
         </nav>
       </aside>

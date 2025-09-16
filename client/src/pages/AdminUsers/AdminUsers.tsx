@@ -46,8 +46,9 @@ const AdminUsers = () => {
         pageSize,
       };
       const data = await fetchUsers(params);
-      setUsers(data.items as User[]);
-      setTotal(data.total);
+      const items = Array.isArray(data.items) ? (data.items as User[]) : [];
+      setUsers(items);
+      setTotal(typeof data.total === 'number' ? data.total : items.length);
     } catch {
       showToast('Failed to load users', 'error');
     } finally {

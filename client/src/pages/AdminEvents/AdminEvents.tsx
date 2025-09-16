@@ -67,8 +67,9 @@ const AdminEvents = () => {
         pageSize,
       };
       const data = await fetchEvents(params);
-      setEvents(data.items as EventItem[]);
-      setTotal(data.total);
+      const items = Array.isArray(data.items) ? (data.items as EventItem[]) : [];
+      setEvents(items);
+      setTotal(typeof data.total === 'number' ? data.total : items.length);
     } catch {
       showToast('Failed to load events', 'error');
     } finally {
@@ -89,7 +90,12 @@ const AdminEvents = () => {
     setSaving(true);
     try {
       const created = await apiCreateEvent(form);
-      setEvents((prev) => [created, ...prev]);
+      if (!created || typeof created !== 'object') {
+        await load();
+      } else {
+        setEvents((prev) => [created as EventItem, ...prev]);
+        setTotal((t) => t + 1);
+      }
       setCreateOpen(false);
       setForm(emptyForm);
     } catch {
@@ -119,7 +125,13 @@ const AdminEvents = () => {
     setSaving(true);
     try {
       const updated = await apiUpdateEvent(edit._id, form);
-      setEvents((prev) => prev.map((ev) => (ev._id === edit._id ? updated : ev)));
+      if (!updated || typeof updated !== 'object') {
+        await load();
+      } else {
+        setEvents((prev) =>
+          prev.map((ev) => (ev._id === edit._id ? (updated as EventItem) : ev)),
+        );
+      }
       setEdit(null);
     } catch {
       showToast('Failed to update event', 'error');
@@ -133,7 +145,7 @@ const AdminEvents = () => {
     try {
       await apiDeleteEvent(id);
       setEvents((prev) => prev.filter((ev) => ev._id !== id));
-      setTotal((t) => t - 1);
+      setTotal((t) => Math.max(0, t - 1));
     } catch {
       showToast('Failed to delete event', 'error');
     }

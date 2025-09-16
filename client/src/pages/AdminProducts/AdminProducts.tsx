@@ -69,8 +69,9 @@ const AdminProducts = () => {
         pageSize,
       };
       const data = await fetchProducts(params);
-      setProducts(data.items as Product[]);
-      setTotal(data.total);
+      const items = Array.isArray(data.items) ? (data.items as Product[]) : [];
+      setProducts(items);
+      setTotal(typeof data.total === 'number' ? data.total : items.length);
     } catch {
       showToast('Failed to load products', 'error');
     } finally {

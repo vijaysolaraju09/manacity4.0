@@ -49,8 +49,9 @@ const AdminShops = () => {
         pageSize,
       };
       const data = await fetchShops(params);
-      setShops(data.items);
-      setTotal(data.total);
+      const items = Array.isArray(data.items) ? (data.items as Shop[]) : [];
+      setShops(items);
+      setTotal(typeof data.total === 'number' ? data.total : items.length);
     } catch {
       showToast('Failed to load shops', 'error');
     } finally {

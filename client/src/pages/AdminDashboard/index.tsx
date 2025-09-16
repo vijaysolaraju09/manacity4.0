@@ -16,7 +16,8 @@ const AdminDashboard = () => {
     (async () => {
       try {
         const data = await fetchUsers();
-        setUsers(data.items as User[]);
+        const items = Array.isArray(data.items) ? (data.items as User[]) : [];
+        setUsers(items);
       } catch {
         // ignore
       }

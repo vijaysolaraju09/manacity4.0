@@ -61,6 +61,8 @@ const VerificationRequests = () => {
         setTotal(data.total);
       } catch {
         setRequests([]);
+        setTotal(0);
+        showToast('Failed to load verification requests', 'error');
       } finally {
         setLoading(false);
       }

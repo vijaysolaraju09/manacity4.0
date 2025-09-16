@@ -24,6 +24,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const productRoutes = require("./routes/productRoutes");
 const adminUserRoutes = require("./routes/adminUserRoutes");
+const adminEventRoutes = require("./routes/adminEventRoutes");
 const proRoutes = require("./routes/proRoutes");
 const AppError = require("./utils/AppError");
 
@@ -81,6 +82,7 @@ app.use("/api/events", eventRoutes);
 app.use("/api/special", specialRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/admin/events", adminEventRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/admin/users", adminUserRoutes);

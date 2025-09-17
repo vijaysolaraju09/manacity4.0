@@ -245,6 +245,7 @@ export const rejectShop = async (id: string) => {
 
 export interface VerificationRequestParams {
   page?: number;
+  pageSize?: number;
   status?: string;
   profession?: string;
 }

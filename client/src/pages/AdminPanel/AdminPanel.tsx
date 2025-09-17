@@ -18,8 +18,11 @@ const AdminPanel = () => {
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetchBusinessRequests({ status: 'pending' });
-        setShops(data);
+        const result = await fetchBusinessRequests({ status: 'pending' });
+        const items = Array.isArray(result.items)
+          ? (result.items as Shop[])
+          : [];
+        setShops(items);
       } catch {
         setShops([]);
       } finally {

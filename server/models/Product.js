@@ -9,6 +9,7 @@ const productSchema = new Schema(
     mrp: { type: Number, required: true },
     discount: { type: Number, default: 0 },
     image: { type: String },
+    images: { type: [String], default: [] },
     category: { type: String, required: true },
     stock: { type: Number, default: 0 },
     available: { type: Boolean, default: true },

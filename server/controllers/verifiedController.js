@@ -131,6 +131,76 @@ exports.listVerified = async (req, res, next) => {
   }
 };
 
+exports.listVerificationRequests = async (req, res, next) => {
+  try {
+    const {
+      status = 'pending',
+      profession,
+      page = 1,
+      pageSize = 10,
+    } = req.query;
+
+    const match = {};
+    if (status) match.status = status;
+    if (profession) {
+      const escaped = String(profession)
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (escaped) {
+        match.profession = { $regex: escaped, $options: 'i' };
+      }
+    }
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(pageSize, 10) || 10));
+    const skip = (pageNum - 1) * limit;
+
+    const pipeline = [
+      { $match: match },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      { $unwind: '$user' },
+    ];
+
+    const [items, totalAgg] = await Promise.all([
+      Verified.aggregate([
+        ...pipeline,
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+      ]),
+      Verified.aggregate([...pipeline, { $count: 'count' }]),
+    ]);
+
+    const total = totalAgg[0]?.count || 0;
+    const requests = items.map((doc) => {
+      const user = doc.user;
+      delete doc.user;
+      return Verified.hydrate(doc).toCardJSON(user);
+    });
+
+    res.json({
+      ok: true,
+      data: {
+        requests,
+        items: requests,
+        total,
+        page: pageNum,
+        pageSize: limit,
+      },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getVerifiedById = async (req, res, next) => {
   try {
     const verified = await Verified.findById(req.params.id).populate(

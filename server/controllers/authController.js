@@ -91,20 +91,48 @@ exports.login = async (req, res, next) => {
 exports.adminLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    if (
-      email === process.env.ADMIN_EMAIL &&
-      password === process.env.ADMIN_PASSWORD
-    ) {
-      const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) {
-        throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
-      }
-      const token = jwt.sign({ role: "admin" }, jwtSecret, {
-        expiresIn: "7d",
-      });
-      return res.json({ ok: true, data: { token }, traceId: req.traceId });
+    if (!email || !password) {
+      throw AppError.badRequest('INVALID_CREDENTIALS', 'Email and password are required');
     }
-    throw AppError.unauthorized('INVALID_CREDENTIALS', 'Invalid credentials');
+
+    const normalizedEmail = String(email).toLowerCase();
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
+    }
+
+    let adminUser = await User.findOne({ email: normalizedEmail, role: 'admin' }).select('+password');
+
+    if (adminUser && adminUser.password) {
+      const match = await bcrypt.compare(String(password), adminUser.password);
+      if (!match) {
+        adminUser = null;
+      }
+    } else {
+      adminUser = null;
+    }
+
+    if (!adminUser) {
+      const matchesEnv =
+        normalizedEmail === String(process.env.ADMIN_EMAIL || '').toLowerCase() &&
+        password === process.env.ADMIN_PASSWORD;
+      if (matchesEnv) {
+        adminUser = await User.findOne({ role: 'admin' }).select('_id');
+      }
+    }
+
+    if (!adminUser) {
+      throw AppError.unauthorized('INVALID_CREDENTIALS', 'Invalid credentials');
+    }
+
+    const payload = { role: 'admin' };
+    if (adminUser._id) {
+      payload.userId = adminUser._id;
+    }
+
+    const token = jwt.sign(payload, jwtSecret, { expiresIn: '7d' });
+
+    return res.json({ ok: true, data: { token }, traceId: req.traceId });
   } catch (err) {
     next(err);
   }

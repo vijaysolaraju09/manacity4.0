@@ -1,23 +1,35 @@
 const Product = require('../models/Product');
 const Shop = require('../models/Shop');
 
-const normalize = (p) => ({
-  id: p._id.toString(),
-  _id: p._id.toString(),
-  name: p.name,
-  price: p.price,
-  mrp: p.mrp,
-  discount: p.discount,
-  image: p.image,
-  category: p.category,
-  stock: p.stock,
-  available: p.available,
-  isSpecial: p.isSpecial,
-  status: p.status,
-  shopId: typeof p.shop === 'object' ? p.shop._id.toString() : p.shop.toString(),
-  shopName: typeof p.shop === 'object' ? p.shop.name : undefined,
-  updatedAt: p.updatedAt,
-});
+const normalize = (p) => {
+  const rawImages = Array.isArray(p.images) ? p.images : [];
+  const filteredImages = rawImages.filter((img) => typeof img === 'string' && img.trim());
+  const fallbackImage = p.image || filteredImages[0] || null;
+  const images = filteredImages.length
+    ? filteredImages
+    : fallbackImage
+    ? [fallbackImage]
+    : [];
+
+  return {
+    id: p._id.toString(),
+    _id: p._id.toString(),
+    name: p.name,
+    price: p.price,
+    mrp: p.mrp,
+    discount: p.discount,
+    image: fallbackImage,
+    images,
+    category: p.category,
+    stock: p.stock,
+    available: p.available,
+    isSpecial: p.isSpecial,
+    status: p.status,
+    shopId: typeof p.shop === 'object' ? p.shop._id.toString() : p.shop.toString(),
+    shopName: typeof p.shop === 'object' ? p.shop.name : undefined,
+    updatedAt: p.updatedAt,
+  };
+};
 
 exports.createProduct = async (req, res, next) => {
   try {
@@ -28,6 +40,7 @@ exports.createProduct = async (req, res, next) => {
       mrp,
       category,
       image,
+      images,
       stock,
       status,
       available,
@@ -44,6 +57,11 @@ exports.createProduct = async (req, res, next) => {
     const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
     if (!shop) return res.status(403).json({ error: 'Not authorized' });
 
+    const imageList = Array.isArray(images)
+      ? images.filter((img) => typeof img === 'string' && img.trim())
+      : [];
+    const primaryImage = image || imageList[0];
+
     const product = await Product.create({
       shop: shop._id,
       createdBy: req.user._id,
@@ -53,7 +71,10 @@ exports.createProduct = async (req, res, next) => {
       price,
       mrp,
       category,
-      image,
+      image: primaryImage,
+      images: primaryImage
+        ? [primaryImage, ...imageList.filter((img) => img !== primaryImage)]
+        : imageList,
       stock,
       status,
       available,
@@ -82,6 +103,7 @@ exports.updateProduct = async (req, res, next) => {
       mrp,
       category,
       image,
+      images,
       stock,
       status,
       available,
@@ -102,7 +124,23 @@ exports.updateProduct = async (req, res, next) => {
       product.mrp = mrp;
     }
     if (category !== undefined) product.category = category;
-    if (image !== undefined) product.image = image;
+    if (image !== undefined) {
+      product.image = image;
+      if (image && (!Array.isArray(product.images) || !product.images.length)) {
+        product.images = [image];
+      }
+    }
+    if (images !== undefined) {
+      const nextImages = Array.isArray(images)
+        ? images.filter((img) => typeof img === 'string' && img.trim())
+        : [];
+      product.images = nextImages;
+      if (nextImages.length) {
+        product.image = nextImages[0];
+      } else if (!image) {
+        product.image = product.image || null;
+      }
+    }
     if (stock !== undefined) product.stock = stock;
     if (status !== undefined) product.status = status;
     if (available !== undefined) product.available = available;

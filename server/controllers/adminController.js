@@ -33,7 +33,12 @@ exports.getUsers = async (req, res) => {
           as: 'orders',
         },
       },
-      { $addFields: { ordersCount: { $size: '$orders' } } },
+      {
+        $addFields: {
+          ordersCount: { $size: '$orders' },
+          isActive: { $ifNull: ['$isActive', true] },
+        },
+      },
       { $project: { password: 0, orders: 0 } },
       { $sort: sortObj },
       { $skip: skip },
@@ -66,7 +71,15 @@ exports.updateUserRole = async (req, res) => {
     }
 
     user.role = role;
-    if (role === 'verified') user.isVerified = true;
+    if (role === 'verified') {
+      user.isVerified = true;
+      user.verificationStatus = 'approved';
+    } else if (role !== 'admin') {
+      user.isVerified = false;
+      if (user.verificationStatus !== 'none') {
+        user.verificationStatus = 'none';
+      }
+    }
     await user.save();
     res.json({ message: 'Role updated' });
   } catch (err) {

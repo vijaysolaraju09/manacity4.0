@@ -9,7 +9,24 @@ const {
 } = require('../controllers/adminController');
 const { adminUpdate } = require('../controllers/userController');
 const { getAdminMessages } = require('../controllers/adminMessageController');
-const { approveShop, rejectShop } = require('../controllers/shopsController');
+const {
+  getMetricsSummary,
+  getMetricSeries,
+} = require('../controllers/adminMetricsController');
+const {
+  listShopRequests,
+  listShops,
+  updateShop,
+  deleteShop,
+  approveShop,
+  rejectShop,
+} = require('../controllers/adminShopController');
+const {
+  listProducts,
+  updateProduct: adminUpdateProduct,
+  deleteProduct: adminDeleteProduct,
+} = require('../controllers/adminProductController');
+const { listVerificationRequests } = require('../controllers/verifiedController');
 const protect = require('../middleware/authMiddleware');
 const isAdmin = require('../middleware/isAdmin');
 const validate = require('../middleware/validate');
@@ -41,7 +58,22 @@ router.delete('/users/:id', protect, isAdmin, deleteUser);
 router.put('/user/:id/verify', protect, isAdmin, verifyUser);
 router.get('/orders', protect, isAdmin, getAllOrders);
 
+router.get('/metrics', protect, isAdmin, getMetricsSummary);
+router.get('/metrics/timeseries', protect, isAdmin, getMetricSeries);
+
+router.get('/shops/requests', protect, isAdmin, listShopRequests);
+router.get('/shops', protect, isAdmin, listShops);
+router.put('/shops/:id', protect, isAdmin, updateShop);
+router.delete('/shops/:id', protect, isAdmin, deleteShop);
+router.post('/shops/approve/:id', protect, isAdmin, approveShop);
 router.post('/shops/:id/approve', protect, isAdmin, approveShop);
+router.post('/shops/reject/:id', protect, isAdmin, rejectShop);
 router.post('/shops/:id/reject', protect, isAdmin, rejectShop);
+
+router.get('/products', protect, isAdmin, listProducts);
+router.put('/products/:id', protect, isAdmin, adminUpdateProduct);
+router.delete('/products/:id', protect, isAdmin, adminDeleteProduct);
+
+router.get('/verified/requests', protect, isAdmin, listVerificationRequests);
 
 module.exports = router;

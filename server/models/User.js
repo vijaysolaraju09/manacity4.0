@@ -38,12 +38,13 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, select: false },
     role: {
       type: String,
-      enum: ["customer", "business", "admin"],
+      enum: ["customer", "verified", "business", "admin"],
       default: "customer",
     },
     location: { type: String },
     address: { type: String },
     isVerified: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
     verificationStatus: {
       type: String,
       enum: ["none", "pending", "approved", "rejected"],

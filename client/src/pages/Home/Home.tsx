@@ -19,7 +19,7 @@ import ShopsSkeleton from '@/components/common/ShopsSkeleton';
 import ProductsSkeleton from '@/components/common/ProductsSkeleton';
 import ErrorCard from '@/components/common/ErrorCard';
 import fallbackImage from '../../assets/no-image.svg';
-import { formatSchedule } from '@/utils/date';
+import { formatDateTime } from '@/utils/date';
 import VerifiedCard from '@/components/ui/VerifiedCard/VerifiedCard';
 
 const Home = () => {
@@ -31,7 +31,7 @@ const Home = () => {
 
   const shops = useSelector((s: RootState) => s.shops);
   const verified = useSelector((s: RootState) => s.verified);
-  const events = useSelector((s: RootState) => s.events);
+  const events = useSelector((s: RootState) => s.events.list);
   const products = useSelector((s: RootState) => s.catalog);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ const Home = () => {
   useEffect(() => {
     if (shops.status === 'idle') d(fetchShops({ sort: '-createdAt', pageSize: 10 }));
     if (verified.status === 'idle') d(fetchVerified({ pageSize: 10 }));
-    if (events.status === 'idle') d(fetchEvents());
+    if (events.status === 'idle') d(fetchEvents({ status: 'published', pageSize: 6 }));
     if (products.status === 'idle') d(fetchSpecialProducts({ pageSize: 10 }));
   }, [shops.status, verified.status, events.status, products.status, d]);
 
@@ -103,7 +103,7 @@ const Home = () => {
         status={events.status}
         error={events.error}
         type="event"
-        onRetry={() => d(fetchEvents())}
+        onRetry={() => d(fetchEvents({ status: 'published', pageSize: 6 }))}
         navigate={navigate}
       />
       <Section
@@ -179,7 +179,7 @@ const Section = ({ title, path, data, status, error, type, onRetry, navigate }: 
               onClick={() => navigate(`/events/${item._id}`)}
             >
               <img
-                src={item.cover || fallbackImage}
+                src={item.bannerUrl || item.coverUrl || fallbackImage}
                 alt={item.title || item.name}
                 loading="lazy"
                 width={150}
@@ -190,7 +190,7 @@ const Section = ({ title, path, data, status, error, type, onRetry, navigate }: 
               <div className="card-info">
                 <h4>{item.title || item.name}</h4>
                 {type === 'event' && (
-                  <p>{formatSchedule(item.startsAt, item.endsAt)}</p>
+                  <p>{formatDateTime(item.startAt)}</p>
                 )}
               </div>
             </motion.div>

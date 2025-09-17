@@ -1,20 +1,28 @@
 const { Schema, model } = require('mongoose');
 
-// Leaderboard entry schema used for tournaments
-const leaderboardEntrySchema = new Schema(
-  {
-    participantId: { type: Schema.Types.ObjectId },
-    teamName: { type: String },
-    userId: { type: Schema.Types.ObjectId, ref: 'User' },
-    points: { type: Number, default: 0 },
-    rank: { type: Number },
-    wins: { type: Number },
-    losses: { type: Number },
-    kills: { type: Number },
-    time: { type: Number },
-  },
-  { _id: false }
-);
+const EVENT_TYPES = ['tournament', 'activity'];
+const EVENT_CATEGORIES = [
+  'freefire',
+  'pubg',
+  'quiz',
+  'cricket',
+  'volleyball',
+  'campfire',
+  'movie',
+  'foodfest',
+  'other',
+];
+const EVENT_FORMATS = [
+  'single_elim',
+  'double_elim',
+  'round_robin',
+  'points',
+  'single_match',
+  'custom',
+];
+const EVENT_VISIBILITY = ['public', 'private'];
+const EVENT_STATUSES = ['draft', 'published', 'ongoing', 'completed', 'canceled'];
+const EVENT_MODES = ['online', 'venue'];
 
 const geoSchema = new Schema(
   {
@@ -31,64 +39,77 @@ const eventSchema = new Schema(
       required: true,
       trim: true,
       minlength: 3,
-      maxlength: 140,
+      maxlength: 160,
     },
     type: {
       type: String,
-      enum: ['tournament', 'activity'],
+      enum: EVENT_TYPES,
       required: true,
     },
-    category: { type: String, required: true },
+    category: {
+      type: String,
+      enum: EVENT_CATEGORIES,
+      default: 'other',
+    },
     format: {
       type: String,
-      enum: ['knockout', 'round_robin', 'points', 'single_match', 'custom'],
+      enum: EVENT_FORMATS,
+      default: 'single_match',
     },
-    teamSize: { type: Number, default: 1 },
-    maxParticipants: { type: Number, required: true },
-    registeredCount: { type: Number, default: 0 },
-    visibility: {
-      type: String,
-      enum: ['public', 'private'],
-      default: 'public',
-    },
-    status: {
-      type: String,
-      enum: ['draft', 'published', 'ongoing', 'completed', 'canceled'],
-      default: 'draft',
-    },
-    description: { type: String, default: '', maxlength: 4000 },
-    rules: { type: String, default: '', maxlength: 4000 },
-    prizePool: { type: String },
-    bannerUrl: { type: String },
-    coverUrl: { type: String },
-    timezone: { type: String, default: 'Asia/Kolkata' },
+    teamSize: { type: Number, default: 1, min: 1 },
+    maxParticipants: { type: Number, required: true, min: 1 },
     registrationOpenAt: { type: Date, required: true },
     registrationCloseAt: { type: Date, required: true },
     startAt: { type: Date, required: true },
     endAt: { type: Date },
-    mode: { type: String, enum: ['online', 'venue'], default: 'online' },
+    timezone: { type: String, default: 'Asia/Kolkata' },
+    mode: { type: String, enum: EVENT_MODES, default: 'online' },
     venue: { type: String },
     geo: { type: geoSchema },
+    visibility: {
+      type: String,
+      enum: EVENT_VISIBILITY,
+      default: 'public',
+    },
+    status: {
+      type: String,
+      enum: EVENT_STATUSES,
+      default: 'draft',
+    },
+    description: { type: String, default: '', maxlength: 12000 },
+    rules: { type: String, default: '', maxlength: 12000 },
+    prizePool: { type: String },
+    bannerUrl: { type: String },
+    coverUrl: { type: String },
+    registeredCount: { type: Number, default: 0, min: 0 },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     updatesCount: { type: Number, default: 0 },
     leaderboardVersion: { type: Number, default: 0 },
-    leaderboard: { type: [leaderboardEntrySchema], default: [] },
   },
   { timestamps: true }
 );
 
-// Indexes
-// for listings and filtering
-// status + category + startAt
 eventSchema.index({ status: 1, category: 1, startAt: -1 });
-// optional text search
+eventSchema.index({ type: 1, startAt: -1 });
+eventSchema.index({ createdBy: 1, startAt: -1 });
+eventSchema.index({ registrationCloseAt: 1 });
 try {
-  eventSchema.index({ title: 'text', description: 'text', rules: 'text' });
-} catch (e) {
-  // ignore for mongoose text index creation errors in tests
+  eventSchema.index({
+    title: 'text',
+    description: 'text',
+    rules: 'text',
+  });
+} catch (err) {
+  // ignore text index recreation errors in tests
 }
 
-// Projection helpers
+eventSchema.pre('save', function clampRegisteredCount(next) {
+  if (typeof this.maxParticipants === 'number' && this.registeredCount > this.maxParticipants) {
+    this.registeredCount = this.maxParticipants;
+  }
+  next();
+});
+
 eventSchema.methods.toCardJSON = function toCardJSON() {
   return {
     id: this._id.toString(),
@@ -96,16 +117,19 @@ eventSchema.methods.toCardJSON = function toCardJSON() {
     title: this.title,
     type: this.type,
     category: this.category,
+    format: this.format,
     teamSize: this.teamSize,
     maxParticipants: this.maxParticipants,
     registeredCount: this.registeredCount,
-    startAt: this.startAt,
     registrationOpenAt: this.registrationOpenAt,
     registrationCloseAt: this.registrationCloseAt,
+    startAt: this.startAt,
+    endAt: this.endAt,
     status: this.status,
-    bannerUrl: this.bannerUrl || null,
     mode: this.mode,
     venue: this.venue,
+    visibility: this.visibility,
+    bannerUrl: this.bannerUrl || null,
   };
 };
 
@@ -113,12 +137,13 @@ eventSchema.methods.toDetailJSON = function toDetailJSON() {
   const base = this.toCardJSON();
   return {
     ...base,
-    endAt: this.endAt,
     timezone: this.timezone,
     description: this.description,
     rules: this.rules,
     prizePool: this.prizePool,
     coverUrl: this.coverUrl || null,
+    updatesCount: this.updatesCount,
+    leaderboardVersion: this.leaderboardVersion,
   };
 };
 

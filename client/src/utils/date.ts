@@ -26,3 +26,28 @@ export const getCountdown = (target: string | Date) => {
   const seconds = Math.floor((diff / 1000) % 60);
   return { diff, days, hours, minutes, seconds };
 };
+
+export const formatDateTime = (value: string | Date, options?: Intl.DateTimeFormatOptions) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    day: 'numeric',
+    month: 'short',
+    ...options,
+  });
+};
+
+export const formatDate = (value: string | Date, options?: Intl.DateTimeFormatOptions) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    ...options,
+  });
+};

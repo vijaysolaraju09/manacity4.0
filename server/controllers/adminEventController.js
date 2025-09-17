@@ -1,9 +1,32 @@
 const Event = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
 const EventUpdate = require('../models/EventUpdate');
+const Match = require('../models/Match');
+const LeaderboardEntry = require('../models/LeaderboardEntry');
 const AppError = require('../utils/AppError');
 
 const MAX_PAGE_SIZE = 50;
+
+const VALID_TYPES = ['tournament', 'activity'];
+const VALID_CATEGORIES = [
+  'freefire',
+  'pubg',
+  'quiz',
+  'cricket',
+  'volleyball',
+  'campfire',
+  'movie',
+  'foodfest',
+  'other',
+];
+const VALID_FORMATS = [
+  'single_elim',
+  'double_elim',
+  'round_robin',
+  'points',
+  'single_match',
+  'custom',
+];
 
 const toDate = (value) => {
   if (!value) return null;
@@ -11,50 +34,46 @@ const toDate = (value) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-const deriveStatus = (event) => {
+const deriveLifecycleStatus = (event) => {
+  if (!event) return 'upcoming';
+  if (event.status === 'canceled' || event.status === 'completed') return 'past';
   const now = Date.now();
-  if (event.status === 'canceled') return 'past';
-  if (event.status === 'completed') return 'past';
   const start = toDate(event.startAt);
   const end = toDate(event.endAt);
-  if (end && end.getTime() < now) return 'past';
-  if (event.status === 'ongoing') return 'ongoing';
-  if (start && start.getTime() <= now && (!end || end.getTime() >= now)) {
-    return 'ongoing';
-  }
-  return 'upcoming';
+  if (start && now < start.getTime()) return 'upcoming';
+  if (start && (!end || end.getTime() >= now)) return 'ongoing';
+  return 'past';
 };
 
 const mapEvent = (event) => ({
   _id: event._id,
   title: event.title,
+  type: event.type,
+  category: event.category,
+  format: event.format,
   startAt: event.startAt,
   endAt: event.endAt ?? null,
-  status: deriveStatus(event),
-  capacity: event.maxParticipants ?? event.capacity ?? 0,
+  registrationOpenAt: event.registrationOpenAt,
+  registrationCloseAt: event.registrationCloseAt,
+  status: deriveLifecycleStatus(event),
+  lifecycleStatus: event.status,
+  capacity: event.maxParticipants ?? 0,
   registered: event.registeredCount ?? 0,
+  visibility: event.visibility,
+  teamSize: event.teamSize,
 });
 
-const computeLifecycleStatus = (start, end, currentStatus) => {
-  if (currentStatus === 'canceled') return currentStatus;
-  const startDate = toDate(start);
-  const endDate = toDate(end);
-  const now = Date.now();
-  if (endDate && endDate.getTime() < now) return 'completed';
-  if (startDate && startDate.getTime() <= now && (!endDate || endDate.getTime() >= now)) {
-    return 'ongoing';
-  }
-  return 'published';
+const parseCapacity = (value) => {
+  if (value === undefined || value === null) return undefined;
+  const num = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(num) && num > 0 ? Math.round(num) : undefined;
 };
 
 exports.listEvents = async (req, res, next) => {
   try {
     const { status, page = 1, pageSize = 10, sort = '-startAt', query } = req.query;
     const pageNumber = Math.max(1, parseInt(page, 10) || 1);
-    const size = Math.min(
-      MAX_PAGE_SIZE,
-      Math.max(1, parseInt(pageSize, 10) || 10),
-    );
+    const size = Math.min(MAX_PAGE_SIZE, Math.max(1, parseInt(pageSize, 10) || 10));
 
     const sortKey = typeof sort === 'string' && sort.startsWith('-') ? sort.slice(1) : sort || 'startAt';
     const sortDir = typeof sort === 'string' && sort.startsWith('-') ? -1 : 1;
@@ -91,7 +110,8 @@ exports.listEvents = async (req, res, next) => {
     }
 
     if (typeof query === 'string' && query.trim()) {
-      filter.title = { $regex: query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+      const safe = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.title = { $regex: safe, $options: 'i' };
     }
 
     const [events, total] = await Promise.all([
@@ -132,22 +152,40 @@ exports.createEvent = async (req, res, next) => {
       throw AppError.unauthorized('UNAUTHORIZED', 'Admin authentication required');
     }
 
-    const lifecycle = computeLifecycleStatus(startAt, endAt);
+    const type = VALID_TYPES.includes(req.body.type) ? req.body.type : 'activity';
+    const category = VALID_CATEGORIES.includes(req.body.category) ? req.body.category : 'other';
+    const format = VALID_FORMATS.includes(req.body.format)
+      ? req.body.format
+      : type === 'tournament'
+      ? 'single_elim'
+      : 'single_match';
+    const teamSize = parseCapacity(req.body.teamSize) || 1;
+    const capacity = parseCapacity(req.body.capacity) ?? parseCapacity(req.body.maxParticipants) ?? teamSize;
+    const registrationOpenAt = toDate(req.body.registrationOpenAt) || new Date();
+    const registrationCloseAt = toDate(req.body.registrationCloseAt) || startAt;
 
     const event = await Event.create({
       title: req.body.title,
-      type: 'activity',
-      category: 'general',
-      format: 'single_match',
-      teamSize: 1,
-      maxParticipants: req.body.capacity,
-      registrationOpenAt: startAt,
-      registrationCloseAt: endAt,
+      type,
+      category,
+      format,
+      teamSize,
+      maxParticipants: capacity,
+      registrationOpenAt,
+      registrationCloseAt,
       startAt,
       endAt,
-      mode: 'online',
+      timezone: req.body.timezone || 'Asia/Kolkata',
+      mode: req.body.mode === 'venue' ? 'venue' : 'online',
+      venue: req.body.venue,
+      visibility: req.body.visibility === 'private' ? 'private' : 'public',
+      status: 'draft',
+      description: req.body.description || '',
+      rules: req.body.rules || '',
+      prizePool: req.body.prizePool,
+      bannerUrl: req.body.bannerUrl,
+      coverUrl: req.body.coverUrl,
       createdBy,
-      status: lifecycle,
     });
 
     res.status(201).json({
@@ -171,17 +209,61 @@ exports.updateEvent = async (req, res, next) => {
       event.title = req.body.title;
     }
 
-    let startAt = event.startAt;
-    let endAt = event.endAt;
+    if (req.body.type !== undefined && VALID_TYPES.includes(req.body.type)) {
+      event.type = req.body.type;
+    }
+
+    if (req.body.category !== undefined && VALID_CATEGORIES.includes(req.body.category)) {
+      event.category = req.body.category;
+    }
+
+    if (req.body.format !== undefined && VALID_FORMATS.includes(req.body.format)) {
+      event.format = req.body.format;
+    }
+
+    if (req.body.visibility !== undefined) {
+      event.visibility = req.body.visibility === 'private' ? 'private' : 'public';
+    }
+
+    if (req.body.mode !== undefined) {
+      event.mode = req.body.mode === 'venue' ? 'venue' : 'online';
+    }
+
+    if (req.body.venue !== undefined) {
+      event.venue = req.body.venue;
+    }
+
+    if (req.body.description !== undefined) {
+      event.description = req.body.description;
+    }
+
+    if (req.body.rules !== undefined) {
+      event.rules = req.body.rules;
+    }
+
+    if (req.body.prizePool !== undefined) {
+      event.prizePool = req.body.prizePool;
+    }
+
+    if (req.body.bannerUrl !== undefined) {
+      event.bannerUrl = req.body.bannerUrl;
+    }
+
+    if (req.body.coverUrl !== undefined) {
+      event.coverUrl = req.body.coverUrl;
+    }
+
+    if (req.body.teamSize !== undefined) {
+      const size = parseCapacity(req.body.teamSize);
+      if (size) event.teamSize = size;
+    }
 
     if (req.body.startAt !== undefined) {
       const startDate = toDate(req.body.startAt);
       if (!startDate) {
         throw AppError.badRequest('INVALID_START', 'Invalid startAt');
       }
-      startAt = startDate;
       event.startAt = startDate;
-      event.registrationOpenAt = startDate;
     }
 
     if (req.body.endAt !== undefined) {
@@ -189,27 +271,49 @@ exports.updateEvent = async (req, res, next) => {
       if (!endDate) {
         throw AppError.badRequest('INVALID_END', 'Invalid endAt');
       }
-      endAt = endDate;
       event.endAt = endDate;
-      event.registrationCloseAt = endDate;
     }
 
-    if (req.body.capacity !== undefined) {
-      const registeredCount = event.registeredCount ?? 0;
-      if (
-        typeof req.body.capacity === 'number' &&
-        req.body.capacity < registeredCount
-      ) {
-        throw AppError.badRequest(
-          'CAPACITY_TOO_LOW',
-          'Capacity cannot be less than registered count',
-        );
+    if (req.body.registrationOpenAt !== undefined) {
+      const openDate = toDate(req.body.registrationOpenAt);
+      if (!openDate) throw AppError.badRequest('INVALID_REG_OPEN', 'Invalid registration open date');
+      event.registrationOpenAt = openDate;
+    }
+
+    if (req.body.registrationCloseAt !== undefined) {
+      const closeDate = toDate(req.body.registrationCloseAt);
+      if (!closeDate) throw AppError.badRequest('INVALID_REG_CLOSE', 'Invalid registration close date');
+      event.registrationCloseAt = closeDate;
+    }
+
+    if (req.body.timezone !== undefined) {
+      event.timezone = req.body.timezone;
+    }
+
+    if (req.body.status !== undefined) {
+      const allowedStatuses = ['draft', 'published', 'ongoing', 'completed', 'canceled'];
+      if (allowedStatuses.includes(req.body.status)) {
+        event.status = req.body.status;
       }
-      event.maxParticipants = req.body.capacity;
     }
 
-    if (event.status !== 'canceled') {
-      event.status = computeLifecycleStatus(startAt, endAt, event.status);
+    if (req.body.geo !== undefined) {
+      event.geo = req.body.geo;
+    }
+
+    if (req.body.capacity !== undefined || req.body.maxParticipants !== undefined) {
+      const registeredCount = event.registeredCount ?? 0;
+      const nextCapacity =
+        parseCapacity(req.body.capacity) ?? parseCapacity(req.body.maxParticipants);
+      if (nextCapacity !== undefined) {
+        if (nextCapacity < registeredCount) {
+          throw AppError.badRequest(
+            'CAPACITY_TOO_LOW',
+            'Capacity cannot be less than registered count'
+          );
+        }
+        event.maxParticipants = nextCapacity;
+      }
     }
 
     await event.save();
@@ -234,6 +338,8 @@ exports.deleteEvent = async (req, res, next) => {
     await Promise.all([
       EventRegistration.deleteMany({ event: event._id }),
       EventUpdate.deleteMany({ event: event._id }),
+      Match.deleteMany({ event: event._id }),
+      LeaderboardEntry.deleteMany({ event: event._id }),
       event.deleteOne(),
     ]);
 

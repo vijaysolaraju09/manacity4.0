@@ -1,47 +1,49 @@
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import EventCard from "../../components/ui/EventCard/EventCard";
-import type { EventItem } from "../../components/ui/EventCard/EventCard";
-import "./Events.scss";
-import { fetchEvents } from "@/store/events";
-import type { RootState } from "@/store";
-import EventsSkeleton from "@/components/common/EventsSkeleton";
-import ErrorCard from "@/components/common/ErrorCard";
-import Empty from "@/components/common/Empty";
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import EventsSkeleton from '@/components/common/EventsSkeleton';
+import ErrorCard from '@/components/common/ErrorCard';
+import Empty from '@/components/common/Empty';
+import EventCard from '@/components/ui/EventCard/EventCard';
+import { fetchEvents } from '@/store/events';
+import type { RootState, AppDispatch } from '@/store';
+import styles from './Events.module.scss';
 
 const Events = () => {
-  const d = useDispatch<any>();
-  const { items, status, error } = useSelector(
-    (s: RootState) => s.events,
-  );
+  const dispatch = useDispatch<AppDispatch>();
+  const { list } = useSelector((state: RootState) => state.events);
 
   useEffect(() => {
-    if (status === "idle") d(fetchEvents());
-  }, [status, d]);
+    if (list.status === 'idle') {
+      dispatch(fetchEvents({ status: 'published' }));
+    }
+  }, [list.status, dispatch]);
 
-  if (status === "loading") return <EventsSkeleton />;
-  if (status === "failed")
+  if (list.status === 'loading') return <EventsSkeleton />;
+  if (list.status === 'failed')
     return (
-        <ErrorCard
-          msg={error || "Failed to load events"}
-          onRetry={() => d(fetchEvents())}
-        />
+      <ErrorCard
+        msg={list.error || 'Failed to load events'}
+        onRetry={() => dispatch(fetchEvents({ status: 'published' }))}
+      />
     );
-  if (status === "succeeded" && items.length === 0)
+  if (list.status === 'succeeded' && list.items.length === 0)
     return (
-        <Empty
-          msg="No events available."
-          ctaText="Refresh"
-          onCta={() => d(fetchEvents())}
-        />
+      <Empty
+        msg="No events available right now."
+        ctaText="Refresh"
+        onCta={() => dispatch(fetchEvents({ status: 'published' }))}
+      />
     );
 
   return (
-    <div className="events">
-      <h2>Events & Tournaments</h2>
-      <div className="event-list">
-        {items.map((ev) => (
-          <EventCard key={ev._id} event={ev as EventItem} />
+    <div className={styles.events}>
+      <header className={styles.header}>
+        <h2>Events &amp; Tournaments</h2>
+        <p>Browse upcoming competitions and community activities.</p>
+      </header>
+      <div className={styles.grid}>
+        {list.items.map((event) => (
+          <EventCard key={event._id} event={event} />
         ))}
       </div>
     </div>

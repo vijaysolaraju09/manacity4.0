@@ -1,67 +1,187 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { http } from "@/lib/http";
-import { toItems, toItem, toErrorMessage } from "@/lib/response";
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { http } from '@/lib/http';
+import { toItems, toItem, toErrorMessage } from '@/lib/response';
 
-export interface Event {
+export type EventStatus = 'draft' | 'published' | 'ongoing' | 'completed' | 'canceled';
+export type EventType = 'tournament' | 'activity';
+export type EventFormat =
+  | 'single_elim'
+  | 'double_elim'
+  | 'round_robin'
+  | 'points'
+  | 'single_match'
+  | 'custom';
+
+export interface EventSummary {
   _id: string;
   title: string;
-  cover?: string;
-  startsAt: string;
-  endsAt: string;
-  price?: number;
-  registered: string[];
-  status: "draft" | "open" | "closed" | "finished";
-  leaderboard?: Array<{ userId: string; score: number; name?: string }>;
+  type: EventType;
+  category: string;
+  format: EventFormat;
+  teamSize: number;
+  maxParticipants: number;
+  registeredCount: number;
+  registrationOpenAt: string;
+  registrationCloseAt: string;
+  startAt: string;
+  endAt?: string | null;
+  status: EventStatus;
+  mode: 'online' | 'venue';
+  venue?: string | null;
+  visibility: 'public' | 'private';
+  bannerUrl?: string | null;
 }
 
-type St<T> = {
-  items: T[];
-  item: T | null;
-  status: "idle" | "loading" | "succeeded" | "failed";
-  error: string | null;
-  page?: number;
-  hasMore?: boolean;
+export interface EventDetail extends EventSummary {
+  timezone: string;
+  description: string;
+  rules: string;
+  prizePool?: string | null;
+  coverUrl?: string | null;
+  updatesCount?: number;
+  leaderboardVersion?: number;
+  isRegistrationOpen?: boolean;
+  registration?: EventRegistration | null;
+}
+
+export interface EventRegistration {
+  _id: string;
+  status: 'registered' | 'waitlisted' | 'checked_in' | 'withdrawn' | 'disqualified';
+  teamName?: string;
+}
+
+interface PaginatedEvents {
+  items: EventSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+interface EventsState {
+  list: {
+    items: EventSummary[];
+    total: number;
+    page: number;
+    pageSize: number;
+    status: 'idle' | 'loading' | 'succeeded' | 'failed';
+    error: string | null;
+  };
+  detail: {
+    item: EventDetail | null;
+    status: 'idle' | 'loading' | 'succeeded' | 'failed';
+    error: string | null;
+  };
+  registration: {
+    status: 'idle' | 'loading' | 'succeeded' | 'failed';
+    error: string | null;
+    data: EventRegistration | null;
+  };
+}
+
+const initialState: EventsState = {
+  list: { items: [], total: 0, page: 1, pageSize: 12, status: 'idle', error: null },
+  detail: { item: null, status: 'idle', error: null },
+  registration: { status: 'idle', error: null, data: null },
 };
 
-const initial: St<Event> = {
-  items: [],
-  item: null,
-  status: "idle",
-  error: null,
-  page: 1,
-  hasMore: true,
+const adaptEventSummary = (raw: any): EventSummary | null => {
+  if (!raw) return null;
+  return {
+    _id: raw._id || raw.id,
+    title: raw.title || '',
+    type: (raw.type as EventType) || 'activity',
+    category: raw.category || 'other',
+    format: (raw.format as EventFormat) || 'single_match',
+    teamSize: Number(raw.teamSize) || 1,
+    maxParticipants: Number(raw.maxParticipants) || 0,
+    registeredCount: Number(raw.registeredCount) || 0,
+    registrationOpenAt: raw.registrationOpenAt || raw.registration_open_at || raw.startAt || new Date().toISOString(),
+    registrationCloseAt: raw.registrationCloseAt || raw.registration_close_at || raw.startAt || new Date().toISOString(),
+    startAt: raw.startAt || raw.start_date || new Date().toISOString(),
+    endAt: raw.endAt || raw.end_date || null,
+    status: (raw.status as EventStatus) || 'draft',
+    mode: raw.mode === 'venue' ? 'venue' : 'online',
+    venue: raw.venue || null,
+    visibility: raw.visibility === 'private' ? 'private' : 'public',
+    bannerUrl: raw.bannerUrl || raw.cover || null,
+  };
 };
 
-export const fetchEvents = createAsyncThunk(
-  "events/fetchAll",
-  async (_: void, { rejectWithValue }) => {
+const adaptEventDetail = (raw: any): EventDetail | null => {
+  const summary = adaptEventSummary(raw);
+  if (!summary) return null;
+  return {
+    ...summary,
+    timezone: raw.timezone || 'Asia/Kolkata',
+    description: raw.description || '',
+    rules: raw.rules || '',
+    prizePool: raw.prizePool || null,
+    coverUrl: raw.coverUrl || raw.cover || null,
+    updatesCount: raw.updatesCount ?? 0,
+    leaderboardVersion: raw.leaderboardVersion ?? 0,
+    isRegistrationOpen: !!raw.isRegistrationOpen,
+    registration: raw.registration || null,
+  };
+};
+
+export const fetchEvents = createAsyncThunk<PaginatedEvents, Record<string, any> | undefined, { rejectValue: string }>(
+  'events/fetchAll',
+  async (params = {}, { rejectWithValue }) => {
     try {
-      const res = await http.get("/events");
-      return toItems(res) as Event[];
+      const res = await http.get('/events', { params });
+      const rawItems = toItems(res);
+      const data = res?.data?.data || {};
+      const items = rawItems.map(adaptEventSummary).filter(Boolean) as EventSummary[];
+      return {
+        items,
+        total: typeof data.total === 'number' ? data.total : items.length,
+        page: typeof data.page === 'number' ? data.page : 1,
+        pageSize: typeof data.pageSize === 'number' ? data.pageSize : items.length,
+      };
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }
   }
 );
 
-export const fetchEventById = createAsyncThunk(
-  "events/fetchById",
-  async (id: string, { rejectWithValue }) => {
+export const fetchEventById = createAsyncThunk<EventDetail, string, { rejectValue: string }>(
+  'events/fetchById',
+  async (id, { rejectWithValue }) => {
     try {
       const res = await http.get(`/events/${id}`);
-      return toItem(res) as Event;
+      const raw = toItem(res);
+      const event = adaptEventDetail(raw);
+      if (!event) throw new Error('Invalid event response');
+      return event;
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }
   }
 );
 
-export const registerForEvent = createAsyncThunk(
-  "events/register",
-  async (id: string, { rejectWithValue }) => {
+export const registerForEvent = createAsyncThunk<
+  { registration: EventRegistration | null; status: string },
+  string,
+  { rejectValue: string }
+>('events/register', async (id, { rejectWithValue }) => {
+  try {
+    const res = await http.post(`/events/${id}/register`);
+    const data = res?.data?.data || res?.data || {};
+    return {
+      registration: data.registration || null,
+      status: data.status || data.registration?.status || 'registered',
+    };
+  } catch (err) {
+    return rejectWithValue(toErrorMessage(err));
+  }
+});
+
+export const unregisterFromEvent = createAsyncThunk<boolean, string, { rejectValue: string }>(
+  'events/unregister',
+  async (id, { rejectWithValue }) => {
     try {
-      const res = await http.post(`/events/${id}/register`);
-      return toItem(res) as Event;
+      const res = await http.delete(`/events/${id}/register`);
+      return !!(res?.data?.data ?? res?.data);
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }
@@ -69,43 +189,78 @@ export const registerForEvent = createAsyncThunk(
 );
 
 const eventsSlice = createSlice({
-  name: "events",
-  initialState: initial,
+  name: 'events',
+  initialState,
   reducers: {},
-  extraReducers: (b) => {
-    b.addCase(fetchEvents.pending, (s) => {
-      s.status = "loading";
-      s.error = null;
-    });
-    b.addCase(fetchEvents.fulfilled, (s, a) => {
-      s.status = "succeeded";
-      s.items = a.payload as Event[];
-    });
-    b.addCase(fetchEvents.rejected, (s, a) => {
-      s.status = "failed";
-      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
-    });
-    b.addCase(fetchEventById.pending, (s) => {
-      s.status = "loading";
-      s.error = null;
-      s.item = null;
-    });
-    b.addCase(fetchEventById.fulfilled, (s, a) => {
-      s.status = "succeeded";
-      s.item = a.payload as Event;
-    });
-    b.addCase(fetchEventById.rejected, (s, a) => {
-      s.status = "failed";
-      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
-    });
-    b.addCase(registerForEvent.fulfilled, (s, a) => {
-      s.item = a.payload as Event;
-      const idx = s.items.findIndex((e) => e._id === a.payload._id);
-      if (idx !== -1) s.items[idx] = a.payload as Event;
-    });
-    b.addCase(registerForEvent.rejected, (s, a) => {
-      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
-    });
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchEvents.pending, (state) => {
+        state.list.status = 'loading';
+        state.list.error = null;
+      })
+      .addCase(fetchEvents.fulfilled, (state, action) => {
+        state.list.status = 'succeeded';
+        state.list.items = action.payload.items;
+        state.list.total = action.payload.total;
+        state.list.page = action.payload.page;
+        state.list.pageSize = action.payload.pageSize;
+      })
+      .addCase(fetchEvents.rejected, (state, action) => {
+        state.list.status = 'failed';
+        state.list.error = action.payload || action.error.message || 'Failed to load events';
+      })
+      .addCase(fetchEventById.pending, (state) => {
+        state.detail.status = 'loading';
+        state.detail.error = null;
+        state.detail.item = null;
+      })
+      .addCase(fetchEventById.fulfilled, (state, action) => {
+        state.detail.status = 'succeeded';
+        state.detail.item = action.payload;
+        state.registration.status = 'idle';
+        state.registration.error = null;
+        state.registration.data = action.payload.registration ?? null;
+      })
+      .addCase(fetchEventById.rejected, (state, action) => {
+        state.detail.status = 'failed';
+        state.detail.error = action.payload || action.error.message || 'Failed to load event';
+      })
+      .addCase(registerForEvent.pending, (state) => {
+        state.registration.status = 'loading';
+        state.registration.error = null;
+      })
+      .addCase(registerForEvent.fulfilled, (state, action) => {
+        state.registration.status = 'succeeded';
+        state.registration.data = action.payload.registration;
+        if (state.detail.item) {
+          state.detail.item.registration = action.payload.registration;
+          if (action.payload.status === 'registered') {
+            state.detail.item.registeredCount = (state.detail.item.registeredCount || 0) + 1;
+          }
+        }
+      })
+      .addCase(registerForEvent.rejected, (state, action) => {
+        state.registration.status = 'failed';
+        state.registration.error = action.payload || action.error.message || 'Registration failed';
+      })
+      .addCase(unregisterFromEvent.pending, (state) => {
+        state.registration.status = 'loading';
+        state.registration.error = null;
+      })
+      .addCase(unregisterFromEvent.fulfilled, (state) => {
+        state.registration.status = 'succeeded';
+        state.registration.data = null;
+        if (state.detail.item) {
+          state.detail.item.registration = null;
+          if (state.detail.item.registeredCount > 0) {
+            state.detail.item.registeredCount -= 1;
+          }
+        }
+      })
+      .addCase(unregisterFromEvent.rejected, (state, action) => {
+        state.registration.status = 'failed';
+        state.registration.error = action.payload || action.error.message || 'Unregister failed';
+      });
   },
 });
 

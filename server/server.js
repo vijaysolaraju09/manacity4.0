@@ -91,6 +91,9 @@ app.use("/api/pros", proRoutes);
 if (process.env.NODE_ENV === "production") {
   const clientPath = path.join(__dirname, "..", "client", "dist");
   app.use(express.static(clientPath));
+  app.get(/^(?!\/api).*/, (_req, res) => {
+    res.sendFile(path.join(clientPath, "index.html"));
+  });
 }
 
 app.use((req, _res, next) => {

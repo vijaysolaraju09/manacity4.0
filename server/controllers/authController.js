@@ -116,8 +116,13 @@ exports.adminLogin = async (req, res, next) => {
       const matchesEnv =
         normalizedEmail === String(process.env.ADMIN_EMAIL || '').toLowerCase() &&
         password === process.env.ADMIN_PASSWORD;
+
       if (matchesEnv) {
         adminUser = await User.findOne({ role: 'admin' }).select('_id');
+
+        if (!adminUser) {
+          adminUser = { role: 'admin' };
+        }
       }
     }
 

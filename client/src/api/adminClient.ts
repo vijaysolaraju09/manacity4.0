@@ -19,4 +19,15 @@ adminApi.interceptors.request.use((config) => {
   return config;
 });
 
+adminApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      localStorage.removeItem('manacity_admin_token');
+      window.location.href = '/admin/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default adminApi;

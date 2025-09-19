@@ -33,6 +33,7 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       lowercase: true,
       trim: true,
+      // eslint-disable-next-line no-useless-escape
       match: /^(?:[a-zA-Z0-9_'^&\/+{}\-]+(?:\.[a-zA-Z0-9_'^&\/+{}\-]+)*|"(?:[\001-\010\013\014\016-\037!#-\[\]-\177]|\\[\001-\011\013\014\016-\177])*")@(?:(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-zA-Z-]*[a-zA-Z]:[\001-\011\013\014\016-\177]+)\])$/,
     },
     password: { type: String, required: true, select: false },

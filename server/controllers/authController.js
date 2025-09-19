@@ -3,6 +3,84 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const AppError = require("../utils/AppError");
 
+const normalizeDigits = (value) => String(value ?? "").replace(/\D/g, "");
+const isValidPhone = (value) => /^\d{10,14}$/.test(value);
+
+const pickAdminPhone = async () => {
+  const preferred = normalizeDigits(process.env.ADMIN_PHONE);
+  const candidates = [preferred, "9990000000", "9990000001", "9990000002"].filter((value) =>
+    isValidPhone(value)
+  );
+
+  for (const candidate of candidates) {
+    // eslint-disable-next-line no-await-in-loop
+    const exists = await User.exists({ phone: candidate });
+    if (!exists) {
+      return candidate;
+    }
+  }
+
+  for (let attempt = 0; attempt < 25; attempt += 1) {
+    const randomCandidate = String(9000000000 + Math.floor(Math.random() * 1000000000));
+    // eslint-disable-next-line no-await-in-loop
+    const exists = await User.exists({ phone: randomCandidate });
+    if (!exists) {
+      return randomCandidate;
+    }
+  }
+
+  throw AppError.internal("ADMIN_SETUP_FAILED", "Unable to provision admin account");
+};
+
+const ensureAdminAccount = async (email, password) => {
+  const hashedPassword = await bcrypt.hash(String(password), 10);
+  const displayName = process.env.ADMIN_NAME || "Administrator";
+
+  let adminUser = await User.findOne({ email }).select("+password");
+  if (adminUser) {
+    adminUser.role = "admin";
+    adminUser.password = hashedPassword;
+    adminUser.isVerified = true;
+    adminUser.verificationStatus = "approved";
+    if (!adminUser.name) {
+      adminUser.name = displayName;
+    }
+    await adminUser.save();
+    return adminUser;
+  }
+
+  adminUser = await User.findOne({ role: "admin" }).select("+password");
+  if (adminUser) {
+    if (!adminUser.email) {
+      adminUser.email = email;
+    }
+    adminUser.password = hashedPassword;
+    adminUser.isVerified = true;
+    adminUser.verificationStatus = "approved";
+    if (!adminUser.name) {
+      adminUser.name = displayName;
+    }
+    await adminUser.save();
+    return adminUser;
+  }
+
+  const phone = await pickAdminPhone();
+
+  const created = await User.create({
+    name: displayName,
+    phone,
+    email,
+    password: hashedPassword,
+    role: "admin",
+    location: "",
+    address: "",
+    isVerified: true,
+    verificationStatus: "approved",
+  });
+
+  return created;
+};
+
 exports.signup = async (req, res, next) => {
   try {
     const { name, phone, password, location, role, email } = req.body;
@@ -112,28 +190,22 @@ exports.adminLogin = async (req, res, next) => {
       adminUser = null;
     }
 
+    const matchesEnv =
+      normalizedEmail === String(process.env.ADMIN_EMAIL || '').toLowerCase() &&
+      password === process.env.ADMIN_PASSWORD;
+
     if (!adminUser) {
-      const matchesEnv =
-        normalizedEmail === String(process.env.ADMIN_EMAIL || '').toLowerCase() &&
-        password === process.env.ADMIN_PASSWORD;
-
-      if (matchesEnv) {
-        adminUser = await User.findOne({ role: 'admin' }).select('_id');
-
-        if (!adminUser) {
-          adminUser = { role: 'admin' };
-        }
+      if (!matchesEnv) {
+        throw AppError.unauthorized('INVALID_CREDENTIALS', 'Invalid credentials');
       }
+      adminUser = await ensureAdminAccount(normalizedEmail, password);
     }
 
-    if (!adminUser) {
+    if (!adminUser?._id) {
       throw AppError.unauthorized('INVALID_CREDENTIALS', 'Invalid credentials');
     }
 
-    const payload = { role: 'admin' };
-    if (adminUser._id) {
-      payload.userId = adminUser._id;
-    }
+    const payload = { role: 'admin', userId: adminUser._id };
 
     const token = jwt.sign(payload, jwtSecret, { expiresIn: '7d' });
 

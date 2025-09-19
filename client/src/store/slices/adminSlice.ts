@@ -4,8 +4,10 @@ interface AdminState {
   token: string | null;
 }
 
+const storedToken = localStorage.getItem('manacity_admin_token');
+
 const initialState: AdminState = {
-  token: null,
+  token: storedToken,
 };
 
 const adminSlice = createSlice({
@@ -14,9 +16,11 @@ const adminSlice = createSlice({
   reducers: {
     setAdminToken(state, action: PayloadAction<string>) {
       state.token = action.payload;
+      localStorage.setItem('manacity_admin_token', action.payload);
     },
     clearAdminToken(state) {
       state.token = null;
+      localStorage.removeItem('manacity_admin_token');
     },
   },
 });

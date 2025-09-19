@@ -19,6 +19,15 @@ export const toItem = (res: any): any => {
   const d = res?.data ?? res;
   if (d && typeof d === 'object') {
     if (d.data && typeof d.data === 'object') {
+      const dataObj = d.data as Record<string, any>;
+      if (
+        typeof dataObj.token === 'string' &&
+        dataObj.token &&
+        dataObj.user &&
+        typeof dataObj.user === 'object'
+      ) {
+        return dataObj;
+      }
       if (d.data.shop && typeof d.data.shop === 'object') return d.data.shop;
       if (d.data.verified && typeof d.data.verified === 'object')
         return d.data.verified;

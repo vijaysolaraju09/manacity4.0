@@ -17,6 +17,20 @@ interface AuthResponse {
   token: string;
 }
 
+const ensureAuthResponse = (payload: unknown): AuthResponse => {
+  if (
+    !payload ||
+    typeof payload !== 'object' ||
+    typeof (payload as { token?: unknown }).token !== 'string' ||
+    !(payload as { token?: string }).token ||
+    typeof (payload as { user?: unknown }).user !== 'object' ||
+    (payload as { user?: unknown }).user === null
+  ) {
+    throw new Error('Invalid auth response');
+  }
+  return payload as AuthResponse;
+};
+
 interface AuthState {
   user: User | null;
   token: string | null;
@@ -41,7 +55,7 @@ export const login = createAsyncThunk(
   ) => {
     try {
       const res = await http.post('/auth/login', creds);
-      return toItem(res) as AuthResponse;
+      return ensureAuthResponse(toItem(res));
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }
@@ -53,7 +67,7 @@ export const signup = createAsyncThunk(
   async (payload: SignupDraft, { rejectWithValue }) => {
     try {
       const res = await http.post('/auth/signup', payload);
-      return toItem(res) as AuthResponse;
+      return ensureAuthResponse(toItem(res));
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }

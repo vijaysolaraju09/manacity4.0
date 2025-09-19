@@ -61,7 +61,15 @@ exports.listVerified = async (req, res, next) => {
     const skip = (pageNum - 1) * limit;
 
     const match = {};
-    if (status) match.status = status;
+    if (status === 'approved') {
+      match.$or = [
+        { status: 'approved' },
+        { status: { $exists: false } },
+        { status: null },
+      ];
+    } else if (status) {
+      match.status = status;
+    }
 
     const searchRegex = q ? new RegExp(q, 'i') : null;
     const locationRegex = location ? new RegExp(location, 'i') : null;

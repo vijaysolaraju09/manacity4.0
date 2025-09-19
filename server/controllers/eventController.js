@@ -146,11 +146,18 @@ exports.listEvents = async (req, res, next) => {
 
     const pageNumber = Math.max(Number(page) || 1, 1);
     const limit = Math.max(Math.min(Number(pageSize) || 12, 50), 1);
-    const filter = { visibility: 'public', status: { $ne: 'draft' } };
+    const filter = {};
 
     if (category) filter.category = category;
     if (type) filter.type = type;
     if (status) filter.status = status;
+    else filter.status = { $ne: 'draft' };
+
+    filter.$or = [
+      { visibility: 'public' },
+      { visibility: { $exists: false } },
+      { visibility: null },
+    ];
     if (from || to) {
       filter.startAt = {};
       if (from) filter.startAt.$gte = new Date(from);

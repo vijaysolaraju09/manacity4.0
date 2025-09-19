@@ -1,7 +1,18 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { clearAdminToken } from '@/store/slices/adminSlice';
+import type { AppDispatch } from '@/store';
 import './AdminLayout.scss';
 
 const AdminLayout = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dispatch(clearAdminToken());
+    navigate('/admin/login');
+  };
+
   return (
     <div className="admin-layout">
       <aside className="admin-sidebar">
@@ -48,7 +59,12 @@ const AdminLayout = () => {
       <div className="admin-content">
         <header className="admin-topbar">
           <input type="text" placeholder="Search..." />
-          <div className="quick-actions">Quick Actions</div>
+          <div className="admin-topbar__actions">
+            <div className="quick-actions">Quick Actions</div>
+            <button type="button" className="admin-logout" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
         </header>
         <main className="admin-main">
           <Outlet />

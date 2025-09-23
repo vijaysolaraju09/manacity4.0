@@ -31,7 +31,9 @@ const EventCard = ({ event }: Props) => {
         <div className={styles.labels}>
           <span className={`${styles.badge} ${styles[event.type]}`}>{toLabel(event.type)}</span>
           <span className={styles.badge}>{toLabel(event.category)}</span>
-          <span className={`${styles.badge} ${styles.status}`}>{toLabel(event.status)}</span>
+          <span className={`${styles.badge} ${styles.status}`}>
+            {toLabel(event.lifecycleStatus || event.status)}
+          </span>
         </div>
       </div>
       <div className={styles.content}>

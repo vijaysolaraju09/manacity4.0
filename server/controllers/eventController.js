@@ -10,6 +10,8 @@ const AppError = require('../utils/AppError');
 const { Types } = mongoose;
 
 const REGISTRATION_STATUSES_FOR_NOTIFICATIONS = ['registered', 'checked_in'];
+const EVENT_STATUS_VALUES = ['draft', 'published', 'ongoing', 'completed', 'canceled'];
+const LIFECYCLE_STATUS_VALUES = ['upcoming', 'ongoing', 'past'];
 
 const toObjectId = (value) => {
   if (!value) return null;
@@ -130,6 +132,68 @@ const loadEventOrThrow = async (id) => {
   return event;
 };
 
+const toDateSafe = (value) => {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const deriveLifecycleStatus = (event) => {
+  if (!event) return 'upcoming';
+  if (event.status === 'canceled' || event.status === 'completed') return 'past';
+  const start = toDateSafe(event.startAt);
+  const end = toDateSafe(event.endAt);
+  const now = new Date();
+  if (start && start > now) return 'upcoming';
+  if (event.status === 'ongoing') return 'ongoing';
+  if (start && start <= now && (!end || end >= now)) return 'ongoing';
+  return 'past';
+};
+
+const buildLifecycleFilters = (statuses) => {
+  if (!statuses || !statuses.size) return [];
+  const now = new Date();
+  const filters = [];
+  if (statuses.has('upcoming')) {
+    filters.push({
+      $and: [
+        { startAt: { $gt: now } },
+        { status: { $nin: ['completed', 'canceled'] } },
+      ],
+    });
+  }
+  if (statuses.has('ongoing')) {
+    filters.push({
+      $or: [
+        { status: 'ongoing' },
+        {
+          $and: [
+            { status: { $nin: ['completed', 'canceled'] } },
+            { startAt: { $lte: now } },
+            {
+              $or: [
+                { endAt: { $exists: false } },
+                { endAt: null },
+                { endAt: { $gte: now } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  }
+  if (statuses.has('past')) {
+    filters.push({
+      $or: [
+        { status: { $in: ['completed', 'canceled'] } },
+        { endAt: { $lt: now } },
+      ],
+    });
+  }
+  return filters;
+};
+
 exports.listEvents = async (req, res, next) => {
   try {
     const {
@@ -146,24 +210,68 @@ exports.listEvents = async (req, res, next) => {
 
     const pageNumber = Math.max(Number(page) || 1, 1);
     const limit = Math.max(Math.min(Number(pageSize) || 12, 50), 1);
-    const filter = {};
+    const trimmedQuery = typeof q === 'string' ? q.trim() : '';
 
-    if (category) filter.category = category;
-    if (type) filter.type = type;
-    if (status) filter.status = status;
-    else filter.status = { $ne: 'draft' };
+    const statusTokens = typeof status === 'string'
+      ? status
+          .split(',')
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean)
+      : [];
 
-    filter.$or = [
-      { visibility: 'public' },
-      { visibility: { $exists: false } },
-      { visibility: null },
-    ];
-    if (from || to) {
-      filter.startAt = {};
-      if (from) filter.startAt.$gte = new Date(from);
-      if (to) filter.startAt.$lte = new Date(to);
+    const includeAllStatuses = statusTokens.some((token) => ['all', 'any'].includes(token));
+    const lifecycleStatuses = new Set();
+    const eventStatuses = new Set();
+
+    for (const token of statusTokens) {
+      if (LIFECYCLE_STATUS_VALUES.includes(token)) lifecycleStatuses.add(token);
+      if (EVENT_STATUS_VALUES.includes(token)) eventStatuses.add(token);
+      if (!LIFECYCLE_STATUS_VALUES.includes(token) && !EVENT_STATUS_VALUES.includes(token)) {
+        eventStatuses.add(token);
+      }
     }
-    if (q) filter.$text = { $search: q };
+
+    const andConditions = [
+      {
+        $or: [
+          { visibility: 'public' },
+          { visibility: { $exists: false } },
+          { visibility: null },
+        ],
+      },
+    ];
+
+    if (category) andConditions.push({ category });
+    if (type) andConditions.push({ type });
+
+    const startRange = {};
+    const fromDate = toDateSafe(from);
+    const toDate = toDateSafe(to);
+    if (fromDate) startRange.$gte = fromDate;
+    if (toDate) startRange.$lte = toDate;
+    if (Object.keys(startRange).length) andConditions.push({ startAt: startRange });
+
+    if (statusTokens.length) {
+      if (!includeAllStatuses && eventStatuses.size) {
+        const statusesArr = Array.from(eventStatuses);
+        andConditions.push(
+          statusesArr.length === 1
+            ? { status: statusesArr[0] }
+            : { status: { $in: statusesArr } }
+        );
+      }
+      const lifecycleFilters = buildLifecycleFilters(lifecycleStatuses);
+      if (lifecycleFilters.length === 1) andConditions.push(lifecycleFilters[0]);
+      else if (lifecycleFilters.length > 1) andConditions.push({ $or: lifecycleFilters });
+    } else {
+      andConditions.push({ status: { $ne: 'draft' } });
+    }
+
+    if (trimmedQuery) {
+      andConditions.push({ $text: { $search: trimmedQuery } });
+    }
+
+    const filter = andConditions.length === 1 ? andConditions[0] : { $and: andConditions };
 
     const skip = (pageNumber - 1) * limit;
     const sortObj = buildSort(sort);
@@ -176,7 +284,10 @@ exports.listEvents = async (req, res, next) => {
     res.json({
       ok: true,
       data: {
-        items: items.map((event) => event.toCardJSON()),
+        items: items.map((event) => ({
+          ...event.toCardJSON(),
+          lifecycleStatus: deriveLifecycleStatus(event),
+        })),
         total,
         page: pageNumber,
         pageSize: limit,

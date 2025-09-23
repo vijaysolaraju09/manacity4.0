@@ -47,7 +47,7 @@ const Home = () => {
   useEffect(() => {
     if (shops.status === 'idle') d(fetchShops({ sort: '-createdAt', pageSize: 10 }));
     if (verified.status === 'idle') d(fetchVerified({ pageSize: 10 }));
-    if (events.status === 'idle') d(fetchEvents({ status: 'published', pageSize: 6 }));
+    if (events.status === 'idle') d(fetchEvents({ status: 'upcoming', pageSize: 6 }));
     if (products.status === 'idle') d(fetchSpecialProducts({ pageSize: 10 }));
   }, [shops.status, verified.status, events.status, products.status, d]);
 
@@ -103,7 +103,7 @@ const Home = () => {
         status={events.status}
         error={events.error}
         type="event"
-        onRetry={() => d(fetchEvents({ status: 'published', pageSize: 6 }))}
+        onRetry={() => d(fetchEvents({ status: 'upcoming', pageSize: 6 }))}
         navigate={navigate}
       />
       <Section

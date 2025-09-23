@@ -14,7 +14,7 @@ const Events = () => {
 
   useEffect(() => {
     if (list.status === 'idle') {
-      dispatch(fetchEvents({ status: 'published' }));
+      dispatch(fetchEvents({ status: 'upcoming' }));
     }
   }, [list.status, dispatch]);
 
@@ -23,7 +23,7 @@ const Events = () => {
     return (
       <ErrorCard
         msg={list.error || 'Failed to load events'}
-        onRetry={() => dispatch(fetchEvents({ status: 'published' }))}
+        onRetry={() => dispatch(fetchEvents({ status: 'upcoming' }))}
       />
     );
   if (list.status === 'succeeded' && list.items.length === 0)
@@ -31,7 +31,7 @@ const Events = () => {
       <Empty
         msg="No events available right now."
         ctaText="Refresh"
-        onCta={() => dispatch(fetchEvents({ status: 'published' }))}
+        onCta={() => dispatch(fetchEvents({ status: 'upcoming' }))}
       />
     );
 

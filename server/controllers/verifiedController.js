@@ -60,75 +60,179 @@ exports.listVerified = async (req, res, next) => {
     const limit = Math.min(parseInt(pageSize, 10) || 10, 100);
     const skip = (pageNum - 1) * limit;
 
-    const match = {};
-    if (status === 'approved') {
-      match.$or = [
-        { status: 'approved' },
-        { status: { $exists: false } },
-        { status: null },
-      ];
-    } else if (status) {
-      match.status = status;
-    }
+    const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const searchRegex = q ? new RegExp(escapeRegex(q), 'i') : null;
+    const locationRegex = location ? new RegExp(escapeRegex(location), 'i') : null;
 
-    const searchRegex = q ? new RegExp(q, 'i') : null;
-    const locationRegex = location ? new RegExp(location, 'i') : null;
+    const sortFieldMap = {
+      rating: 'resolvedRatingAvg',
+      createdAt: 'cardCreatedAt',
+      updatedAt: 'cardUpdatedAt',
+      name: 'name',
+    };
 
-    let sortField = 'createdAt';
+    let sortField = 'cardUpdatedAt';
     let sortDir = -1;
-    if (sort) {
+    if (typeof sort === 'string' && sort.trim()) {
       sortDir = sort.startsWith('-') ? -1 : 1;
-      let field = sort.startsWith('-') ? sort.slice(1) : sort;
-      if (field === 'rating') field = 'ratingAvg';
-      sortField = field;
+      const trimmed = sort.startsWith('-') ? sort.slice(1) : sort;
+      sortField = sortFieldMap[trimmed] || trimmed || 'cardUpdatedAt';
     }
-    const sortObj = { [sortField]: sortDir };
 
-    const pipelineBase = [
-      { $match: match },
+    const statusTokens = String(status || '')
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    let includeAllStatuses = false;
+    const statuses = new Set();
+    if (statusTokens.length === 0) {
+      statuses.add('approved');
+    } else {
+      for (const token of statusTokens) {
+        if (['all', 'any'].includes(token)) {
+          includeAllStatuses = true;
+          break;
+        }
+        statuses.add(token);
+      }
+    }
+
+    const basePipeline = [
+      { $match: { isActive: { $ne: false }, role: { $ne: 'admin' } } },
       {
         $lookup: {
-          from: 'users',
-          localField: 'user',
-          foreignField: '_id',
-          as: 'user',
+          from: 'verifieds',
+          localField: '_id',
+          foreignField: 'user',
+          as: 'verifiedProfile',
         },
       },
-      { $unwind: '$user' },
+      {
+        $addFields: {
+          verifiedProfile: { $first: '$verifiedProfile' },
+          resolvedStatus: {
+            $ifNull: [
+              { $ifNull: ['$verifiedProfile.status', null] },
+              {
+                $cond: [
+                  { $eq: ['$isVerified', true] },
+                  'approved',
+                  { $ifNull: ['$verificationStatus', 'pending'] },
+                ],
+              },
+            ],
+          },
+          resolvedProfession: {
+            $ifNull: [
+              { $ifNull: ['$verifiedProfile.profession', null] },
+              { $ifNull: ['$profession', ''] },
+            ],
+          },
+          resolvedBio: {
+            $ifNull: [
+              { $ifNull: ['$verifiedProfile.bio', null] },
+              { $ifNull: ['$bio', ''] },
+            ],
+          },
+          resolvedPortfolio: {
+            $cond: [
+              { $isArray: '$verifiedProfile.portfolio' },
+              '$verifiedProfile.portfolio',
+              {
+                $cond: [
+                  { $isArray: '$portfolio' },
+                  '$portfolio',
+                  [],
+                ],
+              },
+            ],
+          },
+          resolvedRatingAvg: { $ifNull: ['$verifiedProfile.ratingAvg', 0] },
+          resolvedRatingCount: { $ifNull: ['$verifiedProfile.ratingCount', 0] },
+          cardId: { $ifNull: ['$verifiedProfile._id', '$_id'] },
+          cardCreatedAt: { $ifNull: ['$verifiedProfile.createdAt', '$createdAt'] },
+          cardUpdatedAt: { $ifNull: ['$verifiedProfile.updatedAt', '$updatedAt'] },
+          userId: '$_id',
+        },
+      },
     ];
+
+    if (!includeAllStatuses) {
+      if (statuses.size === 1) basePipeline.push({ $match: { resolvedStatus: Array.from(statuses)[0] } });
+      else if (statuses.size > 1)
+        basePipeline.push({ $match: { resolvedStatus: { $in: Array.from(statuses) } } });
+    }
+
     if (searchRegex) {
-      pipelineBase.push({
+      basePipeline.push({
         $match: {
           $or: [
-            { profession: searchRegex },
-            { bio: searchRegex },
-            { 'user.name': searchRegex },
+            { resolvedProfession: searchRegex },
+            { resolvedBio: searchRegex },
+            { name: searchRegex },
           ],
         },
       });
     }
+
     if (locationRegex) {
-      pipelineBase.push({ $match: { 'user.location': locationRegex } });
+      basePipeline.push({ $match: { location: locationRegex } });
     }
 
     const itemsPipeline = [
-      ...pipelineBase,
-      { $sort: sortObj },
+      ...basePipeline,
+      { $sort: { [sortField]: sortDir, name: 1 } },
       { $skip: skip },
       { $limit: limit },
+      {
+        $project: {
+          _id: '$cardId',
+          userId: 1,
+          name: 1,
+          phone: 1,
+          location: 1,
+          address: 1,
+          profession: '$resolvedProfession',
+          bio: '$resolvedBio',
+          portfolio: '$resolvedPortfolio',
+          status: '$resolvedStatus',
+          ratingAvg: '$resolvedRatingAvg',
+          ratingCount: '$resolvedRatingCount',
+          createdAt: '$cardCreatedAt',
+          updatedAt: '$cardUpdatedAt',
+        },
+      },
     ];
-    const countPipeline = [...pipelineBase, { $count: 'count' }];
 
-    const [itemsRaw, totalRaw] = await Promise.all([
-      Verified.aggregate(itemsPipeline),
-      Verified.aggregate(countPipeline),
+    const countPipeline = [...basePipeline, { $count: 'count' }];
+
+    const [items, totalAgg] = await Promise.all([
+      User.aggregate(itemsPipeline),
+      User.aggregate(countPipeline),
     ]);
-    const total = totalRaw[0]?.count || 0;
-    const cards = itemsRaw.map((v) => {
-      const u = v.user;
-      delete v.user;
-      return Verified.hydrate(v).toCardJSON(u);
-    });
+
+    const total = totalAgg[0]?.count || 0;
+    const cards = items.map((doc) => ({
+      id: String(doc._id),
+      _id: String(doc._id),
+      user: {
+        _id: String(doc.userId),
+        name: doc.name,
+        phone: doc.phone,
+        location: doc.location || '',
+        address: doc.address || '',
+      },
+      profession: doc.profession || '',
+      bio: doc.bio || '',
+      portfolio: Array.isArray(doc.portfolio) ? doc.portfolio : [],
+      status: doc.status || 'pending',
+      ratingAvg: typeof doc.ratingAvg === 'number' ? doc.ratingAvg : 0,
+      ratingCount: typeof doc.ratingCount === 'number' ? doc.ratingCount : 0,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+    }));
+
     res.json({
       ok: true,
       data: { items: cards, total, page: pageNum, pageSize: limit },
@@ -211,13 +315,56 @@ exports.listVerificationRequests = async (req, res, next) => {
 
 exports.getVerifiedById = async (req, res, next) => {
   try {
-    const verified = await Verified.findById(req.params.id).populate(
+    const { id } = req.params;
+    const verified = await Verified.findById(id).populate(
       'user',
       'name phone location address'
     );
-    if (!verified || verified.status !== 'approved')
+    if (verified) {
+      if (verified.status !== 'approved')
+        throw AppError.notFound('VERIFIED_NOT_FOUND', 'Verified not found');
+      const card = verified.toCardJSON(verified.user);
+      res.json({ ok: true, data: { verified: card }, traceId: req.traceId });
+      return;
+    }
+
+    const user = await User.findById(id).select(
+      'name phone location address profession bio verificationStatus isVerified createdAt updatedAt role'
+    );
+    if (
+      !user ||
+      (!user.isVerified &&
+        (user.verificationStatus || '').toLowerCase() !== 'approved' &&
+        user.role !== 'verified')
+    ) {
       throw AppError.notFound('VERIFIED_NOT_FOUND', 'Verified not found');
-    const card = verified.toCardJSON(verified.user);
+    }
+
+    const card = {
+      id: String(user._id),
+      _id: String(user._id),
+      user: {
+        _id: String(user._id),
+        name: user.name,
+        phone: user.phone,
+        location: user.location || '',
+        address: user.address || '',
+      },
+      profession: user.profession || '',
+      bio: user.bio || '',
+      portfolio: [],
+      status:
+        (user.verificationStatus && user.verificationStatus !== 'none'
+          ? user.verificationStatus
+          : user.isVerified
+          ? 'approved'
+          : 'pending'),
+      ratingAvg: 0,
+      ratingCount: 0,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+
     res.json({ ok: true, data: { verified: card }, traceId: req.traceId });
   } catch (err) {
     next(err);

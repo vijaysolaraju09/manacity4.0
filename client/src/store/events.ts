@@ -30,6 +30,7 @@ export interface EventSummary {
   venue?: string | null;
   visibility: 'public' | 'private';
   bannerUrl?: string | null;
+  lifecycleStatus?: 'upcoming' | 'ongoing' | 'past';
 }
 
 export interface EventDetail extends EventSummary {
@@ -86,7 +87,14 @@ const initialState: EventsState = {
 
 const adaptEventSummary = (raw: any): EventSummary | null => {
   if (!raw) return null;
-  return {
+  const lifecycleRaw =
+    typeof raw.lifecycleStatus === 'string'
+      ? raw.lifecycleStatus
+      : typeof raw.lifecycle_status === 'string'
+      ? raw.lifecycle_status
+      : '';
+
+  const summary: EventSummary = {
     _id: raw._id || raw.id,
     title: raw.title || '',
     type: (raw.type as EventType) || 'activity',
@@ -105,6 +113,31 @@ const adaptEventSummary = (raw: any): EventSummary | null => {
     visibility: raw.visibility === 'private' ? 'private' : 'public',
     bannerUrl: raw.bannerUrl || raw.cover || null,
   };
+
+  const startTime = Date.parse(summary.startAt);
+  const endTime = summary.endAt ? Date.parse(summary.endAt) : NaN;
+  const normalizedLifecycle = lifecycleRaw.toLowerCase();
+  if (['upcoming', 'ongoing', 'past'].includes(normalizedLifecycle)) {
+    summary.lifecycleStatus = normalizedLifecycle as 'upcoming' | 'ongoing' | 'past';
+  } else {
+    const now = Date.now();
+    if (
+      summary.status === 'completed' ||
+      summary.status === 'canceled' ||
+      (Number.isFinite(endTime) && endTime < now)
+    ) {
+      summary.lifecycleStatus = 'past';
+    } else if (
+      summary.status === 'ongoing' ||
+      (Number.isFinite(startTime) && startTime <= now && (!Number.isFinite(endTime) || endTime >= now))
+    ) {
+      summary.lifecycleStatus = 'ongoing';
+    } else {
+      summary.lifecycleStatus = 'upcoming';
+    }
+  }
+
+  return summary;
 };
 
 const adaptEventDetail = (raw: any): EventDetail | null => {

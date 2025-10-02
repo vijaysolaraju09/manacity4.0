@@ -10,6 +10,7 @@ import showToast from '../../../components/ui/Toast';
 import type { SignupDraft } from '../../../store/slices/authSlice';
 import { signup as signupThunk } from '../../../store/slices/authSlice';
 import type { AppDispatch } from '../../../store';
+import { normalizePhoneDigits } from '@/utils/phone';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -32,12 +33,8 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const normalizePhone = (phone: string): string | null => {
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length === 10) return `+91${digits}`;
-    if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
-    return null;
-  };
+  const normalizePhone = (phone: string): string | null =>
+    normalizePhoneDigits(phone);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -53,9 +50,9 @@ const Signup = () => {
       email?: string;
     } = {};
     if (!form.name.trim()) newErrors.name = 'Name is required';
-    const phoneE164 = form.phone ? normalizePhone(form.phone) : null;
-    if (form.phone && !phoneE164)
-      newErrors.phone = 'Enter a valid phone number with country code (e.g., +91…)';
+    const normalizedPhone = form.phone ? normalizePhone(form.phone) : null;
+    if (form.phone && !normalizedPhone)
+      newErrors.phone = 'Enter a valid phone number (10-14 digits).';
     if (!form.phone) newErrors.phone = 'Phone is required';
     if (form.password.length < 6)
       newErrors.password = 'Password must be at least 6 characters';
@@ -66,7 +63,11 @@ const Signup = () => {
 
     try {
       setLoading(true);
-      const payload = { ...form, phone: phoneE164!, email: form.email || undefined };
+      const payload = {
+        ...form,
+        phone: normalizedPhone!,
+        email: form.email || undefined,
+      };
       await dispatch(signupThunk(payload)).unwrap();
       showToast('Account created.', 'success');
       navigate('/home');

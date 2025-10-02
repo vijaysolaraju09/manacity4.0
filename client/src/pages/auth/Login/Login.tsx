@@ -9,6 +9,7 @@ import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
 import { login as loginThunk } from '../../../store/slices/authSlice';
 import type { AppDispatch } from '../../../store';
+import { normalizePhoneDigits } from '@/utils/phone';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -24,10 +25,16 @@ const Login = () => {
       setError('Enter your credentials');
       return;
     }
+
+    const normalizedPhone = normalizePhoneDigits(phone);
+    if (!normalizedPhone) {
+      setError('Enter a valid phone number (10-14 digits).');
+      return;
+    }
     try {
       setLoading(true);
       setError('');
-      await dispatch(loginThunk({ phone, password })).unwrap();
+      await dispatch(loginThunk({ phone: normalizedPhone, password })).unwrap();
       navigate('/home');
       showToast('Logged in successfully', 'success');
     } catch (err: any) {

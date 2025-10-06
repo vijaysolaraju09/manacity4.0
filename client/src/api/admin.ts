@@ -295,10 +295,15 @@ export const updateVerificationRequest = async (
   id: string,
   status: 'pending' | 'approved' | 'rejected',
 ) => {
-  return adminApi.patch(
-    withAdminPrefix(`verification-requests/${id}`),
-    { status },
-  );
+  if (status === 'approved') {
+    return adminApi.post(withAdminPrefix(`verified/${id}/approve`));
+  }
+
+  if (status === 'rejected') {
+    return adminApi.post(withAdminPrefix(`verified/${id}/reject`));
+  }
+
+  return adminApi.patch(withAdminPrefix(`verified/${id}/status`), { status });
 };
 
 export interface ShopQueryParams {

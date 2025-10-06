@@ -147,6 +147,10 @@ exports.createEvent = async (req, res, next) => {
       throw AppError.badRequest('INVALID_DATES', 'Invalid event dates');
     }
 
+    if (endAt.getTime() <= startAt.getTime()) {
+      throw AppError.badRequest('END_BEFORE_START', 'Event end must be after the start time');
+    }
+
     const createdBy = req.user?._id;
     if (!createdBy) {
       throw AppError.unauthorized('UNAUTHORIZED', 'Admin authentication required');
@@ -272,6 +276,10 @@ exports.updateEvent = async (req, res, next) => {
         throw AppError.badRequest('INVALID_END', 'Invalid endAt');
       }
       event.endAt = endDate;
+    }
+
+    if (event.startAt && event.endAt && event.endAt.getTime() <= event.startAt.getTime()) {
+      throw AppError.badRequest('END_BEFORE_START', 'Event end must be after the start time');
     }
 
     if (req.body.registrationOpenAt !== undefined) {

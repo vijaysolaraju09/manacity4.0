@@ -74,7 +74,7 @@ const validateForm = (values: EventFormValues): EventFormErrors => {
   }
 
   if (!errors.startAt && !errors.endAt && startDate && endDate && startDate >= endDate) {
-    errors.endAt = 'End must be after start';
+    errors.endAt = 'End date/time must be after the start date/time';
   }
 
   const capacity = Number(values.capacity);

@@ -1,4 +1,5 @@
 import { forwardRef } from 'react';
+import DateTimePicker from '../../components/common/DateTimePicker';
 
 export interface EventFormValues {
   title: string;
@@ -62,40 +63,23 @@ const EventForm = forwardRef<HTMLFormElement, EventFormProps>(
         </div>
 
         <div className="form-field-grid">
-          <div className="form-field">
-            <label htmlFor="event-start">Start</label>
-            <input
-              id="event-start"
-              type="datetime-local"
-              value={values.startAt}
-              onChange={(e) => onChange({ startAt: e.target.value })}
-              aria-invalid={Boolean(errors.startAt)}
-              aria-describedby={errors.startAt ? 'event-start-error' : undefined}
-              required
-            />
-            {errors.startAt ? (
-              <p id="event-start-error" className="field-error">
-                {errors.startAt}
-              </p>
-            ) : null}
-          </div>
-          <div className="form-field">
-            <label htmlFor="event-end">End</label>
-            <input
-              id="event-end"
-              type="datetime-local"
-              value={values.endAt}
-              onChange={(e) => onChange({ endAt: e.target.value })}
-              aria-invalid={Boolean(errors.endAt)}
-              aria-describedby={errors.endAt ? 'event-end-error' : undefined}
-              required
-            />
-            {errors.endAt ? (
-              <p id="event-end-error" className="field-error">
-                {errors.endAt}
-              </p>
-            ) : null}
-          </div>
+          <DateTimePicker
+            id="event-start"
+            label="Start"
+            value={values.startAt}
+            onChange={(startAt) => onChange({ startAt })}
+            error={errors.startAt}
+            required
+          />
+          <DateTimePicker
+            id="event-end"
+            label="End"
+            value={values.endAt}
+            onChange={(endAt) => onChange({ endAt })}
+            error={errors.endAt}
+            min={values.startAt || undefined}
+            required
+          />
         </div>
 
         <div className="form-field">

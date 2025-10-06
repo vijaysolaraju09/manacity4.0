@@ -4,18 +4,39 @@ import { toItems, toItem, toErrorMessage } from '@/lib/response';
 
 export interface Product {
   _id: string;
+  id?: string;
+  shopId: string;
   name: string;
   description: string;
   price: number;
+  pricePaise?: number;
   category: string;
   image?: string;
   images?: string[];
   mrp?: number;
+  mrpPaise?: number;
   discount?: number;
   stock: number;
   shop: string;
   available?: boolean;
 }
+
+export interface CreateProductPayload {
+  shopId: string;
+  name: string;
+  description?: string;
+  pricePaise: number;
+  mrpPaise: number;
+  category: string;
+  imageUrl?: string;
+  stock: number;
+}
+
+export type UpdateProductPayload = Partial<CreateProductPayload> & {
+  name?: string;
+  pricePaise?: number;
+  mrpPaise?: number;
+};
 
 interface ProductState {
   items: Product[];
@@ -38,7 +59,7 @@ export const fetchMyProducts = createAsyncThunk(
 
 export const createProduct = createAsyncThunk(
   'products/create',
-  async (data: Partial<Product>, { rejectWithValue }) => {
+  async (data: CreateProductPayload, { rejectWithValue }) => {
     try {
       const res = await http.post('/products', data);
       return toItem(res) as Product;
@@ -51,7 +72,7 @@ export const createProduct = createAsyncThunk(
 export const updateProduct = createAsyncThunk(
   'products/update',
   async (
-    { id, data }: { id: string; data: Partial<Product> },
+    { id, data }: { id: string; data: UpdateProductPayload },
     { rejectWithValue }
   ) => {
     try {

@@ -436,3 +436,58 @@ exports.rejectVerified = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.updateVerificationRequestStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body || {};
+
+    const allowedStatuses = ['pending', 'approved', 'rejected'];
+    if (!allowedStatuses.includes(status)) {
+      throw AppError.badRequest(
+        'INVALID_STATUS',
+        'Status must be pending, approved, or rejected'
+      );
+    }
+
+    const verified = await Verified.findById(id);
+    if (!verified) {
+      throw AppError.notFound(
+        'VERIFICATION_REQUEST_NOT_FOUND',
+        'Verification request not found'
+      );
+    }
+
+    verified.status = status;
+    await verified.save();
+
+    const userUpdate = {
+      verificationStatus: status,
+      isVerified: status === 'approved',
+    };
+
+    if (status === 'approved') {
+      userUpdate.profession = verified.profession;
+      userUpdate.bio = verified.bio;
+    }
+
+    if (status !== 'approved') {
+      userUpdate.isVerified = false;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(verified.user, userUpdate, {
+      new: true,
+      select: 'name phone location address',
+    });
+
+    const populated =
+      updatedUser ||
+      (await User.findById(verified.user).select('name phone location address'));
+
+    const card = verified.toCardJSON(populated);
+
+    res.json({ ok: true, data: { request: card }, traceId: req.traceId });
+  } catch (err) {
+    next(err);
+  }
+};

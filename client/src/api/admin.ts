@@ -291,12 +291,14 @@ export const fetchVerificationRequests = async (
   };
 };
 
-export const acceptVerification = async (id: string) => {
-  await adminApi.post(withAdminPrefix(`verified/${id}/approve`));
-};
-
-export const rejectVerification = async (id: string) => {
-  await adminApi.post(withAdminPrefix(`verified/${id}/reject`));
+export const updateVerificationRequest = async (
+  id: string,
+  status: 'pending' | 'approved' | 'rejected',
+) => {
+  return adminApi.patch(
+    withAdminPrefix(`verification-requests/${id}`),
+    { status },
+  );
 };
 
 export interface ShopQueryParams {

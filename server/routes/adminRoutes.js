@@ -26,7 +26,10 @@ const {
   updateProduct: adminUpdateProduct,
   deleteProduct: adminDeleteProduct,
 } = require('../controllers/adminProductController');
-const { listVerificationRequests } = require('../controllers/verifiedController');
+const {
+  listVerificationRequests,
+  updateVerificationRequestStatus,
+} = require('../controllers/verifiedController');
 const protect = require('../middleware/authMiddleware');
 const isAdmin = require('../middleware/isAdmin');
 const validate = require('../middleware/validate');
@@ -75,5 +78,11 @@ router.put('/products/:id', protect, isAdmin, adminUpdateProduct);
 router.delete('/products/:id', protect, isAdmin, adminDeleteProduct);
 
 router.get('/verified/requests', protect, isAdmin, listVerificationRequests);
+router.patch(
+  '/verification-requests/:id',
+  protect,
+  isAdmin,
+  updateVerificationRequestStatus
+);
 
 module.exports = router;

@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   fetchVerificationRequests,
-  acceptVerification,
-  rejectVerification,
+  updateVerificationRequest,
 } from '../../api/admin';
 import DataTable, { type Column } from '../../components/admin/DataTable';
 import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
+import { toItem } from '../../lib/response';
 import './VerificationRequests.scss';
 
 interface Request {
@@ -88,21 +88,31 @@ const VerificationRequests = () => {
     id: string,
     newStatus: 'approved' | 'rejected',
   ) => {
-    const prev = [...requests];
-    let updated = requests.map((r) =>
-      r.user._id === id ? { ...r, status: newStatus } : r,
-    );
-    if (status && status !== newStatus) {
-      updated = updated.filter((r) => r.user._id !== id);
-    }
-    setRequests(updated);
     setActionId(id);
     try {
-      if (newStatus === 'approved') await acceptVerification(id);
-      else await rejectVerification(id);
+      const res = await updateVerificationRequest(id, newStatus);
+      const updated = toItem(res) as Request;
+      setRequests((current) => {
+        const index = current.findIndex((r) => r._id === updated._id);
+        if (index === -1) {
+          if (status && status !== updated.status) {
+            return current;
+          }
+          return [...current, updated];
+        }
+        const next = [...current];
+        if (status && status !== updated.status) {
+          next.splice(index, 1);
+        } else {
+          next[index] = updated;
+        }
+        return next;
+      });
+      if (status && status !== newStatus) {
+        setTotal((prevTotal) => Math.max(0, prevTotal - 1));
+      }
       showToast(`Request ${newStatus === 'approved' ? 'approved' : 'rejected'}`);
-    } catch {
-      setRequests(prev);
+    } catch (error) {
       showToast('Failed to update request', 'error');
     } finally {
       setActionId('');
@@ -136,14 +146,14 @@ const VerificationRequests = () => {
       render: (r) => (
         <>
           <button
-            onClick={() => handleAction(r.user._id, 'approved')}
-            disabled={actionId === r.user._id}
+            onClick={() => handleAction(r._id, 'approved')}
+            disabled={actionId === r._id}
           >
             Accept
           </button>
           <button
-            onClick={() => handleAction(r.user._id, 'rejected')}
-            disabled={actionId === r.user._id}
+            onClick={() => handleAction(r._id, 'rejected')}
+            disabled={actionId === r._id}
           >
             Reject
           </button>

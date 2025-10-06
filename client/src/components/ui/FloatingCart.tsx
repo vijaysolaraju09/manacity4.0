@@ -2,6 +2,7 @@ import { FaShoppingCart } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import type { RootState } from '@/store';
+import { paths } from '@/routes/paths';
 import styles from './FloatingCart.module.scss';
 
 const FloatingCart = () => {
@@ -12,7 +13,7 @@ const FloatingCart = () => {
     <button
       type="button"
       className={styles.cart}
-      onClick={() => navigate('/cart')}
+      onClick={() => navigate(paths.cart())}
       aria-label="Cart"
     >
       <FaShoppingCart />

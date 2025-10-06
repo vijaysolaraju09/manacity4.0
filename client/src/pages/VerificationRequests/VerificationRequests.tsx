@@ -7,7 +7,7 @@ import {
 import DataTable, { type Column } from '../../components/admin/DataTable';
 import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
-import { toItem } from '../../lib/response';
+import { toItem, toErrorMessage } from '../../lib/response';
 import './VerificationRequests.scss';
 
 interface Request {
@@ -59,10 +59,10 @@ const VerificationRequests = () => {
         });
         setRequests(data.requests);
         setTotal(data.total);
-      } catch {
+      } catch (err) {
         setRequests([]);
         setTotal(0);
-        showToast('Failed to load verification requests', 'error');
+        showToast(toErrorMessage(err), 'error');
       } finally {
         setLoading(false);
       }
@@ -113,7 +113,7 @@ const VerificationRequests = () => {
       }
       showToast(`Request ${newStatus === 'approved' ? 'approved' : 'rejected'}`);
     } catch (error) {
-      showToast('Failed to update request', 'error');
+      showToast(toErrorMessage(error), 'error');
     } finally {
       setActionId('');
     }

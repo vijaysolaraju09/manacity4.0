@@ -8,6 +8,7 @@ import { logoutApi } from '../../api/auth';
 import { setLanguage, setNotificationPrefs } from '../../store/slices/settingsSlice';
 import type { RootState } from '../../store';
 import { useTheme, type Theme } from '../../theme/ThemeProvider';
+import { paths } from '@/routes/paths';
 import styles from './Settings.module.scss';
 
 const Settings = () => {
@@ -27,7 +28,7 @@ const Settings = () => {
     localStorage.removeItem('user');
     logoutApi().finally(() => {
       dispatch(logoutAction());
-      navigate('/login');
+      navigate(paths.auth.login());
     });
   };
 

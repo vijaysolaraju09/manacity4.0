@@ -35,9 +35,11 @@ const ordersAdapter = createEntityAdapter<Order, string>({
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
 });
 
+type RequestStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
+
 interface OrdersSliceState {
-  mine: EntityState<Order, string> & { status: string; error: string | null };
-  received: EntityState<Order, string> & { status: string; error: string | null };
+  mine: EntityState<Order, string> & { status: RequestStatus; error: string | null };
+  received: EntityState<Order, string> & { status: RequestStatus; error: string | null };
 }
 
 const initialState: OrdersSliceState = {

@@ -7,6 +7,8 @@ import { setAdminToken } from '../../store/slices/adminSlice';
 import type { AppDispatch } from '../../store';
 import Loader from '../../components/Loader';
 import './AdminLogin.scss';
+import { paths } from '@/routes/paths';
+import { toErrorMessage } from '@/lib/response';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -27,10 +29,10 @@ const AdminLogin = () => {
       const token = await adminLogin(form);
       if (token) {
         dispatch(setAdminToken(token));
-        navigate('/admin');
+        navigate(paths.admin.root());
       }
     } catch (err: any) {
-      const message = err.response?.data?.error || 'Login failed';
+      const message = toErrorMessage(err);
       setError(message);
     } finally {
       setLoading(false);

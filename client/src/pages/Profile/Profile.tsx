@@ -11,6 +11,8 @@ import {
 } from '@/api/profile';
 import { setUser } from '@/store/slices/authSlice';
 import type { RootState, AppDispatch } from '@/store';
+import { toErrorMessage } from '@/lib/response';
+import { paths } from '@/routes/paths';
 import styles from './Profile.module.scss';
 
 const Profile = () => {
@@ -122,7 +124,7 @@ const Profile = () => {
       showToast('Profile updated', 'success');
       setOpen(false);
     } catch (err: any) {
-      showToast(err.toString(), 'error');
+      showToast(toErrorMessage(err), 'error');
     }
   };
 
@@ -148,7 +150,7 @@ const Profile = () => {
       showToast('Verification request submitted', 'success');
       setVerifyOpen(false);
     } catch (err: any) {
-      showToast(err.toString(), 'error');
+      showToast(toErrorMessage(err), 'error');
     }
   };
 
@@ -193,7 +195,7 @@ const Profile = () => {
       showToast('Business request submitted', 'success');
       setBusinessOpen(false);
     } catch (err: any) {
-      showToast(err?.response?.data?.message || err.toString(), 'error');
+      showToast(toErrorMessage(err), 'error');
     } finally {
       setBusinessLoading(false);
     }
@@ -209,15 +211,15 @@ const Profile = () => {
   const actions: { label: string; path: string }[] = [];
   if (user.role === 'business') {
     actions.push(
-      { label: 'Manage Products', path: '/manage-products' },
-      { label: 'Received Orders', path: '/orders/received' }
+      { label: 'Manage Products', path: paths.manageProducts() },
+      { label: 'Received Orders', path: paths.orders.received() }
     );
   }
   if (user.isVerified) {
-    actions.push({ label: 'Service Orders', path: '/orders/service' });
+    actions.push({ label: 'Service Orders', path: paths.orders.service() });
   }
   if (actions.length === 0) {
-    actions.push({ label: 'My Orders', path: '/orders' });
+    actions.push({ label: 'My Orders', path: paths.orders.root() });
   }
 
   return (

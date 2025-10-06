@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { clearAdminToken } from '@/store/slices/adminSlice';
 import type { AppDispatch } from '@/store';
+import { paths } from '@/routes/paths';
 import './AdminLayout.scss';
 
 const AdminLayout = () => {
@@ -10,7 +11,7 @@ const AdminLayout = () => {
 
   const handleLogout = () => {
     dispatch(clearAdminToken());
-    navigate('/admin/login');
+    navigate(paths.admin.login());
   };
 
   return (
@@ -19,7 +20,7 @@ const AdminLayout = () => {
         <nav>
           <ul>
             <li>
-              <NavLink to="/admin" end>
+              <NavLink to={paths.admin.root()} end>
                 Dashboard
               </NavLink>
             </li>
@@ -27,31 +28,31 @@ const AdminLayout = () => {
               <span className="nav-group__label">Requests</span>
               <ul>
                 <li>
-                  <NavLink to="/admin/requests/business">
+                  <NavLink to={paths.admin.requests.business()}>
                     Business Requests
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/admin/requests/verification">
+                  <NavLink to={paths.admin.requests.verification()}>
                     Verification Requests
                   </NavLink>
                 </li>
               </ul>
             </li>
             <li>
-              <NavLink to="/admin/shops">Shops</NavLink>
+              <NavLink to={paths.admin.shops()}>Shops</NavLink>
             </li>
             <li>
-              <NavLink to="/admin/products">Products</NavLink>
+              <NavLink to={paths.admin.products()}>Products</NavLink>
             </li>
             <li>
-              <NavLink to="/admin/events">Events</NavLink>
+              <NavLink to={paths.admin.events()}>Events</NavLink>
             </li>
             <li>
-              <NavLink to="/admin/users">Users</NavLink>
+              <NavLink to={paths.admin.users()}>Users</NavLink>
             </li>
             <li>
-              <NavLink to="/admin/analytics">Analytics</NavLink>
+              <NavLink to={paths.admin.analytics()}>Analytics</NavLink>
             </li>
           </ul>
         </nav>

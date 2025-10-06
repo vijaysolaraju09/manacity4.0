@@ -1,5 +1,5 @@
 import { http } from '@/lib/http';
-import { toItems, toErrorMessage } from '@/lib/response';
+import { toItems, toItem, toErrorMessage } from '@/lib/response';
 
 export interface Notification {
   _id: string;
@@ -30,5 +30,10 @@ export const fetchNotifications = async ({
 };
 
 export const markNotificationRead = async (id: string) => {
-  await http.patch(`/notifications/${id}/read`);
+  try {
+    const res = await http.patch(`/notifications/${id}/read`);
+    return toItem(res);
+  } catch (err) {
+    throw new Error(toErrorMessage(err));
+  }
 };

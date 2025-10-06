@@ -1,5 +1,9 @@
 const raw = import.meta.env.VITE_API_URL;
-const normalized = typeof raw === 'string' ? raw.trim() : '';
-const base = normalized || '/api';
 
-export const API_BASE = base.endsWith('/') ? base : `${base}/`;
+if (typeof raw !== 'string' || !raw.trim()) {
+  throw new Error('VITE_API_URL environment variable is required');
+}
+
+const normalized = raw.trim();
+
+export const API_BASE = normalized.endsWith('/') ? normalized : `${normalized}/`;

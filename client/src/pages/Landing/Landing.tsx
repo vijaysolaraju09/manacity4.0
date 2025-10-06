@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import fallbackImage from '../../assets/no-image.svg';
 import './Landing.scss';
+import { paths } from '@/routes/paths';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ const Landing = () => {
 
       <motion.button
         className="primary-cta"
-        onClick={() => navigate('/signup')}
+        onClick={() => navigate(paths.auth.signup())}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         initial={{ opacity: 0, y: 10 }}
@@ -55,7 +56,7 @@ const Landing = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
       >
-        <Link to="/login">Login</Link>
+        <Link to={paths.auth.login()}>Login</Link>
       </motion.div>
     </div>
   );

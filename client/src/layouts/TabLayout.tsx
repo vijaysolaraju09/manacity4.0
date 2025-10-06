@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../store";
 import { fetchNotifs } from "@/store/notifs";
+import { paths } from "@/routes/paths";
 import {
   AiFillHome,
   AiOutlineShop,
@@ -34,24 +35,24 @@ const TabLayout = () => {
   }, [notifStatus, dispatch]);
 
   const tabs = [
-    { name: "Home", icon: <AiFillHome />, path: "/home" },
-    { name: "Shops", icon: <AiOutlineShop />, path: "/shops" },
+    { name: "Home", icon: <AiFillHome />, path: paths.home() },
+    { name: "Shops", icon: <AiOutlineShop />, path: paths.shops() },
     {
       name: "Verified",
       icon: <AiOutlineUsergroupAdd />,
-      path: "/verified-users",
+      path: paths.verifiedUsers.list(),
     },
-    { name: "Events", icon: <AiOutlineCalendar />, path: "/events" },
+    { name: "Events", icon: <AiOutlineCalendar />, path: paths.events.list() },
   ];
 
   const orderTab = {
     name: "Order Now",
     icon: <FaMicrophone />,
-    path: "/voice-order",
+    path: paths.voiceOrder(),
   };
 
   useEffect(() => {
-    if (location.pathname === "/") navigate("/home");
+    if (location.pathname === paths.root()) navigate(paths.home());
   }, [location.pathname, navigate]);
 
   return (
@@ -61,12 +62,12 @@ const TabLayout = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="logo" onClick={() => navigate('/home')}>Manacity</h1>
+        <h1 className="logo" onClick={() => navigate(paths.home())}>Manacity</h1>
         <div className="actions">
           {cartItems.length > 0 && (
             <button
               className="cart-btn"
-              onClick={() => navigate('/cart')}
+              onClick={() => navigate(paths.cart())}
             >
               <FaShoppingCart />
               <span className="count">{cartItems.length}</span>
@@ -74,20 +75,20 @@ const TabLayout = () => {
           )}
           <button
             className="notif-btn"
-            onClick={() => navigate('/notifications')}
+            onClick={() => navigate(paths.notifications())}
           >
             <AiOutlineBell />
             {unread > 0 && <span className="count">{unread}</span>}
           </button>
           <button
             className="profile-btn"
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate(paths.profile())}
           >
             <AiOutlineUser />
           </button>
           <button
             className="settings-btn"
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate(paths.settings())}
           >
             <AiOutlineSetting />
           </button>
@@ -100,7 +101,7 @@ const TabLayout = () => {
 
       <motion.button
         className="special-shop-btn"
-        onClick={() => navigate('/special-shop')}
+        onClick={() => navigate(paths.specialShop())}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -114,38 +115,38 @@ const TabLayout = () => {
         transition={{ duration: 0.4 }}
       >
         <div className="desktop-extras">
-          <h1 className="sidebar-logo" onClick={() => navigate('/home')}>
+          <h1 className="sidebar-logo" onClick={() => navigate(paths.home())}>
             Manacity
           </h1>
-        {cartItems.length > 0 && (
+          {cartItems.length > 0 && (
+            <button
+              className="sidebar-cart"
+              onClick={() => navigate(paths.cart())}
+            >
+              <FaShoppingCart />
+              <span className="count">{cartItems.length}</span>
+            </button>
+          )}
           <button
-            className="sidebar-cart"
-            onClick={() => navigate('/cart')}
+            className="sidebar-notifications"
+            onClick={() => navigate(paths.notifications())}
           >
-            <FaShoppingCart />
-            <span className="count">{cartItems.length}</span>
+            <AiOutlineBell />
+            {unread > 0 && <span className="count">{unread}</span>}
           </button>
-        )}
-        <button
-          className="sidebar-notifications"
-          onClick={() => navigate('/notifications')}
-        >
-          <AiOutlineBell />
-          {unread > 0 && <span className="count">{unread}</span>}
-        </button>
-        <button
-          className="sidebar-profile"
-          onClick={() => navigate('/profile')}
-        >
-          <AiOutlineUser />
-        </button>
-        <button
-          className="sidebar-settings"
-          onClick={() => navigate('/settings')}
-        >
-          <AiOutlineSetting />
-        </button>
-      </div>
+          <button
+            className="sidebar-profile"
+            onClick={() => navigate(paths.profile())}
+          >
+            <AiOutlineUser />
+          </button>
+          <button
+            className="sidebar-settings"
+            onClick={() => navigate(paths.settings())}
+          >
+            <AiOutlineSetting />
+          </button>
+        </div>
         {tabs.slice(0, 2).map((tab) => (
           <button
             key={tab.name}

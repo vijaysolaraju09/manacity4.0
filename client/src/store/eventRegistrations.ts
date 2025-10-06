@@ -5,13 +5,20 @@ import { toErrorMessage } from '@/lib/response';
 export interface EventRegistrationItem {
   _id: string;
   teamName?: string;
-  status: string;
+  status: EventRegistrationStatus;
   user?: {
     _id: string;
     name?: string;
   } | null;
   createdAt?: string;
 }
+
+type EventRegistrationStatus =
+  | 'registered'
+  | 'waitlisted'
+  | 'checked_in'
+  | 'withdrawn'
+  | 'disqualified';
 
 interface RegistrationsState {
   items: EventRegistrationItem[];
@@ -42,7 +49,7 @@ export const fetchEventRegistrations = createAsyncThunk<
       items: items.map((item: any) => ({
         _id: item._id,
         teamName: item.teamName,
-        status: item.status,
+        status: (item.status || 'registered') as EventRegistrationStatus,
         user: item.user || null,
         createdAt: item.createdAt,
       })),

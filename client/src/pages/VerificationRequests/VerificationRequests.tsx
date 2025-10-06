@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   fetchVerificationRequests,
@@ -48,27 +48,28 @@ const VerificationRequests = () => {
     setProfessionInput(profession);
   }, [profession]);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const data: RequestResponse = await fetchVerificationRequests({
-          page,
-          status,
-          profession,
-        });
-        setRequests(data.requests);
-        setTotal(data.total);
-      } catch (err) {
-        setRequests([]);
-        setTotal(0);
-        showToast(toErrorMessage(err), 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+  const loadRequests = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data: RequestResponse = await fetchVerificationRequests({
+        page,
+        status,
+        profession,
+      });
+      setRequests(data.requests);
+      setTotal(data.total);
+    } catch (err) {
+      setRequests([]);
+      setTotal(0);
+      showToast(toErrorMessage(err), 'error');
+    } finally {
+      setLoading(false);
+    }
   }, [page, status, profession]);
+
+  useEffect(() => {
+    void loadRequests();
+  }, [loadRequests]);
 
   const updateParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams);
@@ -84,40 +85,31 @@ const VerificationRequests = () => {
     setSearchParams(params);
   };
 
-  const handleAction = async (
-    id: string,
-    newStatus: 'approved' | 'rejected',
-  ) => {
-    setActionId(id);
-    try {
-      const res = await updateVerificationRequest(id, newStatus);
-      const updated = toItem(res) as Request;
-      setRequests((current) => {
-        const index = current.findIndex((r) => r._id === updated._id);
-        if (index === -1) {
-          if (status && status !== updated.status) {
-            return current;
-          }
-          return [...current, updated];
-        }
-        const next = [...current];
-        if (status && status !== updated.status) {
-          next.splice(index, 1);
-        } else {
-          next[index] = updated;
-        }
-        return next;
-      });
-      if (status && status !== newStatus) {
-        setTotal((prevTotal) => Math.max(0, prevTotal - 1));
+  const handleAction = useCallback(
+    async (id: string, newStatus: 'approved' | 'rejected') => {
+      const current = requests.find((request) => request._id === id);
+      if (current && current.status === newStatus) {
+        showToast(`Request is already ${newStatus}`);
+        return;
       }
-      showToast(`Request ${newStatus === 'approved' ? 'approved' : 'rejected'}`);
-    } catch (error) {
-      showToast(toErrorMessage(error), 'error');
-    } finally {
-      setActionId('');
-    }
-  };
+
+      setActionId(id);
+      try {
+        const res = await updateVerificationRequest(id, newStatus);
+        const updated = toItem(res) as Request | undefined;
+        const resolvedStatus = updated?.status || newStatus;
+        showToast(
+          `Request ${resolvedStatus === 'approved' ? 'approved' : 'rejected'}`,
+        );
+        await loadRequests();
+      } catch (error) {
+        showToast(toErrorMessage(error), 'error');
+      } finally {
+        setActionId('');
+      }
+    },
+    [requests, loadRequests],
+  );
 
   const rows: RequestRow[] = requests.map((r) => ({
     ...r,
@@ -147,13 +139,13 @@ const VerificationRequests = () => {
         <>
           <button
             onClick={() => handleAction(r._id, 'approved')}
-            disabled={actionId === r._id}
+            disabled={actionId === r._id || r.status === 'approved'}
           >
             Accept
           </button>
           <button
             onClick={() => handleAction(r._id, 'rejected')}
-            disabled={actionId === r._id}
+            disabled={actionId === r._id || r.status === 'rejected'}
           >
             Reject
           </button>

@@ -18,7 +18,7 @@ const cancellableStatuses = new Set(['placed', 'confirmed', 'preparing']);
 const OrderDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch<AppDispatch>();
-  const authUserId = useSelector((state: RootState) => state.auth.user?._id || null);
+  const authUserId = useSelector((state: RootState) => state.auth.user?.id || null);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -7,6 +7,9 @@ import {
   type EventQueryParams,
 } from '../../api/admin';
 import DataTable, { type Column } from '../../components/admin/DataTable';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorCard from '../../components/ui/ErrorCard';
+import SkeletonList from '../../components/ui/SkeletonList';
 import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
 import useDebounce from '../../hooks/useDebounce';
@@ -90,6 +93,7 @@ const validateForm = (values: EventFormValues): EventFormErrors => {
 const AdminEvents = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState('');
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query.trim(), 400);
@@ -127,6 +131,7 @@ const AdminEvents = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params: EventQueryParams = {
         status: status || undefined,
@@ -140,7 +145,7 @@ const AdminEvents = () => {
       setEvents(items);
       setTotal(typeof data.total === 'number' ? data.total : items.length);
     } catch {
-      showToast('Failed to load events', 'error');
+      setError('Failed to load events');
     } finally {
       setLoading(false);
     }
@@ -432,15 +437,45 @@ const AdminEvents = () => {
         </button>
       </div>
 
-      <DataTable<EventRow>
-        columns={columns}
-        rows={events as EventRow[]}
-        page={page}
-        pageSize={pageSize}
-        total={total}
-        onPageChange={setPage}
-        loading={loading}
-      />
+      {(() => {
+        const hasEvents = (events ?? []).length > 0;
+        if (loading && !hasEvents) {
+          return <SkeletonList count={pageSize} />;
+        }
+        if (error) {
+          return (
+            <ErrorCard
+              message={error}
+              onRetry={() => {
+                void load();
+              }}
+            />
+          );
+        }
+        if (!loading && !hasEvents) {
+          return (
+            <EmptyState
+              title="No events yet"
+              message="Create a new event or adjust your filters to see scheduled activities."
+              ctaLabel="Refresh"
+              onCtaClick={() => {
+                void load();
+              }}
+            />
+          );
+        }
+        return (
+          <DataTable<EventRow>
+            columns={columns}
+            rows={(events ?? []) as EventRow[]}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            loading={loading}
+          />
+        );
+      })()}
 
       {createOpen && (
         <div className="modal" role="dialog" aria-modal="true">

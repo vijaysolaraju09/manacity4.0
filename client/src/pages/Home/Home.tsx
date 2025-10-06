@@ -1,23 +1,23 @@
 import './Home.scss';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import ProductCard from '../../components/ui/ProductCard.tsx';
 import SectionHeader from '../../components/ui/SectionHeader';
 import HorizontalCarousel from '../../components/ui/HorizontalCarousel';
-import Empty from '../../components/ui/EmptyState';
+import EmptyState from '../../components/ui/EmptyState';
 import { fetchShops } from '@/store/shops';
 import { fetchVerified } from '@/store/verified';
 import { fetchEvents } from '@/store/events';
 import { fetchSpecialProducts } from '@/store/products';
 import { http } from '@/lib/http';
-import Shimmer from '@/components/Shimmer';
 import type { RootState } from '@/store';
 import EventsSkeleton from '@/components/common/EventsSkeleton';
 import ShopsSkeleton from '@/components/common/ShopsSkeleton';
 import ProductsSkeleton from '@/components/common/ProductsSkeleton';
-import ErrorCard from '@/components/common/ErrorCard';
+import ErrorCard from '@/components/ui/ErrorCard';
+import SkeletonList from '@/components/ui/SkeletonList';
 import fallbackImage from '../../assets/no-image.svg';
 import { formatDateTime } from '@/utils/date';
 import VerifiedCard from '@/components/ui/VerifiedCard/VerifiedCard';
@@ -28,21 +28,32 @@ const Home = () => {
 
   const [banners, setBanners] = useState<any[]>([]);
   const [bannerStatus, setBannerStatus] = useState<'loading' | 'succeeded' | 'failed'>('loading');
+  const [bannerError, setBannerError] = useState<string | null>(null);
 
   const shops = useSelector((s: RootState) => s.shops);
   const verified = useSelector((s: RootState) => s.verified);
   const events = useSelector((s: RootState) => s.events.list);
   const products = useSelector((s: RootState) => s.catalog);
 
-  useEffect(() => {
-    http
-      .get('/admin/messages')
-      .then((res) => {
-        setBanners(res.data.filter((m: any) => m.type === 'banner'));
-        setBannerStatus('succeeded');
-      })
-      .catch(() => setBannerStatus('failed'));
+  const loadBanners = useCallback(async () => {
+    setBannerStatus('loading');
+    setBannerError(null);
+    try {
+      const res = await http.get('/admin/messages');
+      const items = Array.isArray(res.data) ? res.data : [];
+      const filtered = items.filter((m: any) => m.type === 'banner');
+      setBanners(filtered);
+      setBannerStatus('succeeded');
+    } catch {
+      setBanners([]);
+      setBannerStatus('failed');
+      setBannerError('Failed to load banners');
+    }
   }, []);
+
+  useEffect(() => {
+    void loadBanners();
+  }, [loadBanners]);
 
   useEffect(() => {
     if (shops.status === 'idle') d(fetchShops({ sort: '-createdAt', pageSize: 10 }));
@@ -56,12 +67,26 @@ const Home = () => {
       <div className="section">
         <SectionHeader title="Admin Banners" />
         {bannerStatus === 'loading' ? (
-          <Shimmer className="shimmer rounded" style={{ height: 180 }} />
+          <SkeletonList count={1} lines={1} />
         ) : bannerStatus === 'failed' ? (
-          <ErrorCard msg="Failed to load banners" onRetry={() => window.location.reload()} />
+          <ErrorCard
+            message={bannerError || 'Failed to load banners'}
+            onRetry={() => {
+              void loadBanners();
+            }}
+          />
+        ) : (banners ?? []).length === 0 ? (
+          <EmptyState
+            title="No banners configured"
+            message="Add a banner to highlight announcements, offers, or important updates for your community."
+            ctaLabel="Refresh"
+            onCtaClick={() => {
+              void loadBanners();
+            }}
+          />
         ) : (
           <HorizontalCarousel>
-            {banners.map((b) => (
+            {(banners ?? []).map((b) => (
               <motion.img
                 key={b._id}
                 src={b.image || fallbackImage}
@@ -144,14 +169,14 @@ const Section = ({ title, path, data, status, error, type, onRetry, navigate }: 
     return (
       <div className="section">
         <SectionHeader title={title} onClick={() => navigate(path)} />
-        <ErrorCard msg={error || `Failed to load ${title}`} onRetry={onRetry} />
+        <ErrorCard message={error || `Failed to load ${title}`} onRetry={onRetry} />
       </div>
     );
   if (status === 'succeeded' && data.length === 0)
     return (
       <div className="section">
         <SectionHeader title={title} onClick={() => navigate(path)} />
-        <Empty message={`No ${title.toLowerCase()}`} />
+        <EmptyState message={`No ${title.toLowerCase()}`} />
       </div>
     );
   return (

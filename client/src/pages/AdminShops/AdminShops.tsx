@@ -6,6 +6,9 @@ import {
   type ShopQueryParams,
 } from '../../api/admin';
 import DataTable, { type Column } from '../../components/admin/DataTable';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorCard from '../../components/ui/ErrorCard';
+import SkeletonList from '../../components/ui/SkeletonList';
 import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
 import './AdminShops.scss';
@@ -26,6 +29,7 @@ type ShopRow = Shop & { actions?: string };
 const AdminShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
   const [category, setCategory] = useState('');
@@ -39,6 +43,7 @@ const AdminShops = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params: ShopQueryParams = {
         query,
@@ -53,7 +58,7 @@ const AdminShops = () => {
       setShops(items);
       setTotal(typeof data.total === 'number' ? data.total : items.length);
     } catch {
-      showToast('Failed to load shops', 'error');
+      setError('Failed to load shops');
     } finally {
       setLoading(false);
     }
@@ -175,15 +180,45 @@ const AdminShops = () => {
           <option value="createdAt">Oldest</option>
         </select>
       </div>
-      <DataTable<ShopRow>
-        columns={columns}
-        rows={shops as ShopRow[]}
-        page={page}
-        pageSize={pageSize}
-        total={total}
-        onPageChange={setPage}
-        loading={loading}
-      />
+      {(() => {
+        const hasShops = (shops ?? []).length > 0;
+        if (loading && !hasShops) {
+          return <SkeletonList count={pageSize} />;
+        }
+        if (error) {
+          return (
+            <ErrorCard
+              message={error}
+              onRetry={() => {
+                void load();
+              }}
+            />
+          );
+        }
+        if (!loading && !hasShops) {
+          return (
+            <EmptyState
+              title="No shops found"
+              message="Try adjusting your filters or refresh to load the latest shops."
+              ctaLabel="Refresh"
+              onCtaClick={() => {
+                void load();
+              }}
+            />
+          );
+        }
+        return (
+          <DataTable<ShopRow>
+            columns={columns}
+            rows={(shops ?? []) as ShopRow[]}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            loading={loading}
+          />
+        );
+      })()}
       {edit && (
         <div className="modal">
           <form className="modal-content" onSubmit={handleSave}>

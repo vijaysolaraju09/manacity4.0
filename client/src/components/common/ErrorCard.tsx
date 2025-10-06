@@ -1,19 +1,22 @@
-import React from "react";
+import type { ReactNode } from 'react';
+import ErrorCard from '../ui/ErrorCard';
 
 interface Props {
   msg: string;
   onRetry?: () => void;
+  title?: string;
+  retryLabel?: string;
+  actions?: ReactNode;
 }
 
-const ErrorCard: React.FC<Props> = ({ msg, onRetry }) => (
-  <div className="error-card" style={{ textAlign: "center", padding: "2rem" }}>
-    <p>{msg}</p>
-    {onRetry && (
-      <button onClick={onRetry} className="btn" style={{ marginTop: "1rem" }}>
-        Retry
-      </button>
-    )}
-  </div>
+const LegacyErrorCard = ({ msg, onRetry, title, retryLabel, actions }: Props) => (
+  <ErrorCard
+    title={title}
+    message={msg}
+    retryLabel={retryLabel}
+    onRetry={onRetry}
+    actions={actions}
+  />
 );
 
-export default ErrorCard;
+export default LegacyErrorCard;

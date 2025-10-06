@@ -6,6 +6,9 @@ import {
   type ProductQueryParams,
 } from '../../api/admin';
 import DataTable, { type Column } from '../../components/admin/DataTable';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorCard from '../../components/ui/ErrorCard';
+import SkeletonList from '../../components/ui/SkeletonList';
 import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
 import './AdminProducts.scss';
@@ -39,6 +42,7 @@ const emptyForm = {
 const AdminProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [shop, setShop] = useState('');
   const [category, setCategory] = useState('');
@@ -56,6 +60,7 @@ const AdminProducts = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params: ProductQueryParams = {
         query,
@@ -73,7 +78,7 @@ const AdminProducts = () => {
       setProducts(items);
       setTotal(typeof data.total === 'number' ? data.total : items.length);
     } catch {
-      showToast('Failed to load products', 'error');
+      setError('Failed to load products');
     } finally {
       setLoading(false);
     }
@@ -258,15 +263,45 @@ const AdminProducts = () => {
           <option value="price">Price: Low to High</option>
         </select>
       </div>
-      <DataTable<ProductRow>
-        columns={columns}
-        rows={products as ProductRow[]}
-        page={page}
-        pageSize={pageSize}
-        total={total}
-        onPageChange={setPage}
-        loading={loading}
-      />
+      {(() => {
+        const hasProducts = (products ?? []).length > 0;
+        if (loading && !hasProducts) {
+          return <SkeletonList count={pageSize} />;
+        }
+        if (error) {
+          return (
+            <ErrorCard
+              message={error}
+              onRetry={() => {
+                void load();
+              }}
+            />
+          );
+        }
+        if (!loading && !hasProducts) {
+          return (
+            <EmptyState
+              title="No products found"
+              message="Adjust your filters or refresh to load the latest products."
+              ctaLabel="Refresh"
+              onCtaClick={() => {
+                void load();
+              }}
+            />
+          );
+        }
+        return (
+          <DataTable<ProductRow>
+            columns={columns}
+            rows={(products ?? []) as ProductRow[]}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            loading={loading}
+          />
+        );
+      })()}
       {edit && (
         <div className="modal">
           <form className="modal-content" onSubmit={handleSave}>

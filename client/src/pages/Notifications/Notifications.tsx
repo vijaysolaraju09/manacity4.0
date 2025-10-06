@@ -5,12 +5,13 @@ import {
   fetchNotifications,
   type Notification,
 } from '../../api/notifications';
-import NotificationCard, {
-  SkeletonNotificationCard,
-} from '../../components/ui/NotificationCard';
+import NotificationCard from '../../components/ui/NotificationCard';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '@/store';
 import { markNotifRead as markNotifReadAction } from '@/store/notifs';
+import EmptyState from '@/components/ui/EmptyState';
+import ErrorCard from '@/components/ui/ErrorCard';
+import SkeletonList from '@/components/ui/SkeletonList';
 
 const filterLabels: Record<string, string> = {
   all: 'All',
@@ -26,6 +27,7 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const dispatch = useDispatch<AppDispatch>();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -42,29 +44,44 @@ const Notifications = () => {
     setNotifications([]);
     setPage(1);
     setHasMore(true);
+    setInitialLoading(true);
+    setError(null);
   }, [activeFilter]);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    fetchNotifications({ page })
-      .then((data) => {
+
+    const load = async () => {
+      setLoading(true);
+      if (page === 1) {
+        setError(null);
+      }
+      try {
+        const data = await fetchNotifications({ page });
         if (cancelled) return;
+        const allItems = data?.notifications ?? [];
         const items =
           activeFilter === 'all'
-            ? data.notifications
-            : data.notifications.filter((n) => n.type === activeFilter);
-        setNotifications((prev) =>
-          page === 1 ? items : [...prev, ...items],
-        );
-        setHasMore(data.hasMore);
-      })
-      .finally(() => {
+            ? allItems
+            : allItems.filter((n) => n.type === activeFilter);
+        setNotifications((prev) => (page === 1 ? items : [...prev, ...items]));
+        setHasMore(Boolean(data?.hasMore));
+      } catch {
+        if (cancelled) return;
+        if (page === 1) {
+          setNotifications([]);
+        }
+        setError('Failed to load notifications');
+      } finally {
         if (!cancelled) {
           setLoading(false);
           setInitialLoading(false);
         }
-      });
+      }
+    };
+
+    void load();
+
     return () => {
       cancelled = true;
     };
@@ -96,7 +113,7 @@ const Notifications = () => {
     }
   };
 
-  const groups = notifications.reduce<Record<string, Notification[]>>(
+  const groups = (notifications ?? []).reduce<Record<string, Notification[]>>(
     (acc, n) => {
       const date = new Date(n.createdAt).toDateString();
       if (!acc[date]) acc[date] = [];
@@ -105,6 +122,18 @@ const Notifications = () => {
     },
     {},
   );
+
+  const reload = () => {
+    setNotifications([]);
+    setPage(1);
+    setHasMore(true);
+    setInitialLoading(true);
+    setError(null);
+  };
+
+  const groupedEntries = Object.entries(groups);
+  const hasNotifications = groupedEntries.length > 0;
+  const showInitialSkeleton = initialLoading && loading;
 
   return (
     <div className="notifications-page">
@@ -123,18 +152,23 @@ const Notifications = () => {
           </button>
         ))}
       </div>
-      {initialLoading ? (
-        Array.from({ length: 3 }).map((_, i) => (
-          <SkeletonNotificationCard key={i} />
-        ))
-      ) : Object.keys(groups).length === 0 ? (
-        <div className="empty-state">No notifications</div>
+      {showInitialSkeleton ? (
+        <SkeletonList count={4} lines={2} withAvatar />
+      ) : !hasNotifications && error && !loading ? (
+        <ErrorCard message={error} onRetry={reload} />
+      ) : !hasNotifications && !loading ? (
+        <EmptyState
+          title="You're all caught up"
+          message="There aren't any notifications to show right now. We'll let you know when something new arrives."
+          ctaLabel="Refresh"
+          onCtaClick={reload}
+        />
       ) : (
         <>
-          {Object.entries(groups).map(([date, items]) => (
+          {groupedEntries.map(([date, items]) => (
             <div key={date} className="notif-group">
               <h4 className="group-date">{date}</h4>
-              {items.map((n) => (
+              {(items ?? []).map((n) => (
                 <NotificationCard
                   key={n._id}
                   message={n.message}
@@ -145,7 +179,10 @@ const Notifications = () => {
               ))}
             </div>
           ))}
-          {loading && <SkeletonNotificationCard />}
+          {loading && hasNotifications && <SkeletonList count={1} lines={2} withAvatar />}
+          {!loading && error && hasNotifications && (
+            <ErrorCard message={error} onRetry={reload} />
+          )}
           <div ref={loaderRef} />
         </>
       )}

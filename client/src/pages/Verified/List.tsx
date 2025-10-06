@@ -1,13 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import Shimmer from '../../components/Shimmer';
 import VerifiedCard from '../../components/ui/VerifiedCard/VerifiedCard';
 import styles from './List.module.scss';
 import { fetchVerified } from '@/store/verified';
 import type { RootState } from '@/store';
-import ErrorCard from '@/components/common/ErrorCard';
-import Empty from '@/components/common/Empty';
+import EmptyState from '@/components/ui/EmptyState';
+import ErrorCard from '@/components/ui/ErrorCard';
+import SkeletonList from '@/components/ui/SkeletonList';
 
 const VerifiedList = () => {
   const d = useDispatch<any>();
@@ -18,7 +18,7 @@ const VerifiedList = () => {
 
   const cards = useMemo(
     () =>
-      items.map((v) => (
+      (items ?? []).map((v) => (
         <VerifiedCard
           key={v._id}
           card={v}
@@ -42,23 +42,47 @@ const VerifiedList = () => {
     return () => clearTimeout(handle);
   }, [profession, location, d]);
 
-  if (status === 'loading')
-    return (
-      <div className={styles.grid}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className={styles.card}>
-            <Shimmer className="rounded" style={{ height: 120 }} />
-            <div style={{ marginTop: '0.5rem' }}>
-              <Shimmer style={{ height: 16, width: '60%' }} />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  if (status === 'failed')
-    return <ErrorCard msg={error || 'Failed to load verified users'} onRetry={() => d(fetchVerified(undefined))} />;
-  if (status === 'succeeded' && items.length === 0)
-    return <Empty msg='No verified professionals found.' ctaText='Refresh' onCta={() => d(fetchVerified(undefined))} />;
+  const safeItems = items ?? [];
+  const isLoading = status === 'loading';
+  const hasError = status === 'failed';
+  const hasItems = safeItems.length > 0;
+
+  const content = (() => {
+    if (isLoading) {
+      return (
+        <SkeletonList
+          count={4}
+          lines={3}
+          withAvatar
+          className={styles.skeletonGrid}
+          itemClassName={styles.cardSkeleton}
+        />
+      );
+    }
+    if (hasError) {
+      return (
+        <ErrorCard
+          message={error || 'Failed to load verified users'}
+          onRetry={() => {
+            void d(fetchVerified(undefined));
+          }}
+        />
+      );
+    }
+    if (!hasItems) {
+      return (
+        <EmptyState
+          title="No verified professionals"
+          message="We couldn't find any verified professionals matching your filters right now. Try refreshing to load the latest profiles."
+          ctaLabel="Refresh"
+          onCtaClick={() => {
+            void d(fetchVerified(undefined));
+          }}
+        />
+      );
+    }
+    return <div className={styles.grid}>{cards}</div>;
+  })();
 
   return (
     <div className={styles.verifiedList}>
@@ -77,7 +101,7 @@ const VerifiedList = () => {
           onChange={(e) => setLocation(e.target.value)}
         />
       </div>
-      <div className={styles.grid}>{cards}</div>
+      {content}
     </div>
   );
 };

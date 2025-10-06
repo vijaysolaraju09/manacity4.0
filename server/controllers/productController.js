@@ -1,88 +1,94 @@
 const Product = require('../models/Product');
 const Shop = require('../models/Shop');
+const { normalizeProduct } = require('../utils/normalize');
 
-const normalize = (p) => {
-  const rawImages = Array.isArray(p.images) ? p.images : [];
-  const filteredImages = rawImages.filter((img) => typeof img === 'string' && img.trim());
-  const fallbackImage = p.image || filteredImages[0] || null;
-  const images = filteredImages.length
-    ? filteredImages
-    : fallbackImage
-    ? [fallbackImage]
-    : [];
-
-  return {
-    id: p._id.toString(),
-    _id: p._id.toString(),
-    name: p.name,
-    price: p.price,
-    mrp: p.mrp,
-    discount: p.discount,
-    image: fallbackImage,
-    images,
-    category: p.category,
-    stock: p.stock,
-    available: p.available,
-    isSpecial: p.isSpecial,
-    status: p.status,
-    shopId: typeof p.shop === 'object' ? p.shop._id.toString() : p.shop.toString(),
-    shopName: typeof p.shop === 'object' ? p.shop.name : undefined,
-    updatedAt: p.updatedAt,
-  };
+const ensurePaise = (value, field) => {
+  if (typeof value !== 'number' || !Number.isInteger(value)) {
+    throw Object.assign(new Error(`${field} must be an integer amount in paise`), {
+      statusCode: 400,
+    });
+  }
+  if (value <= 0) {
+    throw Object.assign(new Error(`${field} must be greater than 0`), { statusCode: 400 });
+  }
+  return value;
 };
+
+const toPrice = (paise) => paise / 100;
 
 exports.createProduct = async (req, res, next) => {
   try {
     const {
+      shopId,
       name,
-      description,
-      price,
-      mrp,
+      description = '',
+      pricePaise,
+      mrpPaise,
       category,
-      image,
-      images,
-      stock,
+      imageUrl,
+      stock = 0,
       status,
       available,
       isSpecial,
-      shopId,
     } = req.body;
-    if (!name || price === undefined || mrp === undefined) {
-      return res.status(400).json({ error: 'Name, price and mrp are required' });
+
+    if (!shopId) {
+      return res.status(400).json({ error: 'Shop is required' });
     }
-    if (price <= 0 || mrp <= 0) {
-      return res.status(400).json({ error: 'Price and MRP must be greater than 0' });
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+    if (!category) {
+      return res.status(400).json({ error: 'Category is required' });
+    }
+
+    let parsedPrice;
+    let parsedMrp;
+    try {
+      const ensuredPrice = ensurePaise(pricePaise, 'Price');
+      const ensuredMrp = ensurePaise(mrpPaise, 'MRP');
+      if (ensuredPrice > ensuredMrp) {
+        return res.status(400).json({ error: 'Price cannot exceed MRP' });
+      }
+      parsedPrice = toPrice(ensuredPrice);
+      parsedMrp = toPrice(ensuredMrp);
+    } catch (err) {
+      const statusCode = err.statusCode || 400;
+      return res.status(statusCode).json({ error: err.message || 'Invalid price payload' });
     }
 
     const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
-    if (!shop) return res.status(403).json({ error: 'Not authorized' });
+    if (!shop) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
 
-    const imageList = Array.isArray(images)
-      ? images.filter((img) => typeof img === 'string' && img.trim())
-      : [];
-    const primaryImage = image || imageList[0];
-
+    const trimmedImage = typeof imageUrl === 'string' ? imageUrl.trim() : '';
+    const numericStock = Number(stock);
+    const parsedStock = Number.isFinite(numericStock) && numericStock >= 0 ? numericStock : 0;
     const product = await Product.create({
       shop: shop._id,
       createdBy: req.user._id,
       updatedBy: req.user._id,
       name,
       description,
-      price,
-      mrp,
+      price: parsedPrice,
+      mrp: parsedMrp,
       category,
-      image: primaryImage,
-      images: primaryImage
-        ? [primaryImage, ...imageList.filter((img) => img !== primaryImage)]
-        : imageList,
-      stock,
+      image: trimmedImage || undefined,
+      images: trimmedImage ? [trimmedImage] : [],
+      stock: parsedStock,
       status,
       available,
       isSpecial,
       city: shop.location,
     });
-    res.status(201).json(normalize(product));
+
+    const payload = normalizeProduct(product);
+    return res.status(201).json({ ok: true, data: { product: payload } });
   } catch (err) {
+    if (err?.statusCode) {
+      return res.status(err.statusCode).json({ error: err.message });
+    }
     return next(err);
   }
 };
@@ -90,18 +96,20 @@ exports.createProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   try {
     const product = await Product.findOne({ _id: req.params.id, isDeleted: false });
-    if (!product) return res.status(404).json({ error: 'Product not found' });
-    if (req.user.role !== 'admin') {
-      const shop = await Shop.findOne({ _id: product.shop, owner: req.user._id });
-      if (!shop) return res.status(403).json({ error: 'Not authorized' });
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
     }
 
     const {
+      shopId,
       name,
       description,
+      pricePaise,
+      mrpPaise,
       price,
       mrp,
       category,
+      imageUrl,
       image,
       images,
       stock,
@@ -109,27 +117,73 @@ exports.updateProduct = async (req, res, next) => {
       available,
       isSpecial,
     } = req.body;
+
+    if (shopId) {
+      const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
+      if (!shop) {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+      product.shop = shop._id;
+      product.city = shop.location;
+    } else if (req.user.role !== 'admin') {
+      const shop = await Shop.findOne({ _id: product.shop, owner: req.user._id });
+      if (!shop) {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+    }
+
     if (name !== undefined) product.name = name;
     if (description !== undefined) product.description = description;
-    if (price !== undefined) {
+
+    if (pricePaise !== undefined) {
+      try {
+        const ensured = ensurePaise(pricePaise, 'Price');
+        product.price = toPrice(ensured);
+      } catch (err) {
+        const statusCode = err.statusCode || 400;
+        return res.status(statusCode).json({ error: err.message });
+      }
+    } else if (price !== undefined) {
       if (price <= 0) {
         return res.status(400).json({ error: 'Price must be greater than 0' });
       }
       product.price = price;
     }
-    if (mrp !== undefined) {
+
+    if (mrpPaise !== undefined) {
+      try {
+        const ensured = ensurePaise(mrpPaise, 'MRP');
+        product.mrp = toPrice(ensured);
+      } catch (err) {
+        const statusCode = err.statusCode || 400;
+        return res.status(statusCode).json({ error: err.message });
+      }
+    } else if (mrp !== undefined) {
       if (mrp <= 0) {
         return res.status(400).json({ error: 'MRP must be greater than 0' });
       }
       product.mrp = mrp;
     }
+
+    if (product.price && product.mrp && product.price > product.mrp) {
+      return res.status(400).json({ error: 'Price cannot exceed MRP' });
+    }
+
     if (category !== undefined) product.category = category;
+
+    if (imageUrl !== undefined) {
+      const trimmed = typeof imageUrl === 'string' ? imageUrl.trim() : '';
+      product.image = trimmed || undefined;
+      product.images = trimmed ? [trimmed] : [];
+    }
+
     if (image !== undefined) {
       product.image = image;
       if (image && (!Array.isArray(product.images) || !product.images.length)) {
         product.images = [image];
       }
     }
+
     if (images !== undefined) {
       const nextImages = Array.isArray(images)
         ? images.filter((img) => typeof img === 'string' && img.trim())
@@ -137,17 +191,26 @@ exports.updateProduct = async (req, res, next) => {
       product.images = nextImages;
       if (nextImages.length) {
         product.image = nextImages[0];
-      } else if (!image) {
+      } else if (!imageUrl && !image) {
         product.image = product.image || null;
       }
     }
-    if (stock !== undefined) product.stock = stock;
+
+    if (stock !== undefined) {
+      const nextStock = Number(stock);
+      if (!Number.isFinite(nextStock) || nextStock < 0) {
+        return res.status(400).json({ error: 'Stock must be a non-negative number' });
+      }
+      product.stock = nextStock;
+    }
     if (status !== undefined) product.status = status;
     if (available !== undefined) product.available = available;
     if (isSpecial !== undefined) product.isSpecial = isSpecial;
+
     product.updatedBy = req.user._id;
     await product.save();
-    res.json(normalize(product));
+    const payload = normalizeProduct(product);
+    return res.json({ ok: true, data: { product: payload } });
   } catch (err) {
     return next(err);
   }
@@ -189,8 +252,8 @@ exports.getProducts = async (req, res, next) => {
     }
     if (query) filter.name = { $regex: query, $options: 'i' };
 
-    const items = await Product.find(filter).populate('shop', 'name').lean();
-    res.json(items.map(normalize));
+    const items = await Product.find(filter).populate('shop', 'name image location').lean();
+    res.json(items.map((item) => normalizeProduct(item)));
   } catch (err) {
     return next(err);
   }
@@ -200,8 +263,10 @@ exports.getMyProducts = async (req, res, next) => {
   try {
     const shops = await Shop.find({ owner: req.user._id });
     const shopIds = shops.map((s) => s._id);
-    const products = await Product.find({ shop: { $in: shopIds }, isDeleted: false }).lean();
-    res.json(products.map(normalize));
+    const products = await Product.find({ shop: { $in: shopIds }, isDeleted: false })
+      .populate('shop', 'name image location')
+      .lean();
+    res.json(products.map((product) => normalizeProduct(product)));
   } catch (err) {
     return next(err);
   }
@@ -209,9 +274,11 @@ exports.getMyProducts = async (req, res, next) => {
 
 exports.getProductById = async (req, res, next) => {
   try {
-    const product = await Product.findOne({ _id: req.params.id, isDeleted: false }).lean();
+    const product = await Product.findOne({ _id: req.params.id, isDeleted: false })
+      .populate('shop', 'name image location')
+      .lean();
     if (!product) return res.status(404).json({ error: 'Product not found' });
-    res.json(normalize(product));
+    res.json(normalizeProduct(product));
   } catch (err) {
     return next(err);
   }

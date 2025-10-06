@@ -109,16 +109,36 @@ const EventDetails = () => {
     );
   }
 
+  const registrationBusy = registration.status === 'loading';
   const isRegistered = !!registration.data && registration.data.status !== 'withdrawn';
   const waitlisted = registration.data?.status === 'waitlisted';
-  const canRegister = event.isRegistrationOpen && !isRegistered && !waitlisted;
+  const registrationOpenTime = Date.parse(event.registrationOpenAt);
+  const registrationCloseTime = Date.parse(event.registrationCloseAt);
+  const now = Date.now();
+  const withinRegistrationWindow =
+    Number.isFinite(registrationOpenTime) && Number.isFinite(registrationCloseTime)
+      ? registrationOpenTime <= now && now <= registrationCloseTime
+      : true;
+  const backendWindowOpen =
+    typeof event.isRegistrationOpen === 'boolean' ? event.isRegistrationOpen : withinRegistrationWindow;
+  const hasCapacity =
+    !event.maxParticipants || event.maxParticipants <= 0 || event.registeredCount < event.maxParticipants;
+  const showRegisterButton =
+    event.status === 'published' && withinRegistrationWindow && backendWindowOpen && hasCapacity && !isRegistered && !waitlisted;
   const canUnregister = isRegistered && registration.status !== 'loading';
-  const registrationBusy = registration.status === 'loading';
 
   const handleRegister = async () => {
-    if (!id) return;
+    if (!id || registrationBusy || !showRegisterButton) return;
     try {
       await dispatch(registerForEvent(id)).unwrap();
+      try {
+        await dispatch(fetchEventById(id)).unwrap();
+      } catch (refreshErr) {
+        console.error(refreshErr);
+      }
+      if (activeTab === 'participants') {
+        dispatch(fetchEventRegistrations(id));
+      }
       showToast('Registration submitted', 'success');
     } catch (err) {
       showToast(typeof err === 'string' ? err : 'Registration failed', 'error');
@@ -126,9 +146,17 @@ const EventDetails = () => {
   };
 
   const handleUnregister = async () => {
-    if (!id) return;
+    if (!id || registrationBusy) return;
     try {
       await dispatch(unregisterFromEvent(id)).unwrap();
+      try {
+        await dispatch(fetchEventById(id)).unwrap();
+      } catch (refreshErr) {
+        console.error(refreshErr);
+      }
+      if (activeTab === 'participants') {
+        dispatch(fetchEventRegistrations(id));
+      }
       showToast('Registration cancelled', 'success');
     } catch (err) {
       showToast(typeof err === 'string' ? err : 'Unable to unregister', 'error');
@@ -176,7 +204,7 @@ const EventDetails = () => {
           </div>
         </div>
         <div className={styles.actions}>
-          {canRegister && (
+          {showRegisterButton && (
             <button onClick={handleRegister} disabled={registrationBusy}>
               {registrationBusy ? 'Processing…' : 'Register'}
             </button>

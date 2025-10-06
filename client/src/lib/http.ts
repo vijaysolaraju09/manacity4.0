@@ -42,7 +42,7 @@ const shouldRetry = (error: AxiosError): error is AxiosError & {
   const method = (config.method || 'get').toLowerCase();
   if (!RETRYABLE_METHODS.has(method)) return false;
 
-  const retries = config.__retryCount ?? 0;
+  const retries = (config as AugmentedConfig).__retryCount ?? 0;
   if (retries >= MAX_RETRIES) return false;
 
   const status = response?.status;

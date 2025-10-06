@@ -5,6 +5,13 @@
   padding: 1rem;
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
 .tabs {
   display: flex;
   gap: 0.5rem;
@@ -25,27 +32,35 @@
   }
 }
 
-.filters {
+.loading {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
-.chips {
+.groups {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  gap: 1.5rem;
+}
 
-  .chip {
-    padding: 0.4rem 0.8rem;
-    border: none;
-    border-radius: 999px;
-    background: var(--color-surface);
-    font-size: 0.85rem;
-    cursor: pointer;
-  }
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.groupTitle {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.orderBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .empty {
@@ -60,5 +75,24 @@
 
 .card {
   margin-bottom: 0.75rem;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  button {
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-surface-alt);
+    }
+  }
 }
 

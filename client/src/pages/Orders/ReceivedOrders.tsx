@@ -1,122 +1,207 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchReceivedOrders, updateOrderStatus, selectOrdersByStatus } from '@/store/orders';
+import {
+  fetchReceivedOrders,
+  selectOrdersByStatus,
+  selectReceivedOrders,
+  updateOrderStatus,
+  type Order,
+  type OrderStatus,
+} from '@/store/orders';
 import type { RootState, AppDispatch } from '@/store';
 import { OrderCard } from '@/components/base';
 import Shimmer from '@/components/Shimmer';
+import ErrorCard from '@/components/ui/ErrorCard';
+import EmptyState from '@/components/ui/EmptyState';
 import showToast from '@/components/ui/Toast';
+import fallbackImage from '@/assets/no-image.svg';
 import styles from './ReceivedOrders.module.scss';
+import { paths } from '@/routes/paths';
+import { useNavigate } from 'react-router-dom';
 
-const statuses = ['all', 'pending', 'accepted', 'cancelled', 'completed'] as const;
+const statusOptions: (OrderStatus | 'all')[] = [
+  'all',
+  'placed',
+  'confirmed',
+  'preparing',
+  'ready',
+  'out_for_delivery',
+  'delivered',
+  'cancelled',
+  'returned',
+];
+
+const statusDisplay: Record<OrderStatus | 'all', string> = {
+  all: 'All',
+  placed: 'Placed',
+  confirmed: 'Confirmed',
+  preparing: 'Preparing',
+  ready: 'Ready',
+  out_for_delivery: 'Out for delivery',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+  returned: 'Returned',
+};
+
+const nextStatusMap: Partial<Record<OrderStatus, { status: OrderStatus; label: string }>> = {
+  placed: { status: 'confirmed', label: 'Confirm order' },
+  confirmed: { status: 'preparing', label: 'Start preparing' },
+  preparing: { status: 'ready', label: 'Mark ready' },
+  ready: { status: 'out_for_delivery', label: 'Out for delivery' },
+  out_for_delivery: { status: 'delivered', label: 'Mark delivered' },
+};
+
+const shopCancellable = new Set<OrderStatus>([
+  'placed',
+  'confirmed',
+  'preparing',
+  'ready',
+  'out_for_delivery',
+]);
 
 const ReceivedOrders = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const [status, setStatus] = useState<(typeof statuses)[number]>('all');
-  const [category, setCategory] = useState('');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
+  const navigate = useNavigate();
+  const [activeStatus, setActiveStatus] = useState<(typeof statusOptions)[number]>('all');
 
-  const { status: loadStatus } = useSelector((s: RootState) => s.orders.received);
+  const receivedState = useSelector((state: RootState) => state.orders.received);
   const orders = useSelector((state: RootState) =>
-    status === 'all'
-      ? (state.orders.received.ids as string[]).map(
-          (id) => state.orders.received.entities[id]!
-        )
-      : selectOrdersByStatus(state, 'received', status as any)
-  ) as any[];
+    activeStatus === 'all'
+      ? selectReceivedOrders(state)
+      : selectOrdersByStatus(state, 'received', activeStatus as OrderStatus)
+  );
 
   useEffect(() => {
+    if (receivedState.status === 'idle') {
+      dispatch(fetchReceivedOrders());
+    }
+  }, [dispatch, receivedState.status]);
+
+  const isLoading = receivedState.status === 'loading';
+  const isError = receivedState.status === 'failed';
+  const showSkeleton = isLoading && orders.length === 0;
+
+  const grouped = useMemo(() => {
+    return orders.reduce<Record<string, Order[]>>((acc, order) => {
+      const date = new Date(order.createdAt).toDateString();
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(order);
+      return acc;
+    }, {});
+  }, [orders]);
+
+  const handleRetry = () => {
     dispatch(fetchReceivedOrders());
-  }, [dispatch]);
+  };
 
-  const filtered = orders.filter((o) => {
-    const item = o.items[0];
-    const withinCategory = category
-      ? item.name?.toLowerCase().includes(category.toLowerCase())
-      : true;
-    const price = item.price;
-    const withinMin = minPrice ? price >= Number(minPrice) : true;
-    const withinMax = maxPrice ? price <= Number(maxPrice) : true;
-    return withinCategory && withinMin && withinMax;
-  });
-
-  const act = async (id: string, action: 'accept' | 'reject' | 'complete') => {
+  const handleUpdateStatus = async (order: Order, status: OrderStatus) => {
+    const notePrompt = status === 'cancelled'
+      ? 'Reason for cancelling this order:'
+      : 'Add a note for the customer (optional):';
+    const note = window.prompt(notePrompt, '');
+    if (status === 'cancelled' && note === null) return;
     try {
-      await dispatch(updateOrderStatus({ id, action })).unwrap();
-      showToast(`Order ${action}ed`, 'success');
-    } catch {
-      showToast(`Failed to ${action} order`, 'error');
+      await dispatch(
+        updateOrderStatus({ id: order.id, status, note: note ? note.trim() : undefined })
+      ).unwrap();
+      showToast('Order updated', 'success');
+    } catch (err) {
+      showToast((err as Error)?.message || 'Failed to update order', 'error');
     }
   };
 
   return (
     <div className={styles.receivedOrders}>
-      <h2>Received Orders</h2>
-      <div className={styles.tabs}>
-        {statuses.map((s) => (
+      <div className={styles.header}>
+        <h2>Received Orders</h2>
+      </div>
+      <div className={styles.tabs} role="tablist">
+        {statusOptions.map((status) => (
           <button
-            key={s}
-            className={s === status ? styles.active : ''}
-            onClick={() => setStatus(s)}
+            key={status}
+            type="button"
+            role="tab"
+            aria-selected={activeStatus === status}
+            className={activeStatus === status ? styles.active : ''}
+            onClick={() => setActiveStatus(status)}
           >
-            {s.charAt(0).toUpperCase() + s.slice(1)}
+            {statusDisplay[status] || status}
           </button>
         ))}
       </div>
-      <div className={styles.filters}>
-        <input
-          type="text"
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
+
+      {showSkeleton && (
+        <div className={styles.loading}>
+          {[1, 2, 3].map((n) => (
+            <Shimmer key={n} className={`${styles.card} shimmer rounded`} style={{ height: 88 }} />
+          ))}
+        </div>
+      )}
+
+      {isError && !showSkeleton && (
+        <ErrorCard
+          message={receivedState.error || 'We could not load your received orders.'}
+          onRetry={handleRetry}
         />
-        <input
-          type="number"
-          placeholder="Min Price"
-          value={minPrice}
-          onChange={(e) => setMinPrice(e.target.value)}
+      )}
+
+      {!isLoading && !isError && orders.length === 0 && (
+        <EmptyState
+          image={fallbackImage}
+          title="No orders yet"
+          message="Orders from your shop will appear here so you can manage them easily."
         />
-        <input
-          type="number"
-          placeholder="Max Price"
-          value={maxPrice}
-          onChange={(e) => setMaxPrice(e.target.value)}
-        />
-      </div>
-      {loadStatus === 'loading' ? (
-        [1, 2, 3].map((n) => (
-          <Shimmer
-            key={n}
-            className={`${styles.card} shimmer rounded`}
-            style={{ height: 80 }}
-          />
-        ))
-      ) : filtered.length === 0 ? (
-        <p className={styles.empty}>No orders.</p>
-      ) : (
-        filtered.map((o) => (
-          <OrderCard
-            key={o._id}
-            items={o.items.map((i: any) => ({
-              id: i.productId || i.name,
-              title: i.name,
-              image: i.image,
-            }))}
-            shop={o.customerId.name}
-            date={o.createdAt}
-            status={o.status}
-            quantity={o.items.reduce((s: number, it: any) => s + it.quantity, 0)}
-            total={o.totals.total}
-            phone={o.customerId.phone}
-            onCall={
-              o.status === 'accepted' && o.customerId.phone
-                ? () => (window.location.href = `tel:${o.customerId.phone}`)
-                : undefined
-            }
-            onAccept={o.status === 'pending' ? () => act(o._id, 'accept') : undefined}
-            onReject={o.status === 'pending' ? () => act(o._id, 'reject') : undefined}
-          />
-        ))
+      )}
+
+      {!isLoading && !isError && orders.length > 0 && (
+        <div className={styles.groups}>
+          {Object.entries(grouped).map(([date, dayOrders]) => (
+            <section key={date} className={styles.group}>
+              <h3 className={styles.groupTitle}>{date}</h3>
+              {dayOrders.map((order) => {
+                const quantity = order.items.reduce((total, item) => total + item.qty, 0);
+                const nextAction = nextStatusMap[order.status];
+                const canCancel = shopCancellable.has(order.status);
+                const customerName = order.customer.name || 'Customer';
+                const customerPhone = order.customer.phone;
+                return (
+                  <div key={order.id} className={styles.orderBlock}>
+                    <OrderCard
+                      items={order.items.map((item, index) => ({
+                        id: item.productId || `${order.id}-${index}`,
+                        title: item.title,
+                        image: item.image || fallbackImage,
+                      }))}
+                      shop={customerName}
+                      phone={customerPhone || undefined}
+                      onCall={customerPhone ? () => (window.location.href = `tel:${customerPhone}`) : undefined}
+                      date={order.createdAt}
+                      status={order.status}
+                      quantity={quantity}
+                      total={order.totals.grand}
+                      className={styles.card}
+                    />
+                    <div className={styles.cardActions}>
+                      <button type="button" onClick={() => navigate(paths.orders.detail(order.id))}>
+                        View details
+                      </button>
+                      {nextAction && (
+                        <button type="button" onClick={() => handleUpdateStatus(order, nextAction.status)}>
+                          {nextAction.label}
+                        </button>
+                      )}
+                      {canCancel && order.status !== 'cancelled' && (
+                        <button type="button" onClick={() => handleUpdateStatus(order, 'cancelled')}>
+                          Cancel order
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+          ))}
+        </div>
       )}
     </div>
   );

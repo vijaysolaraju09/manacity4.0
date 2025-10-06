@@ -403,3 +403,16 @@ export const updateEvent = async (
 export const deleteEvent = async (id: string) => {
   await adminApi.delete(withAdminPrefix(`events/${id}`));
 };
+
+const eventLifecycleEndpoint = async (id: string, action: 'publish' | 'start' | 'complete' | 'cancel') => {
+  const res = await adminApi.post(withAdminPrefix(`events/${id}/${action}`));
+  return extractEntity<any>(res.data);
+};
+
+export const publishEvent = async (id: string) => eventLifecycleEndpoint(id, 'publish');
+
+export const startEvent = async (id: string) => eventLifecycleEndpoint(id, 'start');
+
+export const completeEvent = async (id: string) => eventLifecycleEndpoint(id, 'complete');
+
+export const cancelEvent = async (id: string) => eventLifecycleEndpoint(id, 'cancel');

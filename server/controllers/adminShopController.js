@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Shop = require('../models/Shop');
 const Product = require('../models/Product');
+const User = require('../models/User');
 const AppError = require('../utils/AppError');
 
 const STATUS_TO_INTERNAL = {
@@ -324,6 +325,14 @@ const transitionShopStatus = async (req, res, next, status) => {
 
     shop.status = status;
     await shop.save();
+
+    if (shop.owner) {
+      const update = { businessStatus: status };
+      if (status === 'approved') {
+        update.role = 'business';
+      }
+      await User.findByIdAndUpdate(shop.owner, update);
+    }
 
     const [withOwner] = await Shop.aggregate([
       ...buildShopPipeline({ match: { _id: shop._id }, search: null }),

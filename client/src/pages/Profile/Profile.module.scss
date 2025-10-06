@@ -75,6 +75,23 @@
   cursor: pointer;
 }
 
+.editBtn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.requestActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.requestActions .editBtn {
+  margin-top: 0;
+}
+
 .actions {
   display: flex;
   flex-direction: column;
@@ -90,6 +107,11 @@
   background: var(--color-primary);
   color: var(--color-on-primary);
   cursor: pointer;
+}
+
+.businessPending {
+  background: var(--color-warning, #f59e0b);
+  color: var(--color-surface);
 }
 
 .modalContent {

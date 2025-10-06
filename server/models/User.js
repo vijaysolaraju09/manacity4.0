@@ -55,6 +55,11 @@ const userSchema = new mongoose.Schema(
     bio: { type: String, maxlength: 500 },
     avatarUrl: { type: String },
     preferences: { type: preferencesSchema, default: () => ({}) },
+    businessStatus: {
+      type: String,
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none",
+    },
   },
   { timestamps: true }
 );
@@ -87,6 +92,7 @@ userSchema.methods.toProfileJSON = function () {
     bio: this.bio ?? "",
     avatar: this.avatarUrl ?? null,
     avatarUrl: this.avatarUrl ?? null,
+    businessStatus: this.businessStatus ?? "none",
   };
 };
 

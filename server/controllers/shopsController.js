@@ -1,10 +1,24 @@
 const Shop = require('../models/Shop');
 const Product = require('../models/Product');
+const User = require('../models/User');
 const AppError = require('../utils/AppError');
 
 exports.createShop = async (req, res, next) => {
   try {
     const { name, category, location, address, image, banner, description } = req.body;
+    const existingPending = await Shop.findOne({
+      owner: req.user._id,
+      status: 'pending',
+    }).select('_id');
+    if (existingPending) {
+      return next(
+        AppError.badRequest(
+          'SHOP_REQUEST_PENDING',
+          'You already have a pending business request',
+        )
+      );
+    }
+
     const shop = await Shop.create({
       owner: req.user._id,
       name,
@@ -16,9 +30,50 @@ exports.createShop = async (req, res, next) => {
       description,
       status: 'pending',
     });
+    if (req.user?._id) {
+      await User.findByIdAndUpdate(req.user._id, { businessStatus: 'pending' });
+    }
     return res
       .status(201)
       .json({ ok: true, data: { shop: shop.toCardJSON() }, traceId: req.traceId });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.getMyShops = async (req, res, next) => {
+  try {
+    const shops = await Shop.find({ owner: req.user._id })
+      .sort({ createdAt: -1 })
+      .lean();
+    return res.json({
+      ok: true,
+      data: {
+        items: shops.map((s) => ({
+          id: s._id?.toString(),
+          _id: s._id?.toString(),
+          status: s.status,
+          name: s.name,
+          category: s.category,
+          location: s.location,
+          address: s.address || '',
+          description: s.description || '',
+          image: s.image || null,
+        })),
+        shops: shops.map((s) => ({
+          id: s._id?.toString(),
+          _id: s._id?.toString(),
+          status: s.status,
+          name: s.name,
+          category: s.category,
+          location: s.location,
+          address: s.address || '',
+          description: s.description || '',
+          image: s.image || null,
+        })),
+      },
+      traceId: req.traceId,
+    });
   } catch (err) {
     return next(err);
   }
@@ -140,6 +195,12 @@ exports.approveShop = async (req, res, next) => {
     }
     shop.status = 'approved';
     await shop.save();
+    if (shop.owner) {
+      await User.findByIdAndUpdate(shop.owner, {
+        businessStatus: 'approved',
+        role: 'business',
+      });
+    }
     return res.json({ ok: true, data: { shop: shop.toCardJSON() }, traceId: req.traceId });
   } catch (err) {
     return next(err);
@@ -154,6 +215,9 @@ exports.rejectShop = async (req, res, next) => {
     }
     shop.status = 'rejected';
     await shop.save();
+    if (shop.owner) {
+      await User.findByIdAndUpdate(shop.owner, { businessStatus: 'rejected' });
+    }
     return res.json({ ok: true, data: { shop: shop.toCardJSON() }, traceId: req.traceId });
   } catch (err) {
     return next(err);

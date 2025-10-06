@@ -13,4 +13,5 @@ export interface User {
   avatar?: string | null;
   avatarUrl?: string | null;
   preferences?: { theme: 'light' | 'dark' | 'colored' };
+  businessStatus?: 'none' | 'pending' | 'approved' | 'rejected';
 }

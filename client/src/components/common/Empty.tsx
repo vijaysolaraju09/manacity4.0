@@ -1,4 +1,4 @@
-import React from "react";
+import EmptyState from '../ui/EmptyState';
 
 interface Props {
   msg: string;
@@ -6,15 +6,8 @@ interface Props {
   onCta?: () => void;
 }
 
-const Empty: React.FC<Props> = ({ msg, ctaText, onCta }) => (
-  <div className="empty-state" style={{ textAlign: "center", padding: "2rem" }}>
-    <p>{msg}</p>
-    {ctaText && onCta && (
-      <button onClick={onCta} className="btn" style={{ marginTop: "1rem" }}>
-        {ctaText}
-      </button>
-    )}
-  </div>
+const Empty = ({ msg, ctaText, onCta }: Props) => (
+  <EmptyState message={msg} ctaLabel={ctaText} onCtaClick={onCta} />
 );
 
 export default Empty;

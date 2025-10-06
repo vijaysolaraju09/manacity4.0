@@ -20,6 +20,18 @@
   gap: 1rem;
 }
 
+.skeletonGrid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.cardSkeleton {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  min-height: 160px;
+}
+
 .empty {
   text-align: center;
   margin-top: 2rem;

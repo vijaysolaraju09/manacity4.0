@@ -7,6 +7,9 @@ import {
   type UserQueryParams,
 } from '../../api/admin';
 import DataTable, { type Column } from '../../components/admin/DataTable';
+import EmptyState from '../../components/ui/EmptyState';
+import ErrorCard from '../../components/ui/ErrorCard';
+import SkeletonList from '../../components/ui/SkeletonList';
 import showToast from '../../components/ui/Toast';
 import './AdminUsers.scss';
 
@@ -26,6 +29,7 @@ type UserRow = User & { actions?: string };
 const AdminUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [role, setRole] = useState('');
   const [verified, setVerified] = useState('');
@@ -36,6 +40,7 @@ const AdminUsers = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params: UserQueryParams = {
         query: query || undefined,
@@ -50,7 +55,7 @@ const AdminUsers = () => {
       setUsers(items);
       setTotal(typeof data.total === 'number' ? data.total : items.length);
     } catch {
-      showToast('Failed to load users', 'error');
+      setError('Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -191,16 +196,46 @@ const AdminUsers = () => {
           <option value="createdAt">Oldest</option>
         </select>
       </div>
-      <DataTable<UserRow>
-        columns={columns}
-        rows={users as UserRow[]}
-        page={page}
-        pageSize={pageSize}
-        total={total}
-        onPageChange={setPage}
-        onSort={(key, dir) => setSort(dir === 'asc' ? key : `-${key}`)}
-        loading={loading}
-      />
+      {(() => {
+        const hasUsers = (users ?? []).length > 0;
+        if (loading && !hasUsers) {
+          return <SkeletonList count={pageSize} />;
+        }
+        if (error) {
+          return (
+            <ErrorCard
+              message={error}
+              onRetry={() => {
+                void load();
+              }}
+            />
+          );
+        }
+        if (!loading && !hasUsers) {
+          return (
+            <EmptyState
+              title="No users found"
+              message="Update your search filters or refresh to load user accounts."
+              ctaLabel="Refresh"
+              onCtaClick={() => {
+                void load();
+              }}
+            />
+          );
+        }
+        return (
+          <DataTable<UserRow>
+            columns={columns}
+            rows={(users ?? []) as UserRow[]}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onSort={(key, dir) => setSort(dir === 'asc' ? key : `-${key}`)}
+            loading={loading}
+          />
+        );
+      })()}
     </div>
   );
 };

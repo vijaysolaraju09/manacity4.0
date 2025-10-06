@@ -23,12 +23,16 @@ import { paths } from '@/routes/paths';
 
 const statusOptions: (OrderStatus | 'all')[] = [
   'all',
+  'draft',
+  'pending',
   'placed',
   'confirmed',
+  'accepted',
   'preparing',
   'ready',
   'out_for_delivery',
   'delivered',
+  'completed',
   'cancelled',
   'returned',
 ];
@@ -37,12 +41,16 @@ const cancellableStatuses = new Set<OrderStatus>(['placed', 'confirmed', 'prepar
 
 const statusDisplay: Record<OrderStatus | 'all', string> = {
   all: 'All',
+  draft: 'Draft',
+  pending: 'Pending',
   placed: 'Placed',
   confirmed: 'Confirmed',
+  accepted: 'Accepted',
   preparing: 'Preparing',
   ready: 'Ready',
   out_for_delivery: 'Out for delivery',
   delivered: 'Delivered',
+  completed: 'Completed',
   cancelled: 'Cancelled',
   returned: 'Returned',
 };

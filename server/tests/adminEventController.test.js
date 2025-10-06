@@ -122,10 +122,41 @@ describe('adminEventController', () => {
           title: 'Gala',
           status: 'upcoming',
           capacity: 50,
+          startAt: start,
+          endAt: end,
         }),
         traceId: 'trace',
       });
       expect(next).not.toHaveBeenCalled();
+    });
+
+    it('rejects events when end precedes start', async () => {
+      const start = new Date(Date.now() + 7200000);
+      const end = new Date(Date.now() + 3600000);
+      const req = {
+        body: {
+          title: 'Invalid range',
+          startAt: start.toISOString(),
+          endAt: end.toISOString(),
+          capacity: 10,
+        },
+        user: { _id: 'admin-user' },
+        traceId: 'trace',
+      };
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+
+      await controller.createEvent(req, res, next);
+
+      expect(Event.create).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      const error = next.mock.calls[0][0];
+      expect(error.code).toBe('END_BEFORE_START');
     });
   });
 

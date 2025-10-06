@@ -10,6 +10,7 @@ import styles from './Details.module.scss';
 import ErrorCard from '@/components/common/ErrorCard';
 import Empty from '@/components/common/Empty';
 import { http } from '@/lib/http';
+import { toItem, toErrorMessage } from '@/lib/response';
 import showToast from '@/components/ui/Toast';
 
 const VerifiedDetails = () => {
@@ -44,11 +45,12 @@ const VerifiedDetails = () => {
   const handleOrder = async () => {
     if (!verified) return;
     try {
-      await http.post('/verified/orders', { targetId: verified._id });
+      const res = await http.post('/verified/orders', { targetId: verified._id });
+      toItem(res);
       showToast('Request sent', 'success');
-      window.location.href = `tel:${verified.user.phone}`;
-    } catch {
-      showToast('Failed to send request', 'error');
+      window.location.assign(`tel:${verified.user.phone}`);
+    } catch (err) {
+      showToast(toErrorMessage(err), 'error');
     }
   };
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { http } from '@/lib/http';
+import { toItem, toErrorMessage } from '@/lib/response';
 import ModalSheet from '../../base/ModalSheet';
 import type { Product } from '../ProductCard';
 import showToast from '../Toast';
@@ -28,7 +29,7 @@ const OrderModal = ({ open, onClose, product, shopId }: OrderModalProps) => {
     if (!product) return;
     try {
       setLoading(true);
-      await http.post('/orders', {
+      const res = await http.post('/orders', {
         targetId: shopId,
         items: [
           {
@@ -40,10 +41,11 @@ const OrderModal = ({ open, onClose, product, shopId }: OrderModalProps) => {
           },
         ],
       });
+      toItem(res);
       showToast('Order placed', 'success');
       onClose();
-    } catch {
-      showToast('Failed to place order', 'error');
+    } catch (err) {
+      showToast(toErrorMessage(err), 'error');
     } finally {
       setLoading(false);
     }

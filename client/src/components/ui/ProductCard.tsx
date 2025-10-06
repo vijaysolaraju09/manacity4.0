@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { AiFillStar } from 'react-icons/ai';
 import { useDispatch } from 'react-redux';
 import { http } from '@/lib/http';
+import { toItem, toErrorMessage } from '@/lib/response';
 import { addToCart } from '../../store/slices/cartSlice';
 import fallbackImage from '../../assets/no-image.svg';
 import WishlistHeart from './WishlistHeart';
@@ -41,7 +42,8 @@ const ProductCard = ({
 
   const handleAdd = async () => {
     try {
-      await http.post('/cart', { productId: product._id, quantity: 1 });
+      const res = await http.post('/cart', { productId: product._id, quantity: 1 });
+      toItem(res);
       dispatch(
         addToCart({
           id: product._id,
@@ -52,8 +54,8 @@ const ProductCard = ({
         })
       );
       showToast('Added to cart');
-    } catch {
-      showToast('Failed to add to cart', 'error');
+    } catch (err) {
+      showToast(toErrorMessage(err), 'error');
     }
   };
 

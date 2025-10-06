@@ -7,6 +7,8 @@ import fallbackImage from '../../assets/no-image.svg';
 import { removeFromCart, updateQuantity, clearCart } from '../../store/slices/cartSlice';
 import type { RootState } from '../../store';
 import { http } from '@/lib/http';
+import { toItem, toErrorMessage } from '@/lib/response';
+import { paths } from '@/routes/paths';
 import showToast from '../../components/ui/Toast';
 import styles from './Cart.module.scss';
 
@@ -22,14 +24,15 @@ const Cart = () => {
 
   const handleCheckout = async () => {
     try {
-      await http.post('/orders', {
+      const res = await http.post('/orders', {
         items: items.map((it) => ({ productId: it.id, quantity: it.quantity })),
       });
+      toItem(res);
       dispatch(clearCart());
       showToast('Order placed', 'success');
-      navigate('/orders/my');
-    } catch {
-      showToast('Failed to place order', 'error');
+      navigate(paths.orders.mine());
+    } catch (err) {
+      showToast(toErrorMessage(err), 'error');
     }
   };
 
@@ -39,7 +42,7 @@ const Cart = () => {
         image={fallbackImage}
         message="Your cart is empty"
         ctaLabel="Browse shops"
-        onCtaClick={() => navigate('/shops')}
+        onCtaClick={() => navigate(paths.shops())}
       />
     );
   }

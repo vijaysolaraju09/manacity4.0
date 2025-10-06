@@ -7,6 +7,7 @@ import { clearCart, addToCart } from '@/store/slices/cartSlice';
 import { OrderCard } from '@/components/base';
 import Shimmer from '@/components/Shimmer';
 import styles from './MyOrders.module.scss';
+import { paths } from '@/routes/paths';
 
 const statuses = ['all', 'pending', 'accepted', 'cancelled', 'completed'] as const;
 
@@ -55,7 +56,7 @@ const MyOrders = () => {
         })
       )
     );
-    navigate('/cart');
+    navigate(paths.cart());
   };
 
   return (

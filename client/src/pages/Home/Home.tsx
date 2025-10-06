@@ -12,6 +12,7 @@ import { fetchVerified } from '@/store/verified';
 import { fetchEvents } from '@/store/events';
 import { fetchSpecialProducts } from '@/store/products';
 import { http } from '@/lib/http';
+import { toItems, toErrorMessage } from '@/lib/response';
 import type { RootState } from '@/store';
 import EventsSkeleton from '@/components/common/EventsSkeleton';
 import ShopsSkeleton from '@/components/common/ShopsSkeleton';
@@ -21,13 +22,14 @@ import SkeletonList from '@/components/ui/SkeletonList';
 import fallbackImage from '../../assets/no-image.svg';
 import { formatDateTime } from '@/utils/date';
 import VerifiedCard from '@/components/ui/VerifiedCard/VerifiedCard';
+import { paths } from '@/routes/paths';
 
 const Home = () => {
   const navigate = useNavigate();
   const d = useDispatch<any>();
 
   const [banners, setBanners] = useState<any[]>([]);
-  const [bannerStatus, setBannerStatus] = useState<'loading' | 'succeeded' | 'failed'>('loading');
+  const [bannerStatus, setBannerStatus] = useState<'idle' | 'loading' | 'succeeded' | 'failed'>('idle');
   const [bannerError, setBannerError] = useState<string | null>(null);
 
   const shops = useSelector((s: RootState) => s.shops);
@@ -40,20 +42,22 @@ const Home = () => {
     setBannerError(null);
     try {
       const res = await http.get('/admin/messages');
-      const items = Array.isArray(res.data) ? res.data : [];
+      const items = toItems(res);
       const filtered = items.filter((m: any) => m.type === 'banner');
       setBanners(filtered);
       setBannerStatus('succeeded');
-    } catch {
+    } catch (err) {
       setBanners([]);
       setBannerStatus('failed');
-      setBannerError('Failed to load banners');
+      setBannerError(toErrorMessage(err));
     }
   }, []);
 
   useEffect(() => {
-    void loadBanners();
-  }, [loadBanners]);
+    if (bannerStatus === 'idle') {
+      void loadBanners();
+    }
+  }, [bannerStatus, loadBanners]);
 
   useEffect(() => {
     if (shops.status === 'idle') d(fetchShops({ sort: '-createdAt', pageSize: 10 }));
@@ -103,7 +107,7 @@ const Home = () => {
 
       <Section
         title="Shop Offers"
-        path="/shops"
+        path={paths.shops()}
         data={shops.items}
         status={shops.status}
         error={shops.error}
@@ -113,7 +117,7 @@ const Home = () => {
       />
       <Section
         title="Verified Users"
-        path="/verified-users"
+        path={paths.verifiedUsers.list()}
         data={verified.items}
         status={verified.status}
         error={verified.error}
@@ -123,7 +127,7 @@ const Home = () => {
       />
       <Section
         title="Events"
-        path="/events"
+        path={paths.events.list()}
         data={events.items}
         status={events.status}
         error={events.error}
@@ -133,7 +137,7 @@ const Home = () => {
       />
       <Section
         title="Special Shop Products"
-        path="/special-shop"
+        path={paths.specialShop()}
         data={products.items}
         status={products.status}
         error={products.error}
@@ -149,7 +153,7 @@ interface SectionProps {
   title: string;
   path: string;
   data: any[];
-  status: string;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
   type: 'product' | 'user' | 'event';
   onRetry: () => void;
@@ -188,20 +192,20 @@ const Section = ({ title, path, data, status, error, type, onRetry, navigate }: 
             <ProductCard
               key={item._id}
               product={item}
-              onClick={() => navigate(`/product/${item._id}`)}
+              onClick={() => navigate(paths.products.detail(item._id))}
             />
           ) : type === 'user' ? (
             <VerifiedCard
               key={item._id}
               card={item}
-              onClick={() => navigate(`/verified-users/${item._id}`)}
+              onClick={() => navigate(paths.verifiedUsers.detail(item._id))}
             />
           ) : (
             <motion.div
               key={item._id}
               className="card"
               whileHover={{ scale: 1.03 }}
-              onClick={() => navigate(`/events/${item._id}`)}
+              onClick={() => navigate(paths.events.detail(item._id))}
             >
               <img
                 src={item.bannerUrl || item.coverUrl || fallbackImage}

@@ -11,6 +11,8 @@ import type { SignupDraft } from '../../../store/slices/authSlice';
 import { signup as signupThunk } from '../../../store/slices/authSlice';
 import type { AppDispatch } from '../../../store';
 import { normalizePhoneDigits } from '@/utils/phone';
+import { paths } from '@/routes/paths';
+import { toErrorMessage } from '@/lib/response';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -70,9 +72,9 @@ const Signup = () => {
       };
       await dispatch(signupThunk(payload)).unwrap();
       showToast('Account created.', 'success');
-      navigate('/home');
+      navigate(paths.home());
     } catch (err: any) {
-      const message = err.message || 'Failed to create account';
+      const message = toErrorMessage(err);
       setErrors({ general: message });
       showToast(message, 'error');
     } finally {
@@ -153,9 +155,9 @@ const Signup = () => {
         </form>
 
         <div className="links">
-          <span onClick={() => navigate('/login')}>Already have an account?</span>
+          <span onClick={() => navigate(paths.auth.login())}>Already have an account?</span>
         </div>
-        <div className="back" onClick={() => navigate('/')}>← Back to Landing</div>
+        <div className="back" onClick={() => navigate(paths.landing())}>← Back to Landing</div>
       </motion.div>
     </div>
   );

@@ -1,7 +1,19 @@
-import axios from 'axios';
-import { API_BASE } from '@/config/api';
+import axios, {
+  type AxiosError,
+  type AxiosInstance,
+  type InternalAxiosRequestConfig,
+} from 'axios';
 import type { Store } from '@reduxjs/toolkit';
+import { API_BASE } from '@/config/api';
 import { logout } from '@/store/slices/authSlice';
+import { clearAdminToken } from '@/store/slices/adminSlice';
+import { paths } from '@/routes/paths';
+
+type AugmentedConfig = InternalAxiosRequestConfig & { __retryCount?: number };
+
+const MAX_RETRIES = 3;
+const RETRYABLE_METHODS = new Set(['get', 'head']);
+const RETRY_BASE_DELAY = 300;
 
 let store: Store | null = null;
 
@@ -9,45 +21,100 @@ export const injectStore = (s: Store) => {
   store = s;
 };
 
-export const http = axios.create({
-  baseURL: API_BASE,
-  withCredentials: false,
-  timeout: 20000,
-});
+const delay = (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
-const MAX_RETRIES = 3;
-
-http.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+const normalizeUrl = (config: InternalAxiosRequestConfig) => {
   if (config.url?.startsWith('/')) {
     config.url = config.url.slice(1);
   }
   return config;
+};
+
+const shouldRetry = (error: AxiosError): error is AxiosError & {
+  config: AugmentedConfig;
+} => {
+  const { config, response } = error;
+  if (!config) return false;
+
+  const method = (config.method || 'get').toLowerCase();
+  if (!RETRYABLE_METHODS.has(method)) return false;
+
+  const retries = config.__retryCount ?? 0;
+  if (retries >= MAX_RETRIES) return false;
+
+  const status = response?.status;
+  if (status && status < 500) return false;
+
+  return true;
+};
+
+interface HttpClientOptions {
+  tokenStorageKey: string;
+  onUnauthorized?: () => void;
+  redirectTo?: string;
+}
+
+const createHttpClient = ({
+  tokenStorageKey,
+  onUnauthorized,
+  redirectTo,
+}: HttpClientOptions): AxiosInstance => {
+  const instance = axios.create({
+    baseURL: API_BASE,
+    withCredentials: false,
+    timeout: 20000,
+  });
+
+  instance.interceptors.request.use((config) => {
+    normalizeUrl(config);
+
+    const token = localStorage.getItem(tokenStorageKey);
+    if (token) {
+      config.headers = config.headers ?? {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  });
+
+  instance.interceptors.response.use(
+    (response) => response,
+    async (error: AxiosError) => {
+      if (shouldRetry(error)) {
+        const config = error.config as AugmentedConfig;
+        config.__retryCount = (config.__retryCount ?? 0) + 1;
+        const attempt = config.__retryCount;
+        const wait = RETRY_BASE_DELAY * 2 ** (attempt - 1);
+        await delay(wait);
+        return instance(config);
+      }
+
+      if (error.response?.status === 401) {
+        localStorage.removeItem(tokenStorageKey);
+        onUnauthorized?.();
+        if (redirectTo) {
+          window.location.assign(redirectTo);
+        }
+      }
+
+      return Promise.reject(error);
+    },
+  );
+
+  return instance;
+};
+
+export const http = createHttpClient({
+  tokenStorageKey: 'token',
+  onUnauthorized: () => store?.dispatch(logout()),
+  redirectTo: paths.auth.login(),
 });
 
-http.interceptors.response.use(
-  (res) => res,
-  async (error: any) => {
-    const config = error.config || {};
-    if (
-      config.method === 'get' &&
-      (config.__retryCount || 0) < MAX_RETRIES &&
-      (!error.response || error.response.status >= 500)
-    ) {
-      config.__retryCount = (config.__retryCount || 0) + 1;
-      return http(config);
-    }
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      store?.dispatch(logout());
-      window.location.href = '/login';
-    }
-    return Promise.reject(
-      error.response?.data?.error || error.message || 'Request failed'
-    );
-  }
-);
+export const adminHttp = createHttpClient({
+  tokenStorageKey: 'manacity_admin_token',
+  onUnauthorized: () => store?.dispatch(clearAdminToken()),
+  redirectTo: paths.admin.login(),
+});

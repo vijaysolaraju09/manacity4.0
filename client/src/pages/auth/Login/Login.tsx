@@ -10,6 +10,8 @@ import showToast from '../../../components/ui/Toast';
 import { login as loginThunk } from '../../../store/slices/authSlice';
 import type { AppDispatch } from '../../../store';
 import { normalizePhoneDigits } from '@/utils/phone';
+import { paths } from '@/routes/paths';
+import { toErrorMessage } from '@/lib/response';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -35,10 +37,10 @@ const Login = () => {
       setLoading(true);
       setError('');
       await dispatch(loginThunk({ phone: normalizedPhone, password })).unwrap();
-      navigate('/home');
+      navigate(paths.home());
       showToast('Logged in successfully', 'success');
     } catch (err: any) {
-      const message = err.message || 'Login failed';
+      const message = toErrorMessage(err);
       setError(message);
       showToast(message, 'error');
     } finally {
@@ -100,10 +102,10 @@ const Login = () => {
         </form>
 
         <div className="links">
-          <span onClick={() => navigate('/signup')}>Create Account</span>
+          <span onClick={() => navigate(paths.auth.signup())}>Create Account</span>
         </div>
 
-        <div className="back" onClick={() => navigate('/')}>← Back to Landing</div>
+        <div className="back" onClick={() => navigate(paths.landing())}>← Back to Landing</div>
       </motion.div>
     </div>
   );

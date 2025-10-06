@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FaMicrophone } from 'react-icons/fa';
 import { http } from '@/lib/http';
+import { toItem, toErrorMessage } from '@/lib/response';
 import { fetchShops } from '@/store/shops';
 import type { RootState } from '../../store';
 import styles from './VoiceOrder.module.scss';
@@ -103,7 +104,7 @@ const VoiceOrder = () => {
     if (!confirmItem) return;
     try {
       setLoading(true);
-      await http.post('/orders', {
+      const res = await http.post('/orders', {
         targetId: confirmItem.shop._id,
         items: [
           {
@@ -115,11 +116,12 @@ const VoiceOrder = () => {
           },
         ],
       });
+      toItem(res);
       showToast('Order placed');
       setConfirmOpen(false);
       setConfirmItem(null);
-    } catch {
-      showToast('Failed to place order', 'error');
+    } catch (err) {
+      showToast(toErrorMessage(err), 'error');
     } finally {
       setLoading(false);
     }

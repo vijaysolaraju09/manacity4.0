@@ -193,7 +193,7 @@ export const fetchEventById = createAsyncThunk<EventDetail, string, { rejectValu
 );
 
 export const registerForEvent = createAsyncThunk<
-  { registration: EventRegistration | null; status: string },
+  { registration: EventRegistration | null; status: EventRegistration['status'] },
   string,
   { rejectValue: string }
 >('events/register', async (id, { rejectWithValue }) => {
@@ -202,7 +202,7 @@ export const registerForEvent = createAsyncThunk<
     const data = res?.data?.data || res?.data || {};
     return {
       registration: data.registration || null,
-      status: data.status || data.registration?.status || 'registered',
+      status: (data.status || data.registration?.status || 'registered') as EventRegistration['status'],
     };
   } catch (err) {
     return rejectWithValue(toErrorMessage(err));

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FaMicrophone } from 'react-icons/fa';
 import { fetchShops } from '@/store/shops';
 import { http } from '@/lib/http';
+import { toItem, toErrorMessage } from '@/lib/response';
 import type { RootState } from '../../store';
 import ModalSheet from '../../components/base/ModalSheet';
 import Loader from '../../components/Loader';
@@ -115,8 +116,8 @@ const OrderNow = () => {
     try {
       setPlacing(true);
       await Promise.all(
-        matched.map((m) =>
-          http.post('/orders', {
+        matched.map(async (m) => {
+          const res = await http.post('/orders', {
             targetId: m.shop._id,
             items: [
               {
@@ -127,16 +128,17 @@ const OrderNow = () => {
                 quantity: m.quantity,
               },
             ],
-          })
-        )
+          });
+          toItem(res);
+        })
       );
       showToast('Order placed');
       setMatched([]);
       setTranscript('');
       setManual('');
       setConfirmOpen(false);
-    } catch {
-      showToast('Failed to place order', 'error');
+    } catch (err) {
+      showToast(toErrorMessage(err), 'error');
     } finally {
       setPlacing(false);
     }

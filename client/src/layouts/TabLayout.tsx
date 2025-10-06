@@ -22,15 +22,13 @@ const TabLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const cartItems = useSelector((state: RootState) => state.cart.items);
-  const unread = useSelector(
-    (state: RootState) => state.notifs.items.filter((n) => !n.read).length
-  );
+  const unread = useSelector((state: RootState) => state.notifs.unread);
   const notifStatus = useSelector((state: RootState) => state.notifs.status);
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     if (notifStatus === 'idle') {
-      dispatch(fetchNotifs(undefined));
+      dispatch(fetchNotifs({ page: 1 }));
     }
   }, [notifStatus, dispatch]);
 

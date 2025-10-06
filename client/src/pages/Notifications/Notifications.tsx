@@ -1,17 +1,18 @@
 import './Notifications.scss';
-import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import type { AppDispatch, RootState } from '@/store';
 import {
-  fetchNotifications,
-  type Notification,
-} from '../../api/notifications';
+  fetchNotifs,
+  markNotifRead,
+  removeNotif,
+  type Notif,
+} from '@/store/notifs';
 import NotificationCard from '../../components/ui/NotificationCard';
-import { useDispatch } from 'react-redux';
-import type { AppDispatch } from '@/store';
-import { markNotifRead as markNotifReadAction } from '@/store/notifs';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorCard from '@/components/ui/ErrorCard';
 import SkeletonList from '@/components/ui/SkeletonList';
+import showToast from '@/components/ui/Toast';
 
 const filterLabels: Record<string, string> = {
   all: 'All',
@@ -24,164 +25,129 @@ const filterLabels: Record<string, string> = {
 const filters = Object.keys(filterLabels);
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const dispatch = useDispatch<AppDispatch>();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [initialLoading, setInitialLoading] = useState(true);
+  const { items, status, error, hasMore, page } = useSelector(
+    (state: RootState) => state.notifs
+  );
   const [activeFilter, setActiveFilter] = useState('all');
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const urlFilter = searchParams.get('type');
-    if (urlFilter && filters.includes(urlFilter)) setActiveFilter(urlFilter);
-  }, [searchParams]);
+    if (status === 'idle') {
+      dispatch(fetchNotifs({ page: 1 }));
+    }
+  }, [dispatch, status]);
 
   useEffect(() => {
-    setNotifications([]);
-    setPage(1);
-    setHasMore(true);
-    setInitialLoading(true);
-    setError(null);
-  }, [activeFilter]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      setLoading(true);
-      if (page === 1) {
-        setError(null);
-      }
-      try {
-        const data = await fetchNotifications({ page });
-        if (cancelled) return;
-        const allItems = data?.notifications ?? [];
-        const items =
-          activeFilter === 'all'
-            ? allItems
-            : allItems.filter((n) => n.type === activeFilter);
-        setNotifications((prev) => (page === 1 ? items : [...prev, ...items]));
-        setHasMore(Boolean(data?.hasMore));
-      } catch {
-        if (cancelled) return;
-        if (page === 1) {
-          setNotifications([]);
-        }
-        setError('Failed to load notifications');
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-          setInitialLoading(false);
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [page, activeFilter]);
-
-  useEffect(() => {
-    if (!hasMore || loading) return;
-    const el = loaderRef.current;
-    if (!el) return;
+    if (!hasMore || status === 'loading') return;
+    const node = loaderRef.current;
+    if (!node) return;
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
-        setPage((p) => p + 1);
+        dispatch(fetchNotifs({ page: page + 1 }));
       }
     });
-    observer.observe(el);
+    observer.observe(node);
     return () => observer.disconnect();
-  }, [hasMore, loading]);
+  }, [dispatch, hasMore, status, page]);
+
+  const filtered = useMemo(() => {
+    if (activeFilter === 'all') return items;
+    return items.filter((notif) => notif.type === activeFilter);
+  }, [items, activeFilter]);
+
+  const grouped = useMemo(() => {
+    return filtered.reduce<Record<string, Notif[]>>((acc, notif) => {
+      const date = new Date(notif.createdAt).toDateString();
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(notif);
+      return acc;
+    }, {});
+  }, [filtered]);
 
   const handleMarkRead = async (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n._id === id ? { ...n, read: true } : n)),
-    );
     try {
-      await dispatch(markNotifReadAction(id));
-    } catch {
-      setNotifications((prev) =>
-        prev.map((n) => (n._id === id ? { ...n, read: false } : n)),
-      );
+      await dispatch(markNotifRead(id)).unwrap();
+    } catch (err) {
+      showToast((err as Error)?.message || 'Failed to mark notification as read', 'error');
     }
   };
 
-  const groups = (notifications ?? []).reduce<Record<string, Notification[]>>(
-    (acc, n) => {
-      const date = new Date(n.createdAt).toDateString();
-      if (!acc[date]) acc[date] = [];
-      acc[date].push(n);
-      return acc;
-    },
-    {},
-  );
-
-  const reload = () => {
-    setNotifications([]);
-    setPage(1);
-    setHasMore(true);
-    setInitialLoading(true);
-    setError(null);
+  const handleDelete = async (id: string) => {
+    try {
+      await dispatch(removeNotif(id)).unwrap();
+      showToast('Notification removed', 'success');
+    } catch (err) {
+      showToast((err as Error)?.message || 'Failed to delete notification', 'error');
+    }
   };
 
-  const groupedEntries = Object.entries(groups);
-  const hasNotifications = groupedEntries.length > 0;
-  const showInitialSkeleton = initialLoading && loading;
+  const handleReload = () => {
+    dispatch(fetchNotifs({ page: 1 }));
+  };
+
+  const isLoading = status === 'loading';
+  const showInitialSkeleton = isLoading && items.length === 0;
+  const hasNotifications = filtered.length > 0;
 
   return (
     <div className="notifications-page">
-      <div className="notif-filters">
-        {filters.map((f) => (
+      <div className="notif-filters" role="tablist">
+        {filters.map((filter) => (
           <button
-            key={f}
-            className={activeFilter === f ? 'active' : ''}
-            onClick={() => {
-              setActiveFilter(f);
-              if (f === 'all') setSearchParams({});
-              else setSearchParams({ type: f });
-            }}
+            key={filter}
+            type="button"
+            role="tab"
+            aria-selected={activeFilter === filter}
+            className={activeFilter === filter ? 'active' : ''}
+            onClick={() => setActiveFilter(filter)}
           >
-            {filterLabels[f]}
+            {filterLabels[filter]}
           </button>
         ))}
       </div>
+
       {showInitialSkeleton ? (
         <SkeletonList count={4} lines={2} withAvatar />
-      ) : !hasNotifications && error && !loading ? (
-        <ErrorCard message={error} onRetry={reload} />
-      ) : !hasNotifications && !loading ? (
+      ) : !hasNotifications && status === 'failed' ? (
+        <ErrorCard message={error || 'Failed to load notifications'} onRetry={handleReload} />
+      ) : !hasNotifications ? (
         <EmptyState
           title="You're all caught up"
           message="There aren't any notifications to show right now. We'll let you know when something new arrives."
           ctaLabel="Refresh"
-          onCtaClick={reload}
+          onCtaClick={handleReload}
         />
       ) : (
         <>
-          {groupedEntries.map(([date, items]) => (
+          {Object.entries(grouped).map(([date, dayItems]) => (
             <div key={date} className="notif-group">
               <h4 className="group-date">{date}</h4>
-              {(items ?? []).map((n) => (
-                <NotificationCard
-                  key={n._id}
-                  message={n.message}
-                  timestamp={n.createdAt}
-                  read={n.read}
-                  onSwipeLeft={() => handleMarkRead(n._id)}
-                />
+              {dayItems.map((notif) => (
+                <div key={notif._id} className="notif-card">
+                  <NotificationCard
+                    message={notif.message}
+                    timestamp={notif.createdAt}
+                    read={notif.read}
+                    onSwipeLeft={() => handleMarkRead(notif._id)}
+                  />
+                  <div className="notif-actions">
+                    {!notif.read && (
+                      <button type="button" onClick={() => handleMarkRead(notif._id)}>
+                        Mark read
+                      </button>
+                    )}
+                    <button type="button" onClick={() => handleDelete(notif._id)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           ))}
-          {loading && hasNotifications && <SkeletonList count={1} lines={2} withAvatar />}
-          {!loading && error && hasNotifications && (
-            <ErrorCard message={error} onRetry={reload} />
+          {isLoading && hasNotifications && <SkeletonList count={1} lines={2} withAvatar />}
+          {status === 'failed' && hasNotifications && (
+            <ErrorCard message={error || 'Failed to load notifications'} onRetry={handleReload} />
           )}
           <div ref={loaderRef} />
         </>

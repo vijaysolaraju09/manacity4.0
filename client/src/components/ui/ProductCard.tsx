@@ -43,7 +43,25 @@ const ProductCard = ({
   const handleAdd = async () => {
     try {
       const res = await http.post('/cart', { productId: product._id, quantity: 1 });
-      toItem(res);
+      const cartItem = toItem(res) as any;
+      const rawShop = (product as any).shop;
+      const shopId =
+        (typeof rawShop === 'string' && rawShop) ||
+        rawShop?._id ||
+        cartItem?.shopId ||
+        (typeof cartItem?.shop === 'string' && cartItem.shop) ||
+        cartItem?.shop?._id ||
+        cartItem?.shop?.id;
+      if (!shopId) {
+        showToast('Unable to determine product shop. Please try again.', 'error');
+        return;
+      }
+      const shopName =
+        rawShop?.name ||
+        (product as any).shopName ||
+        cartItem?.shop?.name ||
+        cartItem?.shopName ||
+        '';
       dispatch(
         addToCart({
           id: product._id,
@@ -51,6 +69,8 @@ const ProductCard = ({
           price: product.price,
           quantity: 1,
           image: product.image,
+          shopId: String(shopId),
+          shopName,
         })
       );
       showToast('Added to cart');

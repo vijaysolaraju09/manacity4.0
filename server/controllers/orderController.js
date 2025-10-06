@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Shop = require('../models/Shop');
 const AppError = require('../utils/AppError');
+const { notifyUser } = require('../services/notificationService');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -20,6 +21,17 @@ const allowedTransitions = {
 function toPaise(value) {
   return Math.round(Number(value) * 100);
 }
+
+const statusLabel = (status) =>
+  String(status || '')
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+const orderCode = (order) =>
+  (order?._id ? order._id.toString() : '')
+    .slice(-6)
+    .toUpperCase();
 
 // ---------------------------------------------------------------------------
 // Create Order
@@ -55,7 +67,10 @@ exports.createOrder = async (req, res, next) => {
       const p = productMap.get(i.productId);
       if (!p) throw AppError.badRequest('PRODUCT_NOT_FOUND', 'Product not found');
       const unitPrice = toPaise(p.price);
-      const qty = Number(i.qty);
+      const qty = Number(i.qty ?? i.quantity);
+      if (!Number.isFinite(qty) || qty <= 0) {
+        throw AppError.badRequest('INVALID_QTY', 'Quantity must be greater than zero');
+      }
       const subtotal = unitPrice * qty;
       itemsTotal += subtotal;
       orderItems.push({
@@ -118,6 +133,16 @@ exports.createOrder = async (req, res, next) => {
       ],
     });
 
+    const code = orderCode(order);
+    await notifyUser(shop.owner, {
+      type: 'order',
+      message: `New order ${code || ''} from ${req.user.name || 'a customer'}.`,
+    });
+    await notifyUser(req.user._id, {
+      type: 'order',
+      message: `Your order ${code || ''} with ${shop.name} has been placed successfully.`,
+    });
+
     res.status(201).json({ ok: true, data: { order }, traceId: req.traceId });
   } catch (err) {
     next(err);
@@ -171,7 +196,7 @@ exports.getOrderById = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id).lean();
     if (!order) throw AppError.notFound('ORDER_NOT_FOUND', 'Order not found');
-    const shop = await Shop.findById(order.shop).select('owner').lean();
+    const shop = await Shop.findById(order.shop).select('owner name').lean();
     const isOwner = order.user.toString() === req.user._id.toString();
     const isShopOwner = shop && shop.owner.toString() === req.user._id.toString();
     const isAdmin = req.user.role === 'admin';
@@ -210,6 +235,11 @@ exports.updateOrderStatus = async (req, res, next) => {
       note,
     });
     await order.save();
+    const code = orderCode(order);
+    await notifyUser(order.user, {
+      type: 'order',
+      message: `Order ${code || ''} is now ${statusLabel(status)}.`,
+    });
     res.json({ ok: true, data: { order }, traceId: req.traceId });
   } catch (err) {
     next(err);
@@ -235,6 +265,20 @@ exports.cancelOrder = async (req, res, next) => {
     order.cancel = { by: 'user', reason, at: new Date() };
     order.timeline.push({ at: new Date(), by: 'user', status: 'cancelled', note: reason });
     await order.save();
+    const shop = await Shop.findById(order.shop).select('owner name').lean();
+    const code = orderCode(order);
+    if (shop?.owner) {
+      await notifyUser(shop.owner, {
+        type: 'order',
+        message: `Order ${code || ''} was cancelled by the customer${
+          reason ? `: ${reason}` : ''
+        }.`,
+      });
+    }
+    await notifyUser(order.user, {
+      type: 'order',
+      message: `Order ${code || ''} has been cancelled.`,
+    });
     res.json({ ok: true, data: { order }, traceId: req.traceId });
   } catch (err) {
     next(err);
@@ -258,6 +302,14 @@ exports.rateOrder = async (req, res, next) => {
     order.rating = rating;
     order.review = review;
     await order.save();
+    const shop = await Shop.findById(order.shop).select('owner name').lean();
+    if (shop?.owner && rating) {
+      const code = orderCode(order);
+      await notifyUser(shop.owner, {
+        type: 'order',
+        message: `Order ${code || ''} received a ${rating}-star review.`,
+      });
+    }
     res.json({ ok: true, data: { order }, traceId: req.traceId });
   } catch (err) {
     next(err);

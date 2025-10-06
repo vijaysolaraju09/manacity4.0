@@ -15,6 +15,9 @@ import { fetchProductsByShop } from '@/store/shops';
 import type { RootState } from '@/store';
 import ErrorCard from '@/components/common/ErrorCard';
 import Empty from '@/components/common/Empty';
+import { http } from '@/lib/http';
+import { toItem, toErrorMessage } from '@/lib/response';
+import showToast from '@/components/ui/Toast';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -55,16 +58,43 @@ const ProductDetails = () => {
     ? [product.image]
     : [];
 
-  const handleAdd = () => {
-    d(
-      addToCart({
-        id: product._id,
-        name: product.name,
-        price: product.price,
-        quantity: qty,
-        image: images[0],
-      })
-    );
+  const handleAdd = async () => {
+    try {
+      const res = await http.post('/cart', { productId: product._id, quantity: qty });
+      const cartItem = toItem(res) as any;
+      const rawShop = (product as any).shop;
+      const shopId =
+        (typeof rawShop === 'string' && rawShop) ||
+        rawShop?._id ||
+        cartItem?.shopId ||
+        (typeof cartItem?.shop === 'string' && cartItem.shop) ||
+        cartItem?.shop?._id ||
+        cartItem?.shop?.id;
+      if (!shopId) {
+        showToast('Unable to determine product shop. Please try again.', 'error');
+        return;
+      }
+      const shopName =
+        rawShop?.name ||
+        (product as any).shopName ||
+        cartItem?.shop?.name ||
+        cartItem?.shopName ||
+        '';
+      d(
+        addToCart({
+          id: product._id,
+          name: product.name,
+          price: product.price,
+          quantity: qty,
+          image: images[0],
+          shopId: String(shopId),
+          shopName,
+        })
+      );
+      showToast('Added to cart');
+    } catch (err) {
+      showToast(toErrorMessage(err), 'error');
+    }
   };
 
   return (

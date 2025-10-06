@@ -1,125 +1,225 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchMyOrders, selectOrdersByStatus } from '@/store/orders';
+import {
+  fetchMyOrders,
+  selectOrdersByStatus,
+  selectMyOrders,
+  cancelOrder,
+  rateOrder,
+  type Order,
+  type OrderStatus,
+} from '@/store/orders';
 import type { RootState, AppDispatch } from '@/store';
 import { clearCart, addToCart } from '@/store/slices/cartSlice';
 import { OrderCard } from '@/components/base';
 import Shimmer from '@/components/Shimmer';
+import ErrorCard from '@/components/ui/ErrorCard';
+import EmptyState from '@/components/ui/EmptyState';
+import showToast from '@/components/ui/Toast';
+import fallbackImage from '@/assets/no-image.svg';
 import styles from './MyOrders.module.scss';
 import { paths } from '@/routes/paths';
 
-const statuses = ['all', 'pending', 'accepted', 'cancelled', 'completed'] as const;
+const statusOptions: (OrderStatus | 'all')[] = [
+  'all',
+  'placed',
+  'confirmed',
+  'preparing',
+  'ready',
+  'out_for_delivery',
+  'delivered',
+  'cancelled',
+  'returned',
+];
+
+const cancellableStatuses = new Set<OrderStatus>(['placed', 'confirmed', 'preparing']);
+
+const statusDisplay: Record<OrderStatus | 'all', string> = {
+  all: 'All',
+  placed: 'Placed',
+  confirmed: 'Confirmed',
+  preparing: 'Preparing',
+  ready: 'Ready',
+  out_for_delivery: 'Out for delivery',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+  returned: 'Returned',
+};
 
 const MyOrders = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<(typeof statuses)[number]>('all');
-  const [category, setCategory] = useState('');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
+  const [activeStatus, setActiveStatus] = useState<(typeof statusOptions)[number]>('all');
 
-  const { status: loadStatus } = useSelector((s: RootState) => s.orders.mine);
+  const mineState = useSelector((state: RootState) => state.orders.mine);
   const orders = useSelector((state: RootState) =>
-    status === 'all'
-      ? (state.orders.mine.ids as string[]).map(
-          (id) => state.orders.mine.entities[id]!
-        )
-      : selectOrdersByStatus(state, 'mine', status as any)
-  ) as any[];
+    activeStatus === 'all'
+      ? selectMyOrders(state)
+      : selectOrdersByStatus(state, 'mine', activeStatus as OrderStatus)
+  );
 
   useEffect(() => {
+    if (mineState.status === 'idle') {
+      dispatch(fetchMyOrders());
+    }
+  }, [dispatch, mineState.status]);
+
+  const isLoading = mineState.status === 'loading';
+  const isError = mineState.status === 'failed';
+  const showSkeleton = isLoading && orders.length === 0;
+
+  const grouped = useMemo(() => {
+    return orders.reduce<Record<string, Order[]>>((acc, order) => {
+      const date = new Date(order.createdAt).toDateString();
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(order);
+      return acc;
+    }, {});
+  }, [orders]);
+
+  const handleRetry = () => {
     dispatch(fetchMyOrders());
-  }, [dispatch]);
+  };
 
-  const filtered = orders.filter((o) => {
-    const item = o.items[0];
-    const withinCategory = category
-      ? item.name?.toLowerCase().includes(category.toLowerCase())
-      : true;
-    const price = item.price;
-    const withinMin = minPrice ? price >= Number(minPrice) : true;
-    const withinMax = maxPrice ? price <= Number(maxPrice) : true;
-    return withinCategory && withinMin && withinMax;
-  });
-
-  const reorder = (order: any) => {
+  const handleReorder = (order: Order) => {
     dispatch(clearCart());
-    order.items.forEach((i: any) =>
+    order.items.forEach((item) => {
       dispatch(
         addToCart({
-          id: i.productId || i.name,
-          name: i.name,
-          price: i.price,
-          quantity: i.quantity,
-          image: i.image,
+          id: item.productId || item.id,
+          name: item.title,
+          price: item.unitPrice,
+          quantity: item.qty,
+          image: item.image,
+          shopId: order.shop.id,
+          shopName: order.shop.name,
         })
-      )
-    );
+      );
+    });
     navigate(paths.cart());
+  };
+
+  const handleCancel = async (order: Order) => {
+    const reason = window.prompt('Tell us why you are cancelling this order:', '');
+    if (reason === null) return;
+    try {
+      await dispatch(cancelOrder({ id: order.id, reason: reason || undefined })).unwrap();
+      showToast('Order cancelled', 'success');
+    } catch (err) {
+      showToast((err as Error)?.message || 'Failed to cancel order', 'error');
+    }
+  };
+
+  const handleRate = async (order: Order) => {
+    const ratingInput = window.prompt('Rate your order (1-5):', order.rating ? String(order.rating) : '5');
+    if (!ratingInput) return;
+    const rating = Number(ratingInput);
+    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+      showToast('Please enter a rating between 1 and 5.', 'error');
+      return;
+    }
+    const review = window.prompt('Share more about your experience (optional):', order.review || '');
+    try {
+      await dispatch(
+        rateOrder({ id: order.id, rating, review: review ? review.trim() : undefined })
+      ).unwrap();
+      showToast('Thanks for your feedback!', 'success');
+    } catch (err) {
+      showToast((err as Error)?.message || 'Failed to submit rating', 'error');
+    }
   };
 
   return (
     <div className={styles.myOrders}>
-      <h2>My Orders</h2>
-      <div className={styles.tabs}>
-        {statuses.map((s) => (
+      <div className={styles.header}>
+        <h2>My Orders</h2>
+      </div>
+      <div className={styles.tabs} role="tablist">
+        {statusOptions.map((status) => (
           <button
-            key={s}
-            className={s === status ? styles.active : ''}
-            onClick={() => setStatus(s)}
+            key={status}
+            type="button"
+            role="tab"
+            aria-selected={activeStatus === status}
+            className={activeStatus === status ? styles.active : ''}
+            onClick={() => setActiveStatus(status)}
           >
-            {s.charAt(0).toUpperCase() + s.slice(1)}
+            {statusDisplay[status] || status}
           </button>
         ))}
       </div>
-      <div className={styles.filters}>
-        <input
-          type="text"
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
+
+      {showSkeleton && (
+        <div className={styles.loading}>
+          {[1, 2, 3].map((n) => (
+            <Shimmer key={n} className={`${styles.card} shimmer rounded`} style={{ height: 88 }} />
+          ))}
+        </div>
+      )}
+
+      {isError && !showSkeleton && (
+        <ErrorCard
+          message={mineState.error || 'We could not load your orders.'}
+          onRetry={handleRetry}
         />
-        <input
-          type="number"
-          placeholder="Min Price"
-          value={minPrice}
-          onChange={(e) => setMinPrice(e.target.value)}
+      )}
+
+      {!isLoading && !isError && orders.length === 0 && (
+        <EmptyState
+          image={fallbackImage}
+          title="No orders yet"
+          message="When you place an order, it will show up here so you can track it easily."
+          ctaLabel="Browse shops"
+          onCtaClick={() => navigate(paths.shops())}
         />
-        <input
-          type="number"
-          placeholder="Max Price"
-          value={maxPrice}
-          onChange={(e) => setMaxPrice(e.target.value)}
-        />
-      </div>
-      {loadStatus === 'loading' ? (
-        [1, 2, 3].map((n) => (
-          <Shimmer
-            key={n}
-            className={`${styles.card} shimmer rounded`}
-            style={{ height: 80 }}
-          />
-        ))
-      ) : filtered.length === 0 ? (
-        <p className={styles.empty}>No orders found.</p>
-      ) : (
-        filtered.map((o) => (
-          <OrderCard
-            key={o._id}
-            items={o.items.map((i: any) => ({
-              id: i.productId || i.name,
-              title: i.name,
-              image: i.image,
-            }))}
-            shop={o.targetName || 'Shop'}
-            date={o.createdAt}
-            status={o.status}
-            quantity={o.items.reduce((s: number, it: any) => s + it.quantity, 0)}
-            total={o.totals.total}
-            onReorder={() => reorder(o)}
-          />
-        ))
+      )}
+
+      {!isLoading && !isError && orders.length > 0 && (
+        <div className={styles.groups}>
+          {Object.entries(grouped).map(([date, dayOrders]) => (
+            <section key={date} className={styles.group}>
+              <h3 className={styles.groupTitle}>{date}</h3>
+              {dayOrders.map((order) => {
+                const quantity = order.items.reduce((total, item) => total + item.qty, 0);
+                const canCancel = cancellableStatuses.has(order.status);
+                const canRate = order.status === 'delivered';
+                return (
+                  <div key={order.id} className={styles.orderBlock}>
+                    <OrderCard
+                      items={order.items.map((item, index) => ({
+                        id: item.productId || `${order.id}-${index}`,
+                        title: item.title,
+                        image: item.image || fallbackImage,
+                      }))}
+                      shop={order.shop.name || 'Shop'}
+                      date={order.createdAt}
+                      status={order.status}
+                      quantity={quantity}
+                      total={order.totals.grand}
+                      onCancel={canCancel ? () => handleCancel(order) : undefined}
+                      onReorder={() => handleReorder(order)}
+                      className={styles.card}
+                    />
+                    <div className={styles.cardActions}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(paths.orders.detail(order.id))}
+                      >
+                        View details
+                      </button>
+                      {canRate && (
+                        <button type="button" onClick={() => handleRate(order)}>
+                          Rate order
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+          ))}
+        </div>
       )}
     </div>
   );

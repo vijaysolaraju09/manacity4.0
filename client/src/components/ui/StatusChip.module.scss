@@ -8,12 +8,18 @@
 }
 
 .pending,
+.draft,
 .upcoming {
   background: var(--blue-100);
   color: var(--blue-700);
 }
 
 .accepted,
+.placed,
+.confirmed,
+.preparing,
+.ready,
+.out_for_delivery,
 .approved,
 .active,
 .ongoing {
@@ -23,6 +29,7 @@
 
 .rejected,
 .cancelled,
+.returned,
 .suspended,
 .inactive,
 .past {
@@ -30,7 +37,8 @@
   color: var(--white);
 }
 
-.completed {
+.completed,
+.delivered {
   background: var(--color-info);
   color: var(--color-on-primary);
 }

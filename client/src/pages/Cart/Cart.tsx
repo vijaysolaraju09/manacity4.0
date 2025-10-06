@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import QuantityStepper from '../../components/ui/QuantityStepper/QuantityStepper';
@@ -16,23 +17,52 @@ const Cart = () => {
   const items = useSelector((state: RootState) => state.cart.items);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [notes, setNotes] = useState('');
+  const [placing, setPlacing] = useState(false);
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discount = 0;
   const fee = items.length > 0 && subtotal <= 200 ? 40 : 0;
   const total = subtotal - discount + fee;
 
+  const shopIds = Array.from(new Set(items.map((item) => item.shopId).filter(Boolean)));
+  const hasMultipleShops = shopIds.length > 1;
+  const shopId = shopIds[0];
+  const shopName = items[0]?.shopName || '';
+
   const handleCheckout = async () => {
+    if (placing) return;
+    if (!items.length) return;
+    if (hasMultipleShops) {
+      showToast('Please checkout items from one shop at a time.', 'error');
+      return;
+    }
+    if (!shopId) {
+      showToast('Missing shop information for items in cart.', 'error');
+      return;
+    }
+    if (items.some((item) => !item.shopId)) {
+      showToast('One or more items are missing shop details.', 'error');
+      return;
+    }
+
+    setPlacing(true);
     try {
-      const res = await http.post('/orders', {
-        items: items.map((it) => ({ productId: it.id, quantity: it.quantity })),
-      });
+      const payload = {
+        shopId,
+        items: items.map((it) => ({ productId: it.id, qty: it.quantity })),
+        fulfillment: { type: 'pickup' as const },
+        notes: notes.trim() || undefined,
+      };
+      const res = await http.post('/orders', payload);
       toItem(res);
       dispatch(clearCart());
       showToast('Order placed', 'success');
       navigate(paths.orders.mine());
     } catch (err) {
       showToast(toErrorMessage(err), 'error');
+    } finally {
+      setPlacing(false);
     }
   };
 
@@ -77,6 +107,12 @@ const Cart = () => {
         </div>
 
         <div className={styles.summary}>
+          {shopName && <p className={styles.shopName}>Order from {shopName}</p>}
+          {hasMultipleShops && (
+            <div className={styles.warning}>
+              You have items from multiple shops. Please place separate orders for each shop.
+            </div>
+          )}
           <div className={styles.row}>
             <span>Subtotal</span>
             <span>₹{subtotal}</span>
@@ -93,8 +129,24 @@ const Cart = () => {
             <span>Total</span>
             <span>₹{total}</span>
           </div>
-          <button type="button" className={styles.checkout} onClick={handleCheckout}>
-            Checkout
+          <label htmlFor="cart-notes" className={styles.label}>
+            Notes for the shop (optional)
+          </label>
+          <textarea
+            id="cart-notes"
+            className={styles.notes}
+            rows={3}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Add delivery instructions or special requests"
+          />
+          <button
+            type="button"
+            className={styles.checkout}
+            onClick={handleCheckout}
+            disabled={placing || hasMultipleShops}
+          >
+            {placing ? 'Placing order…' : 'Checkout'}
           </button>
         </div>
       </div>
@@ -103,3 +155,4 @@ const Cart = () => {
 };
 
 export default Cart;
+

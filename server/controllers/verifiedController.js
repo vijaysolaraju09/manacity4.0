@@ -1,6 +1,7 @@
 const Verified = require('../models/Verified');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
+const { notifyUser } = require('../services/notificationService');
 
 exports.requestVerification = async (req, res, next) => {
   try {
@@ -409,6 +410,10 @@ exports.approveVerified = async (req, res, next) => {
       profession: verified.profession,
       bio: verified.bio,
     });
+    await notifyUser(verified.user._id, {
+      type: 'system',
+      message: 'Your verification request has been approved. Welcome to the verified directory!',
+    });
     const card = verified.toCardJSON(verified.user);
     res.json({ ok: true, data: { verified: card }, traceId: req.traceId });
   } catch (err) {
@@ -429,6 +434,10 @@ exports.rejectVerified = async (req, res, next) => {
     await User.findByIdAndUpdate(verified.user._id, {
       isVerified: false,
       verificationStatus: 'rejected',
+    });
+    await notifyUser(verified.user._id, {
+      type: 'system',
+      message: 'Your verification request was rejected. You can review the details and try again.',
     });
     const card = verified.toCardJSON(verified.user);
     res.json({ ok: true, data: { verified: card }, traceId: req.traceId });
@@ -485,6 +494,16 @@ exports.updateVerificationRequestStatus = async (req, res, next) => {
       (await User.findById(verified.user).select('name phone location address'));
 
     const card = verified.toCardJSON(populated);
+
+    let message;
+    if (status === 'approved') {
+      message = 'Your verification request has been approved. Welcome to the verified directory!';
+    } else if (status === 'rejected') {
+      message = 'Your verification request was rejected. You can review the feedback and try again.';
+    } else {
+      message = 'Your verification request is back under review.';
+    }
+    await notifyUser(verified.user, { type: 'system', message });
 
     res.json({ ok: true, data: { request: card }, traceId: req.traceId });
   } catch (err) {

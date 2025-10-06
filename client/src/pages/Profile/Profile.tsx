@@ -3,7 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import ModalSheet from '@/components/base/ModalSheet';
 import showToast from '@/components/ui/Toast';
-import { getCurrentUser, updateProfile, requestVerification } from '@/api/profile';
+import {
+  getCurrentUser,
+  updateProfile,
+  requestVerification,
+  requestBusiness,
+} from '@/api/profile';
 import { setUser } from '@/store/slices/authSlice';
 import type { RootState, AppDispatch } from '@/store';
 import styles from './Profile.module.scss';
@@ -15,6 +20,7 @@ const Profile = () => {
 
   const [open, setOpen] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
+  const [businessOpen, setBusinessOpen] = useState(false);
   const [form, setForm] = useState({
     name: user.name,
     email: user.email || '',
@@ -30,6 +36,15 @@ const Profile = () => {
     bio: user.bio || '',
     portfolio: '',
   });
+  const [businessForm, setBusinessForm] = useState({
+    name: '',
+    category: '',
+    location: user.location || '',
+    address: user.address || '',
+    description: '',
+    image: '',
+  });
+  const [businessLoading, setBusinessLoading] = useState(false);
 
   useEffect(() => {
     setForm({
@@ -47,6 +62,14 @@ const Profile = () => {
       bio: user.bio || '',
       portfolio: '',
     });
+    setBusinessForm({
+      name: '',
+      category: '',
+      location: user.location || '',
+      address: user.address || '',
+      description: '',
+      image: '',
+    });
   }, [user]);
 
   const handleChange = (
@@ -61,6 +84,13 @@ const Profile = () => {
   ) => {
     const { name, value } = e.target;
     setVerify((v) => ({ ...v, [name]: value }));
+  };
+
+  const handleBusinessChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setBusinessForm((f) => ({ ...f, [name]: value }));
   };
 
   const handleSave = async () => {
@@ -122,6 +152,53 @@ const Profile = () => {
     }
   };
 
+  const handleBusinessSubmit = async () => {
+    if (!businessForm.name.trim()) {
+      showToast('Shop name is required', 'error');
+      return;
+    }
+    if (!businessForm.category.trim()) {
+      showToast('Category is required', 'error');
+      return;
+    }
+    if (!businessForm.location.trim()) {
+      showToast('Location is required', 'error');
+      return;
+    }
+    if (!businessForm.address.trim()) {
+      showToast('Address is required', 'error');
+      return;
+    }
+    if (!businessForm.description.trim()) {
+      showToast('Description is required', 'error');
+      return;
+    }
+    if (!businessForm.image.trim()) {
+      showToast('Image URL is required', 'error');
+      return;
+    }
+
+    setBusinessLoading(true);
+    try {
+      await requestBusiness({
+        name: businessForm.name.trim(),
+        category: businessForm.category.trim(),
+        location: businessForm.location.trim(),
+        address: businessForm.address.trim(),
+        description: businessForm.description.trim(),
+        image: businessForm.image.trim(),
+      });
+      const refreshed = await getCurrentUser();
+      dispatch(setUser(refreshed));
+      showToast('Business request submitted', 'success');
+      setBusinessOpen(false);
+    } catch (err: any) {
+      showToast(err?.response?.data?.message || err.toString(), 'error');
+    } finally {
+      setBusinessLoading(false);
+    }
+  };
+
   const initials = user.name
     .split(' ')
     .map((n) => n[0])
@@ -165,18 +242,32 @@ const Profile = () => {
           {user.verificationStatus !== 'none' && (
             <span className={styles.role}>{user.verificationStatus}</span>
           )}
+          {user.businessStatus === 'pending' && (
+            <span className={`${styles.role} ${styles.businessPending}`}>
+              Business Pending
+            </span>
+          )}
         </div>
         <button className={styles.editBtn} onClick={() => setOpen(true)}>
           Edit Profile
         </button>
-        {user.verificationStatus !== 'approved' && (
+        <div className={styles.requestActions}>
           <button
             className={styles.editBtn}
-            onClick={() => setVerifyOpen(true)}
+            onClick={() => setBusinessOpen(true)}
+            disabled={user.role === 'business' || user.businessStatus === 'pending'}
           >
-            Request Verification
+            Request Business
           </button>
-        )}
+          {user.verificationStatus !== 'approved' && (
+            <button
+              className={styles.editBtn}
+              onClick={() => setVerifyOpen(true)}
+            >
+              Request Verification
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={styles.actions}>
@@ -322,6 +413,85 @@ const Profile = () => {
                 Cancel
               </button>
               <button type="submit">Submit</button>
+            </div>
+          </form>
+        </div>
+      </ModalSheet>
+      <ModalSheet open={businessOpen} onClose={() => setBusinessOpen(false)}>
+        <div className={styles.modalContent}>
+          <h3>Request Business</h3>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!businessLoading) handleBusinessSubmit();
+            }}
+            className={styles.editForm}
+          >
+            <label>
+              Shop Name
+              <input
+                name="name"
+                value={businessForm.name}
+                onChange={handleBusinessChange}
+                required
+              />
+            </label>
+            <label>
+              Category
+              <input
+                name="category"
+                value={businessForm.category}
+                onChange={handleBusinessChange}
+                required
+              />
+            </label>
+            <label>
+              Location
+              <input
+                name="location"
+                value={businessForm.location}
+                onChange={handleBusinessChange}
+                required
+              />
+            </label>
+            <label>
+              Address
+              <input
+                name="address"
+                value={businessForm.address}
+                onChange={handleBusinessChange}
+                required
+              />
+            </label>
+            <label>
+              Description
+              <textarea
+                name="description"
+                value={businessForm.description}
+                onChange={handleBusinessChange}
+                required
+              />
+            </label>
+            <label>
+              Image URL
+              <input
+                name="image"
+                value={businessForm.image}
+                onChange={handleBusinessChange}
+                required
+              />
+            </label>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.cancel}
+                onClick={() => setBusinessOpen(false)}
+              >
+                Cancel
+              </button>
+              <button type="submit" disabled={businessLoading}>
+                {businessLoading ? 'Submitting...' : 'Submit'}
+              </button>
             </div>
           </form>
         </div>

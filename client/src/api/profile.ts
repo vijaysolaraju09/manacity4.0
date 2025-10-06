@@ -25,6 +25,7 @@ export interface BusinessRequest {
   location: string;
   address: string;
   description?: string;
+  image?: string;
 }
 
 export interface VerifyRequest {
@@ -54,7 +55,8 @@ export const updateMyVerified = async (data: VerifyRequest) => {
 };
 
 export const requestBusiness = async (data: BusinessRequest) => {
-  await http.post('/shops', data);
+  const res = await http.post('/shops', data);
+  return res.data;
 };
 
 export const getMyBusinessRequest = async () => {

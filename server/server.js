@@ -27,6 +27,7 @@ const adminUserRoutes = require("./routes/adminUserRoutes");
 const adminEventRoutes = require("./routes/adminEventRoutes");
 const proRoutes = require("./routes/proRoutes");
 const AppError = require("./utils/AppError");
+const logger = require("./utils/logger");
 
 const app = express();
 
@@ -106,7 +107,15 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     app.listen(process.env.PORT || 5000, () =>
-      console.log("Server running on port", process.env.PORT)
+      logger.info(
+        {
+          port: process.env.PORT || 5000,
+          env: process.env.NODE_ENV || "development",
+        },
+        "Server started"
+      )
     );
   })
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .catch((err) =>
+    logger.error({ err }, "MongoDB connection error")
+  );

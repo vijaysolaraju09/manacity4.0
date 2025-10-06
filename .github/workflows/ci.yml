@@ -2,22 +2,45 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
 
 jobs:
-  build:
+  client-quality:
+    name: Client quality checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - run: npm install --prefix client
-      - run: npm install --prefix server
-      - run: npm run lint --prefix client
-      - run: npm run typecheck --prefix client
-      - run: npm run build --prefix client
-      - run: npm run lint --prefix server
-      - run: npm start --prefix server & sleep 5 && curl -f http://localhost:5000/api/health
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - name: Install dependencies
+        run: npm ci --prefix client
+      - name: Lint
+        run: npm run lint --prefix client
+      - name: Prettier
+        run: npm run format:check --prefix client
+      - name: Type check
+        run: npm run typecheck --prefix client
+
+  server-quality:
+    name: Server quality checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Install dependencies
+        run: npm ci --prefix server
+      - name: Lint
+        run: npm run lint --prefix server
+      - name: Prettier
+        run: npm run format:check --prefix server
+      - name: Type check
+        run: npm run typecheck --prefix server

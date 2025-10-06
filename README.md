@@ -16,7 +16,14 @@ npm install --prefix server
 ```
 
 ### 2. Environment
-Create `server/.env` based on [`server/.env.example`](server/.env.example).
+Copy the shared example file and adjust the values for your setup:
+
+```bash
+cp .env.example client/.env
+cp .env.example server/.env
+```
+
+The client only reads keys prefixed with `VITE_`, while the server uses the rest when bootstrapping Express and MongoDB.
 
 ### 3. Development
 Run frontend and backend in parallel:
@@ -49,12 +56,18 @@ GET /api/health -> { "ok": true }
 - `npm run dev` – start Vite dev server
 - `npm run build` – type check and build
 - `npm run lint` – ESLint
+- `npm run format` / `npm run format:check` – Prettier
 - `npm run typecheck` – TypeScript
 
 ### Server
 - `npm run dev` – nodemon watcher
 - `npm start` – start Express server
 - `npm run lint` – ESLint
+- `npm run format` / `npm run format:check` – Prettier
+- `npm run typecheck` – TypeScript project references
+
+## Continuous Integration
+Every pull request runs ESLint, Prettier (check mode), and TypeScript type-checking for both the client and server via [GitHub Actions](.github/workflows/ci.yml).
 
 ## License
 MIT

@@ -3,16 +3,15 @@ import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { ModalSheet } from '../../components/base';
-import { logout as logoutAction } from '../../store/slices/authSlice';
-import { logoutApi } from '../../api/auth';
+import { logoutUser } from '../../store/slices/authSlice';
 import { setLanguage, setNotificationPrefs } from '../../store/slices/settingsSlice';
-import type { RootState } from '../../store';
+import type { AppDispatch, RootState } from '../../store';
 import { useTheme, type Theme } from '../../theme/ThemeProvider';
 import { paths } from '@/routes/paths';
 import styles from './Settings.module.scss';
 
 const Settings = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { theme, setTheme, availableThemes } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -24,11 +23,8 @@ const Settings = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    logoutApi().finally(() => {
-      dispatch(logoutAction());
-      navigate(paths.auth.login());
+    void dispatch(logoutUser()).finally(() => {
+      navigate(paths.auth.login(), { replace: true });
     });
   };
 

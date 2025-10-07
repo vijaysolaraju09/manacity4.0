@@ -35,6 +35,7 @@ const MyOrders = lazy(() => import('./pages/Orders/MyOrders'));
 const ServiceOrders = lazy(() => import('./pages/Orders/ServiceOrders'));
 const OrderDetail = lazy(() => import('./pages/Orders/OrderDetail'));
 const Notifications = lazy(() => import('./pages/Notifications/Notifications'));
+const ProductsList = lazy(() => import('./pages/Products/ProductsList'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin/AdminLogin'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminShops = lazy(() => import('./pages/AdminShops'));
@@ -88,6 +89,7 @@ function App() {
           <Route element={<TabLayout />}>
             <Route path="/home" element={<Home />} />
             <Route path="/shops" element={<Shops />} />
+            <Route path="/products" element={<ProductsList />} />
             <Route path="/verified-users" element={<VerifiedList />} />
             <Route path="/events" element={<Events />} />
             <Route path="/special-shop" element={<SpecialShop />} />

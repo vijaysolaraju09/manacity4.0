@@ -107,13 +107,14 @@ const Home = () => {
 
       <Section
         title="Shop Offers"
-        path={paths.shops()}
+        path={paths.products.list()}
         data={shops.items}
         status={shops.status}
         error={shops.error}
         type="product"
         onRetry={() => d(fetchShops({ sort: '-createdAt', pageSize: 10 }))}
         navigate={navigate}
+        linkLabel="See all products"
       />
       <Section
         title="Verified Users"
@@ -158,34 +159,45 @@ interface SectionProps {
   type: 'product' | 'user' | 'event';
   onRetry: () => void;
   navigate: ReturnType<typeof useNavigate>;
+  linkLabel?: string;
 }
 
-const Section = ({ title, path, data, status, error, type, onRetry, navigate }: SectionProps) => {
+const Section = ({
+  title,
+  path,
+  data,
+  status,
+  error,
+  type,
+  onRetry,
+  navigate,
+  linkLabel,
+}: SectionProps) => {
   const loading = status === 'loading';
   if (loading)
     return (
       <div className="section">
-        <SectionHeader title={title} onClick={() => navigate(path)} />
+        <SectionHeader title={title} onClick={() => navigate(path)} linkLabel={linkLabel} />
         {type === 'product' ? <ProductsSkeleton /> : type === 'event' ? <EventsSkeleton /> : <ShopsSkeleton />}
       </div>
     );
   if (status === 'failed')
     return (
       <div className="section">
-        <SectionHeader title={title} onClick={() => navigate(path)} />
+        <SectionHeader title={title} onClick={() => navigate(path)} linkLabel={linkLabel} />
         <ErrorCard message={error || `Failed to load ${title}`} onRetry={onRetry} />
       </div>
     );
   if (status === 'succeeded' && data.length === 0)
     return (
       <div className="section">
-        <SectionHeader title={title} onClick={() => navigate(path)} />
+        <SectionHeader title={title} onClick={() => navigate(path)} linkLabel={linkLabel} />
         <EmptyState message={`No ${title.toLowerCase()}`} />
       </div>
     );
   return (
     <div className="section">
-      <SectionHeader title={title} onClick={() => navigate(path)} />
+      <SectionHeader title={title} onClick={() => navigate(path)} linkLabel={linkLabel} />
       <HorizontalCarousel>
         {data.map((item: any) =>
           type === 'product' ? (

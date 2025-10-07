@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import { http } from '@/lib/http';
+import { logoutApi } from '@/api/auth';
 import { toItem, toErrorMessage } from '@/lib/response';
 import type { User } from '@/types/user';
 
@@ -159,4 +160,15 @@ const authSlice = createSlice({
 });
 
 export const { setUser, setToken, logout } = authSlice.actions;
+
+export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { dispatch }) => {
+  try {
+    await logoutApi();
+  } catch {
+    // Ignore network errors and ensure local logout always completes.
+  } finally {
+    dispatch(logout());
+  }
+});
+
 export default authSlice.reducer;

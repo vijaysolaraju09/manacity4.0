@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect, Suspense, lazy } from 'react';
 import { useDispatch } from 'react-redux';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -47,6 +47,111 @@ const AdminUsers = lazy(() => import('./pages/AdminUsers'));
 const AdminAnalytics = lazy(() => import('./pages/AdminAnalytics'));
 const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
 
+const AppRoutes = () => {
+  const location = useLocation();
+
+  return (
+    <>
+      <Suspense fallback={<Loader />}>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Landing key="landing" />} />
+          <Route path="/login" element={<Login key="login" />} />
+          <Route path="/signup" element={<Signup key="signup" />} />
+          <Route path="/admin/login" element={<AdminLogin key="admin-login" />} />
+          <Route
+            path="/admin"
+            element={<AdminProtectedRoute key="admin-protected" />}
+          >
+            <Route element={<AdminLayout key="admin-layout" />}>
+              <Route index element={<AdminDashboard key="admin-dashboard" />} />
+              <Route path="shops" element={<AdminShops key="admin-shops" />} />
+              <Route
+                path="products"
+                element={<AdminProducts key="admin-products" />}
+              />
+              <Route path="events" element={<AdminEvents key="admin-events" />} />
+              <Route path="users" element={<AdminUsers key="admin-users" />} />
+              <Route
+                path="analytics"
+                element={<AdminAnalytics key="admin-analytics" />}
+              />
+              <Route path="requests">
+                <Route
+                  path="business"
+                  element={<BusinessRequests key="admin-requests-business" />}
+                />
+                <Route
+                  path="verification"
+                  element={
+                    <VerificationRequests key="admin-requests-verification" />
+                  }
+                />
+              </Route>
+            </Route>
+          </Route>
+          <Route element={<ProtectedRoute key="protected" />}>
+            <Route element={<TabLayout key="tab-layout" />}>
+              <Route path="/home" element={<Home key="home" />} />
+              <Route path="/shops" element={<Shops key="shops" />} />
+              <Route path="/products" element={<ProductsList key="products" />} />
+              <Route
+                path="/verified-users"
+                element={<VerifiedList key="verified-list" />}
+              />
+              <Route path="/events" element={<Events key="events" />} />
+              <Route
+                path="/special-shop"
+                element={<SpecialShop key="special-shop" />}
+              />
+              <Route
+                path="/voice-order"
+                element={<VoiceOrder key="voice-order" />}
+              />
+              <Route path="/order-now" element={<OrderNow key="order-now" />} />
+              <Route
+                path="/notifications"
+                element={<Notifications key="notifications" />}
+              />
+              <Route path="/profile" element={<Profile key="profile" />} />
+              <Route path="/settings" element={<Settings key="settings" />} />
+              <Route
+                path="/manage-products"
+                element={<ManageProducts key="manage-products" />}
+              />
+              <Route
+                path="/orders/received"
+                element={<ReceivedOrders key="orders-received" />}
+              />
+              <Route path="/orders/my" element={<MyOrders key="orders-my" />} />
+              <Route
+                path="/orders/service"
+                element={<ServiceOrders key="orders-service" />}
+              />
+            </Route>
+            <Route path="/shops/:id" element={<ShopDetails key="shop-details" />} />
+            <Route
+              path="/product/:id"
+              element={<ProductDetails key="product-details" />}
+            />
+            <Route
+              path="/events/:id"
+              element={<EventDetails key="event-details" />}
+            />
+            <Route
+              path="/verified-users/:id"
+              element={<VerifiedDetails key="verified-details" />}
+            />
+            <Route path="/orders/:id" element={<OrderDetail key="order-detail" />} />
+            <Route path="/cart" element={<Cart key="cart" />} />
+          </Route>
+          <Route path="*" element={<NotFound key="not-found" />} />
+        </Routes>
+      </Suspense>
+      <FloatingCart />
+    </>
+  );
+};
+
 function App() {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -65,57 +170,10 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<Loader />}>
-        <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminProtectedRoute />}>
-          <Route element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="shops" element={<AdminShops />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="events" element={<AdminEvents />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="analytics" element={<AdminAnalytics />} />
-            <Route path="requests">
-              <Route path="business" element={<BusinessRequests />} />
-              <Route path="verification" element={<VerificationRequests />} />
-            </Route>
-          </Route>
-        </Route>
-        <Route element={<ProtectedRoute />}>
-          <Route element={<TabLayout />}>
-            <Route path="/home" element={<Home />} />
-            <Route path="/shops" element={<Shops />} />
-            <Route path="/products" element={<ProductsList />} />
-            <Route path="/verified-users" element={<VerifiedList />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/special-shop" element={<SpecialShop />} />
-            <Route path="/voice-order" element={<VoiceOrder />} />
-            <Route path="/order-now" element={<OrderNow />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/manage-products" element={<ManageProducts />} />
-            <Route path="/orders/received" element={<ReceivedOrders />} />
-            <Route path="/orders/my" element={<MyOrders />} />
-            <Route path="/orders/service" element={<ServiceOrders />} />
-          </Route>
-          <Route path="/shops/:id" element={<ShopDetails />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
-          <Route path="/events/:id" element={<EventDetails />} />
-          <Route path="/verified-users/:id" element={<VerifiedDetails />} />
-        <Route path="/orders/:id" element={<OrderDetail />} />
-        <Route path="/cart" element={<Cart />} />
-        </Route>
-        <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-    <FloatingCart />
-  </BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }
 
+export { AppRoutes };
 export default App;

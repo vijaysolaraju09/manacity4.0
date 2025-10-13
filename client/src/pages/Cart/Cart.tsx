@@ -51,7 +51,7 @@ const Cart = () => {
       await createOrder({
         shopId,
         items: items.map((it) => ({ productId: it.id, quantity: it.quantity })),
-        fulfillment: { type: 'pickup' },
+        fulfillmentType: 'pickup',
         notes: notes.trim() || undefined,
       });
       dispatch(clearCart());

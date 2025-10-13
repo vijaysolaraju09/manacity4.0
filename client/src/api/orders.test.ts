@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockPost = vi.fn();
-let requestInterceptor: ((config: Record<string, any>) => Record<string, any>) | null = null;
+type AxiosConfig = { headers?: Record<string, any> } & Record<string, any>;
+
+let requestInterceptor: ((config: AxiosConfig) => AxiosConfig) | null = null;
 
 vi.mock('axios', () => {
   return {
@@ -34,8 +36,8 @@ describe('createOrder', () => {
 
   it('sends the expected payload and attaches the auth token', async () => {
     const now = new Date().toISOString();
-    let capturedConfig: Record<string, any> | null = null;
-    mockPost.mockImplementation(async (_url, body, config = {}) => {
+    let capturedConfig: AxiosConfig | null = null;
+    mockPost.mockImplementation(async (_url, _body, config: { headers?: Record<string, any> } = {}) => {
       const finalConfig = requestInterceptor ? requestInterceptor(config) : config;
       capturedConfig = finalConfig;
       return {

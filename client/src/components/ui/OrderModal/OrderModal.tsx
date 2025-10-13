@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { http } from '@/lib/http';
-import { toItem, toErrorMessage } from '@/lib/response';
+import { useNavigate } from 'react-router-dom';
+import { toErrorMessage } from '@/lib/response';
+import { createOrder } from '@/api/orders';
+import { paths } from '@/routes/paths';
 import ModalSheet from '../../base/ModalSheet';
 import type { Product } from '../ProductCard';
 import showToast from '../Toast';
@@ -17,6 +19,7 @@ interface OrderModalProps {
 const OrderModal = ({ open, onClose, product, shopId }: OrderModalProps) => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (open) setQuantity(1);
@@ -29,21 +32,13 @@ const OrderModal = ({ open, onClose, product, shopId }: OrderModalProps) => {
     if (!product) return;
     try {
       setLoading(true);
-      const res = await http.post('/orders', {
-        targetId: shopId,
-        items: [
-          {
-            productId: product._id,
-            name: product.name,
-            image: product.image,
-            price: product.price,
-            quantity,
-          },
-        ],
+      await createOrder({
+        shopId,
+        items: [{ productId: product._id, quantity }],
       });
-      toItem(res);
       showToast('Order placed', 'success');
       onClose();
+      navigate(paths.orders.mine());
     } catch (err) {
       showToast(toErrorMessage(err), 'error');
     } finally {

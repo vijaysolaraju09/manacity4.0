@@ -17,6 +17,7 @@ import Shimmer from '@/components/Shimmer';
 import ErrorCard from '@/components/ui/ErrorCard';
 import EmptyState from '@/components/ui/EmptyState';
 import showToast from '@/components/ui/Toast';
+import { toErrorMessage } from '@/lib/response';
 import fallbackImage from '@/assets/no-image.svg';
 import styles from './MyOrders.module.scss';
 import { paths } from '@/routes/paths';
@@ -37,7 +38,13 @@ const statusOptions: (OrderStatus | 'all')[] = [
   'returned',
 ];
 
-const cancellableStatuses = new Set<OrderStatus>(['placed', 'confirmed', 'preparing']);
+const cancellableStatuses = new Set<OrderStatus>([
+  'pending',
+  'placed',
+  'confirmed',
+  'accepted',
+  'preparing',
+]);
 
 const statusDisplay: Record<OrderStatus | 'all', string> = {
   all: 'All',
@@ -78,7 +85,8 @@ const MyOrders = () => {
   const showSkeleton = isLoading && orders.length === 0;
 
   const grouped = useMemo(() => {
-    return orders.reduce<Record<string, Order[]>>((acc, order) => {
+    const list = orders ?? [];
+    return list.reduce<Record<string, Order[]>>((acc, order) => {
       const date = new Date(order.createdAt).toDateString();
       if (!acc[date]) acc[date] = [];
       acc[date].push(order);
@@ -92,7 +100,7 @@ const MyOrders = () => {
 
   const handleReorder = (order: Order) => {
     dispatch(clearCart());
-    order.items.forEach((item) => {
+    (order.items ?? []).forEach((item) => {
       dispatch(
         addToCart({
           id: item.productId || item.id,
@@ -115,7 +123,7 @@ const MyOrders = () => {
       await dispatch(cancelOrder({ id: order.id, reason: reason || undefined })).unwrap();
       showToast('Order cancelled', 'success');
     } catch (err) {
-      showToast((err as Error)?.message || 'Failed to cancel order', 'error');
+      showToast(toErrorMessage(err), 'error');
     }
   };
 
@@ -134,7 +142,7 @@ const MyOrders = () => {
       ).unwrap();
       showToast('Thanks for your feedback!', 'success');
     } catch (err) {
-      showToast((err as Error)?.message || 'Failed to submit rating', 'error');
+      showToast(toErrorMessage(err), 'error');
     }
   };
 
@@ -189,13 +197,14 @@ const MyOrders = () => {
             <section key={date} className={styles.group}>
               <h3 className={styles.groupTitle}>{date}</h3>
               {dayOrders.map((order) => {
-                const quantity = order.items.reduce((total, item) => total + item.qty, 0);
+                const orderItems = order.items ?? [];
+                const quantity = orderItems.reduce((total, item) => total + item.qty, 0);
                 const canCancel = cancellableStatuses.has(order.status);
                 const canRate = order.status === 'delivered';
                 return (
                   <div key={order.id} className={styles.orderBlock}>
                     <OrderCard
-                      items={order.items.map((item, index) => ({
+                      items={orderItems.map((item, index) => ({
                         id: item.productId || `${order.id}-${index}`,
                         title: item.title,
                         image: item.image || fallbackImage,

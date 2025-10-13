@@ -21,7 +21,7 @@ export const paths = {
   },
   orders: {
     root: () => '/orders',
-    mine: () => '/orders/my',
+    mine: () => '/orders/mine',
     received: () => '/orders/received',
     service: () => '/orders/service',
     detail: (orderId: string = ':id') => `/orders/${orderId}`,

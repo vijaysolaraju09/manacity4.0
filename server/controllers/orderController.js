@@ -8,12 +8,16 @@ const { notifyUser } = require('../services/notificationService');
 // Helpers
 // ---------------------------------------------------------------------------
 const allowedTransitions = {
-  placed: ['confirmed', 'cancelled'],
+  draft: ['pending', 'cancelled'],
+  pending: ['accepted', 'cancelled'],
+  accepted: ['confirmed', 'preparing', 'cancelled'],
+  placed: ['accepted', 'confirmed', 'cancelled'],
   confirmed: ['preparing', 'cancelled'],
   preparing: ['ready', 'cancelled'],
   ready: ['out_for_delivery', 'cancelled'],
   out_for_delivery: ['delivered', 'cancelled'],
-  delivered: ['returned'],
+  delivered: ['completed', 'returned'],
+  completed: [],
   cancelled: [],
   returned: [],
 };
@@ -109,7 +113,7 @@ exports.createOrder = async (req, res, next) => {
       },
       items: orderItems,
       notes,
-      status: 'placed',
+      status: 'pending',
       fulfillment,
       shippingAddress,
       currency: 'INR',
@@ -127,8 +131,8 @@ exports.createOrder = async (req, res, next) => {
         {
           at: new Date(),
           by: 'system',
-          status: 'placed',
-          note: 'Order placed',
+          status: 'pending',
+          note: 'Awaiting shop acceptance',
         },
       ],
     });
@@ -140,7 +144,7 @@ exports.createOrder = async (req, res, next) => {
     });
     await notifyUser(req.user._id, {
       type: 'order',
-      message: `Your order ${code || ''} with ${shop.name} has been placed successfully.`,
+      message: `Your order ${code || ''} with ${shop.name} is awaiting shop acceptance.`,
     });
 
     res.status(201).json({ ok: true, data: { order }, traceId: req.traceId });

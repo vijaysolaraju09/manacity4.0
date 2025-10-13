@@ -13,7 +13,7 @@ vi.mock('axios', () => {
         interceptors: {
           request: {
             use: (
-              handler: (config: Record<string, any>) => Record<string, any>,
+              handler: (config: AxiosConfig) => AxiosConfig,
             ) => {
               requestInterceptor = handler;
               return 0;
@@ -37,7 +37,7 @@ describe('createOrder', () => {
   it('sends the expected payload and attaches the auth token', async () => {
     const now = new Date().toISOString();
     let capturedConfig: AxiosConfig | null = null;
-    mockPost.mockImplementation(async (_url, _body, config: { headers?: Record<string, any> } = {}) => {
+    mockPost.mockImplementation(async (_url, _body, config: AxiosConfig = {}) => {
       const finalConfig = requestInterceptor ? requestInterceptor(config) : config;
       capturedConfig = finalConfig;
       return {

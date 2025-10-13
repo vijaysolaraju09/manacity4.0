@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { fetchPublicEvents as fetchPublicEventsApi, fetchPublicEventById } from '@/api/events';
 import { http } from '@/lib/http';
-import { toItems, toItem, toErrorMessage } from '@/lib/response';
+import { toErrorMessage } from '@/lib/response';
 
 export type EventStatus = 'draft' | 'published' | 'ongoing' | 'completed' | 'canceled';
 export type EventType = 'tournament' | 'activity';
@@ -161,15 +162,14 @@ export const fetchEvents = createAsyncThunk<PaginatedEvents, Record<string, any>
   'events/fetchAll',
   async (params = {}, { rejectWithValue }) => {
     try {
-      const res = await http.get('/events', { params });
-      const rawItems = toItems(res);
-      const data = res?.data?.data || {};
+      const res = await fetchPublicEventsApi(params);
+      const rawItems = Array.isArray(res.items) ? res.items : [];
       const items = rawItems.map(adaptEventSummary).filter(Boolean) as EventSummary[];
       return {
         items,
-        total: typeof data.total === 'number' ? data.total : items.length,
-        page: typeof data.page === 'number' ? data.page : 1,
-        pageSize: typeof data.pageSize === 'number' ? data.pageSize : items.length,
+        total: typeof res.total === 'number' ? res.total : items.length,
+        page: typeof res.page === 'number' ? res.page : 1,
+        pageSize: typeof res.pageSize === 'number' ? res.pageSize : items.length,
       };
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
@@ -181,8 +181,7 @@ export const fetchEventById = createAsyncThunk<EventDetail, string, { rejectValu
   'events/fetchById',
   async (id, { rejectWithValue }) => {
     try {
-      const res = await http.get(`/events/${id}`);
-      const raw = toItem(res);
+      const raw = await fetchPublicEventById(id);
       const event = adaptEventDetail(raw);
       if (!event) throw new Error('Invalid event response');
       return event;

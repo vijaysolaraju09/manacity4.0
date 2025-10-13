@@ -14,24 +14,30 @@ const Events = () => {
 
   useEffect(() => {
     if (list.status === 'idle') {
-      dispatch(fetchEvents({ status: 'upcoming' }));
+      dispatch(fetchEvents());
     }
   }, [list.status, dispatch]);
+
+  const items = Array.isArray(list.items) ? list.items : [];
+
+  const reload = () => {
+    dispatch(fetchEvents());
+  };
 
   if (list.status === 'loading') return <EventsSkeleton />;
   if (list.status === 'failed')
     return (
       <ErrorCard
         msg={list.error || 'Failed to load events'}
-        onRetry={() => dispatch(fetchEvents({ status: 'upcoming' }))}
+        onRetry={reload}
       />
     );
-  if (list.status === 'succeeded' && list.items.length === 0)
+  if (list.status === 'succeeded' && items.length === 0)
     return (
       <Empty
         msg="No events available right now."
         ctaText="Refresh"
-        onCta={() => dispatch(fetchEvents({ status: 'upcoming' }))}
+        onCta={reload}
       />
     );
 
@@ -42,7 +48,7 @@ const Events = () => {
         <p>Browse upcoming competitions and community activities.</p>
       </header>
       <div className={styles.grid}>
-        {list.items.map((event) => (
+        {items.map((event) => (
           <EventCard key={event._id} event={event} />
         ))}
       </div>

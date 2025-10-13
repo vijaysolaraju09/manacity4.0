@@ -183,7 +183,7 @@ exports.createEvent = async (req, res, next) => {
       mode: req.body.mode === 'venue' ? 'venue' : 'online',
       venue: req.body.venue,
       visibility: req.body.visibility === 'private' ? 'private' : 'public',
-      status: 'draft',
+      status: 'published',
       description: req.body.description || '',
       rules: req.body.rules || '',
       prizePool: req.body.prizePool,

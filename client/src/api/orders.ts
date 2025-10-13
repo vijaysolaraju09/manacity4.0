@@ -28,8 +28,9 @@ export interface CreateOrderItemInput {
 export interface CreateOrderPayload {
   shopId: string;
   items: CreateOrderItemInput[];
-  fulfillment?: { type: 'pickup' | 'delivery'; eta?: string | null };
   notes?: string;
+  addressId?: string;
+  fulfillmentType?: 'pickup' | 'delivery';
   shippingAddress?: Record<string, unknown>;
   payment?: { method?: string };
   idempotencyKey?: string;
@@ -38,7 +39,16 @@ export interface CreateOrderPayload {
 export const createOrder = async (
   payload: CreateOrderPayload,
 ): Promise<Order> => {
-  const { shopId, items, fulfillment, notes, shippingAddress, payment, idempotencyKey } = payload;
+  const {
+    shopId,
+    items,
+    notes,
+    addressId,
+    fulfillmentType,
+    shippingAddress,
+    payment,
+    idempotencyKey,
+  } = payload;
 
   const body: Record<string, unknown> = {
     shopId,
@@ -47,10 +57,11 @@ export const createOrder = async (
       quantity,
       ...(options ? { options } : {}),
     })),
-    fulfillment: fulfillment ?? { type: 'pickup' },
+    fulfillment: { type: fulfillmentType ?? 'pickup' },
   };
 
   if (notes) body.notes = notes;
+  if (addressId) body.addressId = addressId;
   if (shippingAddress) body.shippingAddress = shippingAddress;
   if (payment) body.payment = payment;
 

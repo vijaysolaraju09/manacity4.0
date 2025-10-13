@@ -13,9 +13,9 @@ import {
 import type { RootState, AppDispatch } from '@/store';
 import { clearCart, addToCart } from '@/store/slices/cartSlice';
 import { OrderCard } from '@/components/base';
-import Shimmer from '@/components/Shimmer';
 import ErrorCard from '@/components/ui/ErrorCard';
-import EmptyState from '@/components/ui/EmptyState';
+import SkeletonList from '@/components/ui/SkeletonList';
+import Empty from '@/components/common/Empty';
 import showToast from '@/components/ui/Toast';
 import { toErrorMessage } from '@/lib/response';
 import fallbackImage from '@/assets/no-image.svg';
@@ -80,19 +80,19 @@ const MyOrders = () => {
     }
   }, [dispatch, mineState.status]);
 
+  const ordersList = orders ?? [];
   const isLoading = mineState.status === 'loading';
   const isError = mineState.status === 'failed';
-  const showSkeleton = isLoading && orders.length === 0;
+  const showSkeleton = isLoading && ordersList.length === 0;
 
   const grouped = useMemo(() => {
-    const list = orders ?? [];
-    return list.reduce<Record<string, Order[]>>((acc, order) => {
+    return ordersList.reduce<Record<string, Order[]>>((acc, order) => {
       const date = new Date(order.createdAt).toDateString();
       if (!acc[date]) acc[date] = [];
       acc[date].push(order);
       return acc;
     }, {});
-  }, [orders]);
+  }, [ordersList]);
 
   const handleRetry = () => {
     dispatch(fetchMyOrders());
@@ -168,9 +168,7 @@ const MyOrders = () => {
 
       {showSkeleton && (
         <div className={styles.loading}>
-          {[1, 2, 3].map((n) => (
-            <Shimmer key={n} className={`${styles.card} shimmer rounded`} style={{ height: 88 }} />
-          ))}
+          <SkeletonList count={3} lines={2} withAvatar />
         </div>
       )}
 
@@ -181,22 +179,20 @@ const MyOrders = () => {
         />
       )}
 
-      {!isLoading && !isError && orders.length === 0 && (
-        <EmptyState
-          image={fallbackImage}
-          title="No orders yet"
-          message="When you place an order, it will show up here so you can track it easily."
-          ctaLabel="Browse shops"
-          onCtaClick={() => navigate(paths.shops())}
+      {!isLoading && !isError && ordersList.length === 0 && (
+        <Empty
+          msg="When you place an order, it will show up here so you can track it easily."
+          ctaText="Browse shops"
+          onCta={() => navigate(paths.shops())}
         />
       )}
 
-      {!isLoading && !isError && orders.length > 0 && (
+      {!isLoading && !isError && ordersList.length > 0 && (
         <div className={styles.groups}>
           {Object.entries(grouped).map(([date, dayOrders]) => (
             <section key={date} className={styles.group}>
               <h3 className={styles.groupTitle}>{date}</h3>
-              {dayOrders.map((order) => {
+              {(dayOrders ?? []).map((order) => {
                 const orderItems = order.items ?? [];
                 const quantity = orderItems.reduce((total, item) => total + item.qty, 0);
                 const canCancel = cancellableStatuses.has(order.status);

@@ -44,11 +44,31 @@ export const toItem = (res: any): any => {
   return d;
 };
 
+const coerceMessage = (input: unknown): string | undefined => {
+  if (!input) return undefined;
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    return trimmed && trimmed !== '[object Object]' ? trimmed : undefined;
+  }
+  if (typeof input === 'object') {
+    const value = input as Record<string, unknown>;
+    const nested =
+      value.message ||
+      value.reason ||
+      value.error ||
+      value.detail ||
+      value.code;
+    return coerceMessage(nested);
+  }
+  return undefined;
+};
+
 export const toErrorMessage = (err: any): string => {
   return (
-    err?.response?.data?.error ||
-    err?.response?.data?.message ||
-    err?.message ||
+    coerceMessage(err?.response?.data?.error) ||
+    coerceMessage(err?.response?.data?.message) ||
+    coerceMessage(err?.message) ||
+    coerceMessage(typeof err === 'string' ? err : err?.toString?.()) ||
     'Request failed'
   );
 };

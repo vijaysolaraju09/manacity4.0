@@ -3,13 +3,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FaMicrophone } from 'react-icons/fa';
 import { fetchShops } from '@/store/shops';
-import { http } from '@/lib/http';
-import { toItem, toErrorMessage } from '@/lib/response';
+import { toErrorMessage } from '@/lib/response';
 import type { RootState } from '../../store';
 import ModalSheet from '../../components/base/ModalSheet';
 import Loader from '../../components/Loader';
 import showToast from '../../components/ui/Toast';
 import styles from './OrderNow.module.scss';
+import { createOrder } from '@/api/orders';
 
 interface Product {
   _id: string;
@@ -116,21 +116,17 @@ const OrderNow = () => {
     try {
       setPlacing(true);
       await Promise.all(
-        matched.map(async (m) => {
-          const res = await http.post('/orders', {
-            targetId: m.shop._id,
+        matched.map((m) =>
+          createOrder({
+            shopId: m.shop._id,
             items: [
               {
                 productId: m.product._id,
-                name: m.product.name,
-                image: m.product.image,
-                price: m.product.price,
                 quantity: m.quantity,
               },
             ],
-          });
-          toItem(res);
-        })
+          }),
+        ),
       );
       showToast('Order placed');
       setMatched([]);

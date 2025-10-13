@@ -7,11 +7,11 @@ import EmptyState from '../../components/ui/EmptyState';
 import fallbackImage from '../../assets/no-image.svg';
 import { removeFromCart, updateQuantity, clearCart } from '../../store/slices/cartSlice';
 import type { RootState } from '../../store';
-import { http } from '@/lib/http';
-import { toItem, toErrorMessage } from '@/lib/response';
+import { toErrorMessage } from '@/lib/response';
 import { paths } from '@/routes/paths';
 import showToast from '../../components/ui/Toast';
 import styles from './Cart.module.scss';
+import { createOrder } from '@/api/orders';
 
 const Cart = () => {
   const items = useSelector((state: RootState) => state.cart.items);
@@ -48,14 +48,12 @@ const Cart = () => {
 
     setPlacing(true);
     try {
-      const payload = {
+      await createOrder({
         shopId,
-        items: items.map((it) => ({ productId: it.id, qty: it.quantity })),
-        fulfillment: { type: 'pickup' as const },
+        items: items.map((it) => ({ productId: it.id, quantity: it.quantity })),
+        fulfillment: { type: 'pickup' },
         notes: notes.trim() || undefined,
-      };
-      const res = await http.post('/orders', payload);
-      toItem(res);
+      });
       dispatch(clearCart());
       showToast('Order placed', 'success');
       navigate(paths.orders.mine());

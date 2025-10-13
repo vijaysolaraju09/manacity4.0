@@ -13,7 +13,13 @@ import showToast from '@/components/ui/Toast';
 import fallbackImage from '../../assets/no-image.svg';
 import styles from './OrderDetail.module.scss';
 
-const cancellableStatuses = new Set(['placed', 'confirmed', 'preparing']);
+const cancellableStatuses = new Set([
+  'pending',
+  'placed',
+  'confirmed',
+  'accepted',
+  'preparing',
+]);
 
 const OrderDetail = () => {
   const { id } = useParams();
@@ -53,7 +59,7 @@ const OrderDetail = () => {
       setOrder(updated);
       showToast('Order cancelled', 'success');
     } catch (err) {
-      showToast((err as Error)?.message || 'Failed to cancel order', 'error');
+      showToast(toErrorMessage(err), 'error');
     }
   };
 
@@ -74,13 +80,14 @@ const OrderDetail = () => {
       setOrder(updated);
       showToast('Thanks for your feedback!', 'success');
     } catch (err) {
-      showToast((err as Error)?.message || 'Failed to submit rating', 'error');
+      showToast(toErrorMessage(err), 'error');
     }
   };
 
   const sortedTimeline = useMemo(() => {
     if (!order) return [] as Order['timeline'];
-    return [...order.timeline].sort(
+    const timeline = order.timeline ?? [];
+    return [...timeline].sort(
       (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime()
     );
   }, [order]);
@@ -105,7 +112,8 @@ const OrderDetail = () => {
     );
   }
 
-  const totalItems = order.items.reduce((sum, item) => sum + item.qty, 0);
+  const orderItems = order.items ?? [];
+  const totalItems = orderItems.reduce((sum, item) => sum + item.qty, 0);
   const canCancel = authUserId && order.customer.id === authUserId && cancellableStatuses.has(order.status);
   const canRate = authUserId && order.customer.id === authUserId && order.status === 'delivered';
 
@@ -124,7 +132,7 @@ const OrderDetail = () => {
       <section className={styles.section}>
         <h3>Items</h3>
         <ul className={styles.items}>
-          {order.items.map((item) => (
+          {orderItems.map((item) => (
             <li key={item.id} className={styles.item}>
               <img src={item.image || fallbackImage} alt={item.title} />
               <div className={styles.itemInfo}>

@@ -122,7 +122,7 @@ const AppRoutes = () => {
                 path="/orders/received"
                 element={<ReceivedOrders key="orders-received" />}
               />
-              <Route path="/orders/my" element={<MyOrders key="orders-my" />} />
+              <Route path="/orders/mine" element={<MyOrders key="orders-mine" />} />
               <Route
                 path="/orders/service"
                 element={<ServiceOrders key="orders-service" />}

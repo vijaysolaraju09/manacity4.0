@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FaMicrophone } from 'react-icons/fa';
-import { http } from '@/lib/http';
-import { toItem, toErrorMessage } from '@/lib/response';
+import { toErrorMessage } from '@/lib/response';
 import { fetchShops } from '@/store/shops';
 import type { RootState } from '../../store';
 import styles from './VoiceOrder.module.scss';
 import showToast from '../../components/ui/Toast';
 import VoiceConfirmSheet from '../../components/ui/ModalSheet/VoiceConfirmSheet';
+import { createOrder } from '@/api/orders';
 
 interface Product {
   _id: string;
@@ -104,19 +104,15 @@ const VoiceOrder = () => {
     if (!confirmItem) return;
     try {
       setLoading(true);
-      const res = await http.post('/orders', {
-        targetId: confirmItem.shop._id,
+      await createOrder({
+        shopId: confirmItem.shop._id,
         items: [
           {
             productId: confirmItem.product._id,
-            name: confirmItem.product.name,
-            image: confirmItem.product.image,
-            price: confirmItem.product.price,
             quantity: confirmItem.quantity,
           },
         ],
       });
-      toItem(res);
       showToast('Order placed');
       setConfirmOpen(false);
       setConfirmItem(null);

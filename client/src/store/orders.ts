@@ -224,7 +224,7 @@ export const normalizeOrder = (input: any): Order => {
     ? input.timeline.map((entry: any) => ({
         at: toIsoString(entry.at),
         by: entry.by || 'system',
-        status: entry.status || input.status || 'placed',
+        status: entry.status || input.status || 'pending',
         note: entry.note || undefined,
       }))
     : [];
@@ -241,7 +241,7 @@ export const normalizeOrder = (input: any): Order => {
     ? toIsoString(input.contactSharedAt)
     : input.contactSharedAt ?? null;
 
-  const status: OrderStatus = (input.status || 'placed') as OrderStatus;
+  const status: OrderStatus = (input.status || 'pending') as OrderStatus;
 
   return {
     id,

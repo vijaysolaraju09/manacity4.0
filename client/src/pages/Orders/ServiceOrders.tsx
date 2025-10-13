@@ -10,6 +10,7 @@ import type { RootState, AppDispatch } from '@/store';
 import { OrderCard } from '@/components/base';
 import Shimmer from '@/components/Shimmer';
 import showToast from '@/components/ui/Toast';
+import { toErrorMessage } from '@/lib/response';
 import fallbackImage from '@/assets/no-image.svg';
 import styles from './ServiceOrders.module.scss';
 
@@ -38,7 +39,7 @@ const ServiceOrders = () => {
       await dispatch(updateServiceOrderStatus({ id: order.id, action })).unwrap();
       showToast(`Order ${action}ed`, 'success');
     } catch (err) {
-      showToast((err as Error)?.message || `Failed to ${action} order`, 'error');
+      showToast(toErrorMessage(err), 'error');
     }
   };
 
@@ -65,29 +66,33 @@ const ServiceOrders = () => {
       ) : filtered.length === 0 ? (
         <p className={styles.empty}>No orders.</p>
       ) : (
-        filtered.map((order) => (
-          <OrderCard
-            key={order.id}
-            items={order.items.map((item, index) => ({
-              id: item.productId || `${order.id}-${index}`,
-              title: item.title,
-              image: item.image || fallbackImage,
-            }))}
-            shop={order.customer.name || 'Customer'}
-            date={order.createdAt}
-            status={order.status}
-            quantity={order.items.reduce((sum, item) => sum + item.qty, 0)}
-            total={order.totals.grand}
-            phone={order.customer.phone || undefined}
-            onCall={
-              order.status === 'accepted' && order.customer.phone
-                ? () => (window.location.href = `tel:${order.customer.phone}`)
-                : undefined
-            }
-            onAccept={order.status === 'pending' ? () => act(order, 'accept') : undefined}
-            onReject={order.status === 'pending' ? () => act(order, 'reject') : undefined}
-          />
-        ))
+        filtered.map((order) => {
+          const orderItems = order.items ?? [];
+          const quantity = orderItems.reduce((sum, item) => sum + item.qty, 0);
+          return (
+            <OrderCard
+              key={order.id}
+              items={orderItems.map((item, index) => ({
+                id: item.productId || `${order.id}-${index}`,
+                title: item.title,
+                image: item.image || fallbackImage,
+              }))}
+              shop={order.customer.name || 'Customer'}
+              date={order.createdAt}
+              status={order.status}
+              quantity={quantity}
+              total={order.totals.grand}
+              phone={order.customer.phone || undefined}
+              onCall={
+                order.status === 'accepted' && order.customer.phone
+                  ? () => (window.location.href = `tel:${order.customer.phone}`)
+                  : undefined
+              }
+              onAccept={order.status === 'pending' ? () => act(order, 'accept') : undefined}
+              onReject={order.status === 'pending' ? () => act(order, 'reject') : undefined}
+            />
+          );
+        })
       )}
     </div>
   );

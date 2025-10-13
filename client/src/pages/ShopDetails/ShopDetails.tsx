@@ -154,21 +154,28 @@ const ShopDetails = () => {
         {filtered.length === 0 ? (
           <EmptyState message="No products found" />
         ) : (
-          filtered.map((product) => (
-            <ProductCard
-              key={product._id}
-              product={product}
-              onClick={() => {
-                setSelected(product);
-                setOrderOpen(true);
-              }}
-            />
-          ))
+          filtered.map((product) => {
+            const openOrderModal = () => {
+              setSelected(product);
+              setOrderOpen(true);
+            };
+            return (
+              <ProductCard
+                key={product._id}
+                product={product}
+                onClick={openOrderModal}
+                onAddToCart={openOrderModal}
+              />
+            );
+          })
         )}
       </div>
       <OrderModal
         open={orderOpen}
-        onClose={() => setOrderOpen(false)}
+        onClose={() => {
+          setOrderOpen(false);
+          setSelected(null);
+        }}
         product={selected}
         shopId={shop._id}
       />

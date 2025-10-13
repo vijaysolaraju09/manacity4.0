@@ -213,9 +213,8 @@ const AdminEvents = () => {
       if (response && typeof response === 'object') {
         const normalized = toEventItem(response);
         applyEventUpdate(normalized);
-      } else {
-        await load();
       }
+      await load();
       showToast(lifecycleSuccessMessages[action], 'success');
     } catch (err) {
       console.error(err);

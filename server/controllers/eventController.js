@@ -11,6 +11,7 @@ const { Types } = mongoose;
 
 const REGISTRATION_STATUSES_FOR_NOTIFICATIONS = ['registered', 'checked_in'];
 const EVENT_STATUS_VALUES = ['draft', 'published', 'ongoing', 'completed', 'canceled'];
+const PUBLIC_EVENT_STATUSES = ['published', 'ongoing'];
 const LIFECYCLE_STATUS_VALUES = ['upcoming', 'ongoing', 'past'];
 
 const toObjectId = (value) => {
@@ -159,7 +160,7 @@ const buildLifecycleFilters = (statuses) => {
     filters.push({
       $and: [
         { startAt: { $gt: now } },
-        { status: { $nin: ['completed', 'canceled'] } },
+        { status: { $nin: ['completed', 'canceled', 'draft'] } },
       ],
     });
   }
@@ -169,7 +170,7 @@ const buildLifecycleFilters = (statuses) => {
         { status: 'ongoing' },
         {
           $and: [
-            { status: { $nin: ['completed', 'canceled'] } },
+            { status: { $nin: ['completed', 'canceled', 'draft'] } },
             { startAt: { $lte: now } },
             {
               $or: [
@@ -264,7 +265,7 @@ exports.listEvents = async (req, res, next) => {
       if (lifecycleFilters.length === 1) andConditions.push(lifecycleFilters[0]);
       else if (lifecycleFilters.length > 1) andConditions.push({ $or: lifecycleFilters });
     } else {
-      andConditions.push({ status: { $ne: 'draft' } });
+      andConditions.push({ status: { $in: PUBLIC_EVENT_STATUSES } });
     }
 
     if (trimmedQuery) {

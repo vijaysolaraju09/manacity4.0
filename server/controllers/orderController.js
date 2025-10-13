@@ -42,7 +42,7 @@ const orderCode = (order) =>
 // ---------------------------------------------------------------------------
 exports.createOrder = async (req, res, next) => {
   try {
-    const { shopId, items, fulfillment, shippingAddress, notes, payment } = req.body;
+    const { shopId, items, fulfillment, shippingAddress, addressId, notes, payment } = req.body;
     if (!shopId || !Array.isArray(items) || items.length === 0) {
       throw AppError.badRequest('INVALID_ORDER', 'Invalid order payload');
     }
@@ -115,7 +115,13 @@ exports.createOrder = async (req, res, next) => {
       notes,
       status: 'pending',
       fulfillment,
-      shippingAddress,
+      shippingAddress:
+        shippingAddress ||
+        (addressId
+          ? {
+              referenceId: addressId,
+            }
+          : undefined),
       currency: 'INR',
       itemsTotal,
       discountTotal,

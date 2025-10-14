@@ -9,7 +9,7 @@ import WishlistHeart from './WishlistHeart';
 import PriceBlock from './PriceBlock';
 import showToast from './Toast';
 import styles from './ProductCard.module.scss';
-import { buildCartItemPayload } from '@/lib/cart';
+import { toCartItem } from '@/lib/cart';
 
 export interface Product {
   _id: string;
@@ -50,12 +50,10 @@ const ProductCard = ({
       }
       const res = await http.post('/cart', { productId, quantity: 1 });
       const cartItem = toItem(res) as any;
-      const payload = buildCartItemPayload({
-        product,
-        quantity: 1,
-        responseItem: cartItem,
-      });
-      if (!payload) {
+      let payload: ReturnType<typeof toCartItem>;
+      try {
+        payload = toCartItem(product, 1, cartItem);
+      } catch {
         showToast('Unable to determine product details. Please try again.', 'error');
         return;
       }

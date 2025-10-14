@@ -18,6 +18,7 @@ import Empty from '@/components/common/Empty';
 import { http } from '@/lib/http';
 import { toItem, toErrorMessage } from '@/lib/response';
 import showToast from '@/components/ui/Toast';
+import { buildCartItemPayload } from '@/lib/cart';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -60,37 +61,23 @@ const ProductDetails = () => {
 
   const handleAdd = async () => {
     try {
-      const res = await http.post('/cart', { productId: product._id, quantity: qty });
-      const cartItem = toItem(res) as any;
-      const rawShop = (product as any).shop;
-      const shopId =
-        (typeof rawShop === 'string' && rawShop) ||
-        rawShop?._id ||
-        cartItem?.shopId ||
-        (typeof cartItem?.shop === 'string' && cartItem.shop) ||
-        cartItem?.shop?._id ||
-        cartItem?.shop?.id;
-      if (!shopId) {
-        showToast('Unable to determine product shop. Please try again.', 'error');
+      const productId = product._id || (product as any).id;
+      if (!productId) {
+        showToast('Unable to add this product to cart. Please try again later.', 'error');
         return;
       }
-      const shopName =
-        rawShop?.name ||
-        (product as any).shopName ||
-        cartItem?.shop?.name ||
-        cartItem?.shopName ||
-        '';
-      d(
-        addToCart({
-          id: product._id,
-          name: product.name,
-          price: product.price,
-          quantity: qty,
-          image: images[0],
-          shopId: String(shopId),
-          shopName,
-        })
-      );
+      const res = await http.post('/cart', { productId, quantity: qty });
+      const cartItem = toItem(res) as any;
+      const payload = buildCartItemPayload({
+        product,
+        quantity: qty,
+        responseItem: cartItem,
+      });
+      if (!payload) {
+        showToast('Unable to determine product details. Please try again.', 'error');
+        return;
+      }
+      d(addToCart(payload));
       showToast('Added to cart');
     } catch (err) {
       showToast(toErrorMessage(err), 'error');

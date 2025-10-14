@@ -20,7 +20,7 @@ const Cart = () => {
   const [notes, setNotes] = useState('');
   const [placing, setPlacing] = useState(false);
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + (item.pricePaise / 100) * item.qty, 0);
   const discount = 0;
   const fee = items.length > 0 && subtotal <= 200 ? 40 : 0;
   const total = subtotal - discount + fee;
@@ -50,7 +50,7 @@ const Cart = () => {
     try {
       await createOrder({
         shopId,
-        items: items.map((it) => ({ productId: it.id, quantity: it.quantity })),
+        items: items.map((it) => ({ productId: it.productId, quantity: it.qty })),
         fulfillmentType: 'pickup',
         notes: notes.trim() || undefined,
       });
@@ -80,22 +80,22 @@ const Cart = () => {
       <div className={styles.content}>
         <div className={styles.items}>
           {items.map((it) => (
-            <div key={it.id} className={styles.item}>
+            <div key={it.productId} className={styles.item}>
               <img src={it.image || fallbackImage} alt={it.name} />
               <div className={styles.details}>
                 <h4 className={styles.title}>{it.name}</h4>
-                <PriceBlock price={it.price} />
+                <PriceBlock price={it.pricePaise / 100} />
               </div>
               <div className={styles.controls}>
                 <QuantityStepper
-                  value={it.quantity}
-                  onChange={(q) => dispatch(updateQuantity({ id: it.id, quantity: q }))}
+                  value={it.qty}
+                  onChange={(q) => dispatch(updateQuantity({ productId: it.productId, qty: q }))}
                   min={1}
                 />
                 <button
                   type="button"
                   className={styles.remove}
-                  onClick={() => dispatch(removeFromCart(it.id))}
+                  onClick={() => dispatch(removeFromCart(it.productId))}
                 >
                   Remove
                 </button>

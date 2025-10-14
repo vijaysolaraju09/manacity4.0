@@ -164,7 +164,6 @@ const ShopDetails = () => {
                 key={product._id}
                 product={product}
                 onClick={openOrderModal}
-                onAddToCart={openOrderModal}
               />
             );
           })

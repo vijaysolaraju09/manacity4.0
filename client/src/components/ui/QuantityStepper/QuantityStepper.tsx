@@ -6,14 +6,33 @@ export interface QuantityStepperProps {
   min?: number;
   max?: number;
   onChange: (v: number) => void;
+  className?: string;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
-const QuantityStepper = ({ value, min = 1, max = 99, onChange }: QuantityStepperProps) => {
+const QuantityStepper = ({
+  value,
+  min = 1,
+  max = 99,
+  onChange,
+  className,
+  id,
+  ariaLabel,
+  ariaDescribedBy,
+}: QuantityStepperProps) => {
   const dec = () => value > min && onChange(value - 1);
   const inc = () => value < max && onChange(value + 1);
 
   return (
-    <div className={styles.stepper}>
+    <div
+      id={id}
+      role="group"
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
+      className={[styles.stepper, className].filter(Boolean).join(' ')}
+    >
       <motion.button
         type="button"
         className={styles.button}

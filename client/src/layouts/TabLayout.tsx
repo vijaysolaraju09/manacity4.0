@@ -15,13 +15,13 @@ import {
   AiOutlineSetting,
   AiOutlineBell,
 } from "react-icons/ai";
-import { FaShoppingCart, FaMicrophone } from "react-icons/fa";
+import { FaMicrophone } from "react-icons/fa";
+import MiniCart from "@/components/cart/MiniCart";
 import "./TabLayout.scss";
 
 const TabLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const cartItems = useSelector((state: RootState) => state.cart.items);
   const unread = useSelector((state: RootState) => state.notifs.unread);
   const notifStatus = useSelector((state: RootState) => state.notifs.status);
   const dispatch = useDispatch<AppDispatch>();
@@ -62,30 +62,22 @@ const TabLayout = () => {
       >
         <h1 className="logo" onClick={() => navigate(paths.home())}>Manacity</h1>
         <div className="actions">
-          {cartItems.length > 0 && (
-            <button
-              className="cart-btn"
-              onClick={() => navigate(paths.cart())}
-            >
-              <FaShoppingCart />
-              <span className="count">{cartItems.length}</span>
-            </button>
-          )}
+          <MiniCart />
           <button
-            className="notif-btn"
+            className="notif-btn action-button"
             onClick={() => navigate(paths.notifications())}
           >
             <AiOutlineBell />
             {unread > 0 && <span className="count">{unread}</span>}
           </button>
           <button
-            className="profile-btn"
+            className="profile-btn action-button"
             onClick={() => navigate(paths.profile())}
           >
             <AiOutlineUser />
           </button>
           <button
-            className="settings-btn"
+            className="settings-btn action-button"
             onClick={() => navigate(paths.settings())}
           >
             <AiOutlineSetting />
@@ -116,15 +108,12 @@ const TabLayout = () => {
           <h1 className="sidebar-logo" onClick={() => navigate(paths.home())}>
             Manacity
           </h1>
-          {cartItems.length > 0 && (
-            <button
-              className="sidebar-cart"
-              onClick={() => navigate(paths.cart())}
-            >
-              <FaShoppingCart />
-              <span className="count">{cartItems.length}</span>
-            </button>
-          )}
+          <MiniCart
+            className="w-full"
+            showLabel
+            align="start"
+            triggerClassName="w-full justify-start"
+          />
           <button
             className="sidebar-notifications"
             onClick={() => navigate(paths.notifications())}

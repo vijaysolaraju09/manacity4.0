@@ -40,15 +40,66 @@ const orderCode = (order) =>
 // ---------------------------------------------------------------------------
 // Create Order
 // ---------------------------------------------------------------------------
+const sanitizeShippingAddress = (input) => {
+  if (!input || typeof input !== 'object') return undefined;
+
+  const value = input;
+  const address1 = typeof value.address1 === 'string' ? value.address1.trim() : '';
+  const address2 = typeof value.address2 === 'string' ? value.address2.trim() : '';
+  const landmark = typeof value.landmark === 'string' ? value.landmark.trim() : '';
+  const city = typeof value.city === 'string' ? value.city.trim() : '';
+  const state = typeof value.state === 'string' ? value.state.trim() : '';
+  const pincode = typeof value.pincode === 'string' ? value.pincode.trim() : '';
+  const name = typeof value.name === 'string' ? value.name.trim() : '';
+  const label = typeof value.label === 'string' ? value.label.trim() : '';
+  const phone = typeof value.phone === 'string' ? value.phone.trim() : '';
+  const referenceId = typeof value.referenceId === 'string' ? value.referenceId.trim() : '';
+
+  const shipping = {};
+  if (name) shipping.name = name;
+  if (label) shipping.label = label;
+  if (phone) shipping.phone = phone;
+  if (address1) shipping.address1 = address1;
+  if (address2) shipping.address2 = address2;
+  if (landmark) shipping.landmark = landmark;
+  if (city) shipping.city = city;
+  if (state) shipping.state = state;
+  if (pincode) shipping.pincode = pincode;
+  if (referenceId) shipping.referenceId = referenceId;
+
+  if (value.geo && typeof value.geo === 'object') {
+    const lat = Number(value.geo.lat);
+    const lng = Number(value.geo.lng);
+    const geo = {};
+    if (Number.isFinite(lat)) geo.lat = lat;
+    if (Number.isFinite(lng)) geo.lng = lng;
+    if (Object.keys(geo).length > 0) shipping.geo = geo;
+  }
+
+  return Object.keys(shipping).length > 0 ? shipping : undefined;
+};
+
 exports.createOrder = async (req, res, next) => {
   try {
-    const { shopId, items, fulfillment, shippingAddress, addressId, notes, payment } = req.body;
+    const {
+      shopId,
+      items,
+      fulfillment,
+      fulfillmentType,
+      shippingAddress,
+      addressId,
+      notes,
+      payment,
+      paymentMethod,
+    } = req.body;
     if (!shopId || !Array.isArray(items) || items.length === 0) {
       throw AppError.badRequest('INVALID_ORDER', 'Invalid order payload');
     }
-    if (!fulfillment || !fulfillment.type) {
-      throw AppError.badRequest('INVALID_FULFILLMENT', 'Fulfillment type required');
-    }
+
+    const desiredFulfillmentType =
+      fulfillment?.type ||
+      (typeof fulfillmentType === 'string' ? fulfillmentType : undefined) ||
+      'delivery';
 
     const idempotencyKey = req.get('Idempotency-Key');
     if (idempotencyKey) {
@@ -71,6 +122,9 @@ exports.createOrder = async (req, res, next) => {
       const p = productMap.get(i.productId);
       if (!p) throw AppError.badRequest('PRODUCT_NOT_FOUND', 'Product not found');
       const unitPrice = toPaise(p.price);
+      if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+        throw AppError.badRequest('INVALID_PRODUCT_PRICE', 'Product price invalid');
+      }
       const qty = Number(i.qty ?? i.quantity);
       if (!Number.isFinite(qty) || qty <= 0) {
         throw AppError.badRequest('INVALID_QTY', 'Quantity must be greater than zero');
@@ -97,6 +151,54 @@ exports.createOrder = async (req, res, next) => {
     const shippingFee = 0;
     const grandTotal = itemsTotal - discountTotal + taxTotal + shippingFee;
 
+    let shippingAddressInput = sanitizeShippingAddress(shippingAddress);
+    if (!shippingAddressInput && addressId) {
+      const addresses = req.user?.addresses || [];
+      const matched = Array.isArray(addresses)
+        ? addresses.find((addr) =>
+            [addr?._id, addr?.id]
+              .filter(Boolean)
+              .some((value) => value.toString() === String(addressId)),
+          )
+        : null;
+      if (matched) {
+        shippingAddressInput = sanitizeShippingAddress({
+          name: matched.label,
+          label: matched.label,
+          address1: matched.line1,
+          address2: matched.line2,
+          city: matched.city,
+          state: matched.state,
+          pincode: matched.pincode,
+          referenceId: addressId,
+        });
+      }
+    }
+
+    if (addressId && shippingAddressInput && !shippingAddressInput.referenceId) {
+      shippingAddressInput.referenceId = addressId;
+    }
+
+    if (desiredFulfillmentType === 'delivery') {
+      if (!shippingAddressInput || !shippingAddressInput.address1) {
+        throw AppError.badRequest(
+          'SHIPPING_ADDRESS_REQUIRED',
+          'Delivery address required to place the order',
+        );
+      }
+    }
+
+    const paymentSource = paymentMethod || payment?.method || 'cod';
+    const resolvedPaymentMethod =
+      typeof paymentSource === 'string' && paymentSource.trim()
+        ? paymentSource.trim().toLowerCase()
+        : 'cod';
+
+    const fulfillmentData =
+      fulfillment && typeof fulfillment === 'object'
+        ? { ...fulfillment, type: desiredFulfillmentType }
+        : { type: desiredFulfillmentType };
+
     const order = await Order.create({
       shop: shop._id,
       shopSnapshot: {
@@ -114,14 +216,8 @@ exports.createOrder = async (req, res, next) => {
       items: orderItems,
       notes,
       status: 'pending',
-      fulfillment,
-      shippingAddress:
-        shippingAddress ||
-        (addressId
-          ? {
-              referenceId: addressId,
-            }
-          : undefined),
+      fulfillment: fulfillmentData,
+      shippingAddress: shippingAddressInput,
       currency: 'INR',
       itemsTotal,
       discountTotal,
@@ -129,8 +225,12 @@ exports.createOrder = async (req, res, next) => {
       shippingFee,
       grandTotal,
       payment: {
-        method: payment?.method || 'cod',
-        status: 'pending',
+        ...(payment && typeof payment === 'object' ? payment : {}),
+        method: resolvedPaymentMethod,
+        status:
+          payment && typeof payment === 'object' && payment.status
+            ? payment.status
+            : 'pending',
         idempotencyKey,
       },
       timeline: [

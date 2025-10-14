@@ -82,6 +82,79 @@
   font-weight: 600;
 }
 
+.multiShopNotice {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--blue-050, rgba(43, 118, 233, 0.08));
+  color: var(--color-info, var(--color-primary));
+  font-size: var(--font-size-sm);
+
+  strong {
+    display: inline-block;
+    margin-right: var(--space-2);
+  }
+}
+
+.shopGroups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.shopGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-alt, var(--color-surface));
+}
+
+.shopGroupHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+
+  @include respond(md) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.shopSelect {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  font-size: var(--font-size-md);
+
+  input[type='radio'] {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--color-primary);
+  }
+}
+
+.shopName {
+  font-weight: 600;
+  font-size: var(--font-size-md);
+}
+
+.shopTotals {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}
+
+.shopSelectHint {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+}
+
 .tableWrapper {
   overflow-x: auto;
 }
@@ -265,6 +338,36 @@
   font-size: var(--font-size-xs);
 }
 
+.summaryShopMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--blue-050, rgba(43, 118, 233, 0.08));
+}
+
+.summaryShopHeading {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.summaryShopValue {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+}
+
+.summaryShopHint {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+}
+
 .checkoutButton {
   @include button-base;
   padding: 0.9rem 1.5rem;
@@ -277,6 +380,12 @@
   &:focus-visible {
     background: var(--color-primary-hover);
   }
+}
+
+.checkoutHelp {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
 }
 
 .visuallyHidden {

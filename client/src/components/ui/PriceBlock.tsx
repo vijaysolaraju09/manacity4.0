@@ -1,38 +1,49 @@
+import { formatINR } from '@/utils/currency';
 import styles from './PriceBlock.module.scss';
 
 interface PriceBlockProps {
-  price: number;
-  mrp?: number;
-  discount?: number;
+  pricePaise: number;
+  mrpPaise?: number;
+  discountPercent?: number;
   className?: string;
 }
 
-const PriceBlock = ({ price, mrp, discount, className = '' }: PriceBlockProps) => {
+const sanitizePaise = (value: number | undefined): number | undefined => {
+  if (typeof value !== 'number') return undefined;
+  if (!Number.isFinite(value)) return undefined;
+  return Math.max(0, Math.round(value));
+};
+
+const PriceBlock = ({
+  pricePaise,
+  mrpPaise,
+  discountPercent,
+  className = '',
+}: PriceBlockProps) => {
+  const safePrice = sanitizePaise(pricePaise) ?? 0;
+  const safeMrp = sanitizePaise(mrpPaise);
   const computedDiscount =
-    discount !== undefined
-      ? discount
-      : mrp
-      ? Math.round(((mrp - price) / mrp) * 100)
+    discountPercent !== undefined
+      ? discountPercent
+      : safeMrp && safeMrp > 0
+      ? Math.max(0, Math.round(((safeMrp - safePrice) / safeMrp) * 100))
       : undefined;
 
   return (
     <div className={`${styles.priceBlock} ${className}`}>
-      <span className={styles.price} aria-label={`Price ₹${price}`}>
-        ₹{price}
+      <span className={styles.price} aria-label={`Price ${formatINR(safePrice)}`}>
+        {formatINR(safePrice)}
       </span>
-      {mrp && (
-        <span className={styles.mrp} aria-label={`MRP ₹${mrp}`}>
-          ₹{mrp}
+      {safeMrp !== undefined && (
+        <span className={styles.mrp} aria-label={`MRP ${formatINR(safeMrp)}`}>
+          {formatINR(safeMrp)}
         </span>
       )}
-      {computedDiscount && (
-        <span
-          className={styles.discount}
-          aria-label={`${computedDiscount}% off`}
-        >
+      {computedDiscount ? (
+        <span className={styles.discount} aria-label={`${computedDiscount}% off`}>
           {computedDiscount}% off
         </span>
-      )}
+      ) : null}
     </div>
   );
 };

@@ -206,7 +206,7 @@ const ReceivedOrders = () => {
                       date={order.createdAt}
                       status={order.status}
                       quantity={quantity}
-                      total={order.totals.grand}
+                      totalPaise={order.totals.grandPaise}
                       className={styles.card}
                     />
                     <div className={styles.cardActions}>

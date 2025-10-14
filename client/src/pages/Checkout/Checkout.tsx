@@ -16,6 +16,7 @@ import {
 } from '@/api/addresses';
 import { toErrorMessage } from '@/lib/response';
 import { selectCartItems, clearCart } from '@/store/slices/cartSlice';
+import { formatINR } from '@/utils/currency';
 import { paths } from '@/routes/paths';
 
 import styles from './Checkout.module.scss';
@@ -60,11 +61,6 @@ type CheckoutResult = {
   orders: CheckoutSuccessOrder[];
 };
 
-const formatPrice = (valueInPaise: number, formatter: Intl.NumberFormat) => {
-  const paise = Number.isFinite(valueInPaise) ? valueInPaise : 0;
-  return formatter.format(paise / 100);
-};
-
 const toShippingAddress = (payload: AddressPayload | Address) => {
   const label = typeof payload.label === 'string' ? payload.label.trim() : '';
   const line1 = typeof payload.line1 === 'string' ? payload.line1.trim() : '';
@@ -97,17 +93,6 @@ const Checkout = () => {
   const navigate = useNavigate();
   const cartItems = useSelector(selectCartItems);
 
-  const currencyFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    [],
-  );
-
   const checkoutItems = useMemo<CheckoutCartItem[]>(() => {
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
       return [];
@@ -127,12 +112,12 @@ const Checkout = () => {
         image: item.image || fallbackImage,
         qty,
         unitPricePaise,
-        unitPriceDisplay: formatPrice(unitPricePaise, currencyFormatter),
+        unitPriceDisplay: formatINR(unitPricePaise),
         lineTotalPaise,
-        lineTotalDisplay: formatPrice(lineTotalPaise, currencyFormatter),
+        lineTotalDisplay: formatINR(lineTotalPaise),
       } satisfies CheckoutCartItem;
     });
-  }, [cartItems, currencyFormatter]);
+  }, [cartItems]);
 
   const shopGroups = useMemo<CheckoutGroup[]>(() => {
     if (checkoutItems.length === 0) {
@@ -159,11 +144,11 @@ const Checkout = () => {
       existing.items.push(item);
       existing.itemCount += item.qty;
       existing.subtotalPaise += item.lineTotalPaise;
-      existing.subtotalDisplay = formatPrice(existing.subtotalPaise, currencyFormatter);
+      existing.subtotalDisplay = formatINR(existing.subtotalPaise);
     });
 
     return Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label));
-  }, [checkoutItems, currencyFormatter]);
+  }, [checkoutItems]);
 
   const totalItemCount = useMemo(
     () => shopGroups.reduce((count, group) => count + group.itemCount, 0),
@@ -176,8 +161,8 @@ const Checkout = () => {
   );
 
   const totalSubtotalDisplay = useMemo(
-    () => formatPrice(totalSubtotalPaise, currencyFormatter),
-    [currencyFormatter, totalSubtotalPaise],
+    () => formatINR(totalSubtotalPaise),
+    [totalSubtotalPaise],
   );
 
   const [checkoutResult, setCheckoutResult] = useState<CheckoutResult | null>(null);

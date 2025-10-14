@@ -1,9 +1,10 @@
+import { formatINR } from '@/utils/currency';
 import styles from './CartSummary.module.scss';
 
 export interface CartSummaryProps {
-  subtotal: number;
-  discount: number;
-  delivery: number;
+  subtotalPaise: number;
+  discountPaise: number;
+  deliveryPaise: number;
   coupon: string;
   onCouponChange: (c: string) => void;
   onApplyCoupon: () => void;
@@ -11,15 +12,15 @@ export interface CartSummaryProps {
 }
 
 const CartSummary = ({
-  subtotal,
-  discount,
-  delivery,
+  subtotalPaise,
+  discountPaise,
+  deliveryPaise,
   coupon,
   onCouponChange,
   onApplyCoupon,
   onCheckout,
 }: CartSummaryProps) => {
-  const total = subtotal - discount + delivery;
+  const totalPaise = subtotalPaise - discountPaise + deliveryPaise;
   return (
     <div className={styles.summary}>
       <div className={styles.coupon}>
@@ -35,21 +36,21 @@ const CartSummary = ({
       </div>
       <div className={styles.row}>
         <span>Subtotal</span>
-        <span>₹{subtotal}</span>
+        <span>{formatINR(subtotalPaise)}</span>
       </div>
-      {discount > 0 && (
+      {discountPaise > 0 && (
         <div className={styles.row}>
           <span>Discount</span>
-          <span>-₹{discount}</span>
+          <span>-{formatINR(discountPaise)}</span>
         </div>
       )}
       <div className={styles.row}>
         <span>Delivery</span>
-        <span>₹{delivery}</span>
+        <span>{formatINR(deliveryPaise)}</span>
       </div>
       <div className={styles.total}>
         <span>Total</span>
-        <span>₹{total}</span>
+        <span>{formatINR(totalPaise)}</span>
       </div>
       <button type="button" className={styles.checkout} onClick={onCheckout}>
         Checkout

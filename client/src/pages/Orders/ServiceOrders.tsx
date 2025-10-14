@@ -81,7 +81,7 @@ const ServiceOrders = () => {
               date={order.createdAt}
               status={order.status}
               quantity={quantity}
-              total={order.totals.grand}
+              totalPaise={order.totals.grandPaise}
               phone={order.customer.phone || undefined}
               onCall={
                 order.status === 'accepted' && order.customer.phone

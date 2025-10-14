@@ -14,7 +14,7 @@ export interface OrderCardProps {
   shop: string;
   date: string; // ISO string
   status: Status;
-  total: number;
+  totalPaise: number;
   quantity?: number;
   phone?: string;
   to?: string;
@@ -30,7 +30,7 @@ const OrderCard = ({
   shop,
   date,
   status,
-  total,
+  totalPaise,
   quantity,
   phone,
   to,
@@ -51,7 +51,7 @@ const OrderCard = ({
         <h4>{shop}</h4>
         <p className={styles.date}>{new Date(date).toLocaleDateString()}</p>
         {quantity !== undefined && <p className={styles.qty}>Qty: {quantity}</p>}
-        <PriceBlock price={total} />
+        <PriceBlock pricePaise={totalPaise} />
       </div>
       <StatusChip status={status} className={styles.status} />
       {(onAccept || onReject || onCancel || onCall || phone) && (

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toErrorMessage } from '@/lib/response';
 import { createOrder } from '@/api/orders';
 import { paths } from '@/routes/paths';
+import { formatINR } from '@/utils/currency';
 import ModalSheet from '../../base/ModalSheet';
 import type { Product } from '../ProductCard';
 import showToast from '../Toast';
@@ -59,7 +60,7 @@ const OrderModal = ({ open, onClose, product, shopId }: OrderModalProps) => {
             />
             <div className={styles.info}>
               <h4>{product.name}</h4>
-              <p>₹{product.price}</p>
+              <p>{formatINR(product.pricePaise)}</p>
             </div>
           </div>
           <div className={styles.stepper}>

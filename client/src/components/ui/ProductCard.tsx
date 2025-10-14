@@ -9,9 +9,9 @@ import AddToCartButton from './AddToCartButton';
 export interface Product {
   _id: string;
   name: string;
-  price: number;
-  mrp?: number;
-  discount?: number;
+  pricePaise: number;
+  mrpPaise?: number;
+  discountPercent?: number;
   image?: string;
   rating?: number;
   description?: string;
@@ -35,10 +35,17 @@ const ProductCard = ({
   className = '',
 }: Props) => {
   const computedDiscount =
-    product.discount !== undefined
-      ? product.discount
-      : product.mrp
-      ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+    product.discountPercent !== undefined
+      ? product.discountPercent
+      : product.mrpPaise
+      ? Math.max(
+          0,
+          Math.round(
+            ((Math.max(0, product.mrpPaise) - Math.max(0, product.pricePaise)) /
+              Math.max(1, product.mrpPaise)) *
+              100,
+          ),
+        )
       : undefined;
 
   return (
@@ -65,9 +72,9 @@ const ProductCard = ({
       <div className={styles.info}>
         <h4>{product.name}</h4>
         <PriceBlock
-          price={product.price}
-          mrp={product.mrp}
-          discount={computedDiscount}
+          pricePaise={product.pricePaise}
+          mrpPaise={product.mrpPaise}
+          discountPercent={computedDiscount}
         />
         {product.rating && (
           <div className={styles.row}>

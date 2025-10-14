@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { http } from '@/lib/http';
 import { toItem, toErrorMessage } from '@/lib/response';
 import PriceBlock from '../../components/ui/PriceBlock';
+import { formatINR } from '@/utils/currency';
 import StatusChip from '../../components/ui/StatusChip';
 import Shimmer from '../../components/Shimmer';
 import ErrorCard from '@/components/ui/ErrorCard';
@@ -139,7 +140,10 @@ const OrderDetail = () => {
                 <span className={styles.itemTitle}>{item.title}</span>
                 <span className={styles.itemMeta}>Qty: {item.qty}</span>
               </div>
-              <PriceBlock price={item.subtotal} className={styles.itemPrice} />
+              <PriceBlock
+                pricePaise={item.subtotalPaise}
+                className={styles.itemPrice}
+              />
             </li>
           ))}
         </ul>
@@ -149,23 +153,23 @@ const OrderDetail = () => {
         <h3>Payment summary</h3>
         <div className={styles.summaryRow}>
           <span>Items total</span>
-          <span>₹{order.totals.items.toFixed(2)}</span>
+          <span>{formatINR(order.totals.itemsPaise)}</span>
         </div>
         <div className={styles.summaryRow}>
           <span>Discounts</span>
-          <span>-₹{order.totals.discount.toFixed(2)}</span>
+          <span>-{formatINR(order.totals.discountPaise)}</span>
         </div>
         <div className={styles.summaryRow}>
           <span>Taxes &amp; fees</span>
-          <span>₹{order.totals.tax.toFixed(2)}</span>
+          <span>{formatINR(order.totals.taxPaise)}</span>
         </div>
         <div className={styles.summaryRow}>
           <span>Shipping</span>
-          <span>₹{order.totals.shipping.toFixed(2)}</span>
+          <span>{formatINR(order.totals.shippingPaise)}</span>
         </div>
         <div className={`${styles.summaryRow} ${styles.summaryTotal}`}>
           <span>Grand total</span>
-          <span>₹{order.totals.grand.toFixed(2)}</span>
+          <span>{formatINR(order.totals.grandPaise)}</span>
         </div>
       </section>
 

@@ -7,6 +7,7 @@ import { FiX } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { clearCart, selectCartItems, selectItemCount, selectSubtotalPaise } from '@/store/slices/cartSlice';
+import { formatINR } from '@/utils/currency';
 import { paths } from '@/routes/paths';
 import type { CartItem } from '@/store/slices/cartSlice';
 
@@ -188,28 +189,20 @@ const MiniCart = ({ className, showLabel = false, align = 'end', triggerClassNam
     };
   }, [sheetOpen]);
 
-  const formatter = useMemo(
-    () =>
-      new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        minimumFractionDigits: 2,
-      }),
-    [],
-  );
+  const formatPrice = useCallback((value: number) => formatINR(value), []);
 
   const formattedItems = useMemo<FormattedCartItem[]>(
     () =>
       items.map((item) => ({
         ...item,
-        lineTotal: formatter.format((item.pricePaise * item.qty) / 100),
+        lineTotal: formatPrice(item.pricePaise * item.qty),
       })),
-    [items, formatter],
+    [items, formatPrice],
   );
 
   const subtotalFormatted = useMemo(
-    () => formatter.format(subtotalPaise / 100),
-    [formatter, subtotalPaise],
+    () => formatPrice(subtotalPaise),
+    [formatPrice, subtotalPaise],
   );
 
   const handleClear = useCallback(() => {

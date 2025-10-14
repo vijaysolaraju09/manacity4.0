@@ -15,6 +15,7 @@ import {
   updateQty,
 } from '@/store/slices/cartSlice';
 import { paths } from '@/routes/paths';
+import { formatINR } from '@/utils/currency';
 
 import styles from './Cart.module.scss';
 
@@ -61,26 +62,10 @@ const CartSkeleton = () => (
   </div>
 );
 
-const formatPrice = (valueInPaise: number, formatter: Intl.NumberFormat) => {
-  const paise = Number.isFinite(valueInPaise) ? valueInPaise : 0;
-  return formatter.format(paise / 100);
-};
-
 const Cart = () => {
   const rawItems = useSelector(selectCartItems);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  const currencyFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    [],
-  );
 
   const [status, setStatus] = useState<LoadState>(() =>
     Array.isArray(rawItems) ? 'loading' : 'error',
@@ -129,12 +114,12 @@ const Cart = () => {
         image: item.image || fallbackImage,
         qty,
         unitPricePaise,
-        unitPriceDisplay: formatPrice(unitPricePaise, currencyFormatter),
+        unitPriceDisplay: formatINR(unitPricePaise),
         lineTotalPaise,
-        lineTotalDisplay: formatPrice(lineTotalPaise, currencyFormatter),
+        lineTotalDisplay: formatINR(lineTotalPaise),
       } satisfies DisplayCartItem;
     });
-  }, [currencyFormatter, rawItems]);
+  }, [rawItems]);
 
   const itemCount = useMemo(
     () => items.reduce((total, item) => total + item.qty, 0),
@@ -158,7 +143,7 @@ const Cart = () => {
           items: [item],
           itemCount: item.qty,
           subtotalPaise: item.lineTotalPaise,
-          subtotalDisplay: formatPrice(item.lineTotalPaise, currencyFormatter),
+          subtotalDisplay: formatINR(item.lineTotalPaise),
         });
         return;
       }
@@ -166,16 +151,13 @@ const Cart = () => {
       existing.items.push(item);
       existing.itemCount += item.qty;
       existing.subtotalPaise += item.lineTotalPaise;
-      existing.subtotalDisplay = formatPrice(
-        existing.subtotalPaise,
-        currencyFormatter,
-      );
+      existing.subtotalDisplay = formatINR(existing.subtotalPaise);
     });
 
     return Array.from(groups.values()).sort((a, b) =>
       a.label.localeCompare(b.label),
     );
-  }, [currencyFormatter, items]);
+  }, [items]);
 
   const hasMultipleShops = shopGroups.length > 1;
 
@@ -208,10 +190,7 @@ const Cart = () => {
   );
 
   const selectedSubtotalPaise = selectedGroup?.subtotalPaise ?? 0;
-  const selectedSubtotalDisplay = formatPrice(
-    selectedSubtotalPaise,
-    currencyFormatter,
-  );
+  const selectedSubtotalDisplay = formatINR(selectedSubtotalPaise);
   const selectedItemCount = selectedGroup?.itemCount ?? 0;
 
   const handleQtyChange = useCallback(

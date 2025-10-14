@@ -3,7 +3,7 @@ import { AiFillStar } from 'react-icons/ai';
 import { useDispatch } from 'react-redux';
 import { http } from '@/lib/http';
 import { toItem, toErrorMessage } from '@/lib/response';
-import { addToCart } from '../../store/slices/cartSlice';
+import { addItem } from '../../store/slices/cartSlice';
 import fallbackImage from '../../assets/no-image.svg';
 import WishlistHeart from './WishlistHeart';
 import PriceBlock from './PriceBlock';
@@ -59,7 +59,7 @@ const ProductCard = ({
         showToast('Unable to determine product details. Please try again.', 'error');
         return;
       }
-      dispatch(addToCart(payload));
+      dispatch(addItem(payload));
       showToast('Added to cart');
     } catch (err) {
       showToast(toErrorMessage(err), 'error');

@@ -11,7 +11,7 @@ import {
   type OrderStatus,
 } from '@/store/orders';
 import type { RootState, AppDispatch } from '@/store';
-import { clearCart, addToCart } from '@/store/slices/cartSlice';
+import { clearCart, addItem } from '@/store/slices/cartSlice';
 import { OrderCard } from '@/components/base';
 import ErrorCard from '@/components/ui/ErrorCard';
 import SkeletonList from '@/components/ui/SkeletonList';
@@ -101,16 +101,18 @@ const MyOrders = () => {
   const handleReorder = (order: Order) => {
     dispatch(clearCart());
     (order.items ?? []).forEach((item) => {
+      const productId = item.productId || item.id;
+      if (!productId) return;
+      const qty = Number.isFinite(item.qty) && item.qty > 0 ? Math.floor(item.qty) : 1;
       dispatch(
-        addToCart({
-          id: item.productId || item.id,
+        addItem({
+          productId: String(productId),
+          shopId: String(order.shop.id),
           name: item.title,
-          price: item.unitPrice,
-          quantity: item.qty,
-          image: item.image,
-          shopId: order.shop.id,
-          shopName: order.shop.name,
-        })
+          pricePaise: Math.max(0, Math.round(item.unitPrice * 100)),
+          qty,
+          image: item.image || undefined,
+        }),
       );
     });
     navigate(paths.cart());

@@ -56,19 +56,6 @@ const extractShopId = (
   );
 };
 
-const extractShopName = (
-  product: ProductLike,
-  responseItem?: CartResponseLike,
-): string | undefined => {
-  const rawShop = product.shop as ShopLike | undefined;
-  return (
-    product.shopName ||
-    rawShop?.name ||
-    (typeof responseItem?.shop === 'object' ? responseItem?.shop?.name : undefined) ||
-    responseItem?.shopName
-  );
-};
-
 const extractProductId = (
   product: ProductLike,
   responseItem?: CartResponseLike,
@@ -146,9 +133,8 @@ export const buildCartItemPayload = ({
     shopId,
     name: extractName(product, responseItem),
     pricePaise,
-    qty: quantity,
+    qty: Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1,
     image: extractImage(product, responseItem),
-    shopName: extractShopName(product, responseItem),
   };
 };
 

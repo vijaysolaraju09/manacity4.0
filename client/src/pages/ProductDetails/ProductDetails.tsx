@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Shimmer from '../../components/Shimmer';
 import './ProductDetails.scss';
-import { addToCart } from '../../store/slices/cartSlice';
+import { addItem } from '../../store/slices/cartSlice';
 import fallbackImage from '../../assets/no-image.svg';
 import PriceBlock from '../../components/ui/PriceBlock';
 import HorizontalCarousel from '../../components/ui/HorizontalCarousel';
@@ -77,7 +77,7 @@ const ProductDetails = () => {
         showToast('Unable to determine product details. Please try again.', 'error');
         return;
       }
-      d(addToCart(payload));
+      d(addItem(payload));
       showToast('Added to cart');
     } catch (err) {
       showToast(toErrorMessage(err), 'error');

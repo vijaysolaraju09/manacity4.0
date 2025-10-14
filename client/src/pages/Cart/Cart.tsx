@@ -5,7 +5,13 @@ import QuantityStepper from '../../components/ui/QuantityStepper/QuantityStepper
 import PriceBlock from '../../components/ui/PriceBlock';
 import EmptyState from '../../components/ui/EmptyState';
 import fallbackImage from '../../assets/no-image.svg';
-import { removeFromCart, updateQuantity, clearCart } from '../../store/slices/cartSlice';
+import {
+  removeItem,
+  updateQty,
+  clearCart,
+  selectCartItems,
+  selectSubtotalPaise,
+} from '../../store/slices/cartSlice';
 import type { RootState } from '../../store';
 import { toErrorMessage } from '@/lib/response';
 import { paths } from '@/routes/paths';
@@ -14,13 +20,14 @@ import styles from './Cart.module.scss';
 import { createOrder } from '@/api/orders';
 
 const Cart = () => {
-  const items = useSelector((state: RootState) => state.cart.items);
+  const items = useSelector(selectCartItems);
+  const subtotalPaise = useSelector(selectSubtotalPaise);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [notes, setNotes] = useState('');
   const [placing, setPlacing] = useState(false);
 
-  const subtotal = items.reduce((sum, item) => sum + (item.pricePaise / 100) * item.qty, 0);
+  const subtotal = subtotalPaise / 100;
   const discount = 0;
   const fee = items.length > 0 && subtotal <= 200 ? 40 : 0;
   const total = subtotal - discount + fee;
@@ -28,7 +35,12 @@ const Cart = () => {
   const shopIds = Array.from(new Set(items.map((item) => item.shopId).filter(Boolean)));
   const hasMultipleShops = shopIds.length > 1;
   const shopId = shopIds[0];
-  const shopName = items[0]?.shopName || '';
+  const shopName = useSelector((state: RootState) => {
+    if (!shopId) return '';
+    const shops = state.shops.items || [];
+    const match = shops.find((shop) => shop.id === shopId || shop._id === shopId);
+    return match?.name || shopId;
+  });
 
   const handleCheckout = async () => {
     if (placing) return;
@@ -89,13 +101,13 @@ const Cart = () => {
               <div className={styles.controls}>
                 <QuantityStepper
                   value={it.qty}
-                  onChange={(q) => dispatch(updateQuantity({ productId: it.productId, qty: q }))}
+                  onChange={(q) => dispatch(updateQty({ productId: it.productId, qty: q }))}
                   min={1}
                 />
                 <button
                   type="button"
                   className={styles.remove}
-                  onClick={() => dispatch(removeFromCart(it.productId))}
+                  onClick={() => dispatch(removeItem(it.productId))}
                 >
                   Remove
                 </button>

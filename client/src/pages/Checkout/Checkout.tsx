@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { type ChangeEvent, useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { isAxiosError } from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';

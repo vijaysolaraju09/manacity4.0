@@ -21,6 +21,7 @@ const VerifiedList = lazy(() => import('@/pages/Verified/List'));
 const SpecialShop = lazy(() => import('@/pages/SpecialShop/SpecialShop'));
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const Cart = lazy(() => import('@/pages/Cart/Cart'));
+const Checkout = lazy(() => import('@/pages/Checkout/Checkout'));
 const Events = lazy(() => import('@/pages/Events/Events'));
 const VoiceOrder = lazy(() => import('@/pages/VoiceOrder/VoiceOrder'));
 const OrderNow = lazy(() => import('@/pages/OrderNow/OrderNow'));
@@ -108,6 +109,7 @@ const AppRoutes = () => (
         <Route path="/verified-users/:id" element={<VerifiedDetails key="verified-details" />} />
         <Route path="/orders/:id" element={<OrderDetail key="order-detail" />} />
         <Route path="/cart" element={<Cart key="cart" />} />
+        <Route path="/checkout" element={<Checkout key="checkout" />} />
       </Route>
 
       <Route path="*" element={<NotFound key="not-found" />} />

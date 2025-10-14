@@ -12,7 +12,6 @@ import {
   clearCart,
   removeItem,
   selectCartItems,
-  selectSubtotalPaise,
   updateQty,
 } from '@/store/slices/cartSlice';
 import { paths } from '@/routes/paths';
@@ -23,6 +22,7 @@ type LoadState = 'loading' | 'ready' | 'error';
 
 type DisplayCartItem = {
   productId: string;
+  shopId: string;
   name: string;
   image: string;
   qty: number;
@@ -30,6 +30,15 @@ type DisplayCartItem = {
   unitPriceDisplay: string;
   lineTotalPaise: number;
   lineTotalDisplay: string;
+};
+
+type ShopGroup = {
+  shopId: string;
+  label: string;
+  items: DisplayCartItem[];
+  itemCount: number;
+  subtotalPaise: number;
+  subtotalDisplay: string;
 };
 
 const CartSkeleton = () => (
@@ -59,7 +68,6 @@ const formatPrice = (valueInPaise: number, formatter: Intl.NumberFormat) => {
 
 const Cart = () => {
   const rawItems = useSelector(selectCartItems);
-  const subtotalPaise = useSelector(selectSubtotalPaise);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -116,6 +124,7 @@ const Cart = () => {
 
       return {
         productId: item.productId,
+        shopId: item.shopId,
         name: item.name,
         image: item.image || fallbackImage,
         qty,
@@ -132,7 +141,78 @@ const Cart = () => {
     [items],
   );
 
-  const grandTotalPaise = subtotalPaise;
+  const shopGroups = useMemo<ShopGroup[]>(() => {
+    if (items.length === 0) {
+      return [];
+    }
+
+    const groups = new Map<string, ShopGroup>();
+
+    items.forEach((item) => {
+      const existing = groups.get(item.shopId);
+      if (!existing) {
+        const label = item.shopId ? `Shop ${item.shopId}` : 'Shop';
+        groups.set(item.shopId, {
+          shopId: item.shopId,
+          label,
+          items: [item],
+          itemCount: item.qty,
+          subtotalPaise: item.lineTotalPaise,
+          subtotalDisplay: formatPrice(item.lineTotalPaise, currencyFormatter),
+        });
+        return;
+      }
+
+      existing.items.push(item);
+      existing.itemCount += item.qty;
+      existing.subtotalPaise += item.lineTotalPaise;
+      existing.subtotalDisplay = formatPrice(
+        existing.subtotalPaise,
+        currencyFormatter,
+      );
+    });
+
+    return Array.from(groups.values()).sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
+  }, [currencyFormatter, items]);
+
+  const hasMultipleShops = shopGroups.length > 1;
+
+  const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedShopId((current) => {
+      if (shopGroups.length === 0) {
+        return null;
+      }
+
+      if (shopGroups.length === 1) {
+        return shopGroups[0]?.shopId ?? null;
+      }
+
+      if (current && shopGroups.some((group) => group.shopId === current)) {
+        return current;
+      }
+
+      return shopGroups[0]?.shopId ?? null;
+    });
+  }, [shopGroups]);
+
+  const selectedGroup = useMemo(
+    () =>
+      selectedShopId
+        ? shopGroups.find((group) => group.shopId === selectedShopId) ?? null
+        : null,
+    [selectedShopId, shopGroups],
+  );
+
+  const selectedSubtotalPaise = selectedGroup?.subtotalPaise ?? 0;
+  const selectedSubtotalDisplay = formatPrice(
+    selectedSubtotalPaise,
+    currencyFormatter,
+  );
+  const selectedItemCount = selectedGroup?.itemCount ?? 0;
 
   const handleQtyChange = useCallback(
     (productId: string, qty: number) => {
@@ -174,9 +254,11 @@ const Cart = () => {
   }, [continueShoppingPath, navigate]);
 
   const handleCheckout = useCallback(() => {
-    if (items.length === 0) return;
-    navigate(checkoutPath);
-  }, [checkoutPath, items.length, navigate]);
+    if (!selectedGroup || selectedGroup.items.length === 0) return;
+    navigate(checkoutPath, {
+      state: { shopId: selectedGroup.shopId },
+    });
+  }, [checkoutPath, navigate, selectedGroup]);
 
   const handleRetry = useCallback(() => {
     setStatus('loading');
@@ -259,67 +341,121 @@ const Cart = () => {
               Items
             </h2>
           </div>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <caption className={styles.visuallyHidden}>
-                Items currently in your cart
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Item</th>
-                  <th scope="col">Unit price</th>
-                  <th scope="col">Quantity</th>
-                  <th scope="col">Line total</th>
-                  <th scope="col">
-                    <span className={styles.visuallyHidden}>Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.productId}>
-                    <td data-label="Item">
-                      <div className={styles.itemCell}>
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className={styles.thumbnail}
+          {hasMultipleShops && (
+            <div className={styles.multiShopNotice} role="status">
+              <strong>Heads up:</strong> Your cart has items from multiple
+              shops. Please choose one shop to check out now.
+            </div>
+          )}
+          <div className={styles.shopGroups}>
+            {shopGroups.map((group) => {
+              const summaryId = `shop-${group.shopId}-summary`;
+              const isSelected = selectedShopId === group.shopId;
+
+              return (
+                <section key={group.shopId} className={styles.shopGroup}>
+                  <header className={styles.shopGroupHeader}>
+                    {hasMultipleShops ? (
+                      <label className={styles.shopSelect}>
+                        <input
+                          type="radio"
+                          name="selected-shop"
+                          value={group.shopId}
+                          checked={isSelected}
+                          onChange={() => setSelectedShopId(group.shopId)}
+                          aria-describedby={summaryId}
                         />
-                        <div className={styles.itemMeta}>
-                          <p className={styles.itemName}>{item.name}</p>
-                          <p className={styles.itemPrice}>
-                            {item.unitPriceDisplay}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td data-label="Unit price" className={styles.priceCell}>
-                      {item.unitPriceDisplay}
-                    </td>
-                    <td data-label="Quantity" className={styles.qtyCell}>
-                      <QuantityStepper
-                        value={item.qty}
-                        onChange={(qty) => handleQtyChange(item.productId, qty)}
-                        ariaLabel={`Change quantity for ${item.name}`}
-                        className={styles.stepperControl}
-                      />
-                    </td>
-                    <td data-label="Line total" className={styles.totalCell}>
-                      <span aria-live="polite">{item.lineTotalDisplay}</span>
-                    </td>
-                    <td className={styles.actionsCell}>
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(item.productId)}
-                        className={styles.removeButton}
-                      >
-                        Remove<span className={styles.visuallyHidden}> {item.name}</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        <span className={styles.shopName}>{group.label}</span>
+                      </label>
+                    ) : (
+                      <span className={styles.shopName}>{group.label}</span>
+                    )}
+                    <span id={summaryId} className={styles.shopTotals}>
+                      {group.itemCount} {group.itemCount === 1 ? 'item' : 'items'} ·{' '}
+                      {group.subtotalDisplay}
+                    </span>
+                  </header>
+                  {hasMultipleShops && (
+                    <p className={styles.shopSelectHint}>
+                      {isSelected
+                        ? 'Selected for checkout'
+                        : 'Select this shop to checkout these items'}
+                    </p>
+                  )}
+                  <div className={styles.tableWrapper}>
+                    <table className={styles.table}>
+                      <caption className={styles.visuallyHidden}>
+                        Items from {group.label}
+                      </caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">Item</th>
+                          <th scope="col">Unit price</th>
+                          <th scope="col">Quantity</th>
+                          <th scope="col">Line total</th>
+                          <th scope="col">
+                            <span className={styles.visuallyHidden}>Actions</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {group.items.map((item) => (
+                          <tr key={item.productId}>
+                            <td data-label="Item">
+                              <div className={styles.itemCell}>
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  className={styles.thumbnail}
+                                />
+                                <div className={styles.itemMeta}>
+                                  <p className={styles.itemName}>{item.name}</p>
+                                  <p className={styles.itemPrice}>
+                                    {item.unitPriceDisplay}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                            <td
+                              data-label="Unit price"
+                              className={styles.priceCell}
+                            >
+                              {item.unitPriceDisplay}
+                            </td>
+                            <td data-label="Quantity" className={styles.qtyCell}>
+                              <QuantityStepper
+                                value={item.qty}
+                                onChange={(qty) =>
+                                  handleQtyChange(item.productId, qty)
+                                }
+                                ariaLabel={`Change quantity for ${item.name}`}
+                                className={styles.stepperControl}
+                              />
+                            </td>
+                            <td data-label="Line total" className={styles.totalCell}>
+                              <span aria-live="polite">{item.lineTotalDisplay}</span>
+                            </td>
+                            <td className={styles.actionsCell}>
+                              <button
+                                type="button"
+                                onClick={() => handleRemove(item.productId)}
+                                className={styles.removeButton}
+                              >
+                                Remove
+                                <span className={styles.visuallyHidden}>
+                                  {' '}
+                                  {item.name}
+                                </span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              );
+            })}
           </div>
           <button
             type="button"
@@ -334,11 +470,24 @@ const Cart = () => {
           <h2 id="cart-summary" className={styles.summaryTitle}>
             Order summary
           </h2>
+          {hasMultipleShops && (
+            <div className={styles.summaryShopMeta}>
+              <p className={styles.summaryShopHeading}>Checkout selection</p>
+              <p className={styles.summaryShopValue}>
+                {selectedGroup ? selectedGroup.label : 'Select a shop'}
+              </p>
+              <p className={styles.summaryShopHint}>
+                {hasMultipleShops
+                  ? 'Only one shop can be checked out at a time.'
+                  : 'All items in your cart will be checked out together.'}
+              </p>
+            </div>
+          )}
           <dl className={styles.summaryList}>
             <div className={styles.summaryRow}>
               <dt>Subtotal</dt>
               <dd aria-live="polite">
-                {formatPrice(subtotalPaise, currencyFormatter)}
+                {selectedSubtotalDisplay}
               </dd>
             </div>
             <div className={`${styles.summaryRow} ${styles.placeholderRow}`}>
@@ -352,7 +501,7 @@ const Cart = () => {
             <div className={`${styles.summaryRow} ${styles.grandTotal}`}>
               <dt>Grand total</dt>
               <dd aria-live="polite">
-                {formatPrice(grandTotalPaise, currencyFormatter)}
+                {selectedSubtotalDisplay}
               </dd>
             </div>
           </dl>
@@ -363,10 +512,19 @@ const Cart = () => {
             type="button"
             className={styles.checkoutButton}
             onClick={handleCheckout}
-            disabled={items.length === 0}
+            disabled={!selectedGroup || selectedGroup.items.length === 0}
           >
             Proceed to checkout
           </button>
+          {hasMultipleShops && (
+            <p className={styles.checkoutHelp}>
+              {selectedGroup
+                ? `${selectedItemCount} ${
+                    selectedItemCount === 1 ? 'item' : 'items'
+                  } will be included in this checkout.`
+                : 'Select a shop to enable checkout.'}
+            </p>
+          )}
         </aside>
       </div>
     </main>

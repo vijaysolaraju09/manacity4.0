@@ -87,5 +87,11 @@
     &:hover {
       background: var(--color-primary-hover);
     }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: var(--color-primary);
+    }
   }
 }

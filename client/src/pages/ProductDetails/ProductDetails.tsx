@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Shimmer from '../../components/Shimmer';
 import './ProductDetails.scss';
-import { addItem } from '../../store/slices/cartSlice';
 import fallbackImage from '../../assets/no-image.svg';
 import PriceBlock from '../../components/ui/PriceBlock';
 import HorizontalCarousel from '../../components/ui/HorizontalCarousel';
@@ -15,10 +14,7 @@ import { fetchProductsByShop } from '@/store/shops';
 import type { RootState } from '@/store';
 import ErrorCard from '@/components/common/ErrorCard';
 import Empty from '@/components/common/Empty';
-import { http } from '@/lib/http';
-import { toItem, toErrorMessage } from '@/lib/response';
-import showToast from '@/components/ui/Toast';
-import { toCartItem } from '@/lib/cart';
+import AddToCartButton from '@/components/ui/AddToCartButton';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -58,29 +54,6 @@ const ProductDetails = () => {
     : product.image
     ? [product.image]
     : [];
-
-  const handleAdd = async () => {
-    try {
-      const productId = product._id || (product as any).id;
-      if (!productId) {
-        showToast('Unable to add this product to cart. Please try again later.', 'error');
-        return;
-      }
-      const res = await http.post('/cart', { productId, quantity: qty });
-      const cartItem = toItem(res) as any;
-      let payload: ReturnType<typeof toCartItem>;
-      try {
-        payload = toCartItem(product, qty, cartItem);
-      } catch {
-        showToast('Unable to determine product details. Please try again.', 'error');
-        return;
-      }
-      d(addItem(payload));
-      showToast('Added to cart');
-    } catch (err) {
-      showToast(toErrorMessage(err), 'error');
-    }
-  };
 
   return (
     <div className="product-details">
@@ -138,9 +111,9 @@ const ProductDetails = () => {
 
       <div className="cta-bar">
         <QuantityStepper value={qty} onChange={setQty} min={1} />
-        <button className="add-cart-btn" onClick={handleAdd}>
+        <AddToCartButton product={product} qty={qty} className="add-cart-btn">
           Add to Cart
-        </button>
+        </AddToCartButton>
       </div>
     </div>
   );

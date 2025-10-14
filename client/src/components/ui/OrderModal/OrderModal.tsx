@@ -34,7 +34,8 @@ const OrderModal = ({ open, onClose, product, shopId }: OrderModalProps) => {
       setLoading(true);
       await createOrder({
         shopId,
-        items: [{ productId: product._id, quantity }],
+        items: [{ productId: product._id, qty: quantity }],
+        paymentMethod: 'COD',
       });
       showToast('Order placed', 'success');
       onClose();

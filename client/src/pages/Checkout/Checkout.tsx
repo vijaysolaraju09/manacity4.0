@@ -59,15 +59,31 @@ const formatPrice = (valueInPaise: number, formatter: Intl.NumberFormat) => {
   return formatter.format(paise / 100);
 };
 
-const toShippingAddress = (payload: AddressPayload) => {
-  return {
-    label: payload.label,
-    address1: payload.line1,
-    ...(payload.line2 ? { address2: payload.line2 } : {}),
-    city: payload.city,
-    state: payload.state,
-    pincode: payload.pincode,
-  } as Record<string, unknown>;
+const toShippingAddress = (payload: AddressPayload | Address) => {
+  const label = typeof payload.label === 'string' ? payload.label.trim() : '';
+  const line1 = typeof payload.line1 === 'string' ? payload.line1.trim() : '';
+  const line2 = typeof payload.line2 === 'string' ? payload.line2.trim() : '';
+  const city = typeof payload.city === 'string' ? payload.city.trim() : '';
+  const state = typeof payload.state === 'string' ? payload.state.trim() : '';
+  const pincode = typeof payload.pincode === 'string' ? payload.pincode.trim() : '';
+
+  const shipping: Record<string, unknown> = {
+    ...(label ? { name: label, label } : {}),
+    address1: line1,
+    city,
+    ...(state ? { state } : {}),
+    pincode,
+  };
+
+  if (line2) {
+    shipping.address2 = line2;
+  }
+
+  if ('id' in payload && payload.id) {
+    shipping.referenceId = payload.id;
+  }
+
+  return shipping;
 };
 
 const Checkout = () => {
@@ -184,6 +200,7 @@ const Checkout = () => {
   const [addressError, setAddressError] = useState<string | null>(null);
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [addressForm, setAddressForm] = useState<AddressFormState>({
     label: 'Home',
@@ -313,6 +330,8 @@ const Checkout = () => {
       return;
     }
 
+    setSubmitError(null);
+
     let orderAddressId: string | undefined;
     let shippingAddressInput: Record<string, unknown> | undefined;
     let shouldCreateAddress = false;
@@ -329,8 +348,15 @@ const Checkout = () => {
           return;
         }
         shouldCreateAddress = true;
+        shippingAddressInput = toShippingAddress(addressPayload);
       } else {
         orderAddressId = selectedAddressId;
+        const selectedAddress = addresses.find((address) => address.id === selectedAddressId);
+        if (!selectedAddress) {
+          showToast('Selected address could not be found', 'error');
+          return;
+        }
+        shippingAddressInput = toShippingAddress(selectedAddress);
       }
     } else {
       if (!addressPayload) {
@@ -340,11 +366,17 @@ const Checkout = () => {
       shippingAddressInput = toShippingAddress(addressPayload);
     }
 
+    if (!shippingAddressInput) {
+      showToast('Delivery address is required', 'error');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (shouldCreateAddress && addressPayload) {
         const created = await createAddress(addressPayload);
         orderAddressId = created.id;
+        shippingAddressInput = toShippingAddress(created);
         setAddresses((current) => [...current, created]);
         setSelectedAddressId(created.id);
       }
@@ -353,29 +385,36 @@ const Checkout = () => {
         shopId: selectedGroup.shopId,
         items: selectedGroup.items.map((item) => ({
           productId: item.productId,
-          quantity: item.qty,
+          qty: item.qty,
         })),
         fulfillmentType: 'delivery',
-        ...(orderAddressId ? { addressId: orderAddressId } : {}),
-        ...(shippingAddressInput ? { shippingAddress: shippingAddressInput } : {}),
+        addressId: orderAddressId,
+        shippingAddress: shippingAddressInput,
+        paymentMethod: 'COD',
       });
 
       dispatch(clearShop(selectedGroup.shopId));
+      setSubmitError(null);
       showToast('Order placed', 'success');
       navigate(paths.orders.detail(order.id));
     } catch (err) {
-      showToast(toErrorMessage(err), 'error');
+      const fallbackMessage = 'Unable to place order. Please retry.';
+      const message = toErrorMessage(err) || fallbackMessage;
+      const finalMessage = message.trim() ? message : fallbackMessage;
+      setSubmitError(finalMessage);
+      showToast(finalMessage, 'error');
     } finally {
       setIsSubmitting(false);
     }
   }, [
     addressBookAvailable,
     addressPayload,
+    addresses,
     dispatch,
+    isSubmitting,
     navigate,
     selectedAddressId,
     selectedGroup,
-    isSubmitting,
   ]);
 
   const handleGoToCart = useCallback(() => {
@@ -661,6 +700,20 @@ const Checkout = () => {
           >
             {isSubmitting ? 'Placing order…' : 'Confirm order'}
           </Button>
+
+          {submitError && (
+            <div className={styles.submitError} role="alert">
+              <span>{submitError}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleConfirmOrder}
+                disabled={isSubmitting}
+              >
+                Retry
+              </Button>
+            </div>
+          )}
 
           <p className={styles.summaryHelp}>
             Your cart will be updated once the order is placed successfully.

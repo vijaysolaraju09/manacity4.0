@@ -106,11 +106,13 @@ const orderSchema = new Schema(
     },
     shippingAddress: {
       name: { type: String },
+      label: { type: String },
       phone: { type: String },
       address1: { type: String },
       address2: { type: String },
       landmark: { type: String },
       city: { type: String },
+      state: { type: String },
       pincode: { type: String },
       referenceId: { type: String },
       geo: {

@@ -37,6 +37,207 @@ const orderCode = (order) =>
     .slice(-6)
     .toUpperCase();
 
+const resolveShippingAddress = ({ shippingAddress, addressId, userAddresses }) => {
+  let shippingAddressInput = sanitizeShippingAddress(shippingAddress);
+
+  if (!shippingAddressInput && addressId) {
+    const addresses = Array.isArray(userAddresses) ? userAddresses : [];
+    const matched = addresses.find((addr) =>
+      [addr?._id, addr?.id]
+        .filter(Boolean)
+        .some((value) => value.toString() === String(addressId)),
+    );
+
+    if (matched) {
+      shippingAddressInput = sanitizeShippingAddress({
+        name: matched.label,
+        label: matched.label,
+        address1: matched.line1,
+        address2: matched.line2,
+        city: matched.city,
+        state: matched.state,
+        pincode: matched.pincode,
+        referenceId: addressId,
+      });
+    }
+  }
+
+  if (addressId && shippingAddressInput && !shippingAddressInput.referenceId) {
+    shippingAddressInput.referenceId = addressId;
+  }
+
+  return shippingAddressInput;
+};
+
+const createShopOrder = async ({
+  shopId,
+  items,
+  user,
+  notes,
+  shippingAddress,
+  addressId,
+  fulfillmentInput,
+  fulfillmentType,
+  paymentMethod,
+  payment,
+  idempotencyKey,
+}) => {
+  if (!shopId || !Array.isArray(items) || items.length === 0) {
+    throw AppError.badRequest('INVALID_ORDER', 'Invalid order payload');
+  }
+
+  const trimmedKey = typeof idempotencyKey === 'string' ? idempotencyKey.trim() : '';
+  if (trimmedKey) {
+    const existing = await Order.findOne({ 'payment.idempotencyKey': trimmedKey });
+    if (existing) {
+      const existingShop = await Shop.findById(existing.shop)
+        .select('name location address owner')
+        .lean();
+      return { order: existing, shop: existingShop, isNew: false };
+    }
+  }
+
+  const shop = await Shop.findById(shopId)
+    .select('name location address owner')
+    .lean();
+  if (!shop) throw AppError.notFound('SHOP_NOT_FOUND', 'Shop not found');
+
+  const productIds = items.map((i) => i.productId);
+  const products = await Product.find({ _id: { $in: productIds }, shop: shopId }).lean();
+  const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+
+  const orderItems = [];
+  let itemsTotal = 0;
+
+  for (const i of items) {
+    const productId = String(i.productId);
+    const p = productMap.get(productId);
+    if (!p) throw AppError.badRequest('PRODUCT_NOT_FOUND', 'Product not found');
+
+    const unitPrice = toPaise(p.price);
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+      throw AppError.badRequest('INVALID_PRODUCT_PRICE', 'Product price invalid');
+    }
+
+    const qty = Number(i.qty ?? i.quantity);
+    if (!Number.isFinite(qty) || qty <= 0) {
+      throw AppError.badRequest('INVALID_QTY', 'Quantity must be greater than zero');
+    }
+
+    const subtotal = unitPrice * qty;
+    itemsTotal += subtotal;
+
+    orderItems.push({
+      product: p._id,
+      productSnapshot: {
+        name: p.name,
+        image: p.image,
+        sku: p.sku,
+        category: p.category,
+      },
+      unitPrice,
+      qty,
+      subtotal,
+      options: i.options || {},
+    });
+  }
+
+  const discountTotal = 0;
+  const taxTotal = 0;
+  const shippingFee = 0;
+  const grandTotal = itemsTotal - discountTotal + taxTotal + shippingFee;
+
+  const userAddresses = Array.isArray(user?.addresses) ? user.addresses : [];
+  const shippingAddressInput = resolveShippingAddress({
+    shippingAddress,
+    addressId,
+    userAddresses,
+  });
+
+  const resolvedFulfillmentType =
+    fulfillmentInput?.type ||
+    (typeof fulfillmentType === 'string' ? fulfillmentType : undefined) ||
+    'delivery';
+
+  if (resolvedFulfillmentType === 'delivery') {
+    if (!shippingAddressInput || !shippingAddressInput.address1) {
+      throw AppError.badRequest(
+        'SHIPPING_ADDRESS_REQUIRED',
+        'Delivery address required to place the order',
+      );
+    }
+  }
+
+  const paymentSource = paymentMethod || payment?.method || 'cod';
+  const resolvedPaymentMethod =
+    typeof paymentSource === 'string' && paymentSource.trim()
+      ? paymentSource.trim().toLowerCase()
+      : 'cod';
+
+  const fulfillmentData =
+    fulfillmentInput && typeof fulfillmentInput === 'object'
+      ? { ...fulfillmentInput, type: resolvedFulfillmentType }
+      : { type: resolvedFulfillmentType };
+
+  const order = await Order.create({
+    shop: shop._id,
+    shopSnapshot: {
+      name: shop.name,
+      location: shop.location,
+      address: shop.address,
+    },
+    user: user._id,
+    userSnapshot: {
+      name: user.name,
+      phone: user.phone,
+      location: user.location,
+      address: user.address,
+    },
+    items: orderItems,
+    notes,
+    status: 'pending',
+    fulfillment: fulfillmentData,
+    shippingAddress: shippingAddressInput,
+    currency: 'INR',
+    itemsTotal,
+    discountTotal,
+    taxTotal,
+    shippingFee,
+    grandTotal,
+    payment: {
+      ...(payment && typeof payment === 'object' ? payment : {}),
+      method: resolvedPaymentMethod,
+      status:
+        payment && typeof payment === 'object' && payment.status
+          ? payment.status
+          : 'pending',
+      idempotencyKey: trimmedKey || undefined,
+    },
+    timeline: [
+      {
+        at: new Date(),
+        by: 'system',
+        status: 'pending',
+        note: 'Awaiting shop acceptance',
+      },
+    ],
+  });
+
+  const code = orderCode(order);
+  if (shop?.owner) {
+    await notifyUser(shop.owner, {
+      type: 'order',
+      message: `New order ${code || ''} from ${user.name || 'a customer'}.`,
+    });
+  }
+  await notifyUser(user._id, {
+    type: 'order',
+    message: `Your order ${code || ''} with ${shop.name} is awaiting shop acceptance.`,
+  });
+
+  return { order, shop, isNew: true };
+};
+
 // ---------------------------------------------------------------------------
 // Create Order
 // ---------------------------------------------------------------------------
@@ -92,168 +293,111 @@ exports.createOrder = async (req, res, next) => {
       payment,
       paymentMethod,
     } = req.body;
-    if (!shopId || !Array.isArray(items) || items.length === 0) {
+
+    const idempotencyKey = req.get('Idempotency-Key');
+
+    const { order, isNew } = await createShopOrder({
+      shopId,
+      items,
+      user: req.user,
+      notes,
+      shippingAddress,
+      addressId,
+      fulfillmentInput: fulfillment,
+      fulfillmentType,
+      paymentMethod,
+      payment,
+      idempotencyKey,
+    });
+
+    const statusCode = isNew ? 201 : 200;
+    res.status(statusCode).json({ ok: true, data: { order }, traceId: req.traceId });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.checkoutOrders = async (req, res, next) => {
+  try {
+    const {
+      items,
+      addressId,
+      shippingAddress,
+      paymentMethod,
+      payment,
+      notes,
+      fulfillment,
+      fulfillmentType,
+    } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
       throw AppError.badRequest('INVALID_ORDER', 'Invalid order payload');
     }
 
-    const desiredFulfillmentType =
-      fulfillment?.type ||
-      (typeof fulfillmentType === 'string' ? fulfillmentType : undefined) ||
-      'delivery';
-
-    const idempotencyKey = req.get('Idempotency-Key');
-    if (idempotencyKey) {
-      const existing = await Order.findOne({ 'payment.idempotencyKey': idempotencyKey });
-      if (existing) {
-        return res.status(200).json({ ok: true, data: { order: existing }, traceId: req.traceId });
+    const sanitizedItems = items.map((item) => {
+      if (!item || typeof item !== 'object') {
+        throw AppError.badRequest('INVALID_ORDER_ITEM', 'Invalid order item');
       }
-    }
-
-    const shop = await Shop.findById(shopId).lean();
-    if (!shop) throw AppError.notFound('SHOP_NOT_FOUND', 'Shop not found');
-
-    const productIds = items.map((i) => i.productId);
-    const products = await Product.find({ _id: { $in: productIds }, shop: shopId }).lean();
-    const productMap = new Map(products.map((p) => [p._id.toString(), p]));
-
-    const orderItems = [];
-    let itemsTotal = 0;
-    for (const i of items) {
-      const p = productMap.get(i.productId);
-      if (!p) throw AppError.badRequest('PRODUCT_NOT_FOUND', 'Product not found');
-      const unitPrice = toPaise(p.price);
-      if (!Number.isFinite(unitPrice) || unitPrice < 0) {
-        throw AppError.badRequest('INVALID_PRODUCT_PRICE', 'Product price invalid');
+      const productId = String(item.productId || item.product || '').trim();
+      if (!productId) {
+        throw AppError.badRequest('INVALID_ORDER_ITEM', 'Product id required');
       }
-      const qty = Number(i.qty ?? i.quantity);
+      const qty = Number(item.qty ?? item.quantity ?? 0);
       if (!Number.isFinite(qty) || qty <= 0) {
         throw AppError.badRequest('INVALID_QTY', 'Quantity must be greater than zero');
       }
-      const subtotal = unitPrice * qty;
-      itemsTotal += subtotal;
-      orderItems.push({
-        product: p._id,
-        productSnapshot: {
-          name: p.name,
-          image: p.image,
-          sku: p.sku,
-          category: p.category,
-        },
-        unitPrice,
+      return {
+        productId,
         qty,
-        subtotal,
-        options: i.options || {},
+        options: item.options || {},
+      };
+    });
+
+    const productIds = sanitizedItems.map((item) => item.productId);
+    const catalog = await Product.find({ _id: { $in: productIds } })
+      .select('_id shop')
+      .lean();
+    const productToShop = new Map(catalog.map((product) => [product._id.toString(), product.shop?.toString()]));
+
+    const groups = new Map();
+    sanitizedItems.forEach((item) => {
+      const shopId = productToShop.get(item.productId);
+      if (!shopId) {
+        throw AppError.badRequest('PRODUCT_NOT_FOUND', 'Product not found');
+      }
+
+      const existing = groups.get(shopId);
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        groups.set(shopId, { shopId, items: [item] });
+      }
+    });
+
+    const idempotencyKey = req.get('Idempotency-Key');
+    const orders = [];
+    let anyNew = false;
+
+    for (const group of groups.values()) {
+      const { order, isNew } = await createShopOrder({
+        shopId: group.shopId,
+        items: group.items,
+        user: req.user,
+        notes,
+        shippingAddress,
+        addressId,
+        fulfillmentInput: fulfillment,
+        fulfillmentType: fulfillmentType || 'delivery',
+        paymentMethod,
+        payment,
+        idempotencyKey: idempotencyKey ? `${idempotencyKey}:${group.shopId}` : undefined,
       });
+      anyNew = anyNew || isNew;
+      orders.push({ _id: order._id, shopId: order.shop });
     }
 
-    const discountTotal = 0;
-    const taxTotal = 0;
-    const shippingFee = 0;
-    const grandTotal = itemsTotal - discountTotal + taxTotal + shippingFee;
-
-    let shippingAddressInput = sanitizeShippingAddress(shippingAddress);
-    if (!shippingAddressInput && addressId) {
-      const addresses = req.user?.addresses || [];
-      const matched = Array.isArray(addresses)
-        ? addresses.find((addr) =>
-            [addr?._id, addr?.id]
-              .filter(Boolean)
-              .some((value) => value.toString() === String(addressId)),
-          )
-        : null;
-      if (matched) {
-        shippingAddressInput = sanitizeShippingAddress({
-          name: matched.label,
-          label: matched.label,
-          address1: matched.line1,
-          address2: matched.line2,
-          city: matched.city,
-          state: matched.state,
-          pincode: matched.pincode,
-          referenceId: addressId,
-        });
-      }
-    }
-
-    if (addressId && shippingAddressInput && !shippingAddressInput.referenceId) {
-      shippingAddressInput.referenceId = addressId;
-    }
-
-    if (desiredFulfillmentType === 'delivery') {
-      if (!shippingAddressInput || !shippingAddressInput.address1) {
-        throw AppError.badRequest(
-          'SHIPPING_ADDRESS_REQUIRED',
-          'Delivery address required to place the order',
-        );
-      }
-    }
-
-    const paymentSource = paymentMethod || payment?.method || 'cod';
-    const resolvedPaymentMethod =
-      typeof paymentSource === 'string' && paymentSource.trim()
-        ? paymentSource.trim().toLowerCase()
-        : 'cod';
-
-    const fulfillmentData =
-      fulfillment && typeof fulfillment === 'object'
-        ? { ...fulfillment, type: desiredFulfillmentType }
-        : { type: desiredFulfillmentType };
-
-    const order = await Order.create({
-      shop: shop._id,
-      shopSnapshot: {
-        name: shop.name,
-        location: shop.location,
-        address: shop.address,
-      },
-      user: req.user._id,
-      userSnapshot: {
-        name: req.user.name,
-        phone: req.user.phone,
-        location: req.user.location,
-        address: req.user.address,
-      },
-      items: orderItems,
-      notes,
-      status: 'pending',
-      fulfillment: fulfillmentData,
-      shippingAddress: shippingAddressInput,
-      currency: 'INR',
-      itemsTotal,
-      discountTotal,
-      taxTotal,
-      shippingFee,
-      grandTotal,
-      payment: {
-        ...(payment && typeof payment === 'object' ? payment : {}),
-        method: resolvedPaymentMethod,
-        status:
-          payment && typeof payment === 'object' && payment.status
-            ? payment.status
-            : 'pending',
-        idempotencyKey,
-      },
-      timeline: [
-        {
-          at: new Date(),
-          by: 'system',
-          status: 'pending',
-          note: 'Awaiting shop acceptance',
-        },
-      ],
-    });
-
-    const code = orderCode(order);
-    await notifyUser(shop.owner, {
-      type: 'order',
-      message: `New order ${code || ''} from ${req.user.name || 'a customer'}.`,
-    });
-    await notifyUser(req.user._id, {
-      type: 'order',
-      message: `Your order ${code || ''} with ${shop.name} is awaiting shop acceptance.`,
-    });
-
-    res.status(201).json({ ok: true, data: { order }, traceId: req.traceId });
+    const statusCode = anyNew ? 201 : 200;
+    res.status(statusCode).json({ ok: true, data: { orders }, traceId: req.traceId });
   } catch (err) {
     next(err);
   }

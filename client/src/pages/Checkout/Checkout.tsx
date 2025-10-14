@@ -1,13 +1,13 @@
 import { type ChangeEvent, useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { isAxiosError } from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/button';
 import showToast from '@/components/ui/Toast';
 import fallbackImage from '@/assets/no-image.svg';
-import { createOrder } from '@/api/orders';
+import { checkoutOrders } from '@/api/orders';
 import {
   createAddress,
   listAddresses,
@@ -15,14 +15,10 @@ import {
   type AddressPayload,
 } from '@/api/addresses';
 import { toErrorMessage } from '@/lib/response';
-import { selectCartItems, clearShop } from '@/store/slices/cartSlice';
+import { selectCartItems, clearCart } from '@/store/slices/cartSlice';
 import { paths } from '@/routes/paths';
 
 import styles from './Checkout.module.scss';
-
-interface CheckoutLocationState {
-  shopId?: string;
-}
 
 type CheckoutCartItem = {
   productId: string;
@@ -52,6 +48,16 @@ type AddressFormState = {
   city: string;
   state: string;
   pincode: string;
+};
+
+type CheckoutSuccessOrder = {
+  id: string;
+  shopId: string;
+  label: string;
+};
+
+type CheckoutResult = {
+  orders: CheckoutSuccessOrder[];
 };
 
 const formatPrice = (valueInPaise: number, formatter: Intl.NumberFormat) => {
@@ -89,9 +95,6 @@ const toShippingAddress = (payload: AddressPayload | Address) => {
 const Checkout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
-  const locationState = (location.state as CheckoutLocationState | null) ?? null;
-  const initialShopId = locationState?.shopId;
   const cartItems = useSelector(selectCartItems);
 
   const currencyFormatter = useMemo(
@@ -162,37 +165,22 @@ const Checkout = () => {
     return Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label));
   }, [checkoutItems, currencyFormatter]);
 
-  const [selectedShopId, setSelectedShopId] = useState<string | null>(() => initialShopId ?? null);
+  const totalItemCount = useMemo(
+    () => shopGroups.reduce((count, group) => count + group.itemCount, 0),
+    [shopGroups],
+  );
 
-  useEffect(() => {
-    setSelectedShopId((current) => {
-      if (shopGroups.length === 0) {
-        return null;
-      }
+  const totalSubtotalPaise = useMemo(
+    () => shopGroups.reduce((sum, group) => sum + group.subtotalPaise, 0),
+    [shopGroups],
+  );
 
-      if (current && shopGroups.some((group) => group.shopId === current)) {
-        return current;
-      }
+  const totalSubtotalDisplay = useMemo(
+    () => formatPrice(totalSubtotalPaise, currencyFormatter),
+    [currencyFormatter, totalSubtotalPaise],
+  );
 
-      if (initialShopId && shopGroups.some((group) => group.shopId === initialShopId)) {
-        return initialShopId;
-      }
-
-      return shopGroups[0]?.shopId ?? null;
-    });
-  }, [initialShopId, shopGroups]);
-
-  const selectedGroup = useMemo<CheckoutGroup | null>(() => {
-    if (shopGroups.length === 0) {
-      return null;
-    }
-
-    if (!selectedShopId) {
-      return shopGroups[0] ?? null;
-    }
-
-    return shopGroups.find((group) => group.shopId === selectedShopId) ?? shopGroups[0] ?? null;
-  }, [selectedShopId, shopGroups]);
+  const [checkoutResult, setCheckoutResult] = useState<CheckoutResult | null>(null);
 
   const [addressBookAvailable, setAddressBookAvailable] = useState(false);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -293,7 +281,7 @@ const Checkout = () => {
   const addressPayload = normalizedAddress.payload;
 
   const canSubmit = useMemo(() => {
-    if (!selectedGroup || isSubmitting) {
+    if (isSubmitting || checkoutItems.length === 0 || checkoutResult) {
       return false;
     }
 
@@ -310,7 +298,14 @@ const Checkout = () => {
     }
 
     return Boolean(addressPayload);
-  }, [addressBookAvailable, addressPayload, isSubmitting, selectedAddressId, selectedGroup]);
+  }, [
+    addressBookAvailable,
+    addressPayload,
+    checkoutItems.length,
+    checkoutResult,
+    isSubmitting,
+    selectedAddressId,
+  ]);
 
   const idPrefix = useId();
   const fieldId = useCallback((name: string) => `${idPrefix}-${name}`, [idPrefix]);
@@ -325,7 +320,8 @@ const Checkout = () => {
 
   const handleConfirmOrder = useCallback(async () => {
     if (isSubmitting) return;
-    if (!selectedGroup) {
+    if (checkoutResult) return;
+    if (checkoutItems.length === 0) {
       showToast('Your cart is empty', 'error');
       return;
     }
@@ -381,9 +377,9 @@ const Checkout = () => {
         setSelectedAddressId(created.id);
       }
 
-      const order = await createOrder({
-        shopId: selectedGroup.shopId,
-        items: selectedGroup.items.map((item) => ({
+      const labelMap = new Map(shopGroups.map((group) => [group.shopId, group.label]));
+      const createdOrders = await checkoutOrders({
+        items: checkoutItems.map((item) => ({
           productId: item.productId,
           qty: item.qty,
         })),
@@ -393,10 +389,16 @@ const Checkout = () => {
         paymentMethod: 'COD',
       });
 
-      dispatch(clearShop(selectedGroup.shopId));
+      const orders: CheckoutSuccessOrder[] = createdOrders.map((entry) => ({
+        id: entry.id,
+        shopId: entry.shopId,
+        label: labelMap.get(entry.shopId) ?? `Shop ${entry.shopId}`,
+      }));
+
+      setCheckoutResult({ orders });
+      dispatch(clearCart());
       setSubmitError(null);
-      showToast('Order placed', 'success');
-      navigate(paths.orders.detail(order.id));
+      showToast('Orders placed successfully', 'success');
     } catch (err) {
       const fallbackMessage = 'Unable to place order. Please retry.';
       const message = toErrorMessage(err) || fallbackMessage;
@@ -410,18 +412,54 @@ const Checkout = () => {
     addressBookAvailable,
     addressPayload,
     addresses,
+    checkoutItems,
+    checkoutResult,
     dispatch,
     isSubmitting,
-    navigate,
     selectedAddressId,
-    selectedGroup,
+    shopGroups,
   ]);
 
   const handleGoToCart = useCallback(() => {
     navigate(paths.cart());
   }, [navigate]);
 
-  if (!selectedGroup) {
+  if (checkoutResult) {
+    const orderCount = checkoutResult.orders.length;
+    return (
+      <main className={styles.checkoutPage} role="main">
+        <section className={styles.successCard} aria-live="polite">
+          <h1 className={styles.successTitle}>Order placed successfully</h1>
+          <p className={styles.successMessage}>
+            We created {orderCount} suborder{orderCount === 1 ? '' : 's'}. Track each shop order below.
+          </p>
+
+          <ul className={styles.successList}>
+            {checkoutResult.orders.map((order) => (
+              <li key={order.id} className={styles.successListItem}>
+                <div>
+                  <span className={styles.successShop}>{order.label}</span>
+                  <span className={styles.successMeta}>Order ID: {order.id}</span>
+                </div>
+                <Link className={styles.successLink} to={paths.orders.detail(order.id)}>
+                  View order
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <div className={styles.successActions}>
+            <Button onClick={() => navigate(paths.orders.mine())}>Go to my orders</Button>
+            <Button variant="outline" onClick={handleGoToCart}>
+              Continue shopping
+            </Button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (checkoutItems.length === 0) {
     return (
       <main className={styles.checkoutPage} role="main">
         <EmptyState
@@ -653,25 +691,39 @@ const Checkout = () => {
             <div className={styles.cardHeader}>
               <h2 className={styles.cardTitle}>Order review</h2>
               <span className={styles.cardMeta}>
-                {selectedGroup.itemCount} item{selectedGroup.itemCount === 1 ? '' : 's'} from {selectedGroup.label}
+                {totalItemCount} item{totalItemCount === 1 ? '' : 's'} across {shopGroups.length} shop
+                {shopGroups.length === 1 ? '' : 's'}
               </span>
             </div>
 
-            <ul className={styles.itemList}>
-              {selectedGroup.items.map((item) => (
-                <li key={item.productId} className={styles.itemRow}>
-                  <img src={item.image} alt="" className={styles.itemImage} />
-                  <div className={styles.itemDetails}>
-                    <div className={styles.itemName}>{item.name}</div>
-                    <div className={styles.itemMeta}>
-                      <span>Qty: {item.qty}</span>
-                      <span>{item.unitPriceDisplay}</span>
-                    </div>
-                  </div>
-                  <div className={styles.itemTotal}>{item.lineTotalDisplay}</div>
-                </li>
+            <div className={styles.groupList}>
+              {shopGroups.map((group) => (
+                <section key={group.shopId} className={styles.groupSection} aria-label={group.label}>
+                  <header className={styles.groupHeader}>
+                    <h3 className={styles.groupTitle}>{group.label}</h3>
+                    <span className={styles.groupMeta}>
+                      {group.itemCount} item{group.itemCount === 1 ? '' : 's'} ·{' '}
+                      {group.subtotalDisplay}
+                    </span>
+                  </header>
+                  <ul className={styles.itemList}>
+                    {group.items.map((item) => (
+                      <li key={item.productId} className={styles.itemRow}>
+                        <img src={item.image} alt="" className={styles.itemImage} />
+                        <div className={styles.itemDetails}>
+                          <div className={styles.itemName}>{item.name}</div>
+                          <div className={styles.itemMeta}>
+                            <span>Qty: {item.qty}</span>
+                            <span>{item.unitPriceDisplay}</span>
+                          </div>
+                        </div>
+                        <div className={styles.itemTotal}>{item.lineTotalDisplay}</div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
               ))}
-            </ul>
+            </div>
           </div>
         </section>
 
@@ -679,8 +731,8 @@ const Checkout = () => {
           <h2 className={styles.summaryTitle}>Order summary</h2>
           <dl className={styles.summaryList}>
             <div className={styles.summaryRow}>
-              <dt>Items ({selectedGroup.itemCount})</dt>
-              <dd>{selectedGroup.subtotalDisplay}</dd>
+              <dt>Items ({totalItemCount})</dt>
+              <dd>{totalSubtotalDisplay}</dd>
             </div>
             <div className={styles.summaryRow}>
               <dt>Shipping</dt>
@@ -688,7 +740,7 @@ const Checkout = () => {
             </div>
             <div className={styles.summaryTotal}>
               <dt>Estimated total</dt>
-              <dd>{selectedGroup.subtotalDisplay}</dd>
+              <dd>{totalSubtotalDisplay}</dd>
             </div>
           </dl>
 
@@ -698,7 +750,7 @@ const Checkout = () => {
             disabled={!canSubmit}
             aria-busy={isSubmitting}
           >
-            {isSubmitting ? 'Placing order…' : 'Confirm order'}
+            {isSubmitting ? 'Placing orders…' : 'Confirm order'}
           </Button>
 
           {submitError && (
@@ -716,7 +768,7 @@ const Checkout = () => {
           )}
 
           <p className={styles.summaryHelp}>
-            Your cart will be updated once the order is placed successfully.
+            Your entire cart will be split into shop-specific orders once this checkout succeeds.
           </p>
         </aside>
       </div>

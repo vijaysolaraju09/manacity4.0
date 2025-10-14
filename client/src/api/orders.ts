@@ -88,3 +88,82 @@ export const createOrder = async (
   const response = await ordersClient.post('/orders', body, { headers });
   return normalizeOrder(toItem(response));
 };
+
+export interface CheckoutOrdersPayload {
+  items: CreateOrderItemInput[];
+  addressId?: string;
+  shippingAddress?: Record<string, unknown>;
+  paymentMethod?: string;
+  payment?: { method?: string };
+  notes?: string;
+  fulfillmentType?: 'pickup' | 'delivery';
+  fulfillment?: Record<string, unknown>;
+}
+
+export interface CheckoutOrderSummary {
+  id: string;
+  shopId: string;
+}
+
+export const checkoutOrders = async (
+  payload: CheckoutOrdersPayload,
+): Promise<CheckoutOrderSummary[]> => {
+  const {
+    items,
+    addressId,
+    shippingAddress,
+    paymentMethod,
+    payment,
+    notes,
+    fulfillmentType,
+    fulfillment,
+  } = payload;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error('At least one item is required to checkout');
+  }
+
+  const body: Record<string, unknown> = {
+    items: items.map(({ productId, qty, quantity, options }) => {
+      const rawQty = qty ?? quantity ?? 1;
+      const numericQty = Number(rawQty);
+      const resolvedQty = Number.isFinite(numericQty) && numericQty > 0 ? numericQty : 1;
+      return {
+        productId,
+        qty: resolvedQty,
+        ...(options ? { options } : {}),
+      };
+    }),
+  };
+
+  if (addressId) body.addressId = addressId;
+  if (shippingAddress) body.shippingAddress = shippingAddress;
+  if (notes) body.notes = notes;
+  if (fulfillmentType) body.fulfillmentType = fulfillmentType;
+  if (fulfillment) body.fulfillment = fulfillment;
+
+  const methodSource = paymentMethod ?? payment?.method ?? 'COD';
+  if (typeof methodSource === 'string' && methodSource.trim()) {
+    body.paymentMethod = methodSource.trim();
+  }
+
+  if (payment) body.payment = payment;
+
+  const response = await ordersClient.post('/orders/checkout', body);
+  const payloadData = toItem(response) as {
+    orders?: { _id?: string; id?: string; shopId?: string }[];
+  };
+
+  const orders = Array.isArray(payloadData?.orders) ? payloadData.orders : [];
+
+  return orders
+    .map((order) => {
+      const id = order._id || order.id;
+      const shopId = order.shopId;
+      if (!id || !shopId) {
+        return null;
+      }
+      return { id, shopId } satisfies CheckoutOrderSummary;
+    })
+    .filter((entry): entry is CheckoutOrderSummary => Boolean(entry));
+};

@@ -3,6 +3,7 @@ export const paths = {
   landing: () => '/',
   home: () => '/home',
   cart: () => '/cart',
+  checkout: () => '/checkout',
   notifications: () => '/notifications',
   profile: () => '/profile',
   settings: () => '/settings',

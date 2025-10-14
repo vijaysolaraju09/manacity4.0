@@ -242,11 +242,11 @@ const Cart = () => {
   }, []);
 
   const checkoutPath = useMemo(() => {
-    if (typeof paths.orders?.mine === 'function') {
-      return paths.orders.mine();
+    if (typeof paths.checkout === 'function') {
+      return paths.checkout();
     }
 
-    return paths.home();
+    return paths.cart();
   }, []);
 
   const handleContinueShopping = useCallback(() => {

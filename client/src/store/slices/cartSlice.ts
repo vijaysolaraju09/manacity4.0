@@ -149,10 +149,16 @@ const cartSlice = createSlice({
       state.items = [];
       touch(state);
     },
+    clearShop(state, action: PayloadAction<string>) {
+      const shopId = action.payload;
+      state.items = state.items.filter((item) => item.shopId !== shopId);
+      touch(state);
+    },
   },
 });
 
-export const { addItem, updateQty, removeItem, clearCart } = cartSlice.actions;
+export const { addItem, updateQty, removeItem, clearCart, clearShop } =
+  cartSlice.actions;
 
 export const selectCartState = (state: RootState) => state.cart;
 export const selectCartItems = (state: RootState) => state.cart.items;

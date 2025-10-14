@@ -18,7 +18,7 @@ import Empty from '@/components/common/Empty';
 import { http } from '@/lib/http';
 import { toItem, toErrorMessage } from '@/lib/response';
 import showToast from '@/components/ui/Toast';
-import { buildCartItemPayload } from '@/lib/cart';
+import { toCartItem } from '@/lib/cart';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -68,12 +68,10 @@ const ProductDetails = () => {
       }
       const res = await http.post('/cart', { productId, quantity: qty });
       const cartItem = toItem(res) as any;
-      const payload = buildCartItemPayload({
-        product,
-        quantity: qty,
-        responseItem: cartItem,
-      });
-      if (!payload) {
+      let payload: ReturnType<typeof toCartItem>;
+      try {
+        payload = toCartItem(product, qty, cartItem);
+      } catch {
         showToast('Unable to determine product details. Please try again.', 'error');
         return;
       }

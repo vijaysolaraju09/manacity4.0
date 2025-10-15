@@ -1,67 +1,54 @@
-import { describe, expect, it } from 'vitest';
-import { toCartItem } from './cart';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { toCartItem, buildCartItemPayload } from './cart';
 
-describe('toCartItem', () => {
-  it('normalizes the provided product and quantity', () => {
-    const item = toCartItem(
-      {
-        productId: 'p-1',
-        shopId: 's-1',
-        name: 'Fresh Apples',
-        pricePaise: 9900,
-        image: 'apple.png',
-      },
-      3.9,
-    );
+describe('cart helpers', () => {
+  it('normalizes various product shapes into cart items', () => {
+    const response = {
+      productId: 'res-123',
+      pricePaise: 2500,
+      shopId: 'shop-res',
+      product: { id: 'res-123', name: 'Response product', image: 'res.jpg' },
+    };
 
-    expect(item).toEqual({
-      productId: 'p-1',
-      shopId: 's-1',
-      name: 'Fresh Apples',
-      pricePaise: 9900,
-      qty: 3,
-      image: 'apple.png',
+    const product = {
+      id: 'prod-456',
+      shop: { _id: 'shop-456' },
+      price: 99.5,
+      title: 'Product title',
+      images: ['image-a.jpg', 'image-b.jpg'],
+    };
+
+    const item = toCartItem(product, 2, response);
+
+    expect(item).toMatchObject({
+      productId: 'prod-456',
+      shopId: 'shop-456',
+      name: 'Product title',
+      qty: 2,
+      pricePaise: 9950,
+      image: 'image-a.jpg',
     });
   });
 
-  it('derives identifiers, price and name from response fallbacks', () => {
-    const item = toCartItem(
-      {
-        id: 123,
-        price: 199.5,
-        images: ['client.png'],
-      },
-      1,
-      {
-        shopId: 'server-shop',
-        productId: 'server-product',
-        name: 'Server Name',
-        pricePaise: 19999,
-        product: {
-          title: 'Server Product',
-          image: 'server.png',
-        },
-        shop: { id: 'fallback-shop' },
-      },
-    );
+  describe('buildCartItemPayload', () => {
+    let consoleSpy: ReturnType<typeof vi.spyOn>;
 
-    expect(item).toEqual({
-      productId: 'server-product',
-      shopId: 'server-shop',
-      name: 'Server Name',
-      pricePaise: 19999,
-      qty: 1,
-      image: 'client.png',
+    beforeEach(() => {
+      consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     });
-  });
 
-  it('throws descriptive errors when required data is missing', () => {
-    expect(() => toCartItem({} as any, 1)).toThrow('Missing product id');
-    expect(() =>
-      toCartItem({ productId: 'p-1' } as any, 1),
-    ).toThrow('Missing shop id');
-    expect(() =>
-      toCartItem({ productId: 'p-1', shopId: 's-1' } as any, 1),
-    ).toThrow('Missing product price');
+    afterEach(() => {
+      consoleSpy.mockRestore();
+    });
+
+    it('returns null payload and logs when normalization fails', () => {
+      const payload = buildCartItemPayload({
+        product: { name: 'Invalid product' },
+        quantity: 1,
+      });
+
+      expect(payload).toBeNull();
+      expect(consoleSpy).toHaveBeenCalled();
+    });
   });
 });

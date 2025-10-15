@@ -36,6 +36,24 @@ vi.mock('./components/ui/FloatingCart', () => ({
   default: () => null,
 }));
 
+vi.mock('./pages/Shops/Shops', async () => {
+  const React = await import('react');
+  const ShopsMock = () =>
+    React.createElement('div', { 'data-testid': 'shops-page' }, 'Shops Page');
+  return { __esModule: true, default: ShopsMock };
+});
+
+vi.mock('./pages/Verified/List', async () => {
+  const React = await import('react');
+  const VerifiedListMock = () =>
+    React.createElement(
+      'div',
+      { 'data-testid': 'verified-list-page' },
+      'Verified List Page',
+    );
+  return { __esModule: true, default: VerifiedListMock };
+});
+
 vi.mock('./pages/Verified/Details', async () => {
   const React = await import('react');
   const VerifiedDetailMock = () =>
@@ -45,8 +63,16 @@ vi.mock('./pages/Verified/Details', async () => {
 
 vi.mock('./pages/Events/Events', async () => {
   const React = await import('react');
-  const EventsMock = () => React.createElement('div', null, 'Events Page');
+  const EventsMock = () =>
+    React.createElement('div', { 'data-testid': 'events-page' }, 'Events Page');
   return { __esModule: true, default: EventsMock };
+});
+
+vi.mock('./pages/Orders/MyOrders', async () => {
+  const React = await import('react');
+  const MyOrdersMock = () =>
+    React.createElement('div', { 'data-testid': 'orders-page' }, 'Orders Page');
+  return { __esModule: true, default: MyOrdersMock };
 });
 
 describe('Verified detail routing', () => {
@@ -72,6 +98,56 @@ describe('Verified detail routing', () => {
     });
 
     expect(screen.queryByTestId('verified-detail')).not.toBeInTheDocument();
-    expect(screen.getByText('Events Page')).toBeInTheDocument();
+    expect(screen.getByTestId('events-page')).toBeInTheDocument();
+  });
+});
+
+describe('App route transitions', () => {
+  it('mounts only the active page when navigating between main tabs', async () => {
+    const { AppRoutes } = await import('./App');
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '*',
+          element: <AppRoutes />,
+        },
+      ],
+      { initialEntries: ['/verified-users'] },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    expect(screen.getByTestId('verified-list-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('shops-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('events-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('orders-page')).not.toBeInTheDocument();
+
+    await act(async () => {
+      await router.navigate('/shops');
+    });
+
+    expect(screen.queryByTestId('verified-list-page')).not.toBeInTheDocument();
+    expect(screen.getByTestId('shops-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('events-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('orders-page')).not.toBeInTheDocument();
+
+    await act(async () => {
+      await router.navigate('/events');
+    });
+
+    expect(screen.queryByTestId('verified-list-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('shops-page')).not.toBeInTheDocument();
+    expect(screen.getByTestId('events-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('orders-page')).not.toBeInTheDocument();
+
+    await act(async () => {
+      await router.navigate('/orders/mine');
+    });
+
+    expect(screen.queryByTestId('verified-list-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('shops-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('events-page')).not.toBeInTheDocument();
+    expect(screen.getByTestId('orders-page')).toBeInTheDocument();
   });
 });

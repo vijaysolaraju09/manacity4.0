@@ -1,6 +1,7 @@
 import {
   createAsyncThunk,
   createEntityAdapter,
+  createSelector,
   createSlice,
   type EntityState,
 } from '@reduxjs/toolkit';
@@ -448,4 +449,23 @@ export const selectOrdersByStatus = (
 
 export const selectOrderById = (state: RootState, id: string) =>
   state.orders.mine.entities[id] ?? state.orders.received.entities[id] ?? null;
+
+const activeCustomerStatuses: OrderStatus[] = [
+  'pending',
+  'placed',
+  'confirmed',
+  'accepted',
+  'preparing',
+  'ready',
+  'out_for_delivery',
+];
+
+export const selectMyPendingOrders = createSelector(selectMyOrders, (orders) =>
+  orders.filter((order) => activeCustomerStatuses.includes(order.status))
+);
+
+export const selectMyPendingOrdersCount = createSelector(
+  selectMyPendingOrders,
+  (orders) => orders.length,
+);
 

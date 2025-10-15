@@ -17,6 +17,7 @@ import {
 } from "react-icons/ai";
 import { FaMicrophone } from "react-icons/fa";
 import MiniCart from "@/components/cart/MiniCart";
+import OrdersNavButton from "@/components/navigation/OrdersNavButton";
 import "./TabLayout.scss";
 
 const TabLayout = () => {
@@ -108,11 +109,10 @@ const TabLayout = () => {
           <h1 className="sidebar-logo" onClick={() => navigate(paths.home())}>
             Manacity
           </h1>
-          <MiniCart
-            className="w-full"
+          <OrdersNavButton
             showLabel
-            align="start"
-            triggerClassName="w-full justify-start"
+            label="My orders"
+            className="orders-nav-button w-full justify-start"
           />
           <button
             className="sidebar-notifications"

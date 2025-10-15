@@ -4,6 +4,10 @@ const {
   createEvent,
   updateEvent,
   deleteEvent,
+  publishEvent,
+  startEvent,
+  completeEvent,
+  cancelEvent,
 } = require('../controllers/adminEventController');
 const protect = require('../middleware/authMiddleware');
 const isAdmin = require('../middleware/isAdmin');
@@ -18,5 +22,9 @@ router.get('/', listEvents);
 router.post('/', validate(createEventSchema), createEvent);
 router.put('/:id', validate(updateEventSchema), updateEvent);
 router.delete('/:id', deleteEvent);
+router.post('/:id/publish', publishEvent);
+router.post('/:id/start', startEvent);
+router.post('/:id/complete', completeEvent);
+router.post('/:id/cancel', cancelEvent);
 
 module.exports = router;

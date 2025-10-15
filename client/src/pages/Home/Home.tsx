@@ -39,7 +39,7 @@ const Home = () => {
   const products = useSelector((s: RootState) => s.catalog);
 
   const featuredEventsParams = useMemo(
-    () => ({ status: 'upcoming', pageSize: 6 }),
+    () => ({ limit: 4 }),
     [],
   );
   const featuredEventsKey = useMemo(
@@ -156,6 +156,7 @@ const Home = () => {
         type="event"
         onRetry={() => d(fetchEvents(featuredEventsParams))}
         navigate={navigate}
+        linkLabel="See all events"
       />
       <Section
         title="Special Shop Products"

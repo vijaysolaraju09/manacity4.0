@@ -55,8 +55,8 @@ const mapEvent = (event) => ({
   endAt: event.endAt ?? null,
   registrationOpenAt: event.registrationOpenAt,
   registrationCloseAt: event.registrationCloseAt,
-  status: deriveLifecycleStatus(event),
-  lifecycleStatus: event.status,
+  status: event.status,
+  lifecycleStatus: deriveLifecycleStatus(event),
   capacity: event.maxParticipants ?? 0,
   registered: event.registeredCount ?? 0,
   visibility: event.visibility,
@@ -331,6 +331,90 @@ exports.updateEvent = async (req, res, next) => {
       data: mapEvent(event),
       traceId: req.traceId,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.publishEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      throw AppError.notFound('EVENT_NOT_FOUND', 'Event not found');
+    }
+
+    if (event.status !== 'draft') {
+      throw AppError.badRequest('INVALID_STATUS', 'Event cannot be published');
+    }
+
+    if (!event.registrationOpenAt || !event.registrationCloseAt) {
+      throw AppError.badRequest('INVALID_WINDOW', 'Registration window is invalid');
+    }
+
+    if (event.registrationOpenAt >= event.registrationCloseAt) {
+      throw AppError.badRequest('INVALID_WINDOW', 'Registration window is invalid');
+    }
+
+    event.status = 'published';
+    await event.save();
+
+    res.json({ ok: true, data: mapEvent(event), traceId: req.traceId });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.startEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      throw AppError.notFound('EVENT_NOT_FOUND', 'Event not found');
+    }
+
+    if (!['published', 'ongoing'].includes(event.status)) {
+      throw AppError.badRequest('INVALID_STATUS', 'Event cannot be started');
+    }
+
+    event.status = 'ongoing';
+    await event.save();
+
+    res.json({ ok: true, data: mapEvent(event), traceId: req.traceId });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.completeEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      throw AppError.notFound('EVENT_NOT_FOUND', 'Event not found');
+    }
+
+    if (!['published', 'ongoing', 'completed'].includes(event.status)) {
+      throw AppError.badRequest('INVALID_STATUS', 'Event cannot be completed');
+    }
+
+    event.status = 'completed';
+    await event.save();
+
+    res.json({ ok: true, data: mapEvent(event), traceId: req.traceId });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.cancelEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      throw AppError.notFound('EVENT_NOT_FOUND', 'Event not found');
+    }
+
+    event.status = 'canceled';
+    await event.save();
+
+    res.json({ ok: true, data: mapEvent(event), traceId: req.traceId });
   } catch (err) {
     next(err);
   }

@@ -58,7 +58,8 @@ describe('adminEventController', () => {
             expect.objectContaining({
               _id: '1',
               title: 'Launch',
-              status: 'upcoming',
+              status: 'published',
+              lifecycleStatus: 'upcoming',
               capacity: 100,
               registered: 10,
             }),
@@ -110,7 +111,7 @@ describe('adminEventController', () => {
         title: 'Gala',
         maxParticipants: 50,
         createdBy: 'admin-user',
-        status: 'published',
+        status: 'draft',
       });
       expect(payload.startAt).toBeInstanceOf(Date);
       expect(payload.endAt).toBeInstanceOf(Date);
@@ -120,7 +121,8 @@ describe('adminEventController', () => {
         data: expect.objectContaining({
           _id: 'evt1',
           title: 'Gala',
-          status: 'upcoming',
+          status: 'published',
+          lifecycleStatus: 'upcoming',
           capacity: 50,
           startAt: start,
           endAt: end,
@@ -157,6 +159,96 @@ describe('adminEventController', () => {
       expect(next).toHaveBeenCalledWith(expect.any(Error));
       const error = next.mock.calls[0][0];
       expect(error.code).toBe('END_BEFORE_START');
+    });
+  });
+
+  describe('publishEvent', () => {
+    it('publishes a draft event', async () => {
+      const event = {
+        _id: 'evt',
+        status: 'draft',
+        registrationOpenAt: new Date(Date.now() - 3600000),
+        registrationCloseAt: new Date(Date.now() + 3600000),
+        save: jest.fn().mockResolvedValue(),
+      };
+      Event.findById.mockResolvedValue(event);
+
+      const req = { params: { id: 'evt' }, traceId: 'trace' };
+      const res = { json: jest.fn() };
+
+      await controller.publishEvent(req, res, jest.fn());
+
+      expect(event.status).toBe('published');
+      expect(res.json).toHaveBeenCalledWith({
+        ok: true,
+        data: expect.objectContaining({ status: 'published' }),
+        traceId: 'trace',
+      });
+    });
+
+    it('rejects publishing non-draft events', async () => {
+      const event = {
+        _id: 'evt',
+        status: 'published',
+      };
+      Event.findById.mockResolvedValue(event);
+
+      const next = jest.fn();
+
+      await controller.publishEvent({ params: { id: 'evt' } }, { json: jest.fn() }, next);
+
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_STATUS' }));
+    });
+  });
+
+  describe('startEvent', () => {
+    it('transitions published events to ongoing', async () => {
+      const event = { _id: 'evt', status: 'published', save: jest.fn().mockResolvedValue() };
+      Event.findById.mockResolvedValue(event);
+
+      const res = { json: jest.fn() };
+      await controller.startEvent({ params: { id: 'evt' }, traceId: 'trace' }, res, jest.fn());
+
+      expect(event.status).toBe('ongoing');
+      expect(res.json).toHaveBeenCalledWith({
+        ok: true,
+        data: expect.objectContaining({ status: 'ongoing' }),
+        traceId: 'trace',
+      });
+    });
+  });
+
+  describe('completeEvent', () => {
+    it('marks ongoing events as completed', async () => {
+      const event = { _id: 'evt', status: 'ongoing', save: jest.fn().mockResolvedValue() };
+      Event.findById.mockResolvedValue(event);
+
+      const res = { json: jest.fn() };
+      await controller.completeEvent({ params: { id: 'evt' }, traceId: 'trace' }, res, jest.fn());
+
+      expect(event.status).toBe('completed');
+      expect(res.json).toHaveBeenCalledWith({
+        ok: true,
+        data: expect.objectContaining({ status: 'completed' }),
+        traceId: 'trace',
+      });
+    });
+  });
+
+  describe('cancelEvent', () => {
+    it('marks events as canceled', async () => {
+      const event = { _id: 'evt', status: 'published', save: jest.fn().mockResolvedValue() };
+      Event.findById.mockResolvedValue(event);
+
+      const res = { json: jest.fn() };
+      await controller.cancelEvent({ params: { id: 'evt' }, traceId: 'trace' }, res, jest.fn());
+
+      expect(event.status).toBe('canceled');
+      expect(res.json).toHaveBeenCalledWith({
+        ok: true,
+        data: expect.objectContaining({ status: 'canceled' }),
+        traceId: 'trace',
+      });
     });
   });
 

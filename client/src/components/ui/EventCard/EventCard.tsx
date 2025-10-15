@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import fallbackImage from '@/assets/no-image.svg';
-import type { EventSummary } from '@/store/events';
+import type { EventSummary } from '@/types/events';
 import { formatDateTime, formatDate } from '@/utils/date';
 import styles from './EventCard.module.scss';
 

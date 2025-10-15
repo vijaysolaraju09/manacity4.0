@@ -3,7 +3,7 @@ import { http } from "@/lib/http";
 import { toItems, toItem, toErrorMessage } from "@/lib/response";
 import { pickPaise, rupeesToPaise } from "@/utils/currency";
 
-export interface Product {
+export interface Product extends Record<PropertyKey, unknown> {
   _id: string;
   name: string;
   description?: string;

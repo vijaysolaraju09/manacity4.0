@@ -104,7 +104,8 @@ const initialState: CartState = {
 
 const touch = (state: CartState) => {
   state.lastUpdated = Date.now();
-  persistCartItems(state.items);
+  const snapshot = state.items.map((item) => ({ ...item }));
+  persistCartItems(snapshot);
 };
 
 const cartSlice = createSlice({

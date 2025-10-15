@@ -252,16 +252,23 @@ const MiniCart = ({ className, showLabel = false, align = 'end', triggerClassNam
     navigate(paths.cart());
   }, [closePanels, navigate]);
 
-  const triggerLabel = showLabel ? 'Open cart preview' : 'Open cart';
+  const triggerLabel = 'Cart';
 
   const triggerContent = (
     <>
-      <ShoppingCart className="h-5 w-5" aria-hidden="true" />
-      {showLabel ? <span className="ml-2 text-sm font-medium">Cart</span> : null}
+      <ShoppingCart
+        className="h-5 w-5 text-slate-600 transition-colors group-hover:text-slate-900 group-focus-visible:text-slate-900 dark:text-slate-200 dark:group-hover:text-white dark:group-focus-visible:text-white"
+        strokeWidth={1.75}
+        aria-hidden="true"
+      />
+      {showLabel ? (
+        <span className="ml-2 text-sm font-medium text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-200 dark:group-hover:text-white">
+          Cart
+        </span>
+      ) : null}
       <span
-        className="absolute -right-2 -top-1 min-h-[1.25rem] min-w-[1.25rem] rounded-full bg-blue-600 px-1.5 text-center text-xs font-semibold text-white shadow ring-2 ring-white transition dark:bg-blue-500 dark:ring-slate-900"
-        aria-live="polite"
-        aria-atomic="true"
+        className="pointer-events-none absolute right-0 top-0 z-10 flex min-h-[1.25rem] min-w-[1.25rem] -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-blue-600 px-1 text-xs font-semibold text-white shadow ring-2 ring-white transition dark:bg-blue-500 dark:ring-slate-900"
+        aria-hidden="true"
       >
         {count}
       </span>
@@ -272,10 +279,10 @@ const MiniCart = ({ className, showLabel = false, align = 'end', triggerClassNam
   );
 
   const triggerClasses = cn(
-    'relative font-semibold text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:text-slate-200',
+    'group relative inline-flex items-center justify-center font-medium text-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-slate-200 dark:hover:text-white dark:focus-visible:ring-offset-slate-900',
     showLabel
-      ? 'h-10 min-w-[3rem] gap-2 rounded-full bg-slate-100 px-4 py-2 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700'
-      : 'h-10 w-10 rounded-full bg-transparent transition hover:-translate-y-0.5 hover:bg-slate-100 dark:hover:bg-slate-800',
+      ? 'h-10 min-w-[3rem] gap-2 rounded-full bg-slate-100 px-4 py-2 shadow-sm transition-transform duration-150 hover:-translate-y-0.5 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700'
+      : 'h-10 w-10 rounded-full bg-transparent transition-transform duration-150 hover:-translate-y-0.5 hover:bg-slate-100 dark:hover:bg-slate-800',
     triggerClassName,
   );
 

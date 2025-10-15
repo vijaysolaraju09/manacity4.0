@@ -84,8 +84,8 @@ const verificationSchema = z.object({
   bio: z
     .string()
     .trim()
-    .optional()
-    .max(500, 'Bio must be 500 characters or less'),
+    .max(500, 'Bio must be 500 characters or less')
+    .optional(),
   portfolio: z
     .string()
     .trim()
@@ -297,16 +297,22 @@ const Profile = () => {
   };
 
   const handleVerificationSubmit: SubmitHandler<VerificationFormValues> = async (values) => {
+    const profession = typeof values.profession === 'string' ? values.profession : '';
+    const bio = typeof values.bio === 'string' ? values.bio : undefined;
+    const portfolioSource = typeof values.portfolio === 'string' ? values.portfolio : undefined;
+
+    const portfolio = portfolioSource
+      ? portfolioSource
+          .split(',')
+          .map((entry: string) => entry.trim())
+          .filter(Boolean)
+      : undefined;
+
     try {
       await requestVerification({
-        profession: values.profession.trim(),
-        bio: values.bio?.trim() || undefined,
-        portfolio: values.portfolio
-          ? values.portfolio
-              .split(',')
-              .map((entry) => entry.trim())
-              .filter(Boolean)
-          : undefined,
+        profession: profession.trim(),
+        bio: bio?.trim() || undefined,
+        portfolio,
       });
       await refreshSilently();
       showToast('Verification request submitted', 'success');

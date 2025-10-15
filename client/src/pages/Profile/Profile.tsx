@@ -5,8 +5,6 @@ import { z } from 'zod';
 import {
   BadgeCheck,
   BriefcaseBusiness,
-  FileText,
-  Globe,
   Home,
   Mail,
   MapPin,
@@ -133,7 +131,7 @@ interface InfoRowProps {
 }
 
 const InfoRow = ({ icon: Icon, label, value, emptyLabel = 'Not provided' }: InfoRowProps) => (
-  <div className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 text-sm dark:border-slate-700 dark:bg-slate-800/40">
+  <div className="flex items-start gap-3 rounded-xl bg-slate-50/80 p-3 text-sm shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-800/60 dark:ring-slate-700">
     <Icon className="mt-1 h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
     <div className="space-y-1">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -162,13 +160,10 @@ const StatusBadge = ({ children, variant = 'default' }: { children: ReactNode; v
 };
 
 const ProfileSkeleton = () => (
-  <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 lg:py-12">
-    <Skeleton className="h-64 w-full" />
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Skeleton className="h-64 w-full" />
-      <Skeleton className="h-64 w-full" />
-    </div>
-    <Skeleton className="h-48 w-full" />
+  <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
+    <Skeleton className="h-56 w-full rounded-2xl" />
+    <Skeleton className="h-40 w-full rounded-2xl" />
+    <Skeleton className="h-40 w-full rounded-2xl" />
   </div>
 );
 
@@ -376,7 +371,7 @@ const Profile = () => {
 
   if (loadState === 'error') {
     return (
-      <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-16">
+      <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
         <Card className="rounded-2xl">
           <CardContent className="flex flex-col items-start gap-4 p-8 text-left">
             <CardTitle className="flex items-center gap-2 text-xl text-slate-900 dark:text-slate-100">
@@ -399,7 +394,7 @@ const Profile = () => {
 
   if (!user) {
     return (
-      <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-16">
+      <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
         <Card>
           <CardContent className="flex flex-col items-start gap-4 p-8 text-left">
             <CardTitle className="text-xl">No profile information</CardTitle>
@@ -429,73 +424,70 @@ const Profile = () => {
     : 'Light';
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 lg:py-12">
-      <Card>
+    <div className="mx-auto max-w-3xl space-y-6 p-6">
+      <Card className="overflow-hidden">
         <CardHeader className="border-none pb-0">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <UserRoundCog className="h-6 w-6 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-              <div>
-                <CardTitle className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                  Your profile
-                </CardTitle>
-                <CardDescription>Manage how your information appears across Manacity.</CardDescription>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-6 pt-4">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-col items-center gap-4 text-center md:flex-row md:items-center md:gap-6 md:text-left">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-4">
               {user.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
                   alt={`${user.name}'s avatar`}
-                  className="h-24 w-24 rounded-full object-cover ring-4 ring-slate-100 dark:ring-slate-800"
+                  className="h-20 w-20 rounded-full object-cover ring-4 ring-slate-100 dark:ring-slate-800"
                 />
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-100 text-2xl font-semibold text-slate-600 ring-4 ring-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-800">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-xl font-semibold text-slate-600 ring-4 ring-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-800">
                   <span aria-hidden="true">{initials}</span>
                   <span className="sr-only">{user.name} avatar</span>
                 </div>
               )}
               <div className="space-y-2">
-                <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{user.name}</p>
-                <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-slate-600 md:justify-start dark:text-slate-300">
-                  <div className="inline-flex items-center gap-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                  <UserRoundCog className="h-4 w-4" aria-hidden="true" />
+                  <span>Profile overview</span>
+                </div>
+                <CardTitle className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                  {user.name}
+                </CardTitle>
+                <CardDescription className="max-w-md text-base text-slate-600 dark:text-slate-300">
+                  Manage how your information appears across Manacity.
+                </CardDescription>
+                <div className="flex flex-wrap gap-2 text-sm text-slate-600 dark:text-slate-300">
+                  <span className="inline-flex items-center gap-2">
                     <Phone className="h-4 w-4" aria-hidden="true" />
                     {user.phone}
-                  </div>
-                  {user.email && (
-                    <div className="inline-flex items-center gap-2">
+                  </span>
+                  {user.email ? (
+                    <span className="inline-flex items-center gap-2">
                       <Mail className="h-4 w-4" aria-hidden="true" />
                       {user.email}
-                    </div>
-                  )}
+                    </span>
+                  ) : null}
                 </div>
               </div>
             </div>
-            <div className="flex flex-col items-center gap-2 md:items-end">
-              <div className="flex flex-wrap justify-center gap-2 md:justify-end">
+            <div className="flex flex-col items-start gap-3 sm:items-end">
+              <div className="flex flex-wrap justify-end gap-2">
                 <StatusBadge>
                   <UserRound className="h-4 w-4" aria-hidden="true" /> {user.role}
                 </StatusBadge>
-                {user.verificationStatus !== 'none' && (
+                {user.verificationStatus !== 'none' ? (
                   <StatusBadge variant={user.verificationStatus === 'approved' ? 'success' : 'info'}>
                     <BadgeCheck className="h-4 w-4" aria-hidden="true" /> {user.verificationStatus}
                   </StatusBadge>
-                )}
-                {user.businessStatus && user.businessStatus !== 'none' && (
+                ) : null}
+                {user.businessStatus && user.businessStatus !== 'none' ? (
                   <StatusBadge variant={user.businessStatus === 'approved' ? 'success' : 'warning'}>
                     <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" /> {user.businessStatus}
                   </StatusBadge>
-                )}
+                ) : null}
               </div>
-              {quickActions.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2 md:justify-end">
+              {quickActions.length > 0 ? (
+                <div className="flex flex-wrap justify-end gap-2">
                   {quickActions.map((action) => (
                     <Button
                       key={action.label}
+                      type="button"
                       variant="outline"
                       size="sm"
                       className="rounded-xl"
@@ -505,86 +497,53 @@ const Profile = () => {
                     </Button>
                   ))}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <InfoRow icon={Phone} label="Phone" value={user.phone} />
+            <InfoRow icon={Mail} label="Email" value={user.email ?? undefined} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <InfoRow icon={BriefcaseBusiness} label="Profession" value={user.profession} />
+            <InfoRow icon={Sparkles} label="Theme preference" value={themeLabel} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <InfoRow icon={MapPin} label="Location" value={user.location} />
+            <InfoRow icon={Home} label="Address" value={user.address} />
+          </div>
+          <div className="rounded-xl bg-slate-50/80 p-4 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-800/60 dark:ring-slate-700">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Bio</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+              {user.bio || 'Tell customers more about you by adding a short bio.'}
+            </p>
+          </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3 sm:flex-row">
-          <Button className="w-full rounded-xl sm:w-auto" onClick={() => setIsEditOpen(true)}>
+        <CardFooter className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 py-6 dark:border-slate-800 dark:bg-slate-900/60 sm:flex-row sm:justify-end">
+          <Button type="button" className="w-full rounded-xl sm:w-auto" onClick={() => setIsEditOpen(true)}>
             Edit profile
           </Button>
           <Button
-            className="w-full rounded-xl sm:w-auto"
+            type="button"
             variant="secondary"
+            className="w-full rounded-xl sm:w-auto"
             disabled={businessDisabled}
             onClick={() => setIsBusinessOpen(true)}
           >
             {businessButtonLabel}
           </Button>
           <Button
-            className="w-full rounded-xl sm:w-auto"
+            type="button"
             variant="outline"
+            className="w-full rounded-xl sm:w-auto"
             disabled={verificationDisabled}
             onClick={() => setIsVerifyOpen(true)}
           >
             {verificationButtonLabel}
           </Button>
         </CardFooter>
-      </Card>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Sparkles className="h-5 w-5 text-purple-500" aria-hidden="true" />
-              <div>
-                <CardTitle className="text-lg">Personal information</CardTitle>
-                <CardDescription>Details that describe who you are.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <InfoRow icon={UserRound} label="Full name" value={user.name} />
-            <InfoRow icon={BriefcaseBusiness} label="Profession" value={user.profession} />
-            <InfoRow
-              icon={FileText}
-              label="Bio"
-              value={user.bio ? <span className="block text-sm leading-relaxed text-slate-700 dark:text-slate-200">{user.bio}</span> : undefined}
-            />
-            <InfoRow icon={Globe} label="Theme preference" value={themeLabel} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-emerald-500" aria-hidden="true" />
-              <div>
-                <CardTitle className="text-lg">Contact details</CardTitle>
-                <CardDescription>How customers can reach you.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <InfoRow icon={Phone} label="Phone" value={user.phone} />
-            <InfoRow icon={Mail} label="Email" value={user.email ?? undefined} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <MapPin className="h-5 w-5 text-orange-500" aria-hidden="true" />
-            <div>
-              <CardTitle className="text-lg">Address</CardTitle>
-              <CardDescription>Your service area and mailing details.</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2">
-          <InfoRow icon={MapPin} label="Location" value={user.location} />
-          <InfoRow icon={Home} label="Address" value={user.address} />
-        </CardContent>
       </Card>
 
       <ModalSheet open={isEditOpen} onClose={() => setIsEditOpen(false)}>

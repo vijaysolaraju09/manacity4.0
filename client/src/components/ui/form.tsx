@@ -1,6 +1,12 @@
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement } from 'react';
 import type { Control, FieldPath, FieldValues } from 'react-hook-form';
-import { Controller, FormProvider, useFormContext, type ControllerFieldState, type ControllerRenderProps } from 'react-hook-form';
+import {
+  Controller,
+  FormProvider,
+  useFormContext,
+  type ControllerFieldState,
+  type ControllerRenderProps,
+} from 'react-hook-form';
 import type { HTMLAttributes, LabelHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +29,14 @@ export const FormField = <
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 >({ control, name, render }: FormFieldProps<TFieldValues, TName>) => (
-  <Controller control={control} name={name} render={({ field, fieldState }) => render({ field, fieldState })} />
+  <Controller
+    control={control}
+    name={name}
+    render={({ field, fieldState }) => {
+      const element = render({ field, fieldState });
+      return element ?? <></>;
+    }}
+  />
 );
 
 export const FormItem = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (

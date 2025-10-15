@@ -1,22 +1,29 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import EventsSkeleton from '@/components/common/EventsSkeleton';
 import ErrorCard from '@/components/common/ErrorCard';
 import Empty from '@/components/common/Empty';
 import EventCard from '@/components/ui/EventCard/EventCard';
-import { fetchEvents } from '@/store/events';
+import { createEventsQueryKey, fetchEvents } from '@/store/events';
 import type { RootState, AppDispatch } from '@/store';
 import styles from './Events.module.scss';
 
 const Events = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { list } = useSelector((state: RootState) => state.events);
+  const defaultQueryKey = useMemo(() => createEventsQueryKey(), []);
 
   useEffect(() => {
-    if (list.status === 'idle') {
-      dispatch(fetchEvents());
+    if (list.status === 'loading') return;
+
+    if (list.status === 'idle' || list.lastQueryKey !== defaultQueryKey) {
+      const promise = dispatch(fetchEvents());
+      return () => {
+        promise.abort?.();
+      };
     }
-  }, [list.status, dispatch]);
+    return undefined;
+  }, [dispatch, list.status, list.lastQueryKey, defaultQueryKey]);
 
   const items = Array.isArray(list.items) ? list.items : [];
 
@@ -24,7 +31,7 @@ const Events = () => {
     dispatch(fetchEvents());
   };
 
-  if (list.status === 'loading') return <EventsSkeleton />;
+  if (list.status === 'loading' || list.status === 'idle') return <EventsSkeleton />;
   if (list.status === 'failed')
     return (
       <ErrorCard

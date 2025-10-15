@@ -1,6 +1,6 @@
 import './Home.scss';
 import { motion } from 'framer-motion';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import ProductCard from '../../components/ui/ProductCard.tsx';
@@ -9,7 +9,7 @@ import HorizontalCarousel from '../../components/ui/HorizontalCarousel';
 import EmptyState from '../../components/ui/EmptyState';
 import { fetchShops } from '@/store/shops';
 import { fetchVerified } from '@/store/verified';
-import { fetchEvents } from '@/store/events';
+import { createEventsQueryKey, fetchEvents } from '@/store/events';
 import { fetchSpecialProducts } from '@/store/products';
 import { http } from '@/lib/http';
 import { toItems, toErrorMessage } from '@/lib/response';
@@ -38,6 +38,15 @@ const Home = () => {
   const events = useSelector((s: RootState) => s.events.list);
   const products = useSelector((s: RootState) => s.catalog);
 
+  const featuredEventsParams = useMemo(
+    () => ({ status: 'upcoming', pageSize: 6 }),
+    [],
+  );
+  const featuredEventsKey = useMemo(
+    () => createEventsQueryKey(featuredEventsParams),
+    [featuredEventsParams],
+  );
+
   const loadBanners = useCallback(async () => {
     setBannerStatus('loading');
     setBannerError(null);
@@ -63,9 +72,20 @@ const Home = () => {
   useEffect(() => {
     if (shops.status === 'idle') d(fetchShops({ sort: '-createdAt', pageSize: 10 }));
     if (verified.status === 'idle') d(fetchVerified({ pageSize: 10 }));
-    if (events.status === 'idle') d(fetchEvents({ status: 'upcoming', pageSize: 6 }));
     if (products.status === 'idle') d(fetchSpecialProducts({ pageSize: 10 }));
-  }, [shops.status, verified.status, events.status, products.status, d]);
+  }, [shops.status, verified.status, products.status, d]);
+
+  useEffect(() => {
+    if (events.status === 'loading') return;
+
+    if (events.status === 'idle' || events.lastQueryKey !== featuredEventsKey) {
+      const promise = d(fetchEvents(featuredEventsParams));
+      return () => {
+        promise.abort?.();
+      };
+    }
+    return undefined;
+  }, [d, events.status, events.lastQueryKey, featuredEventsKey, featuredEventsParams]);
 
   return (
     <div className="home">
@@ -134,7 +154,7 @@ const Home = () => {
         status={events.status}
         error={events.error}
         type="event"
-        onRetry={() => d(fetchEvents({ status: 'upcoming', pageSize: 6 }))}
+        onRetry={() => d(fetchEvents(featuredEventsParams))}
         navigate={navigate}
       />
       <Section
@@ -174,7 +194,7 @@ const Section = ({
   navigate,
   linkLabel,
 }: SectionProps) => {
-  const loading = status === 'loading';
+  const loading = status === 'loading' || status === 'idle';
   if (loading)
     return (
       <div className="section">

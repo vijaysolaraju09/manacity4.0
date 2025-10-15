@@ -27,6 +27,19 @@
       color: var(--color-muted);
     }
 
+    .location {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin: 0.35rem 0 0;
+      font-size: 0.85rem;
+      color: var(--color-muted);
+
+      svg {
+        flex-shrink: 0;
+      }
+    }
+
     .meta {
       display: flex;
       flex-wrap: wrap;
@@ -55,6 +68,23 @@
       &.closed {
         background: var(--color-danger);
         color: var(--color-on-primary);
+      }
+    }
+
+    .cta {
+      margin-top: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border: none;
+      background: $primary-color;
+      color: var(--color-on-primary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
       }
     }
   }

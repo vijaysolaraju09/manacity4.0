@@ -23,6 +23,7 @@ import fallbackImage from '../../assets/no-image.svg';
 import { formatDateTime } from '@/utils/date';
 import VerifiedCard from '@/components/ui/VerifiedCard/VerifiedCard';
 import { paths } from '@/routes/paths';
+import ShopCard from '@/components/ui/ShopCard/ShopCard';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -106,15 +107,15 @@ const Home = () => {
       </div>
 
       <Section
-        title="Shop Offers"
-        path={paths.products.list()}
+        title="Featured Shops"
+        path={paths.shops()}
         data={shops.items}
         status={shops.status}
         error={shops.error}
-        type="product"
+        type="shop"
         onRetry={() => d(fetchShops({ sort: '-createdAt', pageSize: 10 }))}
         navigate={navigate}
-        linkLabel="See all products"
+        linkLabel="See all shops"
       />
       <Section
         title="Verified Users"
@@ -156,7 +157,7 @@ interface SectionProps {
   data: any[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
-  type: 'product' | 'user' | 'event';
+  type: 'product' | 'user' | 'event' | 'shop';
   onRetry: () => void;
   navigate: ReturnType<typeof useNavigate>;
   linkLabel?: string;
@@ -178,7 +179,13 @@ const Section = ({
     return (
       <div className="section">
         <SectionHeader title={title} onClick={() => navigate(path)} linkLabel={linkLabel} />
-        {type === 'product' ? <ProductsSkeleton /> : type === 'event' ? <EventsSkeleton /> : <ShopsSkeleton />}
+        {type === 'product' ? (
+          <ProductsSkeleton />
+        ) : type === 'event' ? (
+          <EventsSkeleton />
+        ) : (
+          <ShopsSkeleton />
+        )}
       </div>
     );
   if (status === 'failed')
@@ -199,20 +206,50 @@ const Section = ({
     <div className="section">
       <SectionHeader title={title} onClick={() => navigate(path)} linkLabel={linkLabel} />
       <HorizontalCarousel>
-        {data.map((item: any) =>
-          type === 'product' ? (
-            <ProductCard
-              key={item._id}
-              product={item}
-              onClick={() => navigate(paths.products.detail(item._id))}
-            />
-          ) : type === 'user' ? (
-            <VerifiedCard
-              key={item._id}
-              card={item}
-              onClick={() => navigate(paths.verifiedUsers.detail(item._id))}
-            />
-          ) : (
+        {data.map((item: any) => {
+          if (type === 'product') {
+            return (
+              <ProductCard
+                key={item._id}
+                product={item}
+                onClick={() => navigate(paths.products.detail(item._id))}
+              />
+            );
+          }
+
+          if (type === 'user') {
+            return (
+              <VerifiedCard
+                key={item._id}
+                card={item}
+                onClick={() => navigate(paths.verifiedUsers.detail(item._id))}
+              />
+            );
+          }
+
+          if (type === 'shop') {
+            const shopId = item._id ?? item.id;
+            return (
+              <ShopCard
+                key={shopId}
+                shop={{
+                  _id: shopId,
+                  name: item.name,
+                  category: item.category ?? 'Shop',
+                  location: item.location ?? item.address,
+                  image: item.image,
+                  logo: item.logo,
+                  banner: item.banner,
+                  rating: item.ratingAvg ?? item.rating,
+                  distance: item.distance,
+                  isOpen: item.isOpen,
+                }}
+                onClick={() => navigate(paths.shop(shopId))}
+              />
+            );
+          }
+
+          return (
             <motion.div
               key={item._id}
               className="card"
@@ -235,8 +272,8 @@ const Section = ({
                 )}
               </div>
             </motion.div>
-          )
-        )}
+          );
+        })}
       </HorizontalCarousel>
     </div>
   );

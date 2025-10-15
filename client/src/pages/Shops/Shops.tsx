@@ -10,6 +10,7 @@ import styles from "./Shops.module.scss";
 import FacetFilterBar from "../../components/ui/FacetFilterBar/FacetFilterBar";
 import ShopCard from "../../components/ui/ShopCard/ShopCard";
 import useDebounce from "@/hooks/useDebounce";
+import { paths } from "@/routes/paths";
 
 const Shops = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -105,13 +106,15 @@ const Shops = () => {
                 _id: shop._id,
                 name: shop.name,
                 category: shop.category,
+                location: shop.location || shop.address,
                 image: shop.image || undefined,
                 logo: shop.image || undefined,
+                banner: shop.banner || undefined,
                 rating: shop.ratingAvg,
                 distance: shop.distance,
                 isOpen: shop.isOpen,
               }}
-              onClick={() => navigate(`/shops/${shop._id}`)}
+              onClick={() => navigate(paths.shop(shop._id))}
             />
           ))}
       </div>

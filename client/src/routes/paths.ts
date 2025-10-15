@@ -8,6 +8,7 @@ export const paths = {
   profile: () => '/profile',
   settings: () => '/settings',
   shops: () => '/shops',
+  shop: (id: string = ':id') => `/shops/${id}`,
   specialShop: () => '/special-shop',
   voiceOrder: () => '/voice-order',
   verified: () => '/verified',

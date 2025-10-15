@@ -67,6 +67,7 @@ interface EventsState {
     pageSize: number;
     status: 'idle' | 'loading' | 'succeeded' | 'failed';
     error: string | null;
+    lastQueryKey: string;
   };
   detail: {
     item: EventDetail | null;
@@ -80,8 +81,30 @@ interface EventsState {
   };
 }
 
+const DEFAULT_QUERY_KEY = '__default__';
+
+type EventQueryParams = Record<string, any> | undefined;
+
+export const createEventsQueryKey = (params?: EventQueryParams): string => {
+  if (!params || typeof params !== 'object') return DEFAULT_QUERY_KEY;
+  const filtered = Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => [key, value] as const);
+  if (filtered.length === 0) return DEFAULT_QUERY_KEY;
+  filtered.sort(([a], [b]) => (a > b ? 1 : a < b ? -1 : 0));
+  return JSON.stringify(filtered);
+};
+
 const initialState: EventsState = {
-  list: { items: [], total: 0, page: 1, pageSize: 12, status: 'idle', error: null },
+  list: {
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 12,
+    status: 'idle',
+    error: null,
+    lastQueryKey: DEFAULT_QUERY_KEY,
+  },
   detail: { item: null, status: 'idle', error: null },
   registration: { status: 'idle', error: null, data: null },
 };
@@ -158,7 +181,7 @@ const adaptEventDetail = (raw: any): EventDetail | null => {
   };
 };
 
-export const fetchEvents = createAsyncThunk<PaginatedEvents, Record<string, any> | undefined, { rejectValue: string }>(
+export const fetchEvents = createAsyncThunk<PaginatedEvents, EventQueryParams, { rejectValue: string }>(
   'events/fetchAll',
   async (params = {}, { rejectWithValue }) => {
     try {
@@ -226,9 +249,10 @@ const eventsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchEvents.pending, (state) => {
+      .addCase(fetchEvents.pending, (state, action) => {
         state.list.status = 'loading';
         state.list.error = null;
+        state.list.lastQueryKey = createEventsQueryKey(action.meta.arg);
       })
       .addCase(fetchEvents.fulfilled, (state, action) => {
         state.list.status = 'succeeded';
@@ -236,10 +260,12 @@ const eventsSlice = createSlice({
         state.list.total = action.payload.total;
         state.list.page = action.payload.page;
         state.list.pageSize = action.payload.pageSize;
+        state.list.lastQueryKey = createEventsQueryKey(action.meta.arg);
       })
       .addCase(fetchEvents.rejected, (state, action) => {
         state.list.status = 'failed';
         state.list.error = action.payload || action.error.message || 'Failed to load events';
+        state.list.lastQueryKey = createEventsQueryKey(action.meta.arg);
       })
       .addCase(fetchEventById.pending, (state) => {
         state.detail.status = 'loading';

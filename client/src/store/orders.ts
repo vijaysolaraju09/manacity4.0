@@ -6,6 +6,7 @@ import {
 } from '@reduxjs/toolkit';
 import { http } from '@/lib/http';
 import { toItems, toItem, toErrorMessage } from '@/lib/response';
+import { toPaise as ensurePaise, rupeesToPaise } from '@/utils/currency';
 import type { RootState } from './index';
 
 export type OrderStatus =
@@ -28,17 +29,17 @@ export interface OrderItem {
   title: string;
   image?: string;
   qty: number;
-  unitPrice: number;
-  subtotal: number;
+  unitPricePaise: number;
+  subtotalPaise: number;
   options?: Record<string, unknown> | null;
 }
 
 export interface OrderTotals {
-  items: number;
-  discount: number;
-  tax: number;
-  shipping: number;
-  grand: number;
+  itemsPaise: number;
+  discountPaise: number;
+  taxPaise: number;
+  shippingPaise: number;
+  grandPaise: number;
 }
 
 export interface OrderParty {
@@ -100,15 +101,14 @@ const toIsoString = (value: unknown): string => {
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
 };
 
-const toRupees = (value: unknown): number => {
-  const num = Number(value);
-  if (!Number.isFinite(num)) return 0;
-  return Math.round(num) / 100;
+const toPositivePaise = (value: unknown): number => {
+  const raw = ensurePaise(value);
+  return Number.isFinite(raw) ? Math.max(0, raw) : 0;
 };
 
-const toNumber = (value: unknown): number => {
-  const num = Number(value);
-  return Number.isFinite(num) ? num : 0;
+const fromRupeesToPaise = (value: unknown): number => {
+  const raw = rupeesToPaise(value);
+  return Number.isFinite(raw) ? Math.max(0, raw) : 0;
 };
 
 const resolveId = (value: unknown): string | undefined => {
@@ -140,12 +140,17 @@ export const normalizeOrder = (input: any): Order => {
     ? input.items.map((item: any, index: number): OrderItem => {
         const rawQty = Number(item.qty ?? item.quantity ?? 0);
         const qty = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 1;
-        const unitPrice = usesPaise
-          ? toRupees(item.unitPrice ?? item.price ?? 0)
-          : toNumber(item.unitPrice ?? item.price ?? 0);
-        const subtotal = usesPaise
-          ? toRupees(item.subtotal ?? item.total ?? unitPrice * qty)
-          : toNumber(item.subtotal ?? item.total ?? unitPrice * qty);
+        const unitPricePaise = usesPaise
+          ? toPositivePaise(item.unitPrice ?? item.price ?? 0)
+          : fromRupeesToPaise(item.unitPrice ?? item.price ?? 0);
+        const subtotalCandidate = item.subtotal ?? item.total;
+        const subtotalPaise = usesPaise
+          ? subtotalCandidate !== undefined
+            ? toPositivePaise(subtotalCandidate)
+            : unitPricePaise * qty
+          : subtotalCandidate !== undefined
+          ? fromRupeesToPaise(subtotalCandidate)
+          : unitPricePaise * qty;
         return {
           id: resolveId(item._id ?? item.id) ?? `${id}-item-${index}`,
           productId:
@@ -161,8 +166,8 @@ export const normalizeOrder = (input: any): Order => {
             item.image ||
             undefined,
           qty,
-          unitPrice,
-          subtotal,
+          unitPricePaise,
+          subtotalPaise,
           options: item.options || null,
         };
       })
@@ -170,18 +175,22 @@ export const normalizeOrder = (input: any): Order => {
 
   const totals: OrderTotals = usesPaise
     ? {
-        items: toRupees(input.itemsTotal),
-        discount: toRupees(input.discountTotal),
-        tax: toRupees(input.taxTotal),
-        shipping: toRupees(input.shippingFee),
-        grand: toRupees(input.grandTotal),
+        itemsPaise: toPositivePaise(input.itemsTotal),
+        discountPaise: toPositivePaise(input.discountTotal),
+        taxPaise: toPositivePaise(input.taxTotal),
+        shippingPaise: toPositivePaise(input.shippingFee),
+        grandPaise: toPositivePaise(input.grandTotal),
       }
     : {
-        items: toNumber(input.totals?.subtotal ?? input.itemsTotal),
-        discount: toNumber(input.totals?.discount ?? input.discountTotal),
-        tax: toNumber(input.totals?.tax ?? input.totals?.taxes ?? input.taxTotal),
-        shipping: toNumber(input.totals?.shipping ?? input.totals?.fee ?? input.shippingFee),
-        grand: toNumber(input.totals?.total ?? input.totals?.grand ?? input.grandTotal),
+        itemsPaise: fromRupeesToPaise(input.totals?.subtotal ?? input.itemsTotal),
+        discountPaise: fromRupeesToPaise(input.totals?.discount ?? input.discountTotal),
+        taxPaise: fromRupeesToPaise(input.totals?.tax ?? input.totals?.taxes ?? input.taxTotal),
+        shippingPaise: fromRupeesToPaise(
+          input.totals?.shipping ?? input.totals?.fee ?? input.shippingFee,
+        ),
+        grandPaise: fromRupeesToPaise(
+          input.totals?.total ?? input.totals?.grand ?? input.grandTotal,
+        ),
       };
 
   const userSnapshot = input.userSnapshot || input.customer || input.customerDetails || {};

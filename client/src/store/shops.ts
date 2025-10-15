@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { http } from "@/lib/http";
 import { toItems, toItem, toErrorMessage } from "@/lib/response";
+import { pickPaise, rupeesToPaise } from "@/utils/currency";
 
 export interface Shop {
   id: string;
@@ -26,7 +27,7 @@ export interface Shop {
 interface Product {
   _id: string;
   name: string;
-  price: number;
+  pricePaise: number;
   image?: string;
   available?: boolean;
 }
@@ -51,6 +52,68 @@ const initial: St<Shop> = {
   products: [],
 };
 
+const sanitizePaise = (value: unknown): number => {
+  const raw = pickPaise(value);
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return Math.max(0, Math.round(raw));
+  }
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : 0;
+};
+
+const normalizeShopProduct = (input: any): Product => {
+  if (!input) {
+    throw new Error("Invalid shop product");
+  }
+
+  const pricePaise = sanitizePaise(
+    pickPaise(
+      input.pricePaise,
+      input.priceInPaise,
+      input.price_in_paise,
+      typeof input.price === "number" ? rupeesToPaise(input.price) : undefined,
+    ) ?? rupeesToPaise(typeof input.price === "number" ? input.price : 0),
+  );
+
+  const normalized: Product & Record<string, unknown> = {
+    ...input,
+    _id: String(input._id ?? input.id ?? ""),
+    name: String(input.name ?? input.title ?? "Product"),
+    pricePaise,
+    image: typeof input.image === "string" ? input.image : undefined,
+    available: typeof input.available === "boolean" ? input.available : undefined,
+  };
+
+  delete normalized.price;
+  delete normalized.pricePaise;
+  delete normalized.priceInPaise;
+  delete normalized.price_in_paise;
+
+  normalized.pricePaise = pricePaise;
+
+  return normalized;
+};
+
+const normalizeShop = (input: any): Shop => {
+  if (!input) {
+    throw new Error("Invalid shop payload");
+  }
+
+  const products = Array.isArray(input.products)
+    ? (input.products.map((product: any) => normalizeShopProduct(product)) as Product[])
+    : undefined;
+
+  const normalized: Shop & Record<string, unknown> = {
+    ...input,
+    _id: String(input._id ?? input.id ?? ""),
+    id: String(input.id ?? input._id ?? ""),
+    name: String(input.name ?? input.title ?? "Shop"),
+    products,
+  };
+
+  return normalized;
+};
+
 export const fetchShops = createAsyncThunk(
   "shops/fetchAll",
   async (
@@ -64,7 +127,8 @@ export const fetchShops = createAsyncThunk(
         p.status = map[p.status] || p.status;
       }
       const res = await http.get("/shops", { params: p });
-      return toItems(res) as Shop[];
+      const items = toItems(res) as any[];
+      return items.map(normalizeShop);
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }
@@ -76,7 +140,7 @@ export const fetchShopById = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       const res = await http.get(`/shops/${id}`);
-      return toItem(res) as Shop;
+      return normalizeShop(toItem(res));
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }
@@ -88,7 +152,8 @@ export const fetchProductsByShop = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       const res = await http.get(`/shops/${id}/products`);
-      return { id, items: toItems(res) };
+      const items = toItems(res) as any[];
+      return { id, items: items.map((product) => normalizeShopProduct(product)) };
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }

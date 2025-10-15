@@ -109,7 +109,7 @@ const MyOrders = () => {
           productId: String(productId),
           shopId: String(order.shop.id),
           name: item.title,
-          pricePaise: Math.max(0, Math.round(item.unitPrice * 100)),
+          pricePaise: Math.max(0, item.unitPricePaise),
           qty,
           image: item.image || undefined,
         }),
@@ -211,7 +211,7 @@ const MyOrders = () => {
                       date={order.createdAt}
                       status={order.status}
                       quantity={quantity}
-                      total={order.totals.grand}
+                      totalPaise={order.totals.grandPaise}
                       onCancel={canCancel ? () => handleCancel(order) : undefined}
                       onReorder={() => handleReorder(order)}
                       className={styles.card}

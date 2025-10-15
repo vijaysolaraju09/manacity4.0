@@ -1,10 +1,11 @@
+import { formatINR } from '@/utils/currency';
 import ModalSheet from '../../base/ModalSheet';
 import styles from './VoiceConfirmSheet.module.scss';
 
 interface Product {
   _id: string;
   name: string;
-  price: number;
+  pricePaise: number;
 }
 
 interface Shop {
@@ -29,7 +30,7 @@ const VoiceConfirmSheet = ({ open, item, loading, onClose, onConfirm }: Props) =
           {item.product.name} × {item.quantity}
         </p>
         <p className={styles.shop}>{item.shop.name}</p>
-        <p className={styles.price}>₹{item.product.price * item.quantity}</p>
+        <p className={styles.price}>{formatINR(item.product.pricePaise * item.quantity)}</p>
         <div className={styles.actions}>
           <button onClick={onConfirm} disabled={loading}>
             {loading ? 'Placing…' : 'Place Order'}

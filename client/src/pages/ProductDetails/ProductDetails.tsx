@@ -83,9 +83,9 @@ const ProductDetails = () => {
 
       <h1 className="title">{product.name}</h1>
       <PriceBlock
-        price={product.price}
-        mrp={product.mrp}
-        discount={product.discount}
+        pricePaise={product.pricePaise}
+        mrpPaise={product.mrpPaise}
+        discountPercent={product.discountPercent}
         className="price-block"
       />
 

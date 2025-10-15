@@ -9,11 +9,12 @@ import styles from './VoiceOrder.module.scss';
 import showToast from '../../components/ui/Toast';
 import VoiceConfirmSheet from '../../components/ui/ModalSheet/VoiceConfirmSheet';
 import { createOrder } from '@/api/orders';
+import { formatINR } from '@/utils/currency';
 
 interface Product {
   _id: string;
   name: string;
-  price: number;
+  pricePaise: number;
   image?: string;
 }
 
@@ -166,7 +167,7 @@ const VoiceOrder = () => {
           <motion.div key={m.product._id} className={styles['product-card']} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <h4>{m.product.name}</h4>
             <p>Qty: {m.quantity}</p>
-            <p>₹{m.product.price}</p>
+            <p>{formatINR(m.product.pricePaise)}</p>
             <p>{m.shop.name}</p>
             <button onClick={() => openConfirm(m)}>Order</button>
           </motion.div>

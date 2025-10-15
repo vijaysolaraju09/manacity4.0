@@ -5,7 +5,7 @@ import styles from './OrderLineItem.module.scss';
 export interface OrderLineItemProps {
   image?: string;
   title: string;
-  price: number;
+  pricePaise: number;
   quantity: number;
   onQuantityChange: (q: number) => void;
   onRemove: () => void;
@@ -14,7 +14,7 @@ export interface OrderLineItemProps {
 const OrderLineItem = ({
   image,
   title,
-  price,
+  pricePaise,
   quantity,
   onQuantityChange,
   onRemove,
@@ -23,7 +23,7 @@ const OrderLineItem = ({
     {image && <img src={image} alt={title} />}
     <div className={styles.info}>
       <h4 className={styles.title}>{title}</h4>
-      <PriceBlock price={price} />
+      <PriceBlock pricePaise={pricePaise} />
     </div>
     <div className={styles.actions}>
       <QuantityStepper value={quantity} onChange={onQuantityChange} />

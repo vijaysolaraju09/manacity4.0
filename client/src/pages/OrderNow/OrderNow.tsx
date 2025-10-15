@@ -10,11 +10,12 @@ import Loader from '../../components/Loader';
 import showToast from '../../components/ui/Toast';
 import styles from './OrderNow.module.scss';
 import { createOrder } from '@/api/orders';
+import { formatINR } from '@/utils/currency';
 
 interface Product {
   _id: string;
   name: string;
-  price: number;
+  pricePaise: number;
   image?: string;
 }
 
@@ -107,8 +108,8 @@ const OrderNow = () => {
     }
   };
 
-  const total = matched.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
+  const totalPaise = matched.reduce(
+    (sum, item) => sum + item.product.pricePaise * item.quantity,
     0
   );
 
@@ -181,7 +182,7 @@ const OrderNow = () => {
           >
             <h4>{m.product.name}</h4>
             <p>Qty: {m.quantity}</p>
-            <p>₹{m.product.price}</p>
+            <p>{formatINR(m.product.pricePaise)}</p>
             <p>{m.shop.name}</p>
           </motion.div>
         ))}
@@ -197,10 +198,10 @@ const OrderNow = () => {
           <div key={m.product._id} className={styles['product-card']}>
             <h4>{m.product.name}</h4>
             <p>Qty: {m.quantity}</p>
-            <p>₹{m.product.price * m.quantity}</p>
+            <p>{formatINR(m.product.pricePaise * m.quantity)}</p>
           </div>
         ))}
-        <p>Total: ₹{total}</p>
+        <p>Total: {formatINR(totalPaise)}</p>
         <button onClick={placeOrder} disabled={placing}>
           {placing ? <Loader /> : 'Place Order'}
         </button>

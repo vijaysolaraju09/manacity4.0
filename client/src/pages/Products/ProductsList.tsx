@@ -7,6 +7,7 @@ import ErrorCard from '@/components/ui/ErrorCard';
 import { http } from '@/lib/http';
 import { toErrorMessage, toItems } from '@/lib/response';
 import { paths } from '@/routes/paths';
+import { normalizeProduct } from '@/store/products';
 import styles from './ProductsList.module.scss';
 
 interface Product extends ProductCardProduct {
@@ -64,9 +65,16 @@ const getShopName = (product: Product): string => {
 };
 
 const getDiscount = (product: Product): number => {
-  if (typeof product.discount === 'number') return product.discount;
-  if (typeof product.mrp === 'number' && product.mrp > 0) {
-    return Math.round(((product.mrp - product.price) / product.mrp) * 100);
+  if (typeof product.discountPercent === 'number') return product.discountPercent;
+  if (typeof product.mrpPaise === 'number' && product.mrpPaise > 0) {
+    return Math.max(
+      0,
+      Math.round(
+        ((Math.max(0, product.mrpPaise) - Math.max(0, product.pricePaise)) /
+          Math.max(1, product.mrpPaise)) *
+          100,
+      ),
+    );
   }
   return 0;
 };
@@ -135,8 +143,8 @@ const ProductsList = () => {
           signal: controller.signal,
         });
         if (!active) return;
-        const data = (toItems(response) ?? []) as Product[];
-        setItems(data);
+        const rawItems = (toItems(response) ?? []) as any[];
+        setItems(rawItems.map((item) => normalizeProduct(item) as Product));
         setStatus('succeeded');
       } catch (err: any) {
         if (!active) return;
@@ -194,10 +202,10 @@ const ProductsList = () => {
     const sorted = [...filtered];
     switch (sort) {
       case 'priceAsc':
-        sorted.sort((a, b) => a.price - b.price);
+        sorted.sort((a, b) => a.pricePaise - b.pricePaise);
         break;
       case 'priceDesc':
-        sorted.sort((a, b) => b.price - a.price);
+        sorted.sort((a, b) => b.pricePaise - a.pricePaise);
         break;
       case 'discountDesc':
         sorted.sort((a, b) => getDiscount(b) - getDiscount(a));

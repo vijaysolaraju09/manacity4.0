@@ -6,9 +6,9 @@ export interface Product {
   id: string;
   title: string;
   image: string;
-  price: number;
-  mrp?: number;
-  discount?: number;
+  pricePaise: number;
+  mrpPaise?: number;
+  discountPercent?: number;
 }
 
 interface ProductCardProps {
@@ -46,14 +46,20 @@ const ProductCard = ({ product, ctaLabel, onCtaClick, onClick, className = '' }:
           width={300}
           height={400}
         />
-        {product.discount && <span className={styles.badge}>{product.discount}% OFF</span>}
+        {product.discountPercent && (
+          <span className={styles.badge}>{product.discountPercent}% OFF</span>
+        )}
         <div className={styles.wishlist}>
           <WishlistHeart />
         </div>
       </div>
       <div className={styles.info}>
         <h4>{product.title}</h4>
-        <PriceBlock price={product.price} mrp={product.mrp} discount={product.discount} />
+        <PriceBlock
+          pricePaise={product.pricePaise}
+          mrpPaise={product.mrpPaise}
+          discountPercent={product.discountPercent}
+        />
       </div>
       <button
         type="button"

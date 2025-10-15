@@ -8,19 +8,10 @@ const { notifyUser } = require('../services/notificationService');
 // Helpers
 // ---------------------------------------------------------------------------
 const allowedTransitions = {
-  draft: ['pending', 'cancelled'],
-  pending: ['accepted', 'cancelled'],
-  accepted: ['confirmed', 'preparing', 'cancelled'],
-  placed: ['accepted', 'confirmed', 'cancelled'],
-  confirmed: ['preparing', 'cancelled'],
-  preparing: ['ready', 'cancelled'],
-  ready: ['out_for_delivery', 'cancelled'],
-  out_for_delivery: ['delivered', 'cancelled'],
-  delivered: ['completed', 'returned'],
-  completed: [],
-  cancelled: [],
-  returned: [],
+  pending: ['accepted', 'rejected'],
 };
+
+const ownerRoles = new Set(['owner', 'business']);
 
 function toPaise(value) {
   return Math.round(Number(value) * 100);
@@ -473,26 +464,34 @@ exports.updateOrderStatus = async (req, res, next) => {
     if (!order) throw AppError.notFound('ORDER_NOT_FOUND', 'Order not found');
     const shop = await Shop.findById(order.shop).select('owner').lean();
     const isShopOwner = shop && shop.owner.toString() === req.user._id.toString();
-    const isAdmin = req.user.role === 'admin';
-    if (!isShopOwner && !isAdmin) {
+    const role = typeof req.user.role === 'string' ? req.user.role.toLowerCase() : '';
+    if (!isShopOwner || !ownerRoles.has(role)) {
       throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized');
     }
+    const nextStatus = typeof status === 'string' ? status.toLowerCase() : '';
     const allowed = allowedTransitions[order.status] || [];
-    if (!allowed.includes(status)) {
+    if (!allowed.includes(nextStatus)) {
       throw AppError.badRequest('INVALID_STATUS', 'Invalid status transition');
     }
-    order.status = status;
+    order.status = nextStatus;
     order.timeline.push({
       at: new Date(),
-      by: isAdmin ? 'admin' : 'shop',
-      status,
+      by: 'shop',
+      status: nextStatus,
       note,
     });
+    if (nextStatus === 'rejected') {
+      order.cancel = {
+        by: 'shop',
+        reason: note,
+        at: new Date(),
+      };
+    }
     await order.save();
     const code = orderCode(order);
     await notifyUser(order.user, {
       type: 'order',
-      message: `Order ${code || ''} is now ${statusLabel(status)}.`,
+      message: `Order ${code || ''} is now ${statusLabel(nextStatus)}.`,
     });
     res.json({ ok: true, data: { order }, traceId: req.traceId });
   } catch (err) {

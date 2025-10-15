@@ -110,10 +110,9 @@ const VoiceOrder = () => {
         items: [
           {
             productId: confirmItem.product._id,
-            qty: confirmItem.quantity,
+            quantity: confirmItem.quantity,
           },
         ],
-        paymentMethod: 'COD',
       });
       showToast('Order placed');
       setConfirmOpen(false);

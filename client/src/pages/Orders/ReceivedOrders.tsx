@@ -25,15 +25,10 @@ const statusOptions: (OrderStatus | 'all')[] = [
   'draft',
   'pending',
   'placed',
-  'confirmed',
   'accepted',
-  'preparing',
-  'ready',
-  'out_for_delivery',
-  'delivered',
-  'completed',
+  'rejected',
   'cancelled',
-  'returned',
+  'completed',
 ];
 
 const statusDisplay: Record<OrderStatus | 'all', string> = {
@@ -41,33 +36,11 @@ const statusDisplay: Record<OrderStatus | 'all', string> = {
   draft: 'Draft',
   pending: 'Pending',
   placed: 'Placed',
-  confirmed: 'Confirmed',
   accepted: 'Accepted',
-  preparing: 'Preparing',
-  ready: 'Ready',
-  out_for_delivery: 'Out for delivery',
-  delivered: 'Delivered',
+  rejected: 'Rejected',
   completed: 'Completed',
   cancelled: 'Cancelled',
-  returned: 'Returned',
 };
-
-const nextStatusMap: Partial<Record<OrderStatus, { status: OrderStatus; label: string }>> = {
-  confirmed: { status: 'preparing', label: 'Start preparing' },
-  accepted: { status: 'preparing', label: 'Start preparing' },
-  preparing: { status: 'ready', label: 'Mark ready' },
-  ready: { status: 'out_for_delivery', label: 'Out for delivery' },
-  out_for_delivery: { status: 'delivered', label: 'Mark delivered' },
-  delivered: { status: 'completed', label: 'Mark completed' },
-};
-
-const shopCancellable = new Set<OrderStatus>([
-  'accepted',
-  'confirmed',
-  'preparing',
-  'ready',
-  'out_for_delivery',
-]);
 
 const ReceivedOrders = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -105,36 +78,27 @@ const ReceivedOrders = () => {
     dispatch(fetchReceivedOrders());
   };
 
-  const handleUpdateStatus = async (
-    order: Order,
-    status: OrderStatus,
-    options?: { prompt?: string; requirePrompt?: boolean; successMessage?: string },
-  ) => {
-    let note: string | undefined;
-    if (options?.prompt) {
-      const response = window.prompt(options.prompt, '');
-      if (response === null && options.requirePrompt) return;
-      note = response && response.trim() ? response.trim() : undefined;
-    }
+  const handleAccept = async (order: Order) => {
     try {
-      await dispatch(
-        updateOrderStatus({ id: order.id, status, note })
-      ).unwrap();
-      showToast(options?.successMessage ?? 'Order updated', 'success');
+      await dispatch(updateOrderStatus({ id: order.id, status: 'accepted' })).unwrap();
+      showToast('Order accepted', 'success');
     } catch (err) {
       showToast(toErrorMessage(err), 'error');
     }
   };
 
-  const handleAccept = (order: Order) =>
-    handleUpdateStatus(order, 'accepted', { successMessage: 'Order accepted' });
-
-  const handleReject = (order: Order) =>
-    handleUpdateStatus(order, 'cancelled', {
-      prompt: 'Reason for rejecting this order:',
-      requirePrompt: true,
-      successMessage: 'Order rejected',
-    });
+  const handleReject = async (order: Order) => {
+    const reason = window.prompt('Reason for rejecting this order:', '');
+    if (reason === null) return;
+    try {
+      await dispatch(
+        updateOrderStatus({ id: order.id, status: 'rejected', note: reason?.trim() || undefined })
+      ).unwrap();
+      showToast('Order rejected', 'success');
+    } catch (err) {
+      showToast(toErrorMessage(err), 'error');
+    }
+  };
 
   return (
     <div className={styles.receivedOrders}>
@@ -187,9 +151,7 @@ const ReceivedOrders = () => {
               {dayOrders.map((order) => {
                 const orderItems = order.items ?? [];
                 const quantity = orderItems.reduce((total, item) => total + item.qty, 0);
-                const awaitingAcceptance = order.status === 'pending' || order.status === 'placed';
-                const nextAction = nextStatusMap[order.status];
-                const canCancel = shopCancellable.has(order.status);
+                const awaitingAcceptance = order.status === 'pending';
                 const customerName = order.customer.name || 'Customer';
                 const customerPhone = order.customer.phone;
                 return (
@@ -213,7 +175,7 @@ const ReceivedOrders = () => {
                       <button type="button" onClick={() => navigate(paths.orders.detail(order.id))}>
                         View details
                       </button>
-                      {awaitingAcceptance ? (
+                      {awaitingAcceptance && (
                         <>
                           <button type="button" onClick={() => handleAccept(order)}>
                             Accept
@@ -221,35 +183,6 @@ const ReceivedOrders = () => {
                           <button type="button" onClick={() => handleReject(order)}>
                             Reject
                           </button>
-                        </>
-                      ) : (
-                        <>
-                          {nextAction && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleUpdateStatus(order, nextAction.status, {
-                                  prompt: 'Add a note for the customer (optional):',
-                                })
-                              }
-                            >
-                              {nextAction.label}
-                            </button>
-                          )}
-                          {canCancel && order.status !== 'cancelled' && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleUpdateStatus(order, 'cancelled', {
-                                  prompt: 'Reason for cancelling this order:',
-                                  requirePrompt: true,
-                                  successMessage: 'Order cancelled',
-                                })
-                              }
-                            >
-                              Cancel order
-                            </button>
-                          )}
                         </>
                       )}
                     </div>

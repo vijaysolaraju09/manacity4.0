@@ -1,6 +1,7 @@
 import { http } from '@/lib/http';
 import { toItems, toItem } from '@/lib/response';
-import { adaptEventDetail, adaptEventSummary, EventDetail, EventSummary } from '@/types/events';
+import { adaptEventDetail, adaptEventSummary } from '@/types/events';
+import type { EventDetail, EventSummary } from '@/types/events';
 
 export interface PaginatedResult<T> {
   items: T[];

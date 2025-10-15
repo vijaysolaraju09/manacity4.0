@@ -36,10 +36,16 @@ const statusDisplay: Record<OrderStatus | 'all', string> = {
   draft: 'Draft',
   pending: 'Pending',
   placed: 'Placed',
+  confirmed: 'Confirmed',
   accepted: 'Accepted',
   rejected: 'Rejected',
+  preparing: 'Preparing',
+  ready: 'Ready',
+  out_for_delivery: 'Out for delivery',
+  delivered: 'Delivered',
   completed: 'Completed',
   cancelled: 'Cancelled',
+  returned: 'Returned',
 };
 
 const ReceivedOrders = () => {

@@ -8,6 +8,7 @@ import cartReducer, {
   selectItemCount,
   selectSubtotalPaise,
 } from '@/store/slices/cartSlice';
+import type { RootState } from '@/store';
 import { useCartActions } from './useCartActions';
 
 const createStore = () =>
@@ -42,7 +43,7 @@ describe('useCartActions', () => {
       );
     });
 
-    const state = store.getState();
+    const state = store.getState() as RootState;
     const items = selectCartItems(state);
 
     expect(items).toHaveLength(1);
@@ -67,6 +68,6 @@ describe('useCartActions', () => {
     const { result } = renderHook(() => useCartActions(), { wrapper });
 
     expect(() => result.current.addToCart({ price: 99 })).toThrowError();
-    expect(selectCartItems(store.getState())).toHaveLength(0);
+    expect(selectCartItems(store.getState() as RootState)).toHaveLength(0);
   });
 });

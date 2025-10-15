@@ -13,7 +13,7 @@ describe('Sample cart seeder', () => {
     const productId = new mongoose.Types.ObjectId();
     const carts = await seedSampleCarts(userIds, productId);
     expect(carts).toHaveLength(2);
-    expect(carts[0].grandTotal).toBe(100);
+    expect(carts[0].grandTotal).toBe(10000);
   });
 });
 

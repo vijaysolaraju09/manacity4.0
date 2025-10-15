@@ -9,8 +9,8 @@ export async function seedSampleCarts(
   for (const userId of userIds) {
     const cart = new CartModel({
       userId,
-      items: [{ productId, qty: 1, unitPrice: 100 }],
-      currency: 'USD',
+      items: [{ productId, qty: 1, unitPrice: 10000 }],
+      currency: 'INR',
     } as Partial<CartAttrs>);
     await cart.save();
     carts.push(cart);

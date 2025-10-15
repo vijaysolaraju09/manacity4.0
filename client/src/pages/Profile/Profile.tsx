@@ -21,7 +21,16 @@ import ModalSheet from '@/components/base/ModalSheet';
 import showToast from '@/components/ui/Toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, useForm } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useForm,
+} from '@/components/ui/form';
+import type { SubmitHandler } from 'react-hook-form';
 import Input from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -48,18 +57,18 @@ const editProfileSchema = z.object({
   email: z
     .string()
     .trim()
-    .optional()
     .refine((value) => !value || /\S+@\S+\.\S+/.test(value), {
       message: 'Enter a valid email address',
-    }),
-  location: z.string().trim().optional(),
-  address: z.string().trim().optional(),
-  profession: z.string().trim().optional(),
+    })
+    .optional(),
+  location: z.string().trim().max(120, 'Location must be 120 characters or less').optional(),
+  address: z.string().trim().max(120, 'Address must be 120 characters or less').optional(),
+  profession: z.string().trim().max(120, 'Profession must be 120 characters or less').optional(),
   bio: z
     .string()
     .trim()
-    .optional()
-    .max(500, 'Bio must be 500 characters or less'),
+    .max(500, 'Bio must be 500 characters or less')
+    .optional(),
   avatarUrl: z
     .string()
     .trim()
@@ -80,7 +89,6 @@ const verificationSchema = z.object({
   portfolio: z
     .string()
     .trim()
-    .optional()
     .refine(
       (value) =>
         !value ||
@@ -92,7 +100,8 @@ const verificationSchema = z.object({
       {
         message: 'Portfolio URLs must be valid links separated by commas',
       },
-    ),
+    )
+    .optional(),
 });
 
 const businessSchema = z.object({
@@ -267,7 +276,7 @@ const Profile = () => {
     }
   }, [dispatch]);
 
-  const handleEditSubmit = async (values: EditProfileFormValues) => {
+  const handleEditSubmit: SubmitHandler<EditProfileFormValues> = async (values) => {
     try {
       await updateProfile({
         name: values.name.trim(),
@@ -287,7 +296,7 @@ const Profile = () => {
     }
   };
 
-  const handleVerificationSubmit = async (values: VerificationFormValues) => {
+  const handleVerificationSubmit: SubmitHandler<VerificationFormValues> = async (values) => {
     try {
       await requestVerification({
         profession: values.profession.trim(),
@@ -307,7 +316,7 @@ const Profile = () => {
     }
   };
 
-  const handleBusinessSubmit = async (values: BusinessFormValues) => {
+  const handleBusinessSubmit: SubmitHandler<BusinessFormValues> = async (values) => {
     try {
       await requestBusiness({
         name: values.name.trim(),

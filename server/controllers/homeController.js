@@ -298,7 +298,7 @@ exports.getEvents = async (req, res, next) => {
         conditions.push({ status: statusParam });
       }
     } else {
-      conditions.push({ status: { $ne: 'draft' } });
+      conditions.push({ status: { $in: ['published', 'ongoing'] } });
     }
 
     const filter = conditions.length === 1 ? conditions[0] : { $and: conditions };

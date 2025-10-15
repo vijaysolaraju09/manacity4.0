@@ -2,55 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { fetchPublicEvents as fetchPublicEventsApi, fetchPublicEventById } from '@/api/events';
 import { http } from '@/lib/http';
 import { toErrorMessage } from '@/lib/response';
-
-export type EventStatus = 'draft' | 'published' | 'ongoing' | 'completed' | 'canceled';
-export type EventType = 'tournament' | 'activity';
-export type EventFormat =
-  | 'single_elim'
-  | 'double_elim'
-  | 'round_robin'
-  | 'points'
-  | 'single_match'
-  | 'custom';
-
-export interface EventSummary {
-  _id: string;
-  title: string;
-  type: EventType;
-  category: string;
-  format: EventFormat;
-  teamSize: number;
-  maxParticipants: number;
-  registeredCount: number;
-  registrationOpenAt: string;
-  registrationCloseAt: string;
-  startAt: string;
-  endAt?: string | null;
-  status: EventStatus;
-  mode: 'online' | 'venue';
-  venue?: string | null;
-  visibility: 'public' | 'private';
-  bannerUrl?: string | null;
-  lifecycleStatus?: 'upcoming' | 'ongoing' | 'past';
-}
-
-export interface EventDetail extends EventSummary {
-  timezone: string;
-  description: string;
-  rules: string;
-  prizePool?: string | null;
-  coverUrl?: string | null;
-  updatesCount?: number;
-  leaderboardVersion?: number;
-  isRegistrationOpen?: boolean;
-  registration?: EventRegistration | null;
-}
-
-export interface EventRegistration {
-  _id: string;
-  status: 'registered' | 'waitlisted' | 'checked_in' | 'withdrawn' | 'disqualified';
-  teamName?: string;
-}
+import type { EventDetail, EventRegistration, EventSummary } from '@/types/events';
 
 interface PaginatedEvents {
   items: EventSummary[];
@@ -109,90 +61,26 @@ const initialState: EventsState = {
   registration: { status: 'idle', error: null, data: null },
 };
 
-const adaptEventSummary = (raw: any): EventSummary | null => {
-  if (!raw) return null;
-  const lifecycleRaw =
-    typeof raw.lifecycleStatus === 'string'
-      ? raw.lifecycleStatus
-      : typeof raw.lifecycle_status === 'string'
-      ? raw.lifecycle_status
-      : '';
-
-  const summary: EventSummary = {
-    _id: raw._id || raw.id,
-    title: raw.title || '',
-    type: (raw.type as EventType) || 'activity',
-    category: raw.category || 'other',
-    format: (raw.format as EventFormat) || 'single_match',
-    teamSize: Number(raw.teamSize) || 1,
-    maxParticipants: Number(raw.maxParticipants) || 0,
-    registeredCount: Number(raw.registeredCount) || 0,
-    registrationOpenAt: raw.registrationOpenAt || raw.registration_open_at || raw.startAt || new Date().toISOString(),
-    registrationCloseAt: raw.registrationCloseAt || raw.registration_close_at || raw.startAt || new Date().toISOString(),
-    startAt: raw.startAt || raw.start_date || new Date().toISOString(),
-    endAt: raw.endAt || raw.end_date || null,
-    status: (raw.status as EventStatus) || 'draft',
-    mode: raw.mode === 'venue' ? 'venue' : 'online',
-    venue: raw.venue || null,
-    visibility: raw.visibility === 'private' ? 'private' : 'public',
-    bannerUrl: raw.bannerUrl || raw.cover || null,
-  };
-
-  const startTime = Date.parse(summary.startAt);
-  const endTime = summary.endAt ? Date.parse(summary.endAt) : NaN;
-  const normalizedLifecycle = lifecycleRaw.toLowerCase();
-  if (['upcoming', 'ongoing', 'past'].includes(normalizedLifecycle)) {
-    summary.lifecycleStatus = normalizedLifecycle as 'upcoming' | 'ongoing' | 'past';
-  } else {
-    const now = Date.now();
-    if (
-      summary.status === 'completed' ||
-      summary.status === 'canceled' ||
-      (Number.isFinite(endTime) && endTime < now)
-    ) {
-      summary.lifecycleStatus = 'past';
-    } else if (
-      summary.status === 'ongoing' ||
-      (Number.isFinite(startTime) && startTime <= now && (!Number.isFinite(endTime) || endTime >= now))
-    ) {
-      summary.lifecycleStatus = 'ongoing';
-    } else {
-      summary.lifecycleStatus = 'upcoming';
-    }
-  }
-
-  return summary;
-};
-
-const adaptEventDetail = (raw: any): EventDetail | null => {
-  const summary = adaptEventSummary(raw);
-  if (!summary) return null;
-  return {
-    ...summary,
-    timezone: raw.timezone || 'Asia/Kolkata',
-    description: raw.description || '',
-    rules: raw.rules || '',
-    prizePool: raw.prizePool || null,
-    coverUrl: raw.coverUrl || raw.cover || null,
-    updatesCount: raw.updatesCount ?? 0,
-    leaderboardVersion: raw.leaderboardVersion ?? 0,
-    isRegistrationOpen: !!raw.isRegistrationOpen,
-    registration: raw.registration || null,
-  };
-};
-
 export const fetchEvents = createAsyncThunk<PaginatedEvents, EventQueryParams, { rejectValue: string }>(
   'events/fetchAll',
   async (params = {}, { rejectWithValue }) => {
     try {
       const res = await fetchPublicEventsApi(params);
-      const rawItems = Array.isArray(res.items) ? res.items : [];
-      const items = rawItems.map(adaptEventSummary).filter(Boolean) as EventSummary[];
       return {
-        items,
-        total: typeof res.total === 'number' ? res.total : items.length,
+        items: Array.isArray(res.items) ? res.items : [],
+        total:
+          typeof res.total === 'number'
+            ? res.total
+            : Array.isArray(res.items)
+            ? res.items.length
+            : 0,
         page: typeof res.page === 'number' ? res.page : 1,
-        pageSize: typeof res.pageSize === 'number' ? res.pageSize : items.length,
+        pageSize:
+          typeof res.pageSize === 'number'
+            ? res.pageSize
+            : Array.isArray(res.items)
+            ? res.items.length
+            : 0,
       };
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
@@ -204,8 +92,7 @@ export const fetchEventById = createAsyncThunk<EventDetail, string, { rejectValu
   'events/fetchById',
   async (id, { rejectWithValue }) => {
     try {
-      const raw = await fetchPublicEventById(id);
-      const event = adaptEventDetail(raw);
+      const event = await fetchPublicEventById(id);
       if (!event) throw new Error('Invalid event response');
       return event;
     } catch (err) {

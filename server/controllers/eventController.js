@@ -206,11 +206,13 @@ exports.listEvents = async (req, res, next) => {
       to,
       page = 1,
       pageSize = 12,
+      limit: limitParam,
       sort = '-startAt',
     } = req.query;
 
     const pageNumber = Math.max(Number(page) || 1, 1);
-    const limit = Math.max(Math.min(Number(pageSize) || 12, 50), 1);
+    const rawLimit = limitParam ?? pageSize;
+    const limit = Math.max(Math.min(Number(rawLimit) || 12, 50), 1);
     const trimmedQuery = typeof q === 'string' ? q.trim() : '';
 
     const statusTokens = typeof status === 'string'

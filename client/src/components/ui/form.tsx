@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import type { Control, FieldPath, FieldValues } from 'react-hook-form';
 import { Controller, FormProvider, useFormContext, type ControllerFieldState, type ControllerRenderProps } from 'react-hook-form';
 import type { HTMLAttributes, LabelHTMLAttributes } from 'react';
@@ -16,7 +16,7 @@ export type FormFieldProps<
   render: (props: {
     field: ControllerRenderProps<TFieldValues, TName>;
     fieldState: ControllerFieldState;
-  }) => ReactNode;
+  }) => ReactElement | null;
 };
 
 export const FormField = <

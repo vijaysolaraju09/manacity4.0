@@ -6,7 +6,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '@/store';
 import { fetchShopById, fetchProductsByShop } from '@/store/shops';
 import Shimmer from '../../components/Shimmer';
-import ProductCard, { type Product } from '../../components/ui/ProductCard.tsx';
+import ProductCard, {
+  type Product as ProductCardProduct,
+} from '../../components/ui/ProductCard.tsx';
 import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
 import EmptyState from '../../components/ui/EmptyState';
 import OrderModal from '../../components/ui/OrderModal/OrderModal';
@@ -25,7 +27,7 @@ const ShopDetails = () => {
   } = useSelector((s: RootState) => s.shops);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('relevance');
-  const [selected, setSelected] = useState<Product | null>(null);
+  const [selected, setSelected] = useState<ProductCardProduct | null>(null);
   const [orderOpen, setOrderOpen] = useState(false);
   const [tab, setTab] = useState<'all' | 'available'>('all');
 
@@ -42,8 +44,12 @@ const ShopDetails = () => {
     );
     const byTab = tab === 'available' ? bySearch.filter((p) => p.available) : bySearch;
     const sorted = [...byTab];
-    if (sort === 'priceAsc') sorted.sort((a, b) => a.price - b.price);
-    if (sort === 'priceDesc') sorted.sort((a, b) => b.price - a.price);
+    const getPricePaise = (product: any): number => {
+      const value = typeof product.pricePaise === 'number' ? product.pricePaise : 0;
+      return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+    };
+    if (sort === 'priceAsc') sorted.sort((a, b) => getPricePaise(a) - getPricePaise(b));
+    if (sort === 'priceDesc') sorted.sort((a, b) => getPricePaise(b) - getPricePaise(a));
     return sorted;
   }, [products, search, sort, tab]);
 
@@ -155,14 +161,15 @@ const ShopDetails = () => {
           <EmptyState message="No products found" />
         ) : (
           filtered.map((product) => {
+            const cardProduct = buildCardProduct(product);
             const openOrderModal = () => {
-              setSelected(product);
+              setSelected(cardProduct);
               setOrderOpen(true);
             };
             return (
               <ProductCard
                 key={product._id}
-                product={product}
+                product={cardProduct}
                 onClick={openOrderModal}
               />
             );
@@ -180,6 +187,35 @@ const ShopDetails = () => {
       />
     </div>
   );
+};
+
+const buildCardProduct = (product: any): ProductCardProduct => {
+  const pricePaise =
+    typeof product?.pricePaise === 'number' && Number.isFinite(product.pricePaise)
+      ? Math.max(0, Math.round(product.pricePaise))
+      : 0;
+  const mrpPaise =
+    typeof product?.mrpPaise === 'number' && Number.isFinite(product.mrpPaise)
+      ? Math.max(0, Math.round(product.mrpPaise))
+      : undefined;
+  const discountPercent =
+    typeof product?.discountPercent === 'number' && Number.isFinite(product.discountPercent)
+      ? Math.max(0, Math.round(product.discountPercent))
+      : mrpPaise && mrpPaise > 0
+      ? Math.max(
+          0,
+          Math.round(
+            ((Math.max(0, mrpPaise) - Math.max(0, pricePaise)) / Math.max(1, mrpPaise)) * 100,
+          ),
+        )
+      : undefined;
+
+  return {
+    ...product,
+    pricePaise,
+    mrpPaise,
+    discountPercent,
+  } as ProductCardProduct;
 };
 
 export default ShopDetails;

@@ -14,7 +14,7 @@ const sanitizeNumber = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-export const formatINR = (paise: number): string => {
+export const formatINR = (paise: unknown): string => {
   const value = sanitizeNumber(paise);
   const rounded = Math.round(value);
   return INR_FORMATTER.format(rounded / 100);

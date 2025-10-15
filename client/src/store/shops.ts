@@ -84,10 +84,9 @@ const normalizeShopProduct = (input: any): Product => {
     available: typeof input.available === "boolean" ? input.available : undefined,
   };
 
-  delete normalized.price;
-  delete normalized.pricePaise;
-  delete normalized.priceInPaise;
-  delete normalized.price_in_paise;
+  ["price", "pricePaise", "priceInPaise", "price_in_paise"].forEach((key) => {
+    Reflect.deleteProperty(normalized, key);
+  });
 
   normalized.pricePaise = pricePaise;
 

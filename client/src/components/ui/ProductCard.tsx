@@ -6,7 +6,7 @@ import PriceBlock from './PriceBlock';
 import styles from './ProductCard.module.scss';
 import AddToCartButton from './AddToCartButton';
 
-export interface Product {
+export interface Product extends Record<string, unknown> {
   _id: string;
   name: string;
   pricePaise: number;

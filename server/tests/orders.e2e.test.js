@@ -231,6 +231,90 @@ describe('orders API flow', () => {
     expect(listResponse.body.data.items[0].status).toBe('pending');
   });
 
+  it('splits checkout payloads into per-shop orders with paise totals', async () => {
+    productDocs = [
+      {
+        _id: 'prod-1',
+        shop: 'shop-1',
+        name: 'Masala Dosa',
+        price: 120,
+      },
+      {
+        _id: 'prod-2',
+        shop: 'shop-2',
+        name: 'Idli',
+        price: 80,
+      },
+    ];
+
+    const shopMap = {
+      'shop-1': {
+        _id: 'shop-1',
+        owner: 'owner-1',
+        name: 'Udupi Cafe',
+        location: 'MG Road',
+        address: 'MG Road',
+      },
+      'shop-2': {
+        _id: 'shop-2',
+        owner: 'owner-2',
+        name: 'SLV',
+        location: 'Brigade Road',
+        address: 'Brigade Road',
+      },
+    };
+
+    const defaultImpl = Shop.findById.getMockImplementation();
+    Shop.findById.mockImplementation((id) => ({
+      lean: jest.fn().mockResolvedValue(shopMap[id] ?? shopRecord),
+      select: jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue(
+          shopMap[id] ? { owner: shopMap[id].owner } : { owner: shopRecord?.owner },
+        ),
+      }),
+    }));
+
+    const response = await request(app)
+      .post('/orders/checkout')
+      .set('Idempotency-Key', 'checkout-123')
+      .send({
+        items: [
+          { productId: 'prod-1', qty: 2 },
+          { productId: 'prod-2', qty: 1 },
+        ],
+        shippingAddress: {
+          name: 'Alice',
+          address1: 'MG Road',
+          city: 'Bengaluru',
+          state: 'KA',
+          pincode: '560001',
+        },
+        paymentMethod: 'COD',
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.ok).toBe(true);
+    expect(response.body.data.orders).toHaveLength(2);
+    expect(Order.create).toHaveBeenCalledTimes(2);
+
+    const payloads = Order.create.mock.calls.map(([payload]) => payload);
+    expect(payloads).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ shop: 'shop-1', itemsTotal: 24000, grandTotal: 24000 }),
+        expect.objectContaining({ shop: 'shop-2', itemsTotal: 8000, grandTotal: 8000 }),
+      ]),
+    );
+
+    Shop.findById.mockImplementation(
+      defaultImpl || ((id) => ({
+        lean: jest.fn().mockResolvedValue(shopRecord),
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue({ owner: shopRecord?.owner }),
+        }),
+      })),
+    );
+  });
+
   it('allows the shop owner to accept the order and updates the status timeline', async () => {
     await request(app)
       .post('/orders')

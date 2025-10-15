@@ -1,9 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import { useDispatch } from 'react-redux';
-import { http } from '@/lib/http';
-import { toItem, toErrorMessage } from '@/lib/response';
-import { addItem } from '@/store/slices/cartSlice';
-import { buildCartItemPayload } from '@/lib/cart';
+import { toErrorMessage } from '@/lib/response';
+import { useCartActions } from '@/hooks/useCartActions';
 import showToast from './Toast';
 
 type ProductShape = Record<PropertyKey, unknown>;
@@ -31,7 +28,7 @@ const AddToCartButton = ({
   disabled: disabledProp = false,
   onAdd,
 }: AddToCartButtonProps) => {
-  const dispatch = useDispatch();
+  const { addToCart } = useCartActions();
   const [pending, setPending] = useState(false);
 
   const productRecord: ProductShape = (product ?? {}) as ProductShape;
@@ -65,32 +62,9 @@ const AddToCartButton = ({
     if (computedDisabled) return;
 
     const quantity = normalizeQuantity(qty);
-    const basePayload = buildCartItemPayload({
-      product: productRecord as any,
-      quantity,
-    });
-
-    if (!basePayload) {
-      showToast('Unable to add this product to cart. Please try again later.', 'error');
-      return;
-    }
-
     setPending(true);
     try {
-      const res = await http.post('/cart', { productId: basePayload.productId, quantity });
-      const responseItem = toItem(res) as any;
-      const payload = buildCartItemPayload({
-        product: productRecord as any,
-        quantity,
-        responseItem,
-      });
-
-      if (!payload) {
-        showToast('Unable to determine product details. Please try again.', 'error');
-        return;
-      }
-
-      dispatch(addItem(payload));
+      addToCart(productRecord, quantity);
       showToast('Added to cart');
       onAdd?.();
     } catch (err) {

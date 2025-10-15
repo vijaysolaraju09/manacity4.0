@@ -13,9 +13,12 @@ import {
   type UpdateProductPayload,
 } from '../../store/slices/productSlice';
 import Loader from '../../components/Loader';
-import ProductCard from '../../components/ui/ProductCard.tsx';
+import ProductCard, {
+  type Product as ProductCardProduct,
+} from '../../components/ui/ProductCard.tsx';
 import showToast from '../../components/ui/Toast';
 import styles from './ManageProducts.module.scss';
+import { rupeesToPaise } from '@/utils/currency';
 
 type ProductFormState = {
   shopId: string;
@@ -44,6 +47,47 @@ const emptyForm: ProductFormState = {
   category: '',
   imageUrl: '',
   stock: 0,
+};
+
+const ensurePaise = (value: unknown): number | undefined => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+  return Math.max(0, Math.round(value));
+};
+
+const ensurePercent = (value: unknown): number | undefined => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+  return Math.max(0, Math.round(value));
+};
+
+const toCardProduct = (product: Product): ProductCardProduct => {
+  const pricePaise =
+    ensurePaise(product.pricePaise) ??
+    ensurePaise(typeof product.price === 'number' ? rupeesToPaise(product.price) : undefined) ??
+    0;
+
+  const mrpPaise =
+    ensurePaise(product.mrpPaise) ??
+    ensurePaise(typeof (product as any).mrp === 'number' ? rupeesToPaise((product as any).mrp) : undefined);
+
+  const discountPercent =
+    ensurePercent((product as any).discountPercent) ??
+    ensurePercent(product.discount) ??
+    (mrpPaise && mrpPaise > 0
+      ? Math.max(
+          0,
+          Math.round(
+            ((Math.max(0, mrpPaise) - Math.max(0, pricePaise)) / Math.max(1, mrpPaise)) *
+              100,
+          ),
+        )
+      : undefined);
+
+  return {
+    ...product,
+    pricePaise,
+    mrpPaise: mrpPaise ?? undefined,
+    discountPercent: discountPercent ?? undefined,
+  } as ProductCardProduct;
 };
 
 const ManageProducts = () => {
@@ -211,16 +255,19 @@ const ManageProducts = () => {
       )}
       {loading && <p>Loading...</p>}
       <div className={styles.grid}>
-        {items.map((p) => (
-          <div key={p._id} className={styles.cardWrapper}>
-            <ProductCard product={p} showActions={false} />
-            <div className={styles.actions}>
-              <button onClick={() => openEdit(p)}>Edit</button>
-              <button onClick={() => handleDelete(p._id)}>Delete</button>
-            </div>
-          </div>
-        ))}
-      </div>
+        {items.map((p) => {
+          const cardProduct = toCardProduct(p);
+            return (
+              <div key={p._id} className={styles.cardWrapper}>
+                <ProductCard product={cardProduct} showActions={false} />
+                <div className={styles.actions}>
+                  <button onClick={() => openEdit(p)}>Edit</button>
+                  <button onClick={() => handleDelete(p._id)}>Delete</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
       {showModal && (
         <div className={styles.modal}>

@@ -6,7 +6,7 @@ import { addItem } from '@/store/slices/cartSlice';
 import { buildCartItemPayload } from '@/lib/cart';
 import showToast from './Toast';
 
-type ProductShape = Record<string, unknown>;
+type ProductShape = Record<PropertyKey, unknown>;
 
 type AddToCartButtonProps = {
   product: ProductShape | null | undefined;

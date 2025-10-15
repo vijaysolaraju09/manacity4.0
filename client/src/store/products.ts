@@ -109,16 +109,22 @@ export const normalizeProduct = (input: any): Product => {
     isSpecial: typeof input.isSpecial === "boolean" ? input.isSpecial : undefined,
   };
 
-  delete normalized.price;
-  delete normalized.pricePaise;
-  delete normalized.priceInPaise;
-  delete normalized.price_in_paise;
-  delete normalized.mrp;
-  delete normalized.mrpPaise;
-  delete normalized.mrpInPaise;
-  delete normalized.mrp_in_paise;
-  delete normalized.discount;
-  delete normalized.discountPercent;
+  const cleanupKeys = [
+    "price",
+    "pricePaise",
+    "priceInPaise",
+    "price_in_paise",
+    "mrp",
+    "mrpPaise",
+    "mrpInPaise",
+    "mrp_in_paise",
+    "discount",
+    "discountPercent",
+  ];
+
+  cleanupKeys.forEach((key) => {
+    Reflect.deleteProperty(normalized, key);
+  });
 
   normalized.pricePaise = pricePaise;
   normalized.mrpPaise = mrpPaise ?? undefined;

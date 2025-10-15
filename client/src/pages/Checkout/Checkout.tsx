@@ -1,7 +1,17 @@
 import { type ChangeEvent, useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { isAxiosError } from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ClipboardList,
+  Home,
+  MapPin,
+  Pencil,
+  Truck,
+} from 'lucide-react';
 
 import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/button';
@@ -18,8 +28,6 @@ import { toErrorMessage } from '@/lib/response';
 import { selectCartItems, clearCart } from '@/store/slices/cartSlice';
 import { formatINR } from '@/utils/currency';
 import { paths } from '@/routes/paths';
-
-import styles from './Checkout.module.scss';
 
 type CheckoutCartItem = {
   productId: string;
@@ -86,6 +94,15 @@ const toShippingAddress = (payload: AddressPayload | Address) => {
   }
 
   return shipping;
+};
+
+const cardClass =
+  'rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition hover:shadow-md dark:border-slate-800/70 dark:bg-slate-900/70';
+
+const listMotion = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -12 },
 };
 
 const Checkout = () => {
@@ -412,28 +429,40 @@ const Checkout = () => {
   if (checkoutResult) {
     const orderCount = checkoutResult.orders.length;
     return (
-      <main className={styles.checkoutPage} role="main">
-        <section className={styles.successCard} aria-live="polite">
-          <h1 className={styles.successTitle}>Order placed successfully</h1>
-          <p className={styles.successMessage}>
-            We created {orderCount} suborder{orderCount === 1 ? '' : 's'}. Track each shop order below.
-          </p>
+      <main className="min-h-screen bg-slate-50 pb-16 pt-10 dark:bg-slate-950" role="main">
+        <section
+          className="mx-auto flex max-w-3xl flex-col gap-6 rounded-2xl border border-slate-200/80 bg-white/80 p-8 text-center shadow-xl backdrop-blur-sm dark:border-slate-800/70 dark:bg-slate-900/80"
+          aria-live="polite"
+        >
+          <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" aria-hidden="true" />
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Order placed successfully</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              We created {orderCount} suborder{orderCount === 1 ? '' : 's'}. Track each shop order below.
+            </p>
+          </div>
 
-          <ul className={styles.successList}>
+          <ul className="space-y-3 text-left">
             {checkoutResult.orders.map((order) => (
-              <li key={order.id} className={styles.successListItem}>
+              <li
+                key={order.id}
+                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 text-sm shadow-sm transition hover:border-blue-200 hover:shadow-md dark:border-slate-800/70 dark:bg-slate-950/70"
+              >
                 <div>
-                  <span className={styles.successShop}>{order.label}</span>
-                  <span className={styles.successMeta}>Order ID: {order.id}</span>
+                  <span className="block font-semibold text-slate-900 dark:text-white">{order.label}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Order ID: {order.id}</span>
                 </div>
-                <Link className={styles.successLink} to={paths.orders.detail(order.id)}>
+                <Link
+                  className="inline-flex items-center gap-1 rounded-full border border-transparent bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:bg-blue-500 dark:hover:bg-blue-400"
+                  to={paths.orders.detail(order.id)}
+                >
                   View order
                 </Link>
               </li>
             ))}
           </ul>
 
-          <div className={styles.successActions}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Button onClick={() => navigate(paths.orders.mine())}>Go to my orders</Button>
             <Button variant="outline" onClick={handleGoToCart}>
               Continue shopping
@@ -446,138 +475,181 @@ const Checkout = () => {
 
   if (checkoutItems.length === 0) {
     return (
-      <main className={styles.checkoutPage} role="main">
-        <EmptyState
-          title="Your cart is empty"
-          message="Add some items before heading to checkout."
-          ctaLabel="Back to cart"
-          onCtaClick={handleGoToCart}
-        />
+      <main className="min-h-screen bg-slate-50 pb-16 pt-10 dark:bg-slate-950" role="main">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          <EmptyState
+            title="Your cart is empty"
+            message="Add some items before heading to checkout."
+            ctaLabel="Back to cart"
+            onCtaClick={handleGoToCart}
+          />
+        </div>
       </main>
     );
   }
 
   return (
-    <main className={styles.checkoutPage} role="main">
-      <header className={styles.header}>
-        <div>
-          <h1 className={styles.heading}>Checkout</h1>
-          <p className={styles.subheading}>Confirm your delivery details and place your order.</p>
-        </div>
-      </header>
+    <main className="min-h-screen bg-slate-50 pb-16 pt-10 dark:bg-slate-950" role="main">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 sm:px-6">
+        <header className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm dark:border-slate-800/70 dark:bg-slate-900/70">
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Checkout</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Confirm your delivery details and place your order.
+          </p>
+        </header>
 
-      <div className={styles.layout}>
-        <section className={styles.detailsColumn}>
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h2 className={styles.cardTitle}>Delivery address</h2>
-              {isAddressLoading && <span className={styles.cardMeta}>Loading addresses…</span>}
-            </div>
-
-            {addressError && (
-              <p className={styles.inlineError} role="alert">
-                {addressError} You can still provide a new address below.
-              </p>
-            )}
-
-            {addressBookAvailable ? (
-              <div className={styles.addressBook}>
-                {addresses.length > 0 && (
-                  <div className={styles.addressList}>
-                    {addresses.map((address) => (
-                      <label key={address.id} className={styles.addressOption}>
-                        <input
-                          type="radio"
-                          name="checkout-address"
-                          value={address.id}
-                          checked={selectedAddressId === address.id}
-                          onChange={() => setSelectedAddressId(address.id)}
-                        />
-                        <div>
-                          <span className={styles.addressLabel}>{address.label}</span>
-                          <span className={styles.addressLine}>{address.line1}</span>
-                          {address.line2 && <span className={styles.addressLine}>{address.line2}</span>}
-                          <span className={styles.addressLine}>
-                            {address.city}, {address.state} {address.pincode}
-                          </span>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+          <section className="space-y-6" aria-labelledby="delivery-details-heading">
+            <div className={cardClass}>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-white">
+                  <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                  <h2 id="delivery-details-heading" className="text-lg font-semibold">
+                    Delivery address
+                  </h2>
+                </div>
+                {isAddressLoading && (
+                  <span className="text-xs text-slate-400 dark:text-slate-500">Loading addresses…</span>
                 )}
+              </div>
 
-                <label className={styles.addressOption}>
-                  <input
-                    type="radio"
-                    name="checkout-address"
-                    value="new"
-                    checked={selectedAddressId === 'new'}
-                    onChange={() => setSelectedAddressId('new')}
-                  />
-                  <div>
-                    <span className={styles.addressLabel}>Use a new address</span>
-                    <span className={styles.addressLine}>Provide a fresh delivery address for this order.</span>
-                  </div>
-                </label>
+              {addressError && (
+                <p className="rounded-xl border border-red-200/70 bg-red-50/80 p-3 text-sm text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200" role="alert">
+                  {addressError} You can still provide a new address below.
+                </p>
+              )}
 
-                {selectedAddressId === 'new' && (
-                  <div className={styles.addressForm}>
-                    <div className={styles.formField}>
-                      <label htmlFor={fieldId('label')}>Label</label>
+              {addressBookAvailable ? (
+                <div className="space-y-4">
+                  {addresses.length > 0 && (
+                    <div className="grid gap-3">
+                      {addresses.map((address) => (
+                        <label
+                          key={address.id}
+                          className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-4 text-sm shadow-sm transition hover:border-blue-200 hover:shadow-md focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 dark:border-slate-800/70 dark:bg-slate-950/60 dark:hover:border-blue-400/40"
+                        >
+                          <input
+                            type="radio"
+                            name="checkout-address"
+                            value={address.id}
+                            checked={selectedAddressId === address.id}
+                            onChange={() => setSelectedAddressId(address.id)}
+                            className="mt-1 h-4 w-4 rounded-full border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600"
+                          />
+                          <div className="space-y-1">
+                            <span className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+                              <Home className="h-4 w-4" aria-hidden="true" />
+                              {address.label}
+                            </span>
+                            <span className="block text-sm text-slate-600 dark:text-slate-300">{address.line1}</span>
+                            {address.line2 && (
+                              <span className="block text-sm text-slate-600 dark:text-slate-300">{address.line2}</span>
+                            )}
+                            <span className="block text-sm text-slate-600 dark:text-slate-300">
+                              {address.city}, {address.state} {address.pincode}
+                            </span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
+                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-dashed border-slate-300/80 bg-slate-100/60 p-4 text-sm shadow-sm transition hover:border-blue-200 hover:bg-white hover:shadow-md focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 dark:border-slate-700/70 dark:bg-slate-800/60 dark:hover:border-blue-400/40">
+                    <input
+                      type="radio"
+                      name="checkout-address"
+                      value="new"
+                      checked={selectedAddressId === 'new'}
+                      onChange={() => setSelectedAddressId('new')}
+                      className="mt-1 h-4 w-4 rounded-full border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600"
+                    />
+                    <div className="space-y-1">
+                      <span className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+                        <Pencil className="h-4 w-4" aria-hidden="true" />
+                        Use a new address
+                      </span>
+                      <span className="block text-sm text-slate-600 dark:text-slate-300">
+                        Provide a fresh delivery address for this order.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              ) : null}
+
+              {(!addressBookAvailable || selectedAddressId === 'new') && (
+                <div className="mt-6 space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <label htmlFor={fieldId('label')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        Label
+                      </label>
                       <input
                         id={fieldId('label')}
                         type="text"
-                        placeholder="e.g. Home"
                         value={addressForm.label}
                         onChange={handleAddressFieldChange('label')}
+                        autoComplete="address-type"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
                       />
                     </div>
-                    <div className={styles.formField}>
-                      <label htmlFor={fieldId('line1')}>Address line 1</label>
+                    <div className="space-y-1">
+                      <label htmlFor={fieldId('line1')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        Address line 1
+                      </label>
                       <input
                         id={fieldId('line1')}
                         type="text"
-                        placeholder="House number, street"
                         value={addressForm.line1}
                         onChange={handleAddressFieldChange('line1')}
                         autoComplete="address-line1"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
                       />
                     </div>
-                    <div className={styles.formField}>
-                      <label htmlFor={fieldId('line2')}>Address line 2 (optional)</label>
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor={fieldId('line2')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      Address line 2 (optional)
+                    </label>
+                    <input
+                      id={fieldId('line2')}
+                      type="text"
+                      value={addressForm.line2}
+                      onChange={handleAddressFieldChange('line2')}
+                      autoComplete="address-line2"
+                      className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-1">
+                      <label htmlFor={fieldId('city')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        City
+                      </label>
                       <input
-                        id={fieldId('line2')}
+                        id={fieldId('city')}
                         type="text"
-                        placeholder="Apartment, suite"
-                        value={addressForm.line2}
-                        onChange={handleAddressFieldChange('line2')}
-                        autoComplete="address-line2"
+                        value={addressForm.city}
+                        onChange={handleAddressFieldChange('city')}
+                        autoComplete="address-level2"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
                       />
                     </div>
-                    <div className={styles.formRow}>
-                      <div className={styles.formField}>
-                        <label htmlFor={fieldId('city')}>City</label>
-                        <input
-                          id={fieldId('city')}
-                          type="text"
-                          value={addressForm.city}
-                          onChange={handleAddressFieldChange('city')}
-                          autoComplete="address-level2"
-                        />
-                      </div>
-                      <div className={styles.formField}>
-                        <label htmlFor={fieldId('state')}>State</label>
-                        <input
-                          id={fieldId('state')}
-                          type="text"
-                          value={addressForm.state}
-                          onChange={handleAddressFieldChange('state')}
-                          autoComplete="address-level1"
-                        />
-                      </div>
+                    <div className="space-y-1">
+                      <label htmlFor={fieldId('state')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        State
+                      </label>
+                      <input
+                        id={fieldId('state')}
+                        type="text"
+                        value={addressForm.state}
+                        onChange={handleAddressFieldChange('state')}
+                        autoComplete="address-level1"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
+                      />
                     </div>
-                    <div className={styles.formField}>
-                      <label htmlFor={fieldId('pincode')}>PIN code</label>
+                    <div className="space-y-1">
+                      <label htmlFor={fieldId('pincode')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        PIN code
+                      </label>
                       <input
                         id={fieldId('pincode')}
                         type="text"
@@ -586,176 +658,130 @@ const Checkout = () => {
                         value={addressForm.pincode}
                         onChange={handleAddressFieldChange('pincode')}
                         autoComplete="postal-code"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
                       />
                     </div>
                   </div>
-                )}
+                </div>
+              )}
+            </div>
 
-                {addresses.length === 0 && selectedAddressId !== 'new' && (
-                  <p className={styles.addressHint}>
-                    You don’t have any saved addresses yet. Choose “Use a new address” to add one.
-                  </p>
-                )}
+            <div className={cardClass}>
+              <div className="flex items-center gap-2 text-slate-900 dark:text-white">
+                <ClipboardList className="h-5 w-5 text-purple-600 dark:text-purple-400" aria-hidden="true" />
+                <h2 className="text-lg font-semibold">Order review</h2>
+                <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
+                  {totalItemCount} item{totalItemCount === 1 ? '' : 's'} across {shopGroups.length} shop
+                  {shopGroups.length === 1 ? '' : 's'}
+                </span>
               </div>
-            ) : (
-              <div className={styles.addressForm}>
-                <p className={styles.addressHint}>
-                  Enter the delivery address for this order. We’ll include it with your request.
-                </p>
-                <div className={styles.formField}>
-                  <label htmlFor={fieldId('label')}>Label</label>
-                  <input
-                    id={fieldId('label')}
-                    type="text"
-                    placeholder="e.g. Home"
-                    value={addressForm.label}
-                    onChange={handleAddressFieldChange('label')}
-                  />
-                </div>
-                <div className={styles.formField}>
-                  <label htmlFor={fieldId('line1')}>Address line 1</label>
-                  <input
-                    id={fieldId('line1')}
-                    type="text"
-                    placeholder="House number, street"
-                    value={addressForm.line1}
-                    onChange={handleAddressFieldChange('line1')}
-                    autoComplete="address-line1"
-                  />
-                </div>
-                <div className={styles.formField}>
-                  <label htmlFor={fieldId('line2')}>Address line 2 (optional)</label>
-                  <input
-                    id={fieldId('line2')}
-                    type="text"
-                    placeholder="Apartment, suite"
-                    value={addressForm.line2}
-                    onChange={handleAddressFieldChange('line2')}
-                    autoComplete="address-line2"
-                  />
-                </div>
-                <div className={styles.formRow}>
-                  <div className={styles.formField}>
-                    <label htmlFor={fieldId('city')}>City</label>
-                    <input
-                      id={fieldId('city')}
-                      type="text"
-                      value={addressForm.city}
-                      onChange={handleAddressFieldChange('city')}
-                      autoComplete="address-level2"
-                    />
-                  </div>
-                  <div className={styles.formField}>
-                    <label htmlFor={fieldId('state')}>State</label>
-                    <input
-                      id={fieldId('state')}
-                      type="text"
-                      value={addressForm.state}
-                      onChange={handleAddressFieldChange('state')}
-                      autoComplete="address-level1"
-                    />
-                  </div>
-                </div>
-                <div className={styles.formField}>
-                  <label htmlFor={fieldId('pincode')}>PIN code</label>
-                  <input
-                    id={fieldId('pincode')}
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={addressForm.pincode}
-                    onChange={handleAddressFieldChange('pincode')}
-                    autoComplete="postal-code"
-                  />
+
+              <div className="mt-4 space-y-4">
+                <AnimatePresence initial={false}>
+                  {shopGroups.map((group) => (
+                    <motion.section
+                      key={group.shopId}
+                      className="space-y-3 rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md dark:border-slate-800/70 dark:bg-slate-950/60"
+                      initial={listMotion.initial}
+                      animate={listMotion.animate}
+                      exit={listMotion.exit}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      aria-label={group.label}
+                    >
+                      <header className="flex flex-wrap items-center justify-between gap-2">
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{group.label}</h3>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {group.itemCount} item{group.itemCount === 1 ? '' : 's'} · {group.subtotalDisplay}
+                        </span>
+                      </header>
+                      <ul className="space-y-3">
+                        {group.items.map((item) => (
+                          <li
+                            key={item.productId}
+                            className="flex items-start gap-4 rounded-2xl border border-slate-200/60 bg-white/95 p-3 text-sm shadow-sm dark:border-slate-800/60 dark:bg-slate-950/60"
+                          >
+                            <img
+                              src={item.image}
+                              alt=""
+                              loading="lazy"
+                              className="h-16 w-16 shrink-0 rounded-xl border border-slate-200 object-cover shadow-sm dark:border-slate-800"
+                            />
+                            <div className="flex flex-1 flex-col gap-1">
+                              <span className="font-medium text-slate-900 dark:text-white">{item.name}</span>
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                                <span>Qty: {item.qty}</span>
+                                <span>{item.unitPriceDisplay}</span>
+                              </div>
+                            </div>
+                            <span className="font-semibold text-slate-900 dark:text-white">{item.lineTotalDisplay}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.section>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          </section>
+
+          <aside
+            className="space-y-5 rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-slate-800/70 dark:bg-slate-900/80"
+            aria-labelledby="checkout-summary"
+          >
+            <div className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-emerald-500" aria-hidden="true" />
+              <h2 id="checkout-summary" className="text-lg font-semibold text-slate-900 dark:text-white">
+                Order summary
+              </h2>
+            </div>
+
+            <dl className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+              <div className="flex items-center justify-between">
+                <dt>Items ({totalItemCount})</dt>
+                <dd className="font-semibold text-slate-900 dark:text-white">{totalSubtotalDisplay}</dd>
+              </div>
+              <div className="flex items-center justify-between text-slate-400 dark:text-slate-500">
+                <dt>Shipping</dt>
+                <dd>Calculated at delivery</dd>
+              </div>
+              <div className="flex items-center justify-between text-base font-semibold text-slate-900 dark:text-white">
+                <dt>Estimated total</dt>
+                <dd>{totalSubtotalDisplay}</dd>
+              </div>
+            </dl>
+
+            <Button
+              className="w-full rounded-full text-base font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+              onClick={handleConfirmOrder}
+              disabled={!canSubmit}
+              aria-busy={isSubmitting}
+            >
+              {isSubmitting ? 'Placing orders…' : 'Confirm order'}
+            </Button>
+
+            {submitError && (
+              <div className="flex items-start gap-3 rounded-2xl border border-red-200/70 bg-red-50/80 p-4 text-sm text-red-600 shadow-sm dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200" role="alert">
+                <ArrowLeft className="mt-0.5 h-4 w-4" aria-hidden="true" />
+                <div className="flex-1 space-y-2">
+                  <p>{submitError}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleConfirmOrder}
+                    disabled={isSubmitting}
+                    className="rounded-full"
+                  >
+                    Retry
+                  </Button>
                 </div>
               </div>
             )}
-          </div>
 
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h2 className={styles.cardTitle}>Order review</h2>
-              <span className={styles.cardMeta}>
-                {totalItemCount} item{totalItemCount === 1 ? '' : 's'} across {shopGroups.length} shop
-                {shopGroups.length === 1 ? '' : 's'}
-              </span>
-            </div>
-
-            <div className={styles.groupList}>
-              {shopGroups.map((group) => (
-                <section key={group.shopId} className={styles.groupSection} aria-label={group.label}>
-                  <header className={styles.groupHeader}>
-                    <h3 className={styles.groupTitle}>{group.label}</h3>
-                    <span className={styles.groupMeta}>
-                      {group.itemCount} item{group.itemCount === 1 ? '' : 's'} ·{' '}
-                      {group.subtotalDisplay}
-                    </span>
-                  </header>
-                  <ul className={styles.itemList}>
-                    {group.items.map((item) => (
-                      <li key={item.productId} className={styles.itemRow}>
-                        <img src={item.image} alt="" className={styles.itemImage} />
-                        <div className={styles.itemDetails}>
-                          <div className={styles.itemName}>{item.name}</div>
-                          <div className={styles.itemMeta}>
-                            <span>Qty: {item.qty}</span>
-                            <span>{item.unitPriceDisplay}</span>
-                          </div>
-                        </div>
-                        <div className={styles.itemTotal}>{item.lineTotalDisplay}</div>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <aside className={styles.summaryCard}>
-          <h2 className={styles.summaryTitle}>Order summary</h2>
-          <dl className={styles.summaryList}>
-            <div className={styles.summaryRow}>
-              <dt>Items ({totalItemCount})</dt>
-              <dd>{totalSubtotalDisplay}</dd>
-            </div>
-            <div className={styles.summaryRow}>
-              <dt>Shipping</dt>
-              <dd>Calculated at delivery</dd>
-            </div>
-            <div className={styles.summaryTotal}>
-              <dt>Estimated total</dt>
-              <dd>{totalSubtotalDisplay}</dd>
-            </div>
-          </dl>
-
-          <Button
-            className={styles.confirmButton}
-            onClick={handleConfirmOrder}
-            disabled={!canSubmit}
-            aria-busy={isSubmitting}
-          >
-            {isSubmitting ? 'Placing orders…' : 'Confirm order'}
-          </Button>
-
-          {submitError && (
-            <div className={styles.submitError} role="alert">
-              <span>{submitError}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleConfirmOrder}
-                disabled={isSubmitting}
-              >
-                Retry
-              </Button>
-            </div>
-          )}
-
-          <p className={styles.summaryHelp}>
-            Your entire cart will be split into shop-specific orders once this checkout succeeds.
-          </p>
-        </aside>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Your entire cart will be split into shop-specific orders once this checkout succeeds.
+            </p>
+          </aside>
+        </div>
       </div>
     </main>
   );

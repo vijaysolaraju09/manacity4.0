@@ -21,76 +21,67 @@ ordersClient.interceptors.request.use((config) => {
 
 export interface CreateOrderItemInput {
   productId: string;
-  qty?: number;
-  quantity?: number;
-  options?: Record<string, unknown>;
+  quantity: number;
 }
 
 export interface CreateOrderPayload {
   shopId: string;
   items: CreateOrderItemInput[];
-  notes?: string;
-  addressId?: string;
-  fulfillmentType?: 'pickup' | 'delivery';
-  shippingAddress?: Record<string, unknown>;
-  paymentMethod?: string;
-  payment?: { method?: string };
-  idempotencyKey?: string;
 }
 
-export const createOrder = async (
-  payload: CreateOrderPayload,
-): Promise<Order> => {
-  const {
-    shopId,
-    items,
-    notes,
-    addressId,
-    fulfillmentType,
-    shippingAddress,
-    paymentMethod,
-    payment,
-    idempotencyKey,
-  } = payload;
+const toPositiveQuantity = (value: unknown): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 1;
+  const floored = Math.floor(parsed);
+  return floored > 0 ? floored : 1;
+};
 
-  const selectedFulfillmentType = fulfillmentType ?? 'pickup';
-
-  const body: Record<string, unknown> = {
-    shopId,
-    items: items.map(({ productId, qty, quantity, options }) => {
-      const rawQty = qty ?? quantity ?? 1;
-      const numericQty = Number(rawQty);
-      const resolvedQty = Number.isFinite(numericQty) && numericQty > 0 ? numericQty : 1;
-      return {
-        productId,
-        qty: resolvedQty,
-        ...(options ? { options } : {}),
-      };
-    }),
-    fulfillmentType: selectedFulfillmentType,
-  };
-
-  if (notes) body.notes = notes;
-  if (addressId) body.addressId = addressId;
-  if (shippingAddress) body.shippingAddress = shippingAddress;
-
-  const methodSource = paymentMethod ?? payment?.method ?? 'COD';
-  if (typeof methodSource === 'string' && methodSource.trim()) {
-    body.paymentMethod = methodSource.trim();
+export const createOrder = async ({ shopId, items }: CreateOrderPayload): Promise<Order> => {
+  const trimmedShopId = typeof shopId === 'string' ? shopId.trim() : '';
+  if (!trimmedShopId) {
+    throw new Error('Shop is required to place an order');
   }
 
-  if (payment) body.payment = payment;
+  const sanitizedItems = Array.isArray(items)
+    ? items
+        .map(({ productId, quantity }) => {
+          const trimmedProductId = typeof productId === 'string' ? productId.trim() : '';
+          if (!trimmedProductId) {
+            return null;
+          }
+          return {
+            productId: trimmedProductId,
+            quantity: toPositiveQuantity(quantity),
+          };
+        })
+        .filter((entry): entry is CreateOrderItemInput => Boolean(entry))
+    : [];
 
-  const headers = idempotencyKey
-    ? { 'Idempotency-Key': idempotencyKey }
-    : undefined;
+  if (sanitizedItems.length === 0) {
+    throw new Error('At least one product is required to place an order');
+  }
 
-  const response = await ordersClient.post('/orders', body, { headers });
+  const body = {
+    shopId: trimmedShopId,
+    items: sanitizedItems.map(({ productId, quantity }) => ({
+      productId,
+      quantity,
+    })),
+  };
+
+  const response = await ordersClient.post('/orders', body);
   return normalizeOrder(toItem(response));
 };
 
+export interface CheckoutOrderItemInput {
+  productId: string;
+  qty?: number;
+  quantity?: number;
+  options?: Record<string, unknown>;
+}
+
 export interface CheckoutOrdersPayload {
-  items: CreateOrderItemInput[];
+  items: CheckoutOrderItemInput[];
   addressId?: string;
   shippingAddress?: Record<string, unknown>;
   paymentMethod?: string;

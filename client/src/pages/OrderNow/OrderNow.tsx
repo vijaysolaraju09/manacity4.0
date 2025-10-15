@@ -123,10 +123,9 @@ const OrderNow = () => {
             items: [
               {
                 productId: m.product._id,
-                qty: m.quantity,
+                quantity: m.quantity,
               },
             ],
-            paymentMethod: 'COD',
           }),
         ),
       );

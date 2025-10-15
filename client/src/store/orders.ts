@@ -16,6 +16,7 @@ export type OrderStatus =
   | 'placed'
   | 'confirmed'
   | 'accepted'
+  | 'rejected'
   | 'preparing'
   | 'ready'
   | 'out_for_delivery'

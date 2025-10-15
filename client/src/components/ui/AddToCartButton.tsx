@@ -11,7 +11,7 @@ type AddToCartButtonProps = {
   className?: string;
   children?: ReactNode;
   disabled?: boolean;
-  onAdd?: () => void;
+  onAdd?: () => void | boolean | Promise<void | boolean>;
 };
 
 const normalizeQuantity = (value: number | undefined): number => {
@@ -61,12 +61,28 @@ const AddToCartButton = ({
   const handleClick = async () => {
     if (computedDisabled) return;
 
+    try {
+      if (onAdd) {
+        const result = onAdd();
+        if (result instanceof Promise) {
+          const awaited = await result;
+          if (awaited === false) {
+            return;
+          }
+        } else if (result === false) {
+          return;
+        }
+      }
+    } catch (err) {
+      showToast(toErrorMessage(err), 'error');
+      return;
+    }
+
     const quantity = normalizeQuantity(qty);
     setPending(true);
     try {
       addToCart(productRecord, quantity);
       showToast('Added to cart');
-      onAdd?.();
     } catch (err) {
       showToast(toErrorMessage(err), 'error');
     } finally {

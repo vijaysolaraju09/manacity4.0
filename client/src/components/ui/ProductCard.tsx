@@ -25,6 +25,7 @@ interface Props {
   product: Product;
   showActions?: boolean;
   onClick?: () => void;
+  onOrder?: () => void | boolean | Promise<void | boolean>;
   className?: string;
 }
 
@@ -32,6 +33,7 @@ const ProductCard = ({
   product,
   showActions = true,
   onClick,
+  onOrder,
   className = '',
 }: Props) => {
   const computedDiscount =
@@ -85,7 +87,7 @@ const ProductCard = ({
       </div>
       {showActions && (
         <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
-          <AddToCartButton product={product} qty={1} />
+          <AddToCartButton product={product} qty={1} onAdd={onOrder} />
         </div>
       )}
     </motion.div>

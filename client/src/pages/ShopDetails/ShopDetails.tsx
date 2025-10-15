@@ -166,11 +166,16 @@ const ShopDetails = () => {
               setSelected(cardProduct);
               setOrderOpen(true);
             };
+            const handleAddToCart = () => {
+              openOrderModal();
+              return false;
+            };
             return (
               <ProductCard
                 key={product._id}
                 product={cardProduct}
                 onClick={openOrderModal}
+                onOrder={handleAddToCart}
               />
             );
           })

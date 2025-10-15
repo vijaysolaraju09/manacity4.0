@@ -89,41 +89,33 @@ const AppRoutes = () => (
 
       <Route element={<ProtectedRoute />}>
         <Route element={<TabLayout />}>
-          <Route key="home" path="/home" element={<Home />} />
-          <Route key="shops" path="/shops" element={<Shops />} />
-          <Route key="products" path="/products" element={<ProductsList />} />
-          <Route key="verified-list" path="/verified-users" element={<VerifiedList />} />
-          <Route key="events" path="/events" element={<Events />} />
-          <Route key="special-shop" path="/special-shop" element={<SpecialShop />} />
-          <Route key="voice-order" path="/voice-order" element={<VoiceOrder />} />
-          <Route key="order-now" path="/order-now" element={<OrderNow />} />
-          <Route key="notifications" path="/notifications" element={<Notifications />} />
-          <Route key="profile" path="/profile" element={<Profile />} />
-          <Route key="settings" path="/settings" element={<Settings />} />
-          <Route
-            key="manage-products"
-            path="/manage-products"
-            element={<ManageProducts />}
-          />
-          <Route
-            key="orders-received"
-            path="/orders/received"
-            element={<ReceivedOrders />}
-          />
-          <Route key="orders-mine" path="/orders/mine" element={<MyOrders />} />
-          <Route key="orders-service" path="/orders/service" element={<ServiceOrders />} />
+          <Route key="home" path="home" element={<Home />} />
+          <Route key="shops" path="shops" element={<Shops />} />
+          <Route key="products" path="products" element={<ProductsList />} />
+          <Route key="verified-list" path="verified-users" element={<VerifiedList />} />
+          <Route key="events" path="events" element={<Events />} />
+          <Route key="special-shop" path="special-shop" element={<SpecialShop />} />
+          <Route key="voice-order" path="voice-order" element={<VoiceOrder />} />
+          <Route key="order-now" path="order-now" element={<OrderNow />} />
+          <Route key="notifications" path="notifications" element={<Notifications />} />
+          <Route key="profile" path="profile" element={<Profile />} />
+          <Route key="settings" path="settings" element={<Settings />} />
+          <Route key="manage-products" path="manage-products" element={<ManageProducts />} />
+          <Route key="orders-received" path="orders/received" element={<ReceivedOrders />} />
+          <Route key="orders-mine" path="orders/mine" element={<MyOrders />} />
+          <Route key="orders-service" path="orders/service" element={<ServiceOrders />} />
         </Route>
-        <Route key="shop-details" path="/shops/:id" element={<ShopDetails />} />
-        <Route key="product-details" path="/product/:id" element={<ProductDetails />} />
-        <Route key="event-details" path="/events/:id" element={<EventDetails />} />
+        <Route key="shop-details" path="shops/:id" element={<ShopDetails />} />
+        <Route key="product-details" path="product/:id" element={<ProductDetails />} />
+        <Route key="event-details" path="events/:id" element={<EventDetails />} />
         <Route
           key="verified-details"
-          path="/verified-users/:id"
+          path="verified-users/:id"
           element={<VerifiedDetails />}
         />
-        <Route key="order-detail" path="/orders/:id" element={<OrderDetail />} />
-        <Route key="cart" path="/cart" element={<Cart />} />
-        <Route key="checkout" path="/checkout" element={<Checkout />} />
+        <Route key="order-detail" path="orders/:id" element={<OrderDetail />} />
+        <Route key="cart" path="cart" element={<Cart />} />
+        <Route key="checkout" path="checkout" element={<Checkout />} />
       </Route>
 
       <Route key="not-found" path="/404" element={<NotFound />} />

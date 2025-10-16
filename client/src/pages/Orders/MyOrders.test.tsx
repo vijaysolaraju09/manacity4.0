@@ -2,7 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
+import {
+  configureStore,
+  type PreloadedState,
+  type ReducersMapObject,
+} from '@reduxjs/toolkit';
 import ordersReducer, { type OrdersSliceState } from '@/store/orders';
 import MyOrders from './MyOrders';
 import type { Order } from '@/store/orders';
@@ -17,8 +21,8 @@ const renderWithState = (state?: Partial<OrdersTestState>) =>
   render(
     <Provider
       store={configureStore({
-        reducer: { orders: ordersReducer },
-        preloadedState: state,
+        reducer: { orders: ordersReducer } as ReducersMapObject<OrdersTestState>,
+        preloadedState: state as PreloadedState<OrdersTestState>,
       })}
     >
       <MemoryRouter initialEntries={['/orders/mine']}>

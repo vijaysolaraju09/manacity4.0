@@ -285,7 +285,7 @@ const ordersAdapter = createEntityAdapter<Order, string>({
 
 type RequestStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
-interface OrdersSliceState {
+export interface OrdersSliceState {
   mine: EntityState<Order, string> & { status: RequestStatus; error: string | null };
   received: EntityState<Order, string> & { status: RequestStatus; error: string | null };
 }

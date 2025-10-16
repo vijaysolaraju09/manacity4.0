@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import ordersReducer from '@/store/orders';
+import { configureStore, type PreloadedState } from '@reduxjs/toolkit';
+import ordersReducer, { type OrdersSliceState } from '@/store/orders';
 import MyOrders from './MyOrders';
 import type { Order } from '@/store/orders';
 
@@ -11,7 +11,9 @@ vi.mock('@/components/ui/Toast', () => ({
   default: vi.fn(),
 }));
 
-const renderWithState = (state: any) =>
+type OrdersTestState = { orders: OrdersSliceState };
+
+const renderWithState = (state?: PreloadedState<OrdersTestState>) =>
   render(
     <Provider
       store={configureStore({

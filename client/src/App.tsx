@@ -1,7 +1,6 @@
 import { BrowserRouter } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import './styles/main.scss';
 import { setToken, fetchMe } from './store/slices/authSlice';
 import { setAdminToken } from './store/slices/adminSlice';
 import type { AppDispatch } from './store';

@@ -137,6 +137,32 @@ const defaultUser = {
   verificationStatus: 'approved' as const,
 };
 
+const defaultOrders = [
+  {
+    _id: 'order-1',
+    status: 'delivered',
+    createdAt: new Date('2024-01-02T09:00:00Z').toISOString(),
+    updatedAt: new Date('2024-01-02T09:00:00Z').toISOString(),
+    customer: { _id: 'user-1', name: 'Test User' },
+    shop: { _id: 'shop-1', name: 'Arcade Alley' },
+    items: [
+      {
+        _id: 'order-1-item-1',
+        name: 'Energy Drink',
+        quantity: 2,
+        price: 9900,
+      },
+    ],
+    totals: {
+      subtotal: 19800,
+      discount: 0,
+      tax: 0,
+      shipping: 0,
+      total: 19800,
+    },
+  },
+];
+
 const baseHandlers: HandlerMap = {
   '/admin/messages': () => Promise.resolve(createResponse({ data: [] })),
   '/shops': () => Promise.resolve(createResponse({ data: defaultShops })),
@@ -154,6 +180,7 @@ const baseHandlers: HandlerMap = {
     ),
   '/events': () => Promise.resolve(createPaginatedEventsResponse(defaultEvents)),
   '/auth/me': () => Promise.resolve(createResponse({ data: defaultUser })),
+  '/orders/mine': () => Promise.resolve(createResponse({ data: defaultOrders })),
 };
 
 const normalizeKey = (url: unknown): string => {
@@ -301,6 +328,34 @@ describe('App customer flows', () => {
     await waitFor(() => {
       expect(within(cartButton).getByText(/1 item in cart/i)).toBeInTheDocument();
     });
+  });
+
+  it('navigates between profile, orders, and shops without stale content', async () => {
+    setupHttpHandlers();
+    const store = createTestStore();
+    const user = userEvent.setup();
+
+    renderApp(store, ['/profile']);
+
+    await screen.findByRole('heading', { name: /profile overview/i });
+    expect(screen.getByText(/manage how your information appears/i)).toBeInTheDocument();
+
+    const ordersLinks = screen.getAllByLabelText(/my orders/i);
+    await user.click(ordersLinks[0]!);
+
+    await screen.findByRole('heading', { name: /my orders/i });
+    expect(screen.getByText(/track your recent purchases/i)).toBeInTheDocument();
+    expect(screen.queryByText(/manage how your information appears/i)).not.toBeInTheDocument();
+
+    const shopsButtons = screen.getAllByRole('button', { name: /shops/i });
+    await user.click(shopsButtons[0]!);
+
+    await screen.findByRole('heading', { name: /explore shops/i });
+    expect(screen.queryByRole('heading', { name: /my orders/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getAllByLabelText(/my orders/i)[0]!);
+    await screen.findByRole('heading', { name: /my orders/i });
+    expect(screen.queryByRole('heading', { name: /explore shops/i })).not.toBeInTheDocument();
   });
 });
 

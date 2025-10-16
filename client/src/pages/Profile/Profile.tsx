@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -130,14 +130,40 @@ interface InfoRowProps {
   emptyLabel?: string;
 }
 
+const pageBackgroundStyle: CSSProperties = {
+  background:
+    'radial-gradient(120% 120% at 0% 0%, rgba(26,115,232,0.12), transparent 55%), radial-gradient(120% 120% at 100% 0%, rgba(26,115,232,0.08), transparent 60%), var(--color-bg)',
+};
+
+const heroCardStyle: CSSProperties = {
+  background:
+    'linear-gradient(130deg, rgba(26,115,232,0.16), rgba(26,115,232,0.06) 45%, rgba(255,255,255,0.98))',
+  boxShadow: 'var(--shadow-lg)',
+  color: 'var(--color-text)',
+};
+
+const bioCardStyle: CSSProperties = {
+  background:
+    'linear-gradient(135deg, rgba(26,115,232,0.12), rgba(26,115,232,0.04) 55%, var(--color-surface))',
+  border: '1px solid rgba(26, 115, 232, 0.18)',
+  boxShadow: 'var(--shadow-sm)',
+};
+
+const infoRowStyle: CSSProperties = {
+  background:
+    'linear-gradient(135deg, rgba(26, 115, 232, 0.14), rgba(26, 115, 232, 0.05) 55%, var(--color-surface))',
+  border: '1px solid rgba(26, 115, 232, 0.18)',
+  boxShadow: 'var(--shadow-sm)',
+};
+
 const InfoRow = ({ icon: Icon, label, value, emptyLabel = 'Not provided' }: InfoRowProps) => (
-  <div className="flex items-start gap-3 rounded-xl bg-slate-50/80 p-3 text-sm shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-800/60 dark:ring-slate-700">
-    <Icon className="mt-1 h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
+  <div className="flex items-start gap-3 rounded-2xl p-4 text-sm backdrop-blur-sm" style={infoRowStyle}>
+    <Icon className="mt-1 h-5 w-5 text-[rgba(26,115,232,0.7)]" aria-hidden="true" />
     <div className="space-y-1">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[rgba(26,115,232,0.85)]">
         {label}
       </p>
-      <p className="text-sm text-slate-900 dark:text-slate-100">{value || emptyLabel}</p>
+      <p className="text-sm text-[var(--color-text)]">{value || emptyLabel}</p>
     </div>
   </div>
 );
@@ -146,10 +172,13 @@ type StatusVariant = 'default' | 'info' | 'success' | 'warning';
 
 const StatusBadge = ({ children, variant = 'default' }: { children: ReactNode; variant?: StatusVariant }) => {
   const variants: Record<StatusVariant, string> = {
-    default: 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-200',
-    info: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200',
-    success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200',
-    warning: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-100',
+    default:
+      'bg-[rgba(26,115,232,0.08)] text-[var(--color-text)] shadow-sm backdrop-blur-sm border border-[rgba(26,115,232,0.18)]',
+    info: 'bg-[rgba(26,115,232,0.12)] text-[rgba(26,115,232,0.9)] shadow-sm border border-[rgba(26,115,232,0.24)]',
+    success:
+      'bg-[rgba(34,197,94,0.12)] text-[rgba(22,163,74,0.95)] shadow-sm border border-[rgba(22,163,74,0.24)]',
+    warning:
+      'bg-[rgba(245,158,11,0.12)] text-[rgba(217,119,6,0.95)] shadow-sm border border-[rgba(217,119,6,0.24)]',
   };
 
   return (
@@ -371,43 +400,46 @@ const Profile = () => {
 
   if (loadState === 'error') {
     return (
-      <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
-        <Card className="rounded-2xl">
-          <CardContent className="flex flex-col items-start gap-4 p-8 text-left">
-            <CardTitle className="flex items-center gap-2 text-xl text-slate-900 dark:text-slate-100">
-              <ShieldCheck className="h-6 w-6 text-red-500" aria-hidden="true" />
-              Unable to load profile
-            </CardTitle>
-            <CardDescription className="text-base text-slate-600 dark:text-slate-300">
-              {error || 'Please try again in a moment.'}
-            </CardDescription>
-            <div className="flex flex-wrap gap-3">
-              <Button onClick={() => fetchProfile()} className="rounded-xl">
-                Retry
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <main className="min-h-screen" style={pageBackgroundStyle}>
+        <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+          <Card className="overflow-hidden border border-transparent" style={heroCardStyle}>
+            <CardContent className="flex flex-col items-start gap-4 p-8 text-left">
+              <CardTitle className="flex items-center gap-2 text-xl text-[var(--color-text)]">
+                <ShieldCheck className="h-6 w-6 text-red-500" aria-hidden="true" />
+                Unable to load profile
+              </CardTitle>
+                  <CardDescription className="text-base text-[var(--color-muted)]">
+                {error || 'Please try again in a moment.'}
+              </CardDescription>
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={() => fetchProfile()} className="rounded-full px-6">
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     );
   }
 
   if (!user) {
     return (
-      <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
-        <Card>
-          <CardContent className="flex flex-col items-start gap-4 p-8 text-left">
-            <CardTitle className="text-xl">No profile information</CardTitle>
-            <CardDescription className="text-base">
-              We could not find your profile details. Try refreshing the page or contact support if the issue
-              persists.
-            </CardDescription>
-            <Button onClick={() => fetchProfile()} className="rounded-xl">
-              Refresh
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <main className="min-h-screen" style={pageBackgroundStyle}>
+        <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+          <Card className="overflow-hidden border border-transparent" style={heroCardStyle}>
+            <CardContent className="flex flex-col items-start gap-4 p-8 text-left">
+              <CardTitle className="text-xl text-[var(--color-text)]">No profile information</CardTitle>
+              <CardDescription className="text-base text-[var(--color-muted)]">
+                We could not find your profile details. Try refreshing the page or contact support if the issue persists.
+              </CardDescription>
+              <Button onClick={() => fetchProfile()} className="rounded-full px-6">
+                Refresh
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     );
   }
 
@@ -424,133 +456,145 @@ const Profile = () => {
     : 'Light';
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <Card className="overflow-hidden">
-        <CardHeader className="border-none pb-0">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex items-start gap-4">
-              {user.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={`${user.name}'s avatar`}
-                  className="h-20 w-20 rounded-full object-cover ring-4 ring-slate-100 dark:ring-slate-800"
-                />
-              ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-xl font-semibold text-slate-600 ring-4 ring-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-800">
-                  <span aria-hidden="true">{initials}</span>
-                  <span className="sr-only">{user.name} avatar</span>
-                </div>
-              )}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
-                  <UserRoundCog className="h-4 w-4" aria-hidden="true" />
-                  <span>Profile overview</span>
-                </div>
-                <CardTitle className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                  {user.name}
-                </CardTitle>
-                <CardDescription className="max-w-md text-base text-slate-600 dark:text-slate-300">
-                  Manage how your information appears across Manacity.
-                </CardDescription>
-                <div className="flex flex-wrap gap-2 text-sm text-slate-600 dark:text-slate-300">
-                  <span className="inline-flex items-center gap-2">
-                    <Phone className="h-4 w-4" aria-hidden="true" />
-                    {user.phone}
-                  </span>
-                  {user.email ? (
+    <main className="min-h-screen" style={pageBackgroundStyle}>
+      <div className="mx-auto max-w-4xl space-y-8 px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+        <Card className="overflow-hidden border border-transparent" style={heroCardStyle}>
+          <CardHeader
+            className="border-none pb-0"
+            style={{
+              background: 'linear-gradient(120deg, rgba(26,115,232,0.1), transparent 70%)',
+            }}
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start gap-4">
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={`${user.name}'s avatar`}
+                    className="h-20 w-20 rounded-full object-cover ring-4 ring-[rgba(26,115,232,0.2)]"
+                  />
+                ) : (
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[rgba(26,115,232,0.12)] text-xl font-semibold text-[rgba(26,115,232,0.95)] ring-4 ring-[rgba(26,115,232,0.2)]">
+                    <span aria-hidden="true">{initials}</span>
+                    <span className="sr-only">{user.name} avatar</span>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-[rgba(26,115,232,0.9)]">
+                    <UserRoundCog className="h-4 w-4" aria-hidden="true" />
+                    <span>Profile overview</span>
+                  </div>
+                  <CardTitle className="text-2xl font-semibold text-[var(--color-text)]">
+                    {user.name}
+                  </CardTitle>
+                  <CardDescription className="max-w-md text-base text-[var(--color-muted)]">
+                    Manage how your information appears across Manacity.
+                  </CardDescription>
+                  <div className="flex flex-wrap gap-2 text-sm text-[var(--color-muted)]">
                     <span className="inline-flex items-center gap-2">
-                      <Mail className="h-4 w-4" aria-hidden="true" />
-                      {user.email}
+                      <Phone className="h-4 w-4" aria-hidden="true" />
+                      {user.phone}
                     </span>
+                    {user.email ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Mail className="h-4 w-4" aria-hidden="true" />
+                        {user.email}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col items-start gap-3 sm:items-end">
+                <div className="flex flex-wrap justify-end gap-2">
+                  <StatusBadge>
+                    <UserRound className="h-4 w-4" aria-hidden="true" /> {user.role}
+                  </StatusBadge>
+                  {user.verificationStatus !== 'none' ? (
+                    <StatusBadge variant={user.verificationStatus === 'approved' ? 'success' : 'info'}>
+                      <BadgeCheck className="h-4 w-4" aria-hidden="true" /> {user.verificationStatus}
+                    </StatusBadge>
+                  ) : null}
+                  {user.businessStatus && user.businessStatus !== 'none' ? (
+                    <StatusBadge variant={user.businessStatus === 'approved' ? 'success' : 'warning'}>
+                      <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" /> {user.businessStatus}
+                    </StatusBadge>
                   ) : null}
                 </div>
+                {quickActions.length > 0 ? (
+                  <div className="flex flex-wrap justify-end gap-2">
+                    {quickActions.map((action) => (
+                      <Button
+                        key={action.label}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full border-[rgba(26,115,232,0.24)] text-[rgba(26,115,232,0.95)] transition hover:border-[rgba(26,115,232,0.45)] hover:bg-[rgba(26,115,232,0.08)] hover:text-[rgba(26,115,232,1)]"
+                        onClick={() => navigate(action.path)}
+                      >
+                        {action.label}
+                      </Button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
-            <div className="flex flex-col items-start gap-3 sm:items-end">
-              <div className="flex flex-wrap justify-end gap-2">
-                <StatusBadge>
-                  <UserRound className="h-4 w-4" aria-hidden="true" /> {user.role}
-                </StatusBadge>
-                {user.verificationStatus !== 'none' ? (
-                  <StatusBadge variant={user.verificationStatus === 'approved' ? 'success' : 'info'}>
-                    <BadgeCheck className="h-4 w-4" aria-hidden="true" /> {user.verificationStatus}
-                  </StatusBadge>
-                ) : null}
-                {user.businessStatus && user.businessStatus !== 'none' ? (
-                  <StatusBadge variant={user.businessStatus === 'approved' ? 'success' : 'warning'}>
-                    <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" /> {user.businessStatus}
-                  </StatusBadge>
-                ) : null}
-              </div>
-              {quickActions.length > 0 ? (
-                <div className="flex flex-wrap justify-end gap-2">
-                  {quickActions.map((action) => (
-                    <Button
-                      key={action.label}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="rounded-xl"
-                      onClick={() => navigate(action.path)}
-                    >
-                      {action.label}
-                    </Button>
-                  ))}
-                </div>
-              ) : null}
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InfoRow icon={Phone} label="Phone" value={user.phone} />
+              <InfoRow icon={Mail} label="Email" value={user.email ?? undefined} />
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <InfoRow icon={Phone} label="Phone" value={user.phone} />
-            <InfoRow icon={Mail} label="Email" value={user.email ?? undefined} />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <InfoRow icon={BriefcaseBusiness} label="Profession" value={user.profession} />
-            <InfoRow icon={Sparkles} label="Theme preference" value={themeLabel} />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <InfoRow icon={MapPin} label="Location" value={user.location} />
-            <InfoRow icon={Home} label="Address" value={user.address} />
-          </div>
-          <div className="rounded-xl bg-slate-50/80 p-4 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-800/60 dark:ring-slate-700">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Bio</p>
-            <p className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
-              {user.bio || 'Tell customers more about you by adding a short bio.'}
-            </p>
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 py-6 dark:border-slate-800 dark:bg-slate-900/60 sm:flex-row sm:justify-end">
-          <Button type="button" className="w-full rounded-xl sm:w-auto" onClick={() => setIsEditOpen(true)}>
-            Edit profile
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            className="w-full rounded-xl sm:w-auto"
-            disabled={businessDisabled}
-            onClick={() => setIsBusinessOpen(true)}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InfoRow icon={BriefcaseBusiness} label="Profession" value={user.profession} />
+              <InfoRow icon={Sparkles} label="Theme preference" value={themeLabel} />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InfoRow icon={MapPin} label="Location" value={user.location} />
+              <InfoRow icon={Home} label="Address" value={user.address} />
+            </div>
+            <div className="rounded-2xl p-5 shadow-sm backdrop-blur-sm" style={bioCardStyle}>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[rgba(26,115,232,0.85)]">Bio</p>
+              <p className="mt-1 text-sm leading-relaxed text-[var(--color-text)]">
+                {user.bio || 'Tell customers more about you by adding a short bio.'}
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter
+            className="flex flex-col gap-3 sm:flex-row sm:justify-end"
+            style={{
+              borderTop: '1px solid rgba(26, 115, 232, 0.18)',
+              background: 'linear-gradient(120deg, rgba(26,115,232,0.08), transparent 70%)',
+            }}
           >
-            {businessButtonLabel}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full rounded-xl sm:w-auto"
-            disabled={verificationDisabled}
-            onClick={() => setIsVerifyOpen(true)}
-          >
-            {verificationButtonLabel}
-          </Button>
-        </CardFooter>
-      </Card>
+            <Button type="button" className="w-full rounded-full px-6 font-semibold sm:w-auto" onClick={() => setIsEditOpen(true)}>
+              Edit profile
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full rounded-full px-6 font-semibold sm:w-auto"
+              disabled={businessDisabled}
+              onClick={() => setIsBusinessOpen(true)}
+            >
+              {businessButtonLabel}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full rounded-full px-6 font-semibold sm:w-auto border-[rgba(26,115,232,0.24)] text-[rgba(26,115,232,0.95)] hover:border-[rgba(26,115,232,0.45)] hover:bg-[rgba(26,115,232,0.08)]"
+              disabled={verificationDisabled}
+              onClick={() => setIsVerifyOpen(true)}
+            >
+              {verificationButtonLabel}
+            </Button>
+          </CardFooter>
+        </Card>
 
       <ModalSheet open={isEditOpen} onClose={() => setIsEditOpen(false)}>
         <div className="space-y-6 p-6">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Edit profile</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <h3 className="text-lg font-semibold text-[var(--color-text)]">Edit profile</h3>
+            <p className="text-sm text-[var(--color-muted)]">
               Update your profile details. Fields marked with an asterisk are required.
             </p>
           </div>
@@ -672,12 +716,16 @@ const Profile = () => {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full rounded-xl sm:w-auto"
+                  className="w-full rounded-full sm:w-auto"
                   onClick={() => setIsEditOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="w-full rounded-xl sm:w-auto" disabled={editForm.formState.isSubmitting}>
+                <Button
+                  type="submit"
+                  className="w-full rounded-full sm:w-auto"
+                  disabled={editForm.formState.isSubmitting}
+                >
                   {editForm.formState.isSubmitting ? 'Saving...' : 'Save changes'}
                 </Button>
               </div>
@@ -689,8 +737,8 @@ const Profile = () => {
       <ModalSheet open={isVerifyOpen} onClose={() => setIsVerifyOpen(false)}>
         <div className="space-y-6 p-6">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Request verification</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <h3 className="text-lg font-semibold text-[var(--color-text)]">Request verification</h3>
+            <p className="text-sm text-[var(--color-muted)]">
               Provide details that help us confirm your professional credentials.
             </p>
           </div>
@@ -739,7 +787,7 @@ const Profile = () => {
                         {...field}
                       />
                     </FormControl>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-[var(--color-muted)]">
                       Separate multiple links with commas.
                     </p>
                     {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
@@ -750,14 +798,14 @@ const Profile = () => {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full rounded-xl sm:w-auto"
+                  className="w-full rounded-full sm:w-auto"
                   onClick={() => setIsVerifyOpen(false)}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="w-full rounded-xl sm:w-auto"
+                  className="w-full rounded-full sm:w-auto"
                   disabled={verificationForm.formState.isSubmitting}
                 >
                   {verificationForm.formState.isSubmitting ? 'Submitting...' : 'Submit request'}
@@ -771,8 +819,8 @@ const Profile = () => {
       <ModalSheet open={isBusinessOpen} onClose={() => setIsBusinessOpen(false)}>
         <div className="space-y-6 p-6">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Request business account</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <h3 className="text-lg font-semibold text-[var(--color-text)]">Request business account</h3>
+            <p className="text-sm text-[var(--color-muted)]">
               Tell us about your business to start selling on Manacity.
             </p>
           </div>
@@ -864,14 +912,14 @@ const Profile = () => {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full rounded-xl sm:w-auto"
+                  className="w-full rounded-full sm:w-auto"
                   onClick={() => setIsBusinessOpen(false)}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="w-full rounded-xl sm:w-auto"
+                  className="w-full rounded-full sm:w-auto"
                   disabled={businessForm.formState.isSubmitting}
                 >
                   {businessForm.formState.isSubmitting ? 'Submitting...' : 'Submit request'}
@@ -882,6 +930,7 @@ const Profile = () => {
         </div>
       </ModalSheet>
     </div>
+  </main>
   );
 };
 

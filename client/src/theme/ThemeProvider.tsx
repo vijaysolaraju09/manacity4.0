@@ -13,10 +13,18 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 const storageKey = 'manacity_theme';
 const availableThemes: Theme[] = ['light', 'dark', 'colorful'];
 
+const applyThemeAttributes = (value: Theme) => {
+  if (typeof document === 'undefined') return;
+  document.documentElement.setAttribute('data-theme', value);
+  document.documentElement.classList.toggle('dark', value === 'dark');
+  document.body.setAttribute('data-theme', value);
+  document.body.classList.toggle('dark', value === 'dark');
+};
+
 const getInitialTheme = (): Theme => {
   const stored = localStorage.getItem(storageKey) as Theme | null;
   const initial = stored && availableThemes.includes(stored) ? stored : 'light';
-  document.documentElement.setAttribute('data-theme', initial);
+  applyThemeAttributes(initial);
   return initial;
 };
 
@@ -24,7 +32,7 @@ const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    applyThemeAttributes(theme);
     localStorage.setItem(storageKey, theme);
   }, [theme]);
 

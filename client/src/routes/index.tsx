@@ -1,11 +1,12 @@
 import { Suspense, lazy } from 'react';
-import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import { Routes, Route, Outlet } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 import TabLayout from '@/layouts/TabLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import Loader from '@/components/Loader';
 import FloatingCart from '@/components/ui/FloatingCart';
+import ScrollToTop from './ScrollToTop';
 
 const Landing = lazy(() => import('@/pages/Landing/Landing'));
 const Login = lazy(() => import('@/pages/auth/Login/Login'));
@@ -49,8 +50,9 @@ const SuspendedOutlet = () => (
   </Suspense>
 );
 
-const AppLayout = () => (
+const RootLayout = () => (
   <>
+    <ScrollToTop />
     <SuspendedOutlet />
     <FloatingCart />
   </>
@@ -58,13 +60,13 @@ const AppLayout = () => (
 
 const AppRoutes = () => (
   <Routes>
-    <Route element={<AppLayout />}>
+    <Route key="root" element={<RootLayout />}>
       <Route key="landing" path="/" element={<Landing />} />
       <Route key="login" path="/login" element={<Login />} />
       <Route key="signup" path="/signup" element={<Signup />} />
       <Route key="admin-login" path="/admin/login" element={<AdminLogin />} />
 
-      <Route element={<AdminProtectedRoute />}>
+      <Route key="admin-guard" element={<AdminProtectedRoute />}>
         <Route key="admin" path="/admin" element={<AdminLayout />}>
           <Route key="admin-dashboard" index element={<AdminDashboard />} />
           <Route key="admin-shops" path="shops" element={<AdminShops />} />
@@ -87,8 +89,8 @@ const AppRoutes = () => (
         </Route>
       </Route>
 
-      <Route element={<ProtectedRoute />}>
-        <Route element={<TabLayout />}>
+      <Route key="app-guard" element={<ProtectedRoute />}>
+        <Route key="tab-layout" element={<TabLayout />}>
           <Route key="home" path="home" element={<Home />} />
           <Route key="shops" path="shops" element={<Shops />} />
           <Route key="products" path="products" element={<ProductsList />} />
@@ -118,8 +120,7 @@ const AppRoutes = () => (
         <Route key="checkout" path="checkout" element={<Checkout />} />
       </Route>
 
-      <Route key="not-found" path="/404" element={<NotFound />} />
-      <Route key="catch-all" path="*" element={<Navigate to="/404" replace />} />
+      <Route key="not-found" path="*" element={<NotFound />} />
     </Route>
   </Routes>
 );

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import { Bell, CalendarDays, Gift, Home, Mic, Settings, ShoppingCart, Store, UserRound, Users } from "lucide-react";
 import MiniCart from "@/components/cart/MiniCart";
-import SidebarItem from "@/components/navigation/SidebarItem";
+import NavItem from "@/components/navigation/NavItem";
 import type { RootState, AppDispatch } from "../store";
 import { fetchNotifs } from "@/store/notifs";
 import { selectMyPendingOrdersCount, fetchMyOrders } from "@/store/orders";
@@ -65,31 +65,22 @@ const TabLayout = () => {
         <h1 className="logo" onClick={() => navigate(paths.home())}>Manacity</h1>
         <div className="actions">
           <MiniCart />
-          <button
-            type="button"
-            className="notif-btn action-button"
-            onClick={() => navigate(paths.notifications())}
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5" aria-hidden="true" />
-            {unread > 0 && <span className="count">{unread}</span>}
-          </button>
-          <button
-            type="button"
-            className="profile-btn action-button"
-            onClick={() => navigate(paths.profile())}
-            aria-label="Profile"
-          >
-            <UserRound className="h-5 w-5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="settings-btn action-button"
-            onClick={() => navigate(paths.settings())}
-            aria-label="Settings"
-          >
-            <Settings className="h-5 w-5" aria-hidden="true" />
-          </button>
+          <NavItem
+            to={paths.orders.mine()}
+            icon={ShoppingCart}
+            label="My Orders"
+            ariaLabel="My Orders"
+            badge={pendingOrders > 0 ? (pendingOrders > 99 ? "99+" : pendingOrders) : undefined}
+          />
+          <NavItem
+            to={paths.notifications()}
+            icon={Bell}
+            label="Notifications"
+            ariaLabel="Notifications"
+            badge={unread > 0 ? (unread > 99 ? "99+" : unread) : undefined}
+          />
+          <NavItem to={paths.profile()} icon={UserRound} label="Profile" ariaLabel="Profile" />
+          <NavItem to={paths.settings()} icon={Settings} label="Settings" ariaLabel="Settings" />
         </div>
       </motion.header>
       <main className="tab-content">
@@ -118,22 +109,39 @@ const TabLayout = () => {
           <h1 className="sidebar-logo" onClick={() => navigate(paths.home())}>
             Manacity
           </h1>
-          <nav className="flex w-full flex-col gap-1.5">
-            <SidebarItem
-              to={paths.orders.mine()}
-              icon={ShoppingCart}
-              label="My orders"
-              badge={pendingOrders > 0 ? (pendingOrders > 99 ? '99+' : pendingOrders) : undefined}
-              className="orders-nav-button"
-            />
-            <SidebarItem
-              to={paths.notifications()}
-              icon={Bell}
-              label="Notifications"
-              badge={unread > 0 ? (unread > 99 ? '99+' : unread) : undefined}
-            />
-            <SidebarItem to={paths.profile()} icon={UserRound} label="Profile" />
-            <SidebarItem to={paths.settings()} icon={Settings} label="Settings" />
+          <nav className="flex w-full flex-col gap-3" aria-label="Secondary navigation">
+            <div className="flex items-center gap-2">
+              <NavItem
+                to={paths.orders.mine()}
+                icon={ShoppingCart}
+                label="My Orders"
+                ariaLabel="My Orders"
+                badge={pendingOrders > 0 ? (pendingOrders > 99 ? '99+' : pendingOrders) : undefined}
+              />
+              <NavItem
+                to={paths.notifications()}
+                icon={Bell}
+                label="Notifications"
+                ariaLabel="Notifications"
+                badge={unread > 0 ? (unread > 99 ? '99+' : unread) : undefined}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <NavItem
+                to={paths.profile()}
+                icon={UserRound}
+                label="Profile"
+                ariaLabel="Profile"
+                variant="default"
+              />
+              <NavItem
+                to={paths.settings()}
+                icon={Settings}
+                label="Settings"
+                ariaLabel="Settings"
+                variant="default"
+              />
+            </div>
           </nav>
         </div>
         {tabs.slice(0, 2).map((tab) => {

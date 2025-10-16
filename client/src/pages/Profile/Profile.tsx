@@ -360,7 +360,7 @@ const Profile = () => {
       actions.push({ label: 'Service Orders', path: paths.orders.service() });
     }
     if (actions.length === 0) {
-      actions.push({ label: 'My Orders', path: paths.orders.root() });
+      actions.push({ label: 'My Orders', path: paths.orders.mine() });
     }
     return actions;
   }, [user]);

@@ -2,11 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import {
-  configureStore,
-  type PreloadedState,
-  type ReducersMapObject,
-} from '@reduxjs/toolkit';
+import { configureStore } from '@reduxjs/toolkit';
 import ordersReducer, { type OrdersSliceState } from '@/store/orders';
 import MyOrders from './MyOrders';
 import type { Order } from '@/store/orders';
@@ -17,19 +13,41 @@ vi.mock('@/components/ui/Toast', () => ({
 
 type OrdersTestState = { orders: OrdersSliceState };
 
-const renderWithState = (state?: Partial<OrdersTestState>) =>
-  render(
-    <Provider
-      store={configureStore({
-        reducer: { orders: ordersReducer } as ReducersMapObject<OrdersTestState>,
-        preloadedState: state as PreloadedState<OrdersTestState>,
-      })}
-    >
+const createOrdersState = (state?: Partial<OrdersSliceState>): OrdersSliceState => {
+  const baseState = ordersReducer(undefined, { type: '@@INIT' } as { type: string });
+
+  return {
+    ...baseState,
+    ...(state ?? {}),
+    mine: {
+      ...baseState.mine,
+      ...(state?.mine ?? {}),
+    },
+    received: {
+      ...baseState.received,
+      ...(state?.received ?? {}),
+    },
+  };
+};
+
+const renderWithState = (state?: Partial<OrdersTestState>) => {
+  const mergedState: OrdersTestState = {
+    orders: createOrdersState(state?.orders),
+  };
+
+  const store = configureStore({
+    reducer: { orders: ordersReducer },
+    preloadedState: mergedState,
+  });
+
+  return render(
+    <Provider store={store}>
       <MemoryRouter initialEntries={['/orders/mine']}>
         <MyOrders />
       </MemoryRouter>
     </Provider>,
   );
+};
 
 describe('MyOrders page', () => {
   it('displays skeleton placeholders while loading', () => {

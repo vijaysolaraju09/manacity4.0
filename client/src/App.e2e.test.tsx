@@ -357,5 +357,82 @@ describe('App customer flows', () => {
     await screen.findByRole('heading', { name: /my orders/i });
     expect(screen.queryByRole('heading', { name: /explore shops/i })).not.toBeInTheDocument();
   });
+
+  it('lets a user add voice parsed items to the cart and proceed to checkout', async () => {
+    const tomatoProduct = {
+      _id: 'prod-tomato',
+      name: 'Tomato',
+      price: 45,
+      image: 'tomato.jpg',
+      shop: { _id: 'shop-1', name: 'Arcade Alley' },
+    };
+    const okraProduct = {
+      _id: 'prod-okra',
+      name: 'Okra',
+      price: 60,
+      image: 'okra.jpg',
+      shop: { _id: 'shop-2', name: 'Green Basket' },
+    };
+
+    setupHttpHandlers({
+      '/products': (config) => {
+        const query = String(config?.params?.q ?? '').toLowerCase();
+        if (query.includes('tomato')) {
+          return Promise.resolve(createResponse({ data: [tomatoProduct] }));
+        }
+        if (query.includes('benda') || query.includes('okra')) {
+          return Promise.resolve(createResponse({ data: [okraProduct] }));
+        }
+        return Promise.resolve(createResponse({ data: [] }));
+      },
+    });
+
+    const store = createTestStore();
+    const user = userEvent.setup();
+
+    renderApp(store, ['/voice-order']);
+
+    await screen.findByRole('heading', { name: /voice order/i });
+
+    const manualInput = screen.getByLabelText(/prefer typing/i);
+    await user.type(manualInput, 'oka kilo tomatolu');
+    await user.click(screen.getByRole('button', { name: /parse text/i }));
+
+    await screen.findByText('Arcade Alley');
+    await user.click(screen.getByRole('button', { name: /add to cart/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/1 items/i)).toBeInTheDocument();
+      expect(screen.getByText(/₹\s?45\.00/)).toBeInTheDocument();
+    });
+
+    await user.clear(manualInput);
+    await user.type(manualInput, '2 kg bendakayalu');
+    await user.click(screen.getByRole('button', { name: /parse text/i }));
+
+    await screen.findByText('Green Basket');
+    const addButtons = screen.getAllByRole('button', { name: /add to cart/i });
+    await user.click(addButtons[0]!);
+
+    await waitFor(() => {
+      expect(screen.getByText(/3 items/i)).toBeInTheDocument();
+      expect(screen.getByText(/₹\s?105\.00/)).toBeInTheDocument();
+    });
+
+    const originalLocation = window.location;
+    const assignSpy = vi.fn();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, assign: assignSpy },
+    });
+
+    await user.click(screen.getByRole('button', { name: /proceed to checkout/i }));
+    expect(assignSpy).toHaveBeenCalledWith(paths.checkout());
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    });
+  });
 });
 

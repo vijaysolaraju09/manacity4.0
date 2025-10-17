@@ -1,4 +1,4 @@
-import React, {
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -59,6 +59,25 @@ interface ItemSearchEntry {
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error?: string;
 }
+
+type SpeechRecognitionAlternativeLike = {
+  transcript?: string;
+};
+
+type SpeechRecognitionResultLike = {
+  isFinal: boolean;
+  0?: SpeechRecognitionAlternativeLike;
+};
+
+type SpeechRecognitionEventLike = {
+  resultIndex: number;
+  results: ArrayLike<SpeechRecognitionResultLike>;
+};
+
+type SpeechRecognitionErrorEventLike = {
+  error?: string;
+  message?: string;
+};
 
 const createId = () =>
   (typeof crypto !== 'undefined' && crypto.randomUUID
@@ -134,7 +153,7 @@ const VoiceOrder = () => {
     resetListeningState();
   }, [resetListeningState]);
 
-  const handleRecognitionResult = useCallback((event: SpeechRecognitionEvent) => {
+  const handleRecognitionResult = useCallback((event: SpeechRecognitionEventLike) => {
     let interim = '';
     let final = '';
 
@@ -285,10 +304,10 @@ const VoiceOrder = () => {
         setInterimTranscript('');
         finalTranscriptRef.current = '';
       };
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
+      recognition.onresult = (event: SpeechRecognitionEventLike) => {
         handleRecognitionResult(event);
       };
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEventLike) => {
         console.error('voice-order:recognition-error', event);
         showToast('We lost the mic for a bit. Try again?', 'error');
         resetListeningState();

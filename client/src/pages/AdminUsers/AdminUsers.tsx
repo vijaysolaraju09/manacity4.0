@@ -34,7 +34,9 @@ interface User {
   createdAt: string;
 }
 
-type UserRow = User & { actions?: string };
+interface UserRow extends User {
+  [key: string]: unknown;
+}
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<User[]>([]);

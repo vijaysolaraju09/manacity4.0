@@ -195,6 +195,8 @@ export interface UserQueryParams {
   page?: number;
   pageSize?: number;
   sort?: string;
+  createdFrom?: string;
+  createdTo?: string;
 }
 
 export const fetchUsers = async (params: UserQueryParams = {}) => {

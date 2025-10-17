@@ -1,17 +1,27 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Ban,
+  BadgeCheck,
+  RefreshCcw,
+  ShieldQuestion,
+  Trash2,
+  UserCog,
+} from 'lucide-react';
 import {
   fetchUsers,
   updateUserRole,
   updateUserStatus,
   deleteUser as apiDeleteUser,
   type UserQueryParams,
-} from '../../api/admin';
-import DataTable, { type Column } from '../../components/admin/DataTable';
-import EmptyState from '../../components/ui/EmptyState';
-import ErrorCard from '../../components/ui/ErrorCard';
-import SkeletonList from '../../components/ui/SkeletonList';
-import showToast from '../../components/ui/Toast';
-import './AdminUsers.scss';
+} from '@/api/admin';
+import AdminTable, { type AdminTableColumn } from '@/components/admin/AdminTable';
+import FilterBar, { type DateRangeValue } from '@/components/admin/FilterBar';
+import { Button } from '@/components/ui/button';
+import Badge from '@/components/ui/badge';
+import ErrorCard from '@/components/ui/ErrorCard';
+import Select from '@/components/ui/select';
+import SkeletonList from '@/components/ui/SkeletonList';
+import showToast from '@/components/ui/Toast';
 
 interface User {
   _id: string;
@@ -37,6 +47,7 @@ const AdminUsers = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const pageSize = 10;
+  const [createdRange, setCreatedRange] = useState<DateRangeValue>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,6 +60,8 @@ const AdminUsers = () => {
         sort,
         page,
         pageSize,
+        createdFrom: createdRange.from || undefined,
+        createdTo: createdRange.to || undefined,
       };
       const data = await fetchUsers(params);
       const items = Array.isArray(data.items) ? (data.items as User[]) : [];
@@ -59,7 +72,7 @@ const AdminUsers = () => {
     } finally {
       setLoading(false);
     }
-  }, [query, role, verified, sort, page]);
+  }, [createdRange, page, pageSize, query, role, sort, verified]);
 
   useEffect(() => {
     load();
@@ -110,132 +123,275 @@ const AdminUsers = () => {
     }
   };
 
-  const columns: Column<UserRow>[] = [
-    { key: 'name', label: 'Name' },
-    { key: 'phone', label: 'Phone' },
-    {
-      key: 'role',
-      label: 'Role',
-      render: (u) => (
-        <select
-          value={u.role}
-          onChange={(e) => handleRoleChange(u._id, e.target.value)}
-        >
-          <option value="customer">Customer</option>
-          <option value="verified">Verified</option>
-          <option value="business">Business</option>
-          <option value="admin">Admin</option>
-        </select>
-      ),
-    },
-    {
-      key: 'isVerified',
-      label: 'Verified',
-      render: (u) => (u.isVerified ? 'Yes' : 'No'),
-    },
-    { key: 'ordersCount', label: 'Orders' },
-    {
-      key: 'createdAt',
-      label: 'Created',
-      render: (u) => new Date(u.createdAt).toLocaleDateString(),
-    },
-    {
-      key: 'actions',
-      label: '',
-      render: (u) => (
-        <div className="actions">
-          <button onClick={() => handleToggleActive(u)}>
-            {u.isActive ? 'Deactivate' : 'Reactivate'}
-          </button>
-          <button className="danger" onClick={() => handleDelete(u._id)}>
-            Delete
-          </button>
-        </div>
-      ),
-    },
-  ];
+  const sortState = useMemo(() => {
+    const direction = sort.startsWith('-') ? 'desc' : 'asc';
+    const key = sort.replace(/^-/, '') || 'createdAt';
+    return { key, direction: direction as 'asc' | 'desc' };
+  }, [sort]);
+
+  const handleSortChange = (key: string, direction: 'asc' | 'desc') => {
+    setSort(direction === 'asc' ? key : `-${key}`);
+  };
+
+  const handleResetFilters = () => {
+    setQuery('');
+    setRole('');
+    setVerified('');
+    setCreatedRange({});
+    setPage(1);
+  };
+
+  const formatDate = useCallback((value: string) => {
+    try {
+      return new Intl.DateTimeFormat('en-IN', {
+        dateStyle: 'medium',
+      }).format(new Date(value));
+    } catch (error) {
+      return new Date(value).toLocaleDateString();
+    }
+  }, []);
+
+  const columns: AdminTableColumn<UserRow>[] = useMemo(() => {
+    return [
+      {
+        key: 'name',
+        header: 'User',
+        render: (user) => (
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10 text-sm font-semibold uppercase text-blue-600 dark:bg-blue-500/20 dark:text-blue-200">
+              {user.name?.[0]?.toUpperCase() ?? 'U'}
+            </span>
+            <div className="space-y-1">
+              <p className="font-medium text-slate-900 dark:text-slate-100">{user.name || 'Unnamed user'}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{user.phone || '—'}</p>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: 'role',
+        header: 'Role',
+        render: (user) => (
+          <div className="flex items-center gap-2">
+            <Select
+              value={user.role}
+              onChange={(event) => handleRoleChange(user._id, event.target.value)}
+              className="w-36 rounded-full bg-white/80 dark:bg-slate-900"
+            >
+              <option value="customer">Customer</option>
+              <option value="verified">Verified</option>
+              <option value="business">Business</option>
+              <option value="admin">Admin</option>
+            </Select>
+            {user.role === 'admin' ? (
+              <Badge variant="outline" className="gap-1">
+                <UserCog className="h-3.5 w-3.5" aria-hidden="true" />
+                Admin
+              </Badge>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        key: 'isVerified',
+        header: 'Verification',
+        render: (user) =>
+          user.isVerified ? (
+            <Badge variant="success" className="gap-1">
+              <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Verified
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="gap-1">
+              <ShieldQuestion className="h-3.5 w-3.5" aria-hidden="true" />
+              Pending
+            </Badge>
+          ),
+      },
+      {
+        key: 'ordersCount',
+        header: 'Orders',
+        align: 'center',
+        render: (user) => (
+          <span className="inline-flex min-w-[3rem] items-center justify-center rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 dark:bg-slate-800/70 dark:text-slate-100">
+            {user.ordersCount ?? 0}
+          </span>
+        ),
+      },
+      {
+        key: 'createdAt',
+        header: 'Joined',
+        sortable: true,
+        render: (user) => (
+          <span className="text-sm text-slate-600 dark:text-slate-300">{formatDate(user.createdAt)}</span>
+        ),
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        align: 'right',
+        render: (user) => (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-full border-slate-200 text-xs text-slate-600 hover:border-blue-200 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-200"
+              onClick={() => handleToggleActive(user)}
+            >
+              {user.isActive ? (
+                <>
+                  <Ban className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                  Suspend
+                </>
+              ) : (
+                <>
+                  <RefreshCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                  Activate
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="rounded-full text-xs"
+              onClick={() => handleDelete(user._id)}
+            >
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              Delete
+            </Button>
+          </div>
+        ),
+      },
+    ];
+  }, [formatDate, handleRoleChange, handleToggleActive, handleDelete]);
+
+  const hasUsers = users.length > 0;
+  const hasActiveFilters = Boolean(
+    query || role || verified || createdRange.from || createdRange.to,
+  );
 
   return (
-    <div className="admin-users">
-      <h2>Users</h2>
-      <div className="filters">
-        <input
-          placeholder="Search name or phone"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
+    <div className="space-y-6 p-6">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Users</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Monitor user roles, verification status, and account activity in one place.
+        </p>
+      </div>
+
+      <FilterBar
+        searchPlaceholder="Search name or phone"
+        searchValue={query}
+        onSearchChange={(value) => {
+          setQuery(value);
+          setPage(1);
+        }}
+        filters={[
+          {
+            id: 'role',
+            label: 'Role',
+            value: role,
+            placeholder: 'All roles',
+            options: [
+              { label: 'Customer', value: 'customer' },
+              { label: 'Verified', value: 'verified' },
+              { label: 'Business', value: 'business' },
+              { label: 'Admin', value: 'admin' },
+            ],
+            onChange: (value) => {
+              setRole(value);
+              setPage(1);
+            },
+          },
+          {
+            id: 'verification',
+            label: 'Verification',
+            value: verified,
+            placeholder: 'All users',
+            options: [
+              { label: 'Verified', value: 'true' },
+              { label: 'Unverified', value: 'false' },
+            ],
+            onChange: (value) => {
+              setVerified(value);
+              setPage(1);
+            },
+          },
+        ]}
+        dateRange={{
+          value: createdRange,
+          onChange: (value) => {
+            setCreatedRange(value);
             setPage(1);
+          },
+          label: 'Joined between',
+        }}
+        onReset={hasActiveFilters ? handleResetFilters : undefined}
+      />
+
+      {loading && !hasUsers ? <SkeletonList count={pageSize} /> : null}
+
+      {error ? (
+        <ErrorCard
+          message={error}
+          onRetry={() => {
+            void load();
           }}
         />
-        <select
-          value={role}
-          onChange={(e) => {
-            setRole(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">All Roles</option>
-          <option value="customer">Customer</option>
-          <option value="verified">Verified</option>
-          <option value="business">Business</option>
-          <option value="admin">Admin</option>
-        </select>
-        <select
-          value={verified}
-          onChange={(e) => {
-            setVerified(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">All Users</option>
-          <option value="true">Verified</option>
-          <option value="false">Unverified</option>
-        </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value)}>
-          <option value="-createdAt">Newest</option>
-          <option value="createdAt">Oldest</option>
-        </select>
-      </div>
-      {(() => {
-        const hasUsers = (users ?? []).length > 0;
-        if (loading && !hasUsers) {
-          return <SkeletonList count={pageSize} />;
-        }
-        if (error) {
-          return (
-            <ErrorCard
-              message={error}
-              onRetry={() => {
-                void load();
-              }}
-            />
-          );
-        }
-        if (!loading && !hasUsers) {
-          return (
-            <EmptyState
-              title="No users found"
-              message="Update your search filters or refresh to load user accounts."
-              ctaLabel="Refresh"
-              onCtaClick={() => {
-                void load();
-              }}
-            />
-          );
-        }
-        return (
-          <DataTable<UserRow>
-            columns={columns}
-            rows={(users ?? []) as UserRow[]}
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={setPage}
-            onSort={(key, dir) => setSort(dir === 'asc' ? key : `-${key}`)}
-            loading={loading}
-          />
-        );
-      })()}
+      ) : null}
+
+      {!error ? (
+        <AdminTable<UserRow>
+          data={(users ?? []) as UserRow[]}
+          columns={columns}
+          isLoading={loading}
+          skeletonRows={pageSize}
+          emptyState={
+            <div className="space-y-2 text-center">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">No users found</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Adjust your filters or refresh to see recent signups.
+              </p>
+              <Button type="button" variant="outline" className="rounded-full" onClick={() => void load()}>
+                Refresh
+              </Button>
+            </div>
+          }
+          caption={
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                Showing page {page} of {Math.max(1, Math.ceil(total / pageSize))}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={page <= 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() => setPage((prev) => (prev * pageSize < total ? prev + 1 : prev))}
+                  disabled={page * pageSize >= total}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          }
+          sortState={sortState}
+          onSort={handleSortChange}
+        />
+      ) : null}
     </div>
   );
 };

@@ -46,6 +46,8 @@ import { setUser } from '@/store/slices/authSlice';
 import { paths } from '@/routes/paths';
 import type { User } from '@/types/user';
 
+import './Profile.scss';
+
 const editProfileSchema = z.object({
   name: z
     .string()
@@ -189,11 +191,13 @@ const StatusBadge = ({ children, variant = 'default' }: { children: ReactNode; v
 };
 
 const ProfileSkeleton = () => (
-  <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
-    <Skeleton className="h-56 w-full rounded-2xl" />
-    <Skeleton className="h-40 w-full rounded-2xl" />
-    <Skeleton className="h-40 w-full rounded-2xl" />
-  </div>
+  <main className="profile-page profile-page--loading">
+    <div className="profile-page__container mx-auto flex max-w-3xl flex-col gap-4 p-6">
+      <Skeleton className="h-56 w-full rounded-2xl" />
+      <Skeleton className="h-40 w-full rounded-2xl" />
+      <Skeleton className="h-40 w-full rounded-2xl" />
+    </div>
+  </main>
 );
 
 const Profile = () => {
@@ -400,9 +404,9 @@ const Profile = () => {
 
   if (loadState === 'error') {
     return (
-      <main className="min-h-screen" style={pageBackgroundStyle}>
-        <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
-          <Card className="overflow-hidden border border-transparent" style={heroCardStyle}>
+      <main className="profile-page profile-page--error min-h-screen" style={pageBackgroundStyle}>
+        <div className="profile-page__container mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+          <Card className="profile-page__hero-card overflow-hidden border border-transparent" style={heroCardStyle}>
             <CardContent className="flex flex-col items-start gap-4 p-8 text-left">
               <CardTitle className="flex items-center gap-2 text-xl text-[var(--color-text)]">
                 <ShieldCheck className="h-6 w-6 text-red-500" aria-hidden="true" />
@@ -425,9 +429,9 @@ const Profile = () => {
 
   if (!user) {
     return (
-      <main className="min-h-screen" style={pageBackgroundStyle}>
-        <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
-          <Card className="overflow-hidden border border-transparent" style={heroCardStyle}>
+      <main className="profile-page profile-page--empty min-h-screen" style={pageBackgroundStyle}>
+        <div className="profile-page__container mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+          <Card className="profile-page__hero-card overflow-hidden border border-transparent" style={heroCardStyle}>
             <CardContent className="flex flex-col items-start gap-4 p-8 text-left">
               <CardTitle className="text-xl text-[var(--color-text)]">No profile information</CardTitle>
               <CardDescription className="text-base text-[var(--color-muted)]">
@@ -456,9 +460,9 @@ const Profile = () => {
     : 'Light';
 
   return (
-    <main className="min-h-screen" style={pageBackgroundStyle}>
-      <div className="mx-auto max-w-4xl space-y-8 px-4 pb-16 pt-10 sm:px-6 lg:px-8">
-        <Card className="overflow-hidden border border-transparent" style={heroCardStyle}>
+    <main className="profile-page min-h-screen" style={pageBackgroundStyle}>
+      <div className="profile-page__container mx-auto max-w-4xl space-y-8 px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+        <Card className="profile-page__hero-card overflow-hidden border border-transparent" style={heroCardStyle}>
           <CardHeader
             className="border-none pb-0"
             style={{
@@ -539,16 +543,16 @@ const Profile = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <CardContent className="profile-page__details space-y-6">
+            <div className="profile-page__detail-grid grid gap-4 sm:grid-cols-2">
               <InfoRow icon={Phone} label="Phone" value={user.phone} />
               <InfoRow icon={Mail} label="Email" value={user.email ?? undefined} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="profile-page__detail-grid grid gap-4 sm:grid-cols-2">
               <InfoRow icon={BriefcaseBusiness} label="Profession" value={user.profession} />
               <InfoRow icon={Sparkles} label="Theme preference" value={themeLabel} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="profile-page__detail-grid grid gap-4 sm:grid-cols-2">
               <InfoRow icon={MapPin} label="Location" value={user.location} />
               <InfoRow icon={Home} label="Address" value={user.address} />
             </div>
@@ -560,7 +564,7 @@ const Profile = () => {
             </div>
           </CardContent>
           <CardFooter
-            className="flex flex-col gap-3 sm:flex-row sm:justify-end"
+            className="profile-page__actions flex flex-col gap-3 sm:flex-row sm:justify-end"
             style={{
               borderTop: '1px solid rgba(26, 115, 232, 0.18)',
               background: 'linear-gradient(120deg, rgba(26,115,232,0.08), transparent 70%)',

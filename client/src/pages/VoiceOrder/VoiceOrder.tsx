@@ -42,6 +42,8 @@ import { searchProducts } from '@/features/voice-order/api';
 import type { ParsedItem, ParseResult, VoiceProductHit } from '@/features/voice-order/types';
 import { paths } from '@/routes/paths';
 
+import './VoiceOrder.scss';
+
 const ENABLE_STT_UPLOAD = import.meta.env.VITE_ENABLE_STT_UPLOAD === 'true';
 
 interface UtteranceEntry {
@@ -534,9 +536,9 @@ const VoiceOrder = () => {
   const subtotalDisplay = formatINR(subtotalPaise);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50/70 to-slate-100 py-6 dark:from-slate-950 dark:via-slate-950/80 dark:to-slate-900">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-3 rounded-3xl bg-white/80 p-6 shadow-sm backdrop-blur dark:bg-slate-900/70">
+    <main className="voice-order-page min-h-screen bg-gradient-to-b from-slate-50 via-slate-50/70 to-slate-100 py-6 dark:from-slate-950 dark:via-slate-950/80 dark:to-slate-900">
+      <div className="voice-order-page__container mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 sm:px-6 lg:px-8">
+        <header className="voice-order-page__intro flex flex-col gap-3 rounded-3xl bg-white/80 p-6 shadow-sm backdrop-blur dark:bg-slate-900/70">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-2">
               <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-100">New</Badge>
@@ -559,8 +561,8 @@ const VoiceOrder = () => {
           </div>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[420px_1fr]">
-          <Card className="h-full border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/80">
+        <div className="voice-order-page__layout grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[420px_1fr]">
+          <Card className="voice-order-page__panel voice-order-page__panel--console h-full border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/80">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
                 <Mic className="h-5 w-5 text-blue-500" aria-hidden="true" /> Voice console
@@ -773,7 +775,7 @@ const VoiceOrder = () => {
           </Card>
 
           <div className="flex flex-col gap-6">
-            <Card className="border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/80">
+            <Card className="voice-order-page__panel border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/80">
               <CardHeader className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
@@ -988,7 +990,7 @@ const VoiceOrder = () => {
               </CardContent>
             </Card>
 
-            <Card className="border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/80">
+            <Card className="voice-order-page__panel border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/80">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
                   <ShoppingCart className="h-5 w-5 text-blue-500" aria-hidden="true" /> Summary
@@ -1026,7 +1028,7 @@ const VoiceOrder = () => {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

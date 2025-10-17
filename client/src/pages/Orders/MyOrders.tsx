@@ -24,6 +24,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatINR } from '@/utils/currency';
 import { cn } from '@/lib/utils';
 
+import './MyOrders.scss';
+
 const statusOptions: (OrderStatus | 'all')[] = [
   'all',
   'draft',
@@ -105,7 +107,7 @@ const StatusBadge = ({ status }: { status: OrderStatus }) => (
 );
 
 const OrdersSkeleton = () => (
-  <div className="space-y-4">
+  <div className="orders-page__skeleton space-y-4">
     <Skeleton className="h-10 w-40 rounded-full" />
     {Array.from({ length: 3 }).map((_, index) => (
       <Skeleton key={index} className="h-44 w-full rounded-2xl" />
@@ -201,25 +203,26 @@ const MyOrders = () => {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">My orders</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Track your recent purchases, manage cancellations, and check delivery progress.
-        </p>
-      </div>
+    <main className="orders-page">
+      <div className="orders-page__container mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
+        <div className="orders-page__intro space-y-2">
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">My orders</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Track your recent purchases, manage cancellations, and check delivery progress.
+          </p>
+        </div>
 
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter orders by status">
-        {(statusOptions ?? []).map((status) => {
-          const isActive = status === activeStatus;
-          return (
-            <button
-              key={status}
+        <div className="orders-page__filters flex flex-wrap gap-2" role="tablist" aria-label="Filter orders by status">
+          {(statusOptions ?? []).map((status) => {
+            const isActive = status === activeStatus;
+            return (
+              <button
+                key={status}
               type="button"
               role="tab"
               aria-selected={isActive}
               className={cn(
-                'rounded-full border px-3 py-1 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600',
+                'orders-page__filter rounded-full border px-3 py-1 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600',
                 isActive
                   ? 'border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500'
                   : 'border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800',
@@ -230,34 +233,34 @@ const MyOrders = () => {
             </button>
           );
         })}
-      </div>
+        </div>
 
-      {showSkeleton && <OrdersSkeleton />}
+        {showSkeleton && <OrdersSkeleton />}
 
-      {isError && !showSkeleton ? (
-        <ErrorCard
-          message={mineState.error || 'We could not load your orders.'}
-          onRetry={handleRetry}
-        />
-      ) : null}
+        {isError && !showSkeleton ? (
+          <ErrorCard
+            message={mineState.error || 'We could not load your orders.'}
+            onRetry={handleRetry}
+          />
+        ) : null}
 
-      {!isLoading && !isError && ordersList.length === 0 ? (
-        <Empty
-          msg="When you place an order, it will show up here so you can track it easily."
-          ctaText="Browse shops"
-          onCta={() => navigate(paths.shops())}
-        />
-      ) : null}
+        {!isLoading && !isError && ordersList.length === 0 ? (
+          <Empty
+            msg="When you place an order, it will show up here so you can track it easily."
+            ctaText="Browse shops"
+            onCta={() => navigate(paths.shops())}
+          />
+        ) : null}
 
-      {!isLoading && !isError && ordersList.length > 0 ? (
-        <div className="space-y-8">
-          {Object.entries(grouped).map(([date, dayOrders]) => (
-            <section key={date} className="space-y-4">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {date}
-              </h2>
-              <div className="space-y-4">
-                {(dayOrders ?? []).map((order) => {
+        {!isLoading && !isError && ordersList.length > 0 ? (
+          <div className="orders-page__groups space-y-8">
+            {Object.entries(grouped).map(([date, dayOrders]) => (
+              <section key={date} className="orders-page__group space-y-4">
+                <h2 className="orders-page__group-heading text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {date}
+                </h2>
+                <div className="orders-page__cards space-y-4">
+                  {(dayOrders ?? []).map((order) => {
                   const orderItems = order.items ?? [];
                   const quantity = orderItems.reduce((total, item) => {
                     const itemQty = Number(item.qty);
@@ -269,8 +272,8 @@ const MyOrders = () => {
                   const formattedDate = formatDate(order.createdAt);
 
                   return (
-                    <Card key={order.id} className="overflow-hidden border border-slate-200/80 bg-white shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-                      <CardHeader className="flex flex-col gap-2 border-b border-slate-100 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between">
+                    <Card key={order.id} className="orders-page__card overflow-hidden border border-slate-200/80 bg-white shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+                      <CardHeader className="orders-page__card-header flex flex-col gap-2 border-b border-slate-100 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                             {order.shop.name || 'Shop'}
@@ -281,7 +284,7 @@ const MyOrders = () => {
                         </div>
                         <StatusBadge status={order.status} />
                       </CardHeader>
-                      <CardContent className="space-y-4">
+                      <CardContent className="orders-page__card-content space-y-4">
                         <div className="flex flex-wrap gap-3">
                           {orderItems.slice(0, 3).map((item, index) => (
                             <div
@@ -317,7 +320,7 @@ const MyOrders = () => {
                           </div>
                         </div>
                       </CardContent>
-                      <CardFooter className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 py-4 dark:border-slate-800 dark:bg-slate-900/60 sm:flex-row sm:items-center sm:justify-between">
+                      <CardFooter className="orders-page__card-footer flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 py-4 dark:border-slate-800 dark:bg-slate-900/60 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-sm text-slate-500 dark:text-slate-400">
                           Order ID: {order.id}
                         </div>
@@ -353,7 +356,8 @@ const MyOrders = () => {
           ))}
         </div>
       ) : null}
-    </div>
+      </div>
+    </main>
   );
 };
 

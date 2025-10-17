@@ -27,6 +27,8 @@ import {
 import { paths } from '@/routes/paths';
 import { formatINR } from '@/utils/currency';
 
+import './Cart.scss';
+
 type LoadState = 'loading' | 'ready' | 'error';
 
 type DisplayCartItem = {
@@ -328,7 +330,7 @@ const Cart = () => {
 
   if (status === 'loading') {
     return (
-      <main className="min-h-screen pb-16 pt-10" aria-busy="true" style={pageBackgroundStyle}>
+      <main className="cart-page cart-page--loading min-h-screen pb-16 pt-10" aria-busy="true" style={pageBackgroundStyle}>
         <CartSkeleton />
       </main>
     );
@@ -336,8 +338,8 @@ const Cart = () => {
 
   if (status === 'error') {
     return (
-      <main className="min-h-screen pb-16 pt-10" role="main" style={pageBackgroundStyle}>
-        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+      <main className="cart-page cart-page--error min-h-screen pb-16 pt-10" role="main" style={pageBackgroundStyle}>
+        <div className="cart-page__container mx-auto max-w-3xl px-4 sm:px-6">
           <ErrorCard
             title="We couldn’t load your cart"
             message={loadError ?? 'Please try again in a moment.'}
@@ -350,8 +352,8 @@ const Cart = () => {
 
   if (items.length === 0) {
     return (
-      <main className="min-h-screen pb-16 pt-10" role="main" style={pageBackgroundStyle}>
-        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+      <main className="cart-page cart-page--empty min-h-screen pb-16 pt-10" role="main" style={pageBackgroundStyle}>
+        <div className="cart-page__container mx-auto max-w-3xl px-4 sm:px-6">
           <EmptyState
             title="Your cart is empty"
             message="Looks like you haven’t added anything yet. Let’s fix that!"
@@ -364,10 +366,10 @@ const Cart = () => {
   }
 
   return (
-    <main className="min-h-screen pb-16 pt-10" role="main" style={pageBackgroundStyle}>
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 sm:px-6">
+    <main className="cart-page min-h-screen pb-16 pt-10" role="main" style={pageBackgroundStyle}>
+      <div className="cart-page__container mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 sm:px-6">
         <header
-          className="flex flex-col gap-4 rounded-3xl p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+          className="cart-page__header flex flex-col gap-4 rounded-3xl p-6 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
           style={headerCardStyle}
         >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -393,9 +395,9 @@ const Cart = () => {
           </p>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+        <div className="cart-page__content grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
           <section
-            className="space-y-6"
+            className="cart-page__items space-y-6"
             aria-labelledby="cart-items-heading"
           >
             <div className="flex items-center justify-between gap-3">
@@ -430,7 +432,7 @@ const Cart = () => {
                 return (
                   <motion.section
                     key={group.shopId}
-                    className="space-y-4 rounded-3xl p-5 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+                    className="cart-page__shop space-y-4 rounded-3xl p-5 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
                     style={surfacePanelStyle}
                     initial={groupMotion.initial}
                     animate={groupMotion.animate}
@@ -475,7 +477,7 @@ const Cart = () => {
                       {group.items.map((item) => (
                         <motion.article
                           key={item.productId}
-                          className="group/item flex flex-col gap-4 rounded-2xl p-4 transition hover:-translate-y-0.5 hover:ring-2 hover:ring-[rgba(26,115,232,0.25)] hover:shadow-lg"
+                          className="cart-page__item group/item flex flex-col gap-4 rounded-2xl p-4 transition hover:-translate-y-0.5 hover:ring-2 hover:ring-[rgba(26,115,232,0.25)] hover:shadow-lg"
                           style={itemCardStyle}
                           initial={itemMotion.initial}
                           animate={itemMotion.animate}
@@ -536,7 +538,7 @@ const Cart = () => {
           </section>
 
           <aside
-            className="space-y-5 rounded-3xl p-6 shadow-lg"
+            className="cart-page__summary space-y-5 rounded-3xl p-6 shadow-lg"
             style={surfacePanelStyle}
             aria-labelledby="cart-summary"
           >

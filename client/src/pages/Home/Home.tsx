@@ -1,5 +1,6 @@
 import './Home.scss';
 import { motion } from 'framer-motion';
+import { Mic } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,6 +25,7 @@ import { formatDateTime } from '@/utils/date';
 import VerifiedCard from '@/components/ui/VerifiedCard/VerifiedCard';
 import { paths } from '@/routes/paths';
 import ShopCard from '@/components/ui/ShopCard/ShopCard';
+import Button from '@/components/ui/button';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -124,6 +126,48 @@ const Home = () => {
             ))}
           </HorizontalCarousel>
         )}
+      </div>
+
+      <div className="section">
+        <motion.div
+          className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="flex flex-col gap-2">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
+              <Mic className="h-4 w-4" aria-hidden="true" /> Voice Order
+            </span>
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">Speak groceries into your cart</h2>
+            <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
+              Talk to Manacity in Telugu, Hindi or English. We instantly parse your request, surface matching products across neighbourhood shops and let you checkout from one place.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button className="gap-2" size="lg" onClick={() => navigate(paths.voiceOrder())}>
+              <Mic className="h-4 w-4" aria-hidden="true" /> Try Voice Order
+            </Button>
+            <Button
+              variant="secondary"
+              className="gap-2"
+              onClick={() => navigate(paths.voiceOrder())}
+            >
+              Learn more
+            </Button>
+          </div>
+          <ul className="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400">
+            <li className="rounded-full border border-blue-200 bg-white/80 px-3 py-1 dark:border-blue-500/30 dark:bg-slate-900/80">
+              “oka kilo tomatolu”
+            </li>
+            <li className="rounded-full border border-blue-200 bg-white/80 px-3 py-1 dark:border-blue-500/30 dark:bg-slate-900/80">
+              “2 kg bendakayalu”
+            </li>
+            <li className="rounded-full border border-blue-200 bg-white/80 px-3 py-1 dark:border-blue-500/30 dark:bg-slate-900/80">
+              “tomato one kilo”
+            </li>
+          </ul>
+        </motion.div>
       </div>
 
       <Section

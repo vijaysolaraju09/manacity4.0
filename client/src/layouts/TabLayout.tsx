@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import { Bell, CalendarDays, Gift, Home, Mic, Settings, ShoppingCart, Store, UserRound, Users } from "lucide-react";
 import NavItem from "@/components/navigation/NavItem";
+import Button from "@/components/ui/button";
 import type { RootState, AppDispatch } from "../store";
 import { fetchNotifs } from "@/store/notifs";
 import { selectItemCount } from "@/store/slices/cartSlice";
@@ -56,6 +57,13 @@ const TabLayout = () => {
       >
         <h1 className="logo" onClick={() => navigate(paths.home())}>Manacity</h1>
         <div className="actions">
+          <Button
+            onClick={() => navigate(paths.voiceOrder())}
+            className="hidden gap-2 md:inline-flex"
+            aria-label="Voice Order"
+          >
+            <Mic className="h-4 w-4" aria-hidden="true" /> Voice Order
+          </Button>
           <NavItem
             to={paths.cart()}
             icon={ShoppingCart}

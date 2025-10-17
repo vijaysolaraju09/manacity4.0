@@ -1,7 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AnimatePresence, motion } from 'framer-motion';
-import type { ChangeEvent } from 'react';
 import {
   AudioLines,
   Check,
@@ -128,7 +134,7 @@ const VoiceOrder = () => {
     resetListeningState();
   }, [resetListeningState]);
 
-  const handleRecognitionResult = useCallback((event: any) => {
+  const handleRecognitionResult = useCallback((event: SpeechRecognitionEvent) => {
     let interim = '';
     let final = '';
 
@@ -279,10 +285,10 @@ const VoiceOrder = () => {
         setInterimTranscript('');
         finalTranscriptRef.current = '';
       };
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         handleRecognitionResult(event);
       };
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('voice-order:recognition-error', event);
         showToast('We lost the mic for a bit. Try again?', 'error');
         resetListeningState();
@@ -458,7 +464,7 @@ const VoiceOrder = () => {
       const recorder = new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
 
-      recorder.ondataavailable = (event) => {
+      recorder.ondataavailable = (event: BlobEvent) => {
         if (event.data?.size > 0) {
           recordedChunksRef.current.push(event.data);
         }

@@ -44,20 +44,22 @@ const NavItem = ({
       )
     }
   >
-    <Icon className="h-5 w-5" aria-hidden="true" />
+    <span className="relative inline-flex items-center justify-center">
+      <Icon className="h-5 w-5 text-current" aria-hidden="true" />
+      {badge ? (
+        <span
+          aria-hidden="true"
+          className="absolute -top-1 -right-1 inline-flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-red-500 px-[0.3rem] text-[0.65rem] font-semibold leading-none text-white shadow ring-2 ring-white dark:bg-red-400 dark:ring-slate-900"
+        >
+          {badge}
+        </span>
+      ) : null}
+    </span>
     {variant === 'default' ? (
       <span className="truncate text-sm font-medium text-inherit">{label}</span>
     ) : (
       <span className="sr-only">{label}</span>
     )}
-    {badge ? (
-      <span
-        aria-hidden="true"
-        className="absolute -top-1.5 -right-1.5 inline-flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[0.65rem] font-semibold text-white shadow ring-2 ring-white dark:bg-red-400 dark:ring-slate-900"
-      >
-        {badge}
-      </span>
-    ) : null}
   </NavLink>
 );
 

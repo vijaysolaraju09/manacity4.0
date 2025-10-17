@@ -3,11 +3,10 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import { Bell, CalendarDays, Gift, Home, Mic, Settings, ShoppingCart, Store, UserRound, Users } from "lucide-react";
-import MiniCart from "@/components/cart/MiniCart";
 import NavItem from "@/components/navigation/NavItem";
 import type { RootState, AppDispatch } from "../store";
 import { fetchNotifs } from "@/store/notifs";
-import { selectMyPendingOrdersCount, fetchMyOrders } from "@/store/orders";
+import { selectItemCount } from "@/store/slices/cartSlice";
 import { paths } from "@/routes/paths";
 import "./TabLayout.scss";
 
@@ -16,8 +15,7 @@ const TabLayout = () => {
   const navigate = useNavigate();
   const unread = useSelector((state: RootState) => state.notifs.unread);
   const notifStatus = useSelector((state: RootState) => state.notifs.status);
-  const ordersStatus = useSelector((state: RootState) => state.orders.mine.status);
-  const pendingOrders = useSelector(selectMyPendingOrdersCount);
+  const cartItemCount = useSelector(selectItemCount);
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
@@ -25,12 +23,6 @@ const TabLayout = () => {
       dispatch(fetchNotifs({ page: 1 }));
     }
   }, [notifStatus, dispatch]);
-
-  useEffect(() => {
-    if (ordersStatus === "idle") {
-      dispatch(fetchMyOrders());
-    }
-  }, [dispatch, ordersStatus]);
 
   const tabs = [
     { name: "Home", icon: Home, path: paths.home() },
@@ -64,13 +56,12 @@ const TabLayout = () => {
       >
         <h1 className="logo" onClick={() => navigate(paths.home())}>Manacity</h1>
         <div className="actions">
-          <MiniCart />
           <NavItem
-            to={paths.orders.mine()}
+            to={paths.cart()}
             icon={ShoppingCart}
-            label="My Orders"
-            ariaLabel="My Orders"
-            badge={pendingOrders > 0 ? (pendingOrders > 99 ? "99+" : pendingOrders) : undefined}
+            label="Cart"
+            ariaLabel="Cart"
+            badge={cartItemCount > 0 ? (cartItemCount > 99 ? "99+" : cartItemCount) : undefined}
           />
           <NavItem
             to={paths.notifications()}
@@ -112,11 +103,11 @@ const TabLayout = () => {
           <nav className="flex w-full flex-col gap-3" aria-label="Secondary navigation">
             <div className="flex items-center gap-2">
               <NavItem
-                to={paths.orders.mine()}
+                to={paths.cart()}
                 icon={ShoppingCart}
-                label="My Orders"
-                ariaLabel="My Orders"
-                badge={pendingOrders > 0 ? (pendingOrders > 99 ? '99+' : pendingOrders) : undefined}
+                label="Cart"
+                ariaLabel="Cart"
+                badge={cartItemCount > 0 ? (cartItemCount > 99 ? '99+' : cartItemCount) : undefined}
               />
               <NavItem
                 to={paths.notifications()}

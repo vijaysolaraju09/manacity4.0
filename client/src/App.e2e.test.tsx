@@ -8,6 +8,7 @@ import type { Store } from '@reduxjs/toolkit';
 import { act } from 'react-dom/test-utils';
 import ThemeProvider from '@/theme/ThemeProvider';
 import { AppRoutes } from '@/App';
+import { paths } from '@/routes/paths';
 import authReducer from '@/store/slices/authSlice';
 import cartReducer from '@/store/slices/cartSlice';
 import productReducer from '@/store/slices/productSlice';

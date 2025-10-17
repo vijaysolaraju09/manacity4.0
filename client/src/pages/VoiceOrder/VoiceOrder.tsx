@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AnimatePresence, motion } from 'framer-motion';
+import type { ChangeEvent } from 'react';
 import {
   AudioLines,
   Check,
@@ -33,7 +34,6 @@ import { createOrder } from '@/api/orders';
 import { parseUtterance } from '@/features/voice-order/parser';
 import { searchProducts } from '@/features/voice-order/api';
 import type { ParsedItem, ParseResult, VoiceProductHit } from '@/features/voice-order/types';
-import type { RootState } from '@/store';
 import { paths } from '@/routes/paths';
 
 const ENABLE_STT_UPLOAD = import.meta.env.VITE_ENABLE_STT_UPLOAD === 'true';
@@ -60,8 +60,16 @@ const createId = () =>
     : `voice-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
 const listeningMotion = {
-  animate: { scale: [1, 1.05, 0.95, 1], boxShadow: ['0 0 0 0 rgba(59,130,246,0.4)', '0 0 0 12px rgba(59,130,246,0)', '0 0 0 0 rgba(59,130,246,0.35)', '0 0 0 0 rgba(59,130,246,0)'] },
-  transition: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
+  animate: {
+    scale: [1, 1.05, 0.95, 1],
+    boxShadow: [
+      '0 0 0 0 rgba(59,130,246,0.4)',
+      '0 0 0 12px rgba(59,130,246,0)',
+      '0 0 0 0 rgba(59,130,246,0.35)',
+      '0 0 0 0 rgba(59,130,246,0)',
+    ],
+  },
+  transition: { duration: 2.2, repeat: Infinity, ease: [0.42, 0, 0.58, 1] as const },
 };
 
 const VoiceOrder = () => {
@@ -300,6 +308,13 @@ const VoiceOrder = () => {
     }
   }, [isListening, startListening, stopListening]);
 
+  const handleManualTranscriptChange = useCallback(
+    (event: ChangeEvent<HTMLTextAreaElement>) => {
+      setManualTranscript(event.target.value);
+    },
+    [],
+  );
+
   const handleManualProcess = useCallback(() => {
     if (!manualTranscript.trim()) {
       showToast('Type something to parse first.', 'info');
@@ -307,6 +322,10 @@ const VoiceOrder = () => {
     }
     void processTranscript(manualTranscript, 'manual');
   }, [manualTranscript, processTranscript]);
+
+  const handleManualQueryChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setManualQuery(event.target.value);
+  }, []);
 
   const handleManualSearch = useCallback(async () => {
     const query = manualQuery.trim();
@@ -599,7 +618,7 @@ const VoiceOrder = () => {
                 <Textarea
                   id="voice-manual"
                   value={manualTranscript}
-                  onChange={(event) => setManualTranscript(event.target.value)}
+                  onChange={handleManualTranscriptChange}
                   placeholder="Example: oka kilo tomatolu"
                   aria-label="Manual order input"
                   className="rounded-2xl"
@@ -742,7 +761,7 @@ const VoiceOrder = () => {
                 <div className="flex items-center gap-2">
                   <Input
                     value={manualQuery}
-                    onChange={(event) => setManualQuery(event.target.value)}
+                    onChange={handleManualQueryChange}
                     placeholder="Search manually"
                     className="h-9 w-48"
                   />

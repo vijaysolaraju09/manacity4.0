@@ -82,6 +82,18 @@
   --color-text-secondary: var(--color-muted);
   --overlay-bg: rgba(0, 0, 0, 0.4);
 
+  /* RGB tokens for Tailwind colour utilities */
+  --color-bg-rgb: 255 255 255;
+  --color-text-rgb: 17 24 39;
+  --color-border-rgb: 189 209 250;
+  --color-muted-rgb: 75 85 99;
+  --color-muted-foreground-rgb: 75 85 99;
+  --color-primary-rgb: 27 99 217;
+  --color-primary-contrast-rgb: 255 255 255;
+  --color-surface-rgb: 255 255 255;
+  --color-danger-rgb: 220 38 38;
+  --color-danger-contrast-rgb: 255 255 255;
+
   /* Legacy colour aliases */
   --color-card: var(--color-surface);
 }
@@ -131,6 +143,17 @@
   /* Legacy colour aliases */
   --color-card: var(--color-surface);
   --overlay-bg: rgba(0, 0, 0, 0.4);
+
+  --color-bg-rgb: 255 255 255;
+  --color-text-rgb: 17 24 39;
+  --color-border-rgb: 189 209 250;
+  --color-muted-rgb: 75 85 99;
+  --color-muted-foreground-rgb: 75 85 99;
+  --color-primary-rgb: 27 99 217;
+  --color-primary-contrast-rgb: 255 255 255;
+  --color-surface-rgb: 255 255 255;
+  --color-danger-rgb: 220 38 38;
+  --color-danger-contrast-rgb: 255 255 255;
 }
 
 /* Dark theme */
@@ -158,6 +181,17 @@
   --color-card: var(--color-surface);
   --overlay-bg: rgba(0, 0, 0, 0.6);
   --color-text-secondary: var(--color-muted);
+
+  --color-bg-rgb: 15 23 42;
+  --color-text-rgb: 226 232 240;
+  --color-border-rgb: 63 63 70;
+  --color-muted-rgb: 148 163 184;
+  --color-muted-foreground-rgb: 203 213 225;
+  --color-primary-rgb: 236 72 153;
+  --color-primary-contrast-rgb: 255 255 255;
+  --color-surface-rgb: 30 41 59;
+  --color-danger-rgb: 248 113 113;
+  --color-danger-contrast-rgb: 17 24 39;
 }
 
 /* Colourful theme with brand accents */
@@ -182,5 +216,16 @@
   --color-card: var(--color-surface);
   --overlay-bg: rgba(0, 0, 0, 0.4);
   --color-text-secondary: var(--color-muted);
+
+  --color-bg-rgb: 255 255 255;
+  --color-text-rgb: 34 34 34;
+  --color-border-rgb: 229 231 235;
+  --color-muted-rgb: 107 114 128;
+  --color-muted-foreground-rgb: 107 114 128;
+  --color-primary-rgb: 255 152 0;
+  --color-primary-contrast-rgb: 255 255 255;
+  --color-surface-rgb: 255 255 255;
+  --color-danger-rgb: 220 38 38;
+  --color-danger-contrast-rgb: 255 255 255;
 }
 

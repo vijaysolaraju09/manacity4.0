@@ -5,7 +5,11 @@
 }
 
 .micButton {
-  @apply w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md transition-transform;
+  @apply w-20 h-20 rounded-full flex items-center justify-center shadow-md transition-transform;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 
   &:hover {
     transform: scale(1.05);
@@ -13,7 +17,9 @@
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 4px var(--ring);
+    box-shadow:
+      0 0 0 2px var(--color-surface),
+      0 0 0 6px rgba(27, 99, 217, 0.3);
   }
 
   &.listening {

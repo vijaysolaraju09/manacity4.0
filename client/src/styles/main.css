@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(var(--background, 0 0% 100%));
+}
+
+:root {
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}

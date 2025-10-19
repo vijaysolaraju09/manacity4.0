@@ -2,22 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import {
-  ArrowLeft,
-  Building2,
-  ChevronRight,
-  MinusCircle,
-  PlusCircle,
-  Shield,
-  ShoppingCart,
-  Trash2,
-} from 'lucide-react';
+import { ArrowLeft, ChevronRight, ShoppingCart, Trash2 } from 'lucide-react';
 
-import CartItemCard from '@/features/cart/components/CartItemCard';
-import CartMobileSummary from '@/features/cart/components/CartMobileSummary';
 import CartSkeleton from '@/features/cart/components/CartSkeleton';
-import CartSummaryCard from '@/features/cart/components/CartSummaryCard';
+import CouponField from '@/features/cart/components/CouponField';
 import EmptyCart from '@/features/cart/components/EmptyCart';
+import FreeShippingBar from '@/features/cart/components/FreeShippingBar';
 import type { CartDisplayItem } from '@/features/cart/types';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import ErrorCard from '@/components/ui/ErrorCard';
@@ -28,6 +18,7 @@ import fallbackImage from '@/assets/no-image.svg';
 import { paths } from '@/routes/paths';
 import { cn } from '@/lib/utils';
 import styles from '@/styles/PageShell.module.scss';
+import cartStyles from './Cart.module.scss';
 import {
   clearCart,
   removeItem,
@@ -58,6 +49,12 @@ const sectionMotion = {
   transition: { duration: 0.22, ease: 'easeOut' as const },
 } as const;
 
+const itemMotion = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -12 },
+};
+
 const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -68,7 +65,6 @@ const Cart = () => {
   const [couponCode, setCouponCode] = useState('');
   const [couponState, setCouponState] = useState<'idle' | 'loading' | 'applied' | 'error'>('idle');
   const [couponError, setCouponError] = useState<string | null>(null);
-  const [summaryOpen, setSummaryOpen] = useState(false);
   const [confirmState, setConfirmState] = useState<ConfirmState>(null);
 
   useEffect(() => {
@@ -85,6 +81,8 @@ const Cart = () => {
       const qty = Number.isFinite(item.qty) && item.qty > 0 ? Math.floor(item.qty) : 1;
       const unitPrice = Number.isFinite(item.pricePaise) ? Math.max(0, Math.round(item.pricePaise)) : 0;
       const lineTotal = unitPrice * qty;
+      const mrpInput = (item as { mrpPaise?: number }).mrpPaise;
+      const mrpPaise = Number.isFinite(mrpInput) ? Math.max(unitPrice, Math.round(mrpInput as number)) : undefined;
 
       return {
         productId: item.productId,
@@ -94,6 +92,7 @@ const Cart = () => {
         qty,
         unitPricePaise: unitPrice,
         lineTotalPaise: lineTotal,
+        mrpPaise,
         brand: item.shopId ? `Shop ${item.shopId}` : undefined,
         availabilityLabel: 'In stock',
         deliveryMessage: 'Delivery by Tue, Oct 21 • Free above ₹499',
@@ -195,6 +194,14 @@ const Cart = () => {
     navigate(paths.home?.() ?? '/');
   };
 
+  const handleViewOrders = () => {
+    if (typeof paths.orders?.mine === 'function') {
+      navigate(paths.orders.mine());
+      return;
+    }
+    navigate('/orders/mine');
+  };
+
   const handleCheckout = () => {
     if (selectedItems.length === 0) {
       showToast('Select items to checkout', 'info');
@@ -287,98 +294,106 @@ const Cart = () => {
   }
 
   const allSelected = selectedIds.size === items.length && items.length > 0;
+  const stepperButtonClasses =
+    'flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-40';
 
   return (
     <main className={cartContainerClasses}>
       <div className={cn(styles.pageShell__inner, 'mx-auto max-w-7xl px-4 pb-32 pt-12 sm:px-6 lg:px-8')}>
-        <div className="flex flex-col gap-12">
+        <div className="flex flex-col gap-10">
           <motion.section
             initial={sectionMotion.initial}
             animate={sectionMotion.animate}
             transition={sectionMotion.transition}
             className="space-y-6"
           >
-            <div className="flex flex-col gap-6 rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/15 via-white/90 to-white/70 p-6 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/70 dark:shadow-indigo-900/40">
+            <div className="flex flex-col gap-6 rounded-3xl border border-border bg-background/80 p-6 shadow-xl backdrop-blur">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-start gap-4">
                   <Button
                     variant="ghost"
-                    className="h-11 w-11 rounded-full border border-indigo-200/60 bg-white/80 text-indigo-600 shadow-sm hover:border-indigo-400 hover:text-indigo-700 dark:border-indigo-500/30 dark:bg-slate-900/70 dark:text-indigo-200"
+                    className="h-11 w-11 rounded-full border border-border bg-background text-foreground shadow-sm hover:border-primary/40 hover:text-primary"
                     onClick={() => navigate(-1)}
                     aria-label="Go back"
                   >
                     <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                   </Button>
-                  <div className="space-y-2">
-                    <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Shopping cart</h1>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                  <div className="space-y-3">
+                    <h1 className="text-3xl font-semibold tracking-tight">Shopping cart</h1>
+                    <p className="text-sm text-muted-foreground">
                       {items.length} item{items.length === 1 ? '' : 's'} curated from neighbourhood shops.
                     </p>
-                    <button
-                      type="button"
-                      onClick={handleContinueShopping}
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 transition hover:text-indigo-700 dark:text-indigo-300"
-                    >
-                      Continue shopping
-                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                    </button>
+                    <div className="flex flex-wrap gap-3 text-sm font-semibold">
+                      <button
+                        type="button"
+                        onClick={handleContinueShopping}
+                        className="inline-flex items-center gap-2 text-primary transition hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                      >
+                        Continue shopping
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-semibold"
+                        onClick={handleViewOrders}
+                      >
+                        <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+                        View orders
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex flex-col items-start gap-2 rounded-full bg-indigo-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200 sm:flex-row sm:items-center">
-                  <Shield className="h-4 w-4" aria-hidden="true" />
-                  Secure checkout • Trusted shops
+                <div className="rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                  Trusted checkout • Secure payments
                 </div>
               </div>
-              <div className="grid gap-4 rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-xl shadow-slate-200/60 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-900/70 dark:shadow-slate-950/50 lg:grid-cols-[1.2fr_minmax(0,1fr)] lg:items-center">
-                <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <div className={cn(cartStyles.bulkBar, 'flex-col gap-4 sm:flex-row sm:items-center')}>
+                <label className="flex items-center gap-3 text-sm font-semibold">
                   <input
                     type="checkbox"
-                    className="h-5 w-5 rounded-full border border-slate-300 text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600"
+                    className="h-5 w-5 rounded-md border border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     checked={allSelected}
                     onChange={(event) => handleSelectAll(event.target.checked)}
                     aria-label="Select all items"
                   />
-                  Select all
-                  <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-semibold text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200">
-                    {selectedItems.length} chosen
+                  <span>Select all</span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                    {selectedItems.length} selected
                   </span>
                 </label>
-                <div className="flex flex-col gap-3 text-sm text-slate-600 dark:text-slate-300 lg:flex-row lg:items-center lg:justify-end lg:gap-4">
-                  <div className="flex items-center gap-3">
-                    <span>Subtotal</span>
-                    <span className="text-base font-semibold text-slate-900 dark:text-white">{formatINR(subtotalPaise)}</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                      onClick={handleBulkSave}
-                      disabled={selectedItems.length === 0}
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Save for later
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="rounded-full px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-rose-400 dark:hover:bg-rose-500/20"
-                      onClick={handleBulkRemove}
-                      disabled={selectedItems.length === 0}
-                    >
-                      <MinusCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Remove selected
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                      onClick={handleClear}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Clear cart
-                    </Button>
-                  </div>
+                <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
+                  <span className="text-sm text-muted-foreground">
+                    Subtotal:
+                    <span className="ml-2 font-semibold text-foreground">{formatINR(subtotalPaise)}</span>
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="rounded-full px-4 py-2 text-xs font-semibold"
+                    onClick={handleBulkSave}
+                    disabled={selectedItems.length === 0}
+                  >
+                    Save for later
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="rounded-full px-4 py-2 text-xs font-semibold text-destructive hover:text-destructive"
+                    onClick={handleBulkRemove}
+                    disabled={selectedItems.length === 0}
+                  >
+                    Remove selected
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="rounded-full px-4 py-2 text-xs font-semibold"
+                    onClick={handleClear}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Clear cart
+                  </Button>
                 </div>
               </div>
             </div>
@@ -388,97 +403,210 @@ const Cart = () => {
             initial={sectionMotion.initial}
             animate={sectionMotion.animate}
             transition={{ ...sectionMotion.transition, delay: 0.05 }}
-            className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
           >
-            <section aria-labelledby="cart-items" className="space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 id="cart-items" className="text-xl font-semibold text-slate-900 dark:text-white">
-                  Items in your cart
-                </h2>
-                <span className="rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200">
-                  {itemCount} items
-                </span>
-              </div>
-              <AnimatePresence mode="popLayout">
-                {items.map((item) => (
-                  <CartItemCard
-                    key={item.productId}
-                    item={item}
-                    selected={selectedIds.has(item.productId)}
-                    onSelectChange={(checked) => handleSelectItem(item.productId, checked)}
-                    onQtyChange={(qty) => handleQtyChange(item.productId, qty, item.name)}
-                    onRemove={() => handleRemove(item.productId, item.name)}
-                    onSaveForLater={() => handleSaveForLater(item.name)}
-                  />
-                ))}
-              </AnimatePresence>
-            </section>
-            <motion.aside
-              initial={sectionMotion.initial}
-              animate={sectionMotion.animate}
-              transition={{ ...sectionMotion.transition, delay: 0.1 }}
-              className="space-y-4 lg:sticky lg:top-32"
-            >
-              <CartSummaryCard
-                subtotalPaise={subtotalPaise}
-                discountPaise={0}
-                shippingPaise={0}
-                onCheckout={handleCheckout}
-                disabled={selectedItems.length === 0}
-                couponCode={couponCode}
-                onApplyCoupon={handleApplyCoupon}
-                onRemoveCoupon={handleRemoveCoupon}
-                couponState={couponState}
-                couponError={couponError}
-                itemCount={itemCount}
-                freeShippingThresholdPaise={FREE_SHIPPING_THRESHOLD_PAISE}
-              />
-              <div className="hidden rounded-3xl border border-slate-200/70 bg-white/90 p-5 text-sm text-slate-600 shadow-xl shadow-slate-200/60 backdrop-blur-lg dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-slate-300 lg:flex lg:flex-col lg:gap-3">
-                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                  <Building2 className="h-4 w-4" aria-hidden="true" />
-                  We partner with trusted neighbourhood shops for genuine products.
+            <div className={cn(cartStyles.layout, 'items-start')}>
+              <section aria-labelledby="cart-items" className="space-y-6 lg:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 id="cart-items" className="text-xl font-semibold">
+                    Items in your cart
+                  </h2>
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                    {itemCount} item{itemCount === 1 ? '' : 's'}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                  <ShoppingCart className="h-4 w-4" aria-hidden="true" />
-                  Checkout once, receive consolidated delivery updates.
+                <AnimatePresence initial={false} mode="popLayout">
+                  {items.map((item) => {
+                    const selected = selectedIds.has(item.productId);
+                    const savingsPaise = item.mrpPaise ? Math.max(0, item.mrpPaise - item.unitPricePaise) : 0;
+
+                    return (
+                      <motion.li
+                        key={item.productId}
+                        layout
+                        variants={itemMotion}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                        className={cn(cartStyles.itemCard, 'flex-col gap-4 sm:flex-row sm:items-start')}
+                      >
+                        <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:items-start">
+                          <div className="flex items-start gap-3">
+                            <label className="pt-1">
+                              <input
+                                type="checkbox"
+                                className="h-5 w-5 rounded-md border border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                checked={selected}
+                                onChange={(event) => handleSelectItem(item.productId, event.target.checked)}
+                                aria-label={`Select ${item.name}`}
+                              />
+                            </label>
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              loading="lazy"
+                              className={cn(cartStyles.itemImg, 'h-24 w-24 border border-border object-cover shadow-sm')}
+                            />
+                          </div>
+                          <div className="flex flex-1 flex-col gap-3">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div className="space-y-1">
+                                {item.brand ? (
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    {item.brand}
+                                  </p>
+                                ) : null}
+                                <h3 className="text-base font-semibold leading-tight" title={item.name}>
+                                  {item.name}
+                                </h3>
+                              </div>
+                              <div className={cartStyles.priceCluster} aria-live="polite">
+                                <span className="current">{formatINR(item.unitPricePaise)}</span>
+                                {item.mrpPaise && item.mrpPaise > item.unitPricePaise ? (
+                                  <span className="mrp">{formatINR(item.mrpPaise)}</span>
+                                ) : null}
+                                {savingsPaise > 0 ? (
+                                  <span className="savings">You save {formatINR(savingsPaise)}</span>
+                                ) : null}
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+                              <span>{item.availabilityLabel ?? 'In stock'}</span>
+                              {item.deliveryMessage ? <span>{item.deliveryMessage}</span> : null}
+                              {item.shippingNote ? <span>{item.shippingNote}</span> : null}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="w-full border-t border-border pt-4 sm:w-auto sm:border-none sm:pt-0">
+                          <div className="flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <div className="flex items-center gap-2" role="group" aria-label={`Update quantity for ${item.name}`}>
+                                <span className="text-xs font-semibold uppercase text-muted-foreground">Qty</span>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    className={stepperButtonClasses}
+                                    onClick={() => handleQtyChange(item.productId, Math.max(1, item.qty - 1), item.name)}
+                                    aria-label={`Decrease quantity for ${item.name}`}
+                                    disabled={item.qty <= 1}
+                                  >
+                                    −
+                                  </button>
+                                  <span className="min-w-[2.5rem] text-center text-sm font-semibold" aria-live="polite">
+                                    {item.qty}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className={stepperButtonClasses}
+                                    onClick={() => handleQtyChange(item.productId, item.qty + 1, item.name)}
+                                    aria-label={`Increase quantity for ${item.name}`}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveForLater(item.name)}
+                                  className="rounded-full px-3 py-1 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                                >
+                                  Save for later
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemove(item.productId, item.name)}
+                                  className="rounded-full px-3 py-1 text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="text-xs text-muted-foreground">Line total</span>
+                              <span className="text-lg font-semibold">{formatINR(item.lineTotalPaise)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.li>
+                    );
+                  })}
+                </AnimatePresence>
+              </section>
+
+              <aside className={cn(cartStyles.summary, 'space-y-6')} aria-labelledby="cart-summary">
+                <div className="space-y-1">
+                  <h2 id="cart-summary" className="text-lg font-semibold">
+                    Price details
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedItems.length} item{selectedItems.length === 1 ? '' : 's'} selected
+                  </p>
                 </div>
-              </div>
-            </motion.aside>
+
+                <CouponField
+                  value={couponCode}
+                  onApply={handleApplyCoupon}
+                  onRemove={handleRemoveCoupon}
+                  state={couponState}
+                  error={couponError}
+                />
+
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Item total</span>
+                    <span className="font-semibold text-foreground">{formatINR(subtotalPaise)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-emerald-600">
+                    <span>Discounts</span>
+                    <span>-{formatINR(0)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Shipping</span>
+                    <span>Calculated at checkout</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-base font-semibold">
+                  <span>Grand total</span>
+                  <span>{formatINR(totalPaise)}</span>
+                </div>
+
+                <FreeShippingBar
+                  subtotalPaise={subtotalPaise}
+                  thresholdPaise={FREE_SHIPPING_THRESHOLD_PAISE}
+                />
+
+                <Button
+                  type="button"
+                  className="w-full rounded-full py-3 text-base font-semibold"
+                  onClick={handleCheckout}
+                  disabled={selectedItems.length === 0}
+                >
+                  Proceed to checkout
+                </Button>
+                <p className="text-center text-xs text-muted-foreground">Secure checkout powered by Manacity Pay</p>
+              </aside>
+            </div>
           </motion.section>
         </div>
       </div>
 
-      <CartMobileSummary
-        totalPaise={totalPaise}
-        itemCount={itemCount}
-        onCheckout={handleCheckout}
-        disabled={selectedItems.length === 0}
-        open={summaryOpen}
-        onOpenChange={setSummaryOpen}
-        summaryContent={
-          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-200">
-            <div className="flex items-center justify-between text-base font-semibold text-slate-900 dark:text-white">
-              <span>Grand total</span>
-              <span>{formatINR(totalPaise)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Items</span>
-              <span>{itemCount}</span>
-            </div>
-            <Button
-              type="button"
-              className="w-full rounded-full py-3 text-sm font-semibold"
-              onClick={() => {
-                setSummaryOpen(false);
-                handleCheckout();
-              }}
-              disabled={selectedItems.length === 0}
-            >
-              Proceed to checkout
-            </Button>
-          </div>
-        }
-      />
+      <div className={cn(cartStyles.bottomSheet, 'lg:hidden')} role="region" aria-label="Cart summary">
+        <div className="flex flex-col">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total</span>
+          <span className="text-lg font-semibold">{formatINR(totalPaise)}</span>
+          <span className="text-xs text-muted-foreground">{itemCount} item{itemCount === 1 ? '' : 's'}</span>
+        </div>
+        <Button
+          type="button"
+          className="rounded-full px-6 py-2 text-sm font-semibold"
+          onClick={handleCheckout}
+          disabled={selectedItems.length === 0}
+        >
+          Checkout
+        </Button>
+      </div>
 
       <ConfirmDialog
         open={Boolean(confirmState)}

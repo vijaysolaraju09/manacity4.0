@@ -1,0 +1,44 @@
+.layout {
+  @apply grid grid-cols-1 lg:grid-cols-3 gap-6;
+}
+
+.itemCard {
+  @apply flex gap-4 p-4 bg-background border border-border rounded-2xl shadow-sm hover:shadow-md transition;
+}
+
+.itemImg {
+  aspect-ratio: 1 / 1;
+  border-radius: 1rem;
+  object-fit: cover;
+}
+
+.priceCluster {
+  @apply flex flex-col;
+
+  .current {
+    font-weight: 600;
+  }
+
+  .mrp {
+    text-decoration: line-through;
+    color: var(--muted-foreground);
+  }
+
+  .savings {
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+    @apply px-2 py-1 rounded-md text-xs;
+  }
+}
+
+.bulkBar {
+  @apply flex justify-between items-center bg-muted/30 px-4 py-2 rounded-xl border border-border;
+}
+
+.summary {
+  @apply sticky top-20 p-4 bg-background border border-border rounded-2xl shadow-md;
+}
+
+.bottomSheet {
+  @apply fixed bottom-0 inset-x-0 p-4 bg-background/80 backdrop-blur border-t border-border flex justify-between items-center;
+}

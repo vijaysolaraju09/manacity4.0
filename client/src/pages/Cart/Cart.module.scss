@@ -34,7 +34,8 @@
 }
 
 .bulkBar {
-  @apply flex justify-between items-center bg-muted/30 px-4 py-2 rounded-xl border;
+  @apply flex justify-between items-center px-4 py-2 rounded-xl border;
+  background-color: rgb(var(--color-muted-rgb) / 0.3);
   border-color: var(--border);
 }
 

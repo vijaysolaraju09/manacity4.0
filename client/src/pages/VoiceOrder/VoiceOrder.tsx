@@ -12,7 +12,6 @@ import {
   AudioLines,
   Check,
   ChevronRight,
-  Circle,
   Headphones,
   History,
   Loader2,
@@ -27,7 +26,6 @@ import {
   XCircle,
 } from 'lucide-react';
 import Button from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Textarea from '@/components/ui/textarea';
 import Input from '@/components/ui/input';
 import QuantityStepper from '@/components/ui/QuantityStepper/QuantityStepper';
@@ -43,8 +41,8 @@ import { searchProducts } from '@/features/voice-order/api';
 import type { ParsedItem, ParseResult, VoiceProductHit } from '@/features/voice-order/types';
 import { paths } from '@/routes/paths';
 
-import './VoiceOrder.scss';
 import styles from '@/styles/PageShell.module.scss';
+import voiceStyles from '../VoiceOrder.module.scss';
 
 const ENABLE_STT_UPLOAD = import.meta.env.VITE_ENABLE_STT_UPLOAD === 'true';
 
@@ -87,19 +85,6 @@ const createId = () =>
   (typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : `voice-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
-
-const listeningMotion = {
-  animate: {
-    scale: [1, 1.05, 0.95, 1],
-    boxShadow: [
-      '0 0 0 0 rgba(59,130,246,0.4)',
-      '0 0 0 12px rgba(59,130,246,0)',
-      '0 0 0 0 rgba(59,130,246,0.35)',
-      '0 0 0 0 rgba(59,130,246,0)',
-    ],
-  },
-  transition: { duration: 2.2, repeat: Infinity, ease: [0.42, 0, 0.58, 1] as const },
-};
 
 const VoiceOrder = () => {
   const dispatch = useDispatch();
@@ -537,511 +522,526 @@ const VoiceOrder = () => {
 
   const subtotalDisplay = formatINR(subtotalPaise);
 
+  const examplePhrases = useMemo(
+    () => [
+      'oka kilo tomatolu',
+      '3 dozen eggs from Sri Fresh',
+      'send 2 litres milk and 1 bread',
+      'half kilo onions and coriander',
+    ],
+    [],
+  );
+
+  const handleExampleInsert = useCallback(
+    (example: string) => {
+      setManualTranscript(example);
+      setManualQuery(example);
+      setTranscript(example);
+      setInterimTranscript('');
+      finalTranscriptRef.current = example;
+    },
+    [],
+  );
+
   return (
-    <main className={cn(styles.pageShell, 'voice-order-page bg-transparent text-slate-900 dark:text-slate-100')}>
-      <div className={cn(styles.pageShell__inner, 'voice-order-page__container mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 sm:px-6 lg:px-8')}>
+    <motion.main
+      className={cn(styles.pageShell, 'bg-background text-foreground')}
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
+      <div
+        className={cn(
+          styles.pageShell__inner,
+          'mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-32 sm:px-6 lg:px-8',
+        )}
+      >
         <motion.header
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.24, ease: 'easeOut' }}
-          className="voice-order-page__intro flex flex-col gap-4 rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/15 via-white/90 to-white/70 p-6 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/70 dark:shadow-indigo-900/40"
+          transition={{ duration: 0.45, ease: 'easeOut', delay: 0.05 }}
+          className="flex flex-col gap-4"
         >
-          <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="space-y-2">
-              <Badge className="bg-indigo-500/10 text-indigo-600 shadow-sm dark:bg-indigo-500/20 dark:text-indigo-100">New</Badge>
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Voice Order</h1>
-              <p className="max-w-3xl text-sm text-slate-600 dark:text-slate-300">
-                Speak in Telugu, Hindi, English or mix them freely. Manacity listens, understands and lines up fresh produce across shops so you can add items to cart or order instantly from one place.
+              <Badge variant="secondary" className="px-3 py-1 text-xs">
+                Flagship
+              </Badge>
+              <h1 className="text-3xl font-semibold tracking-tight">Voice order</h1>
+              <p className="max-w-2xl text-sm text-muted-foreground">
+                Speak naturally and we line up matching inventory across Manacity. Mix languages, refine the transcript and push matches directly to your cart.
               </p>
             </div>
-            <div className="flex flex-col items-end gap-3 text-right">
-              <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Cart summary
-              </span>
-              <div className="flex items-center gap-3 rounded-2xl border border-indigo-200/60 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 shadow-md shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-slate-900/70 dark:text-slate-100">
-                <ShoppingCart className="h-4 w-4 text-indigo-500" aria-hidden="true" />
-                <span>{cartItemCount} items</span>
-                <span className="text-slate-400">•</span>
-                <span>{subtotalDisplay}</span>
-              </div>
+            <div className="rounded-2xl border border-border bg-background/70 p-4 text-right shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Cart snapshot</p>
+              <p className="mt-1 text-lg font-semibold">{subtotalDisplay}</p>
+              <p className="text-xs text-muted-foreground">
+                {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'}
+              </p>
             </div>
           </div>
         </motion.header>
 
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.24, ease: 'easeOut', delay: 0.05 }}
-          className="voice-order-page__layout grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[420px_1fr]"
-        >
-          <Card className="voice-order-page__panel voice-order-page__panel--console h-full border border-indigo-200/60 bg-white/90 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/80 dark:shadow-indigo-900/40">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
-                <Mic className="h-5 w-5 text-blue-500" aria-hidden="true" /> Voice console
-              </CardTitle>
-              <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-                Tap the mic, speak your order, review the transcript and send it for understanding.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-5">
-              <div className="flex items-center gap-3">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
+          <div>
+            <motion.section
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
+              className={voiceStyles.consoleCard}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold">Voice console</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Tap the mic, speak freely and watch Manacity transcribe in real time.
+                  </p>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  Live
+                </Badge>
+              </div>
+              <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
                 <motion.button
                   type="button"
                   aria-label={isListening ? 'Stop listening' : 'Start listening'}
                   aria-pressed={isListening}
-                  className="relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  className={cn(voiceStyles.micButton, isListening && 'listening')}
                   onClick={toggleListening}
-                  {...(isListening ? listeningMotion : {})}
+                  whileTap={{ scale: 0.94 }}
+                  animate={isListening ? { scale: [1, 1.08, 0.96, 1] } : { scale: 1 }}
+                  transition={
+                    isListening
+                      ? { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
+                      : { type: 'spring', stiffness: 340, damping: 20 }
+                  }
                 >
-                  {isListening ? <MicOff className="h-7 w-7" aria-hidden="true" /> : <Mic className="h-7 w-7" aria-hidden="true" />}
-                  <span className="sr-only">{isListening ? 'Stop listening' : 'Start listening'}</span>
+                  {isListening ? (
+                    <MicOff className="h-7 w-7" aria-hidden="true" />
+                  ) : (
+                    <Mic className="h-7 w-7" aria-hidden="true" />
+                  )}
                 </motion.button>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">
                     {isListening ? 'Listening…' : isTranscribing ? 'Transcribing…' : 'Ready when you are'}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-muted-foreground">
                     {supportsSpeechRecognition
-                      ? 'Auto-stops on silence. You can also edit the transcript below.'
-                      : 'Browser speech recognition unavailable. Use recording or manual entry.'}
+                      ? 'Auto-stops on silence. You can edit the transcript before asking us to understand it.'
+                      : 'Browser speech recognition unavailable. Use recording or manual entry instead.'}
                   </p>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <label htmlFor="voice-transcript" className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Transcript preview
-                </label>
-                <div
-                  id="voice-transcript"
-                  aria-live="polite"
-                  className="min-h-[96px] rounded-2xl border border-indigo-200/60 bg-white/90 p-4 text-sm text-slate-800 shadow-inner dark:border-indigo-500/30 dark:bg-slate-950/60 dark:text-slate-100"
-                >
-                  {interimTranscript ? (
-                    <span className="text-slate-500 dark:text-slate-400">{interimTranscript}</span>
-                  ) : transcript ? (
-                    <span>{transcript}</span>
-                  ) : (
-                    <span className="text-slate-400">Tap the mic or type your order.</span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setTranscript('');
-                      setInterimTranscript('');
-                      finalTranscriptRef.current = '';
-                    }}
-                    className="gap-2"
-                  >
-                    <X className="h-4 w-4" aria-hidden="true" />
-                    Clear
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => void processTranscript(transcript || interimTranscript, 'manual')}
-                    className="gap-2"
-                    disabled={processing || !(transcript || interimTranscript)}
-                  >
-                    <Sparkles className="h-4 w-4" aria-hidden="true" />
-                    Understand this
-                  </Button>
-                </div>
+              <div className={voiceStyles.transcript} aria-live="polite">
+                {interimTranscript ? (
+                  <span className="text-muted-foreground">{interimTranscript}</span>
+                ) : transcript ? (
+                  <span>{transcript}</span>
+                ) : (
+                  <span className="text-muted-foreground">Tap the mic or try one of the sample prompts below.</span>
+                )}
               </div>
+              <div className={voiceStyles.examples}>
+                {examplePhrases.map((example) => (
+                  <button
+                    key={example}
+                    type="button"
+                    onClick={() => handleExampleInsert(example)}
+                    className={cn(
+                      'transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                      voiceStyles.chip,
+                    )}
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setTranscript('');
+                    setInterimTranscript('');
+                    finalTranscriptRef.current = '';
+                  }}
+                  className="gap-2"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                  Clear
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => void processTranscript(transcript || interimTranscript, 'manual')}
+                  className="gap-2"
+                  disabled={processing || !(transcript || interimTranscript)}
+                >
+                  <Sparkles className="h-4 w-4" aria-hidden="true" />
+                  Understand this
+                </Button>
+              </div>
+            </motion.section>
 
-              <div className="space-y-2">
-                <label htmlFor="voice-manual" className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Prefer typing?
-                </label>
+            <motion.section
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: 'easeOut', delay: 0.15 }}
+              className={voiceStyles.consoleCard}
+            >
+              <div className="flex flex-col gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold">Fine tune</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Type, correct or manually search for products to add alongside voice results.
+                  </p>
+                </div>
                 <Textarea
-                  id="voice-manual"
                   value={manualTranscript}
                   onChange={handleManualTranscriptChange}
                   placeholder="Example: oka kilo tomatolu"
                   aria-label="Manual order input"
-                  className="rounded-2xl"
                 />
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap gap-2">
                   <Button onClick={handleManualProcess} disabled={processing} className="gap-2">
                     <Wand2 className="h-4 w-4" aria-hidden="true" /> Parse text
                   </Button>
-                  {supportsSpeechRecognition ? null : (
-                    <div className="inline-flex items-center gap-2 rounded-2xl border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  {!supportsSpeechRecognition ? (
+                    <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
                       <Headphones className="h-4 w-4" aria-hidden="true" />
-                      Speech recognition coming soon for this browser
+                      Speech recognition coming soon
                     </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-3 rounded-2xl border border-indigo-200/60 bg-white/70 p-4 shadow-inner dark:border-indigo-500/30 dark:bg-slate-950/40">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Fallback recording</p>
-                  <Badge variant="outline" className="text-xs">Beta</Badge>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Record audio to send later for transcription. Perfect for unsupported browsers or very long orders.
-                </p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button
-                    onClick={handleRecordingToggle}
-                    variant={isRecording ? 'destructive' : 'secondary'}
-                    className="gap-2"
-                  >
-                    {isRecording ? (
-                      <>
-                        <XCircle className="h-4 w-4" aria-hidden="true" /> Stop recording
-                      </>
-                    ) : (
-                      <>
-                        <AudioLines className="h-4 w-4" aria-hidden="true" /> Record audio
-                      </>
-                    )}
-                  </Button>
-                  {recordingUrl ? (
-                    <a
-                      className="flex items-center gap-2 text-xs font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-300"
-                      href={recordingUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <History className="h-3.5 w-3.5" aria-hidden="true" /> Listen to last clip
-                    </a>
                   ) : null}
                 </div>
               </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-200">
-                  <span>Recent attempts</span>
-                </div>
-                <div className="space-y-2">
-                  {entries.length === 0 ? (
-                    <p className="text-xs text-slate-400">We will keep the last few transcripts you submit here.</p>
-                  ) : (
-                    entries.slice(0, 5).map((entry) => (
-                      <motion.div
-                        key={entry.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="rounded-2xl border border-slate-200 bg-white/80 p-3 text-xs text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                              <History className="h-3 w-3" aria-hidden="true" />
-                              {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                            <p className="text-slate-600 dark:text-slate-200">{entry.transcript}</p>
-                            <div className="flex flex-wrap gap-2">
-                              {entry.result.items.map((item) => (
-                                <Badge key={`${entry.id}-${item.name}`} variant="outline">
-                                  {item.quantity} {item.unit} • {item.name}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            <Badge variant="outline" className="text-[10px] uppercase">
-                              {entry.result.languageHint === 'mixed'
-                                ? 'Mixed'
-                                : entry.result.languageHint === 'te'
-                                ? 'Telugu'
-                                : entry.result.languageHint === 'hi'
-                                ? 'Hindi'
-                                : 'English'}
-                            </Badge>
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${
-                                  entry.feedback === 'positive'
-                                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-100'
-                                    : 'border-transparent text-slate-400 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:border-emerald-500/40 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-100'
-                                }`}
-                                onClick={() => handleFeedback(entry.id, 'positive')}
-                              >
-                                Yes
-                              </button>
-                              <button
-                                type="button"
-                                className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${
-                                  entry.feedback === 'negative'
-                                    ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-100'
-                                    : 'border-transparent text-slate-400 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:hover:border-rose-500/40 dark:hover:bg-rose-500/10 dark:hover:text-rose-100'
-                                }`}
-                                onClick={() => handleFeedback(entry.id, 'negative')}
-                              >
-                                No
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="flex flex-col gap-6">
-            <Card className="voice-order-page__panel border border-slate-200/70 bg-white/95 shadow-2xl shadow-slate-200/50 backdrop-blur-xl dark:border-slate-800/60 dark:bg-slate-900/80 dark:shadow-slate-950/50">
-              <CardHeader className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
-                    <ShoppingBag className="h-5 w-5 text-blue-500" aria-hidden="true" /> Matches across shops
-                  </CardTitle>
-                  <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-                    We fetch live products from every shop for each parsed item. Adjust quantities and add directly to cart.
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
+              <div className="mt-5 space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Manual marketplace search
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
                     value={manualQuery}
                     onChange={handleManualQueryChange}
-                    placeholder="Search manually"
-                    className="h-9 w-48"
+                    placeholder="Search for a product"
+                    className="sm:flex-1"
                   />
-                  <Button onClick={handleManualSearch} variant="secondary" className="h-9 px-3 text-sm" disabled={processing}>
-                    <RefreshCcw className="mr-2 h-4 w-4" aria-hidden="true" />
-                    Search
+                  <Button onClick={handleManualSearch} variant="secondary" disabled={processing} className="gap-2">
+                    <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+                    Search shops
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {searchEntries.length === 0 && !processing ? (
-                  <div className="flex flex-col items-center gap-4 rounded-3xl border border-dashed border-slate-300 bg-slate-50/60 p-8 text-center dark:border-slate-700 dark:bg-slate-950/30">
-                    <Sparkles className="h-10 w-10 text-blue-500" aria-hidden="true" />
-                    <div className="space-y-2">
-                      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Say it in your style</h2>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Try phrases like “oka kilo tomatolu”, “2 kg bendakayalu” or “one kilo tomato and half kilo onion”.
-                      </p>
-                    </div>
-                  </div>
+              </div>
+              <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <Button onClick={handleRecordingToggle} variant={isRecording ? 'destructive' : 'ghost'} className="gap-2">
+                  {isRecording ? (
+                    <>
+                      <XCircle className="h-4 w-4" aria-hidden="true" />
+                      Stop recording
+                    </>
+                  ) : (
+                    <>
+                      <AudioLines className="h-4 w-4" aria-hidden="true" />
+                      Record audio
+                    </>
+                  )}
+                </Button>
+                {recordingUrl ? (
+                  <a
+                    className="inline-flex items-center gap-2 text-xs font-medium text-primary underline-offset-4 hover:underline"
+                    href={recordingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <History className="h-3.5 w-3.5" aria-hidden="true" />
+                    Listen to last clip
+                  </a>
                 ) : null}
-
-                {entries[0]?.result.items.length === 0 && entries[0]?.result.guesses.length > 0 ? (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
-                    <p className="font-semibold">Did you mean:</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {entries[0]?.result.guesses.map((guess) => (
-                        <Button
-                          key={guess.name}
-                          variant="outline"
-                          size="sm"
-                          className="h-8 gap-2 text-xs"
-                          onClick={() => {
-                            setManualQuery(guess.name);
-                            void handleManualSearch();
-                          }}
-                        >
-                          {guess.name}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
+                {ENABLE_STT_UPLOAD ? (
+                  <span className="text-xs text-muted-foreground">Upload support enabled for long orders.</span>
                 ) : null}
-
-                {searchError ? (
-                  <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
-                    <XCircle className="h-5 w-5" aria-hidden="true" />
-                    <div className="flex-1">{searchError}</div>
-                    <Button variant="ghost" size="sm" onClick={() => setSearchError(null)} className="text-xs">
-                      Dismiss
-                    </Button>
-                  </div>
-                ) : null}
-
-                {uniqueShops.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setActiveShopFilter('all')}
-                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition ${
-                        activeShopFilter === 'all'
-                          ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-400 dark:bg-blue-500/15 dark:text-blue-100'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-400/40 dark:hover:text-blue-200'
-                      }`}
+              </div>
+            </motion.section>
+            <motion.section
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: 'easeOut', delay: 0.2 }}
+              className={voiceStyles.consoleCard}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Recent attempts</h2>
+                  <p className="text-sm text-muted-foreground">
+                    We keep a short trail so you can retry or give quick feedback.
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {entries.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Speak or type to see recent transcripts here.</p>
+                ) : (
+                  entries.slice(0, 5).map((entry) => (
+                    <motion.div
+                      key={entry.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-xl border border-border/70 bg-muted/20 p-4 text-sm shadow-sm"
                     >
-                      All shops
-                    </button>
-                    {uniqueShops.map((shop) => (
-                      <button
-                        key={shop.shopId}
-                        type="button"
-                        onClick={() => setActiveShopFilter(shop.shopId)}
-                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition ${
-                          activeShopFilter === shop.shopId
-                            ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-400 dark:bg-blue-500/15 dark:text-blue-100'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-400/40 dark:hover:text-blue-200'
-                        }`}
-                      >
-                        {shop.shopName}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-
-                <div className="space-y-4">
-                  {searchEntries.map((entry) => (
-                    <div key={entry.item.name} className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/60">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {entry.item.quantity} {entry.item.unit}
-                          </Badge>
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{entry.item.name}</p>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+                            <History className="h-3 w-3" aria-hidden="true" />
+                            {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                          <p>{entry.transcript}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {entry.result.items.map((item) => (
+                              <Badge key={`${entry.id}-${item.name}`} variant="outline">
+                                {item.quantity} {item.unit} • {item.name}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
-                        {entry.status === 'loading' ? (
-                          <span className="inline-flex items-center gap-2 text-xs text-slate-500">
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                            Searching…
-                          </span>
-                        ) : entry.status === 'failed' ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs"
-                            onClick={() => void processTranscript(entry.item.raw, 'manual')}
-                          >
-                            Retry
-                          </Button>
-                        ) : null}
+                        <div className="flex flex-col items-end gap-2">
+                          <Badge variant="outline" className="text-[10px] uppercase">
+                            {entry.result.languageHint === 'mixed'
+                              ? 'Mixed'
+                              : entry.result.languageHint === 'te'
+                              ? 'Telugu'
+                              : entry.result.languageHint === 'hi'
+                              ? 'Hindi'
+                              : 'English'}
+                          </Badge>
+                          <div className="flex items-center gap-2 text-[11px]">
+                            <span className="text-muted-foreground">Helpful?</span>
+                            <button
+                              type="button"
+                              className={cn(
+                                'rounded-full border px-2 py-1 font-semibold transition-colors',
+                                entry.feedback === 'positive'
+                                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-100'
+                                  : 'border-transparent text-muted-foreground hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700',
+                              )}
+                              onClick={() => handleFeedback(entry.id, 'positive')}
+                            >
+                              Yes
+                            </button>
+                            <button
+                              type="button"
+                              className={cn(
+                                'rounded-full border px-2 py-1 font-semibold transition-colors',
+                                entry.feedback === 'negative'
+                                  ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-100'
+                                  : 'border-transparent text-muted-foreground hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700',
+                              )}
+                              onClick={() => handleFeedback(entry.id, 'negative')}
+                            >
+                              No
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </motion.section>
+          </div>
+
+          <motion.section
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: 'easeOut', delay: 0.12 }}
+            className={cn(voiceStyles.consoleCard, voiceStyles.results)}
+          >
+            <div className="flex flex-col gap-2">
+              <h2 className="text-lg font-semibold">Smart results</h2>
+              <p className="text-sm text-muted-foreground">
+                Organised matches from every shop you unlocked with your voice.
+              </p>
+            </div>
+
+            {searchEntries.length === 0 && !processing ? (
+              <div className="mt-4 rounded-2xl border border-dashed border-border/60 bg-muted/20 p-6 text-sm text-muted-foreground">
+                <p>Start speaking or try a sample prompt to see matches roll in.</p>
+              </div>
+            ) : null}
+
+            {entries[0]?.result.items.length === 0 && entries[0]?.result.guesses.length > 0 ? (
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+                <p className="font-semibold">Did you mean</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {entries[0]?.result.guesses.map((guess) => (
+                    <Button key={guess.name} variant="outline" size="sm" onClick={() => void processTranscript(guess.raw, 'manual')}>
+                      {guess.name}
+                    </Button>
                   ))}
                 </div>
+              </div>
+            ) : null}
 
-                <AnimatePresence mode="popLayout">
-                  {isLoadingResults ? (
-                    <motion.div
-                      key="loading"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="flex items-center justify-center gap-3 rounded-3xl border border-slate-200 bg-slate-50/80 p-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-300"
-                    >
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Gathering products…
-                    </motion.div>
-                  ) : flattenedHits.length === 0 && searchEntries.length > 0 ? (
-                    <motion.div
-                      key="empty"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-300"
-                    >
-                      <p>No matches yet. Try rephrasing or manual search.</p>
-                    </motion.div>
-                  ) : (
-                    flattenedHits.map(({ hit, item }) => (
-                      <motion.div
-                        key={`${hit.id}-${item.name}`}
-                        layout
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -16 }}
-                        className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-950/60"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-4">
-                          <div>
-                            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">{hit.name}</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{hit.shopName}</p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatINR(hit.pricePaise)}</span>
-                            <QuantityStepper
-                              value={quantities[hit.id] ?? Math.max(1, Math.round(item.quantity || 1))}
-                              onChange={(value) =>
-                                setQuantities((prev) => ({
-                                  ...prev,
-                                  [hit.id]: value,
-                                }))
-                              }
-                              ariaLabel={`Quantity for ${hit.name}`}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                            <Circle className={`h-2 w-2 ${hit.available ? 'text-emerald-500' : 'text-amber-500'}`} aria-hidden="true" />
-                            {hit.available ? 'In stock' : 'Check availability'}
-                            <span className="mx-1 text-slate-300">•</span>
-                            Requested {item.quantity} {item.unit}
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="gap-2"
-                              onClick={() => handleAddToCart(hit, item)}
-                            >
-                              <ShoppingCart className="h-4 w-4" aria-hidden="true" /> Add to cart
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="gap-2"
-                              onClick={() => void handleBuyNow(hit, item)}
-                              disabled={placingOrder === hit.id}
-                            >
-                              {placingOrder === hit.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                              ) : (
-                                <Check className="h-4 w-4" aria-hidden="true" />
-                              )}
-                              Buy now
-                            </Button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))
-                  )}
-                </AnimatePresence>
-              </CardContent>
-            </Card>
+            {searchError ? (
+              <div className="mt-4 flex items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+                <XCircle className="h-5 w-5" aria-hidden="true" />
+                <div className="flex-1">{searchError}</div>
+                <Button variant="ghost" size="sm" onClick={() => setSearchError(null)}>
+                  Dismiss
+                </Button>
+              </div>
+            ) : null}
 
-            <Card className="voice-order-page__panel border border-slate-200/70 bg-white/95 shadow-2xl shadow-slate-200/50 backdrop-blur-xl dark:border-slate-800/60 dark:bg-slate-900/80 dark:shadow-slate-950/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
-                  <ShoppingCart className="h-5 w-5 text-blue-500" aria-hidden="true" /> Summary
-                </CardTitle>
-                <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-                  Cart items persist across sessions. Proceed to checkout when ready.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
-                  <span>Cart subtotal</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">{subtotalDisplay}</span>
+            {uniqueShops.length > 0 ? (
+              <div className={cn(voiceStyles.tabs, 'mt-6')}>
+                <button
+                  type="button"
+                  onClick={() => setActiveShopFilter('all')}
+                  className={cn('text-sm font-medium text-muted-foreground transition-colors', activeShopFilter === 'all' && 'active')}
+                >
+                  All
+                </button>
+                {uniqueShops.map((shop) => (
+                  <button
+                    key={shop.shopId}
+                    type="button"
+                    onClick={() => setActiveShopFilter(shop.shopId)}
+                    className={cn('text-sm font-medium text-muted-foreground transition-colors', activeShopFilter === shop.shopId && 'active')}
+                  >
+                    {shop.shopName}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            <div className="mt-6 space-y-3">
+              {searchEntries.map((entry) => (
+                <div key={entry.item.name} className="rounded-2xl border border-border/60 bg-muted/10 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Badge variant="outline">{entry.item.quantity} {entry.item.unit}</Badge>
+                      <span className="font-semibold">{entry.item.name}</span>
+                    </div>
+                    {entry.status === 'loading' ? (
+                      <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                        Searching…
+                      </span>
+                    ) : entry.status === 'failed' ? (
+                      <Button size="sm" variant="outline" onClick={() => void processTranscript(entry.item.raw, 'manual')}>
+                        Retry
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Voice orders respect the single-shop rule. If your cart has items from multiple shops, we’ll help you split them on checkout.
-                </p>
-              </CardContent>
-              <CardFooter className="flex flex-col gap-3">
-                <Button
-                  className="w-full gap-2"
-                  size="lg"
-                  onClick={() => window.location.assign(paths.checkout())}
+              ))}
+            </div>
+
+            <AnimatePresence mode="popLayout">
+              {isLoadingResults ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="mt-6 flex items-center justify-center gap-3 rounded-2xl border border-border bg-muted/20 p-6 text-sm text-muted-foreground"
                 >
-                  Proceed to checkout <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                  onClick={() => window.location.assign(paths.cart())}
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Gathering products…
+                </motion.div>
+              ) : flattenedHits.length === 0 && searchEntries.length > 0 ? (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mt-6 rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-center text-sm text-muted-foreground"
                 >
-                  Review cart
-                </Button>
-              </CardFooter>
-            </Card>
+                  No matches yet. Try refining the transcript or manual search.
+                </motion.div>
+              ) : (
+                flattenedHits.map(({ hit, item }) => (
+                  <motion.div
+                    key={`${hit.id}-${item.name}`}
+                    layout
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    className={voiceStyles.productRow}
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-semibold">{hit.name}</h3>
+                        <Badge variant="secondary" className="text-xs">{hit.shopName}</Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Requested {item.quantity} {item.unit} • {formatINR(hit.pricePaise)}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <QuantityStepper
+                        value={quantities[hit.id] ?? Math.max(1, Math.round(item.quantity || 1))}
+                        onChange={(value) =>
+                          setQuantities((prev) => ({
+                            ...prev,
+                            [hit.id]: value,
+                          }))
+                        }
+                        ariaLabel={`Quantity for ${hit.name}`}
+                      />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleAddToCart(hit, item)}
+                          className="gap-2"
+                        >
+                          <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+                          Add
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => void handleBuyNow(hit, item)}
+                          disabled={placingOrder === hit.id}
+                          className="gap-2"
+                        >
+                          {placingOrder === hit.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                          ) : (
+                            <Check className="h-4 w-4" aria-hidden="true" />
+                          )}
+                          Buy now
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+          </motion.section>
+        </div>
+
+        <motion.aside
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: 'easeOut', delay: 0.25 }}
+          className={cn(voiceStyles.summary, 'gap-4 flex-wrap sm:flex-nowrap')}
+        >
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Subtotal</p>
+            <p className="text-lg font-semibold">{subtotalDisplay}</p>
+            <p className="text-xs text-muted-foreground">
+              {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'} in cart
+            </p>
           </div>
-        </motion.div>
+          <div className="flex items-center gap-3">
+            <Button size="lg" onClick={() => window.location.assign(paths.checkout())} className="gap-2">
+              Proceed to checkout
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </Button>
+            <Button variant="ghost" onClick={() => window.location.assign(paths.cart())}>
+              Review cart
+            </Button>
+          </div>
+        </motion.aside>
       </div>
-    </main>
+    </motion.main>
   );
+
 };
 
 export default VoiceOrder;

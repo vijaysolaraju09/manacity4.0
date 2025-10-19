@@ -93,6 +93,13 @@
   --color-surface-rgb: 255 255 255;
   --color-danger-rgb: 220 38 38;
   --color-danger-contrast-rgb: 255 255 255;
+  /* Modern surface tokens */
+  --background: #f8fafc;
+  --muted: #e2e8f0;
+  --primary: var(--color-primary);
+  --border: var(--color-border);
+  --background-dark: #020817;
+  --muted-dark: #0f172a;
 
   /* Legacy colour aliases */
   --color-card: var(--color-surface);
@@ -154,6 +161,8 @@
   --color-surface-rgb: 255 255 255;
   --color-danger-rgb: 220 38 38;
   --color-danger-contrast-rgb: 255 255 255;
+  --background: #f8fafc;
+  --muted: #e2e8f0;
 }
 
 /* Dark theme */
@@ -192,6 +201,13 @@
   --color-surface-rgb: 30 41 59;
   --color-danger-rgb: 248 113 113;
   --color-danger-contrast-rgb: 17 24 39;
+  --background: var(--background-dark);
+  --muted: var(--muted-dark);
+}
+
+.dark {
+  --background: var(--background-dark);
+  --muted: var(--muted-dark);
 }
 
 /* Colourful theme with brand accents */

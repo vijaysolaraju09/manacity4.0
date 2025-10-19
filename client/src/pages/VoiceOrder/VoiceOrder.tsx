@@ -571,7 +571,7 @@ const VoiceOrder = () => {
                 Speak naturally and we line up matching inventory across Manacity. Mix languages, refine the transcript and push matches directly to your cart.
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-background/70 p-4 text-right shadow-sm">
+            <div className="rounded-2xl border border-[var(--border)] bg-background/70 p-4 text-right shadow-sm">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Cart snapshot</p>
               <p className="mt-1 text-lg font-semibold">{subtotalDisplay}</p>
               <p className="text-xs text-muted-foreground">
@@ -782,7 +782,7 @@ const VoiceOrder = () => {
                       key={entry.id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="rounded-xl border border-border/70 bg-muted/20 p-4 text-sm shadow-sm"
+                      className="rounded-xl border border-[rgba(var(--color-border-rgb),0.7)] bg-muted/20 p-4 text-sm shadow-sm"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
@@ -859,7 +859,7 @@ const VoiceOrder = () => {
             </div>
 
             {searchEntries.length === 0 && !processing ? (
-              <div className="mt-4 rounded-2xl border border-dashed border-border/60 bg-muted/20 p-6 text-sm text-muted-foreground">
+              <div className="mt-4 rounded-2xl border border-dashed border-[rgba(var(--color-border-rgb),0.6)] bg-muted/20 p-6 text-sm text-muted-foreground">
                 <p>Start speaking or try a sample prompt to see matches roll in.</p>
               </div>
             ) : null}
@@ -911,7 +911,7 @@ const VoiceOrder = () => {
 
             <div className="mt-6 space-y-3">
               {searchEntries.map((entry) => (
-                <div key={entry.item.name} className="rounded-2xl border border-border/60 bg-muted/10 p-4">
+                <div key={entry.item.name} className="rounded-2xl border border-[rgba(var(--color-border-rgb),0.6)] bg-muted/10 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2 text-sm">
                       <Badge variant="outline">{entry.item.quantity} {entry.item.unit}</Badge>
@@ -939,7 +939,7 @@ const VoiceOrder = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="mt-6 flex items-center justify-center gap-3 rounded-2xl border border-border bg-muted/20 p-6 text-sm text-muted-foreground"
+                  className="mt-6 flex items-center justify-center gap-3 rounded-2xl border border-[var(--border)] bg-muted/20 p-6 text-sm text-muted-foreground"
                 >
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Gathering products…
                 </motion.div>
@@ -948,7 +948,7 @@ const VoiceOrder = () => {
                   key="empty"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="mt-6 rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-center text-sm text-muted-foreground"
+                  className="mt-6 rounded-2xl border border-dashed border-[rgba(var(--color-border-rgb),0.7)] bg-muted/20 p-6 text-center text-sm text-muted-foreground"
                 >
                   No matches yet. Try refining the transcript or manual search.
                 </motion.div>

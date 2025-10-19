@@ -295,7 +295,7 @@ const Cart = () => {
 
   const allSelected = selectedIds.size === items.length && items.length > 0;
   const stepperButtonClasses =
-    'flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-40';
+    'flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-background text-foreground transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-40';
 
   return (
     <main className={cartContainerClasses}>
@@ -307,12 +307,12 @@ const Cart = () => {
             transition={sectionMotion.transition}
             className="space-y-6"
           >
-            <div className="flex flex-col gap-6 rounded-3xl border border-border bg-background/80 p-6 shadow-xl backdrop-blur">
+            <div className="flex flex-col gap-6 rounded-3xl border border-[var(--border)] bg-background/80 p-6 shadow-xl backdrop-blur">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-start gap-4">
                   <Button
                     variant="ghost"
-                    className="h-11 w-11 rounded-full border border-border bg-background text-foreground shadow-sm hover:border-primary/40 hover:text-primary"
+                    className="h-11 w-11 rounded-full border border-[var(--border)] bg-background text-foreground shadow-sm hover:border-primary/40 hover:text-primary"
                     onClick={() => navigate(-1)}
                     aria-label="Go back"
                   >
@@ -335,7 +335,7 @@ const Cart = () => {
                       <Button
                         type="button"
                         variant="outline"
-                        className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-semibold"
+                        className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold"
                         onClick={handleViewOrders}
                       >
                         <ShoppingCart className="h-4 w-4" aria-hidden="true" />
@@ -352,7 +352,7 @@ const Cart = () => {
                 <label className="flex items-center gap-3 text-sm font-semibold">
                   <input
                     type="checkbox"
-                    className="h-5 w-5 rounded-md border border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="h-5 w-5 rounded-md border border-[var(--border)] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     checked={allSelected}
                     onChange={(event) => handleSelectAll(event.target.checked)}
                     aria-label="Select all items"
@@ -435,7 +435,7 @@ const Cart = () => {
                             <label className="pt-1">
                               <input
                                 type="checkbox"
-                                className="h-5 w-5 rounded-md border border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                className="h-5 w-5 rounded-md border border-[var(--border)] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                 checked={selected}
                                 onChange={(event) => handleSelectItem(item.productId, event.target.checked)}
                                 aria-label={`Select ${item.name}`}
@@ -445,7 +445,7 @@ const Cart = () => {
                               src={item.image}
                               alt={item.name}
                               loading="lazy"
-                              className={cn(cartStyles.itemImg, 'h-24 w-24 border border-border object-cover shadow-sm')}
+                              className={cn(cartStyles.itemImg, 'h-24 w-24 border border-[var(--border)] object-cover shadow-sm')}
                             />
                           </div>
                           <div className="flex flex-1 flex-col gap-3">
@@ -477,7 +477,7 @@ const Cart = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="w-full border-t border-border pt-4 sm:w-auto sm:border-none sm:pt-0">
+                        <div className="w-full border-t border-t-[var(--border)] pt-4 sm:w-auto sm:border-none sm:pt-0">
                           <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="flex flex-wrap items-center gap-3">
                               <div className="flex items-center gap-2" role="group" aria-label={`Update quantity for ${item.name}`}>

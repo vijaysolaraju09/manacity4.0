@@ -33,6 +33,7 @@ import Input from '@/components/ui/input';
 import QuantityStepper from '@/components/ui/QuantityStepper/QuantityStepper';
 import Badge from '@/components/ui/badge';
 import showToast from '@/components/ui/Toast';
+import { cn } from '@/lib/utils';
 import { addItem, selectSubtotalPaise } from '@/store/slices/cartSlice';
 import { selectItemCount } from '@/store/slices/cartSlice';
 import { formatINR } from '@/utils/currency';
@@ -43,6 +44,7 @@ import type { ParsedItem, ParseResult, VoiceProductHit } from '@/features/voice-
 import { paths } from '@/routes/paths';
 
 import './VoiceOrder.scss';
+import styles from '@/styles/PageShell.module.scss';
 
 const ENABLE_STT_UPLOAD = import.meta.env.VITE_ENABLE_STT_UPLOAD === 'true';
 
@@ -536,13 +538,18 @@ const VoiceOrder = () => {
   const subtotalDisplay = formatINR(subtotalPaise);
 
   return (
-    <main className="voice-order-page min-h-screen bg-gradient-to-b from-slate-50 via-slate-50/70 to-slate-100 py-6 dark:from-slate-950 dark:via-slate-950/80 dark:to-slate-900">
-      <div className="voice-order-page__container mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 sm:px-6 lg:px-8">
-        <header className="voice-order-page__intro flex flex-col gap-3 rounded-3xl bg-white/80 p-6 shadow-sm backdrop-blur dark:bg-slate-900/70">
+    <main className={cn(styles.pageShell, 'voice-order-page bg-transparent text-slate-900 dark:text-slate-100')}>
+      <div className={cn(styles.pageShell__inner, 'voice-order-page__container mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 sm:px-6 lg:px-8')}>
+        <motion.header
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, ease: 'easeOut' }}
+          className="voice-order-page__intro flex flex-col gap-4 rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/15 via-white/90 to-white/70 p-6 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/70 dark:shadow-indigo-900/40"
+        >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-2">
-              <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-100">New</Badge>
-              <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Voice Order</h1>
+              <Badge className="bg-indigo-500/10 text-indigo-600 shadow-sm dark:bg-indigo-500/20 dark:text-indigo-100">New</Badge>
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Voice Order</h1>
               <p className="max-w-3xl text-sm text-slate-600 dark:text-slate-300">
                 Speak in Telugu, Hindi, English or mix them freely. Manacity listens, understands and lines up fresh produce across shops so you can add items to cart or order instantly from one place.
               </p>
@@ -551,18 +558,23 @@ const VoiceOrder = () => {
               <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Cart summary
               </span>
-              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
-                <ShoppingCart className="h-4 w-4 text-blue-500" aria-hidden="true" />
+              <div className="flex items-center gap-3 rounded-2xl border border-indigo-200/60 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 shadow-md shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-slate-900/70 dark:text-slate-100">
+                <ShoppingCart className="h-4 w-4 text-indigo-500" aria-hidden="true" />
                 <span>{cartItemCount} items</span>
                 <span className="text-slate-400">•</span>
                 <span>{subtotalDisplay}</span>
               </div>
             </div>
           </div>
-        </header>
+        </motion.header>
 
-        <div className="voice-order-page__layout grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[420px_1fr]">
-          <Card className="voice-order-page__panel voice-order-page__panel--console h-full border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/80">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, ease: 'easeOut', delay: 0.05 }}
+          className="voice-order-page__layout grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr] xl:grid-cols-[420px_1fr]"
+        >
+          <Card className="voice-order-page__panel voice-order-page__panel--console h-full border border-indigo-200/60 bg-white/90 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/80 dark:shadow-indigo-900/40">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
                 <Mic className="h-5 w-5 text-blue-500" aria-hidden="true" /> Voice console
@@ -603,7 +615,7 @@ const VoiceOrder = () => {
                 <div
                   id="voice-transcript"
                   aria-live="polite"
-                  className="min-h-[96px] rounded-2xl border border-slate-200 bg-white/90 p-4 text-sm text-slate-800 shadow-inner dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100"
+                  className="min-h-[96px] rounded-2xl border border-indigo-200/60 bg-white/90 p-4 text-sm text-slate-800 shadow-inner dark:border-indigo-500/30 dark:bg-slate-950/60 dark:text-slate-100"
                 >
                   {interimTranscript ? (
                     <span className="text-slate-500 dark:text-slate-400">{interimTranscript}</span>
@@ -663,7 +675,7 @@ const VoiceOrder = () => {
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-white/70 p-4 dark:border-slate-800/60 dark:bg-slate-950/40">
+              <div className="space-y-3 rounded-2xl border border-indigo-200/60 bg-white/70 p-4 shadow-inner dark:border-indigo-500/30 dark:bg-slate-950/40">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Fallback recording</p>
                   <Badge variant="outline" className="text-xs">Beta</Badge>
@@ -775,7 +787,7 @@ const VoiceOrder = () => {
           </Card>
 
           <div className="flex flex-col gap-6">
-            <Card className="voice-order-page__panel border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/80">
+            <Card className="voice-order-page__panel border border-slate-200/70 bg-white/95 shadow-2xl shadow-slate-200/50 backdrop-blur-xl dark:border-slate-800/60 dark:bg-slate-900/80 dark:shadow-slate-950/50">
               <CardHeader className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
@@ -990,7 +1002,7 @@ const VoiceOrder = () => {
               </CardContent>
             </Card>
 
-            <Card className="voice-order-page__panel border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/80">
+            <Card className="voice-order-page__panel border border-slate-200/70 bg-white/95 shadow-2xl shadow-slate-200/50 backdrop-blur-xl dark:border-slate-800/60 dark:bg-slate-900/80 dark:shadow-slate-950/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
                   <ShoppingCart className="h-5 w-5 text-blue-500" aria-hidden="true" /> Summary
@@ -1026,6 +1038,7 @@ const VoiceOrder = () => {
               </CardFooter>
             </Card>
           </div>
+        </motion.div>
         </div>
       </div>
     </main>

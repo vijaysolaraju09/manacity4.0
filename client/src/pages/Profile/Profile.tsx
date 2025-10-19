@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { motion } from 'framer-motion';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -39,14 +40,15 @@ import {
   requestVerification,
   updateProfile,
 } from '@/api/profile';
-import { toErrorMessage } from '@/lib/response';
 import { createZodResolver } from '@/lib/createZodResolver';
+import { toErrorMessage } from '@/lib/response';
+import { cn } from '@/lib/utils';
 import type { AppDispatch, RootState } from '@/store';
 import { setUser } from '@/store/slices/authSlice';
 import { paths } from '@/routes/paths';
 import type { User } from '@/types/user';
 
-import './Profile.scss';
+import styles from '@/styles/PageShell.module.scss';
 
 const editProfileSchema = z.object({
   name: z
@@ -132,55 +134,36 @@ interface InfoRowProps {
   emptyLabel?: string;
 }
 
-const pageBackgroundStyle: CSSProperties = {
-  background:
-    'radial-gradient(120% 120% at 0% 0%, rgba(26,115,232,0.12), transparent 55%), radial-gradient(120% 120% at 100% 0%, rgba(26,115,232,0.08), transparent 60%), var(--color-bg)',
-};
-
-const heroCardStyle: CSSProperties = {
-  background:
-    'linear-gradient(130deg, rgba(26,115,232,0.16), rgba(26,115,232,0.06) 45%, rgba(255,255,255,0.98))',
-  boxShadow: 'var(--shadow-lg)',
-  color: 'var(--color-text)',
-};
-
-const bioCardStyle: CSSProperties = {
-  background:
-    'linear-gradient(135deg, rgba(26,115,232,0.12), rgba(26,115,232,0.04) 55%, var(--color-surface))',
-  border: '1px solid rgba(26, 115, 232, 0.18)',
-  boxShadow: 'var(--shadow-sm)',
-};
-
-const infoRowStyle: CSSProperties = {
-  background:
-    'linear-gradient(135deg, rgba(26, 115, 232, 0.14), rgba(26, 115, 232, 0.05) 55%, var(--color-surface))',
-  border: '1px solid rgba(26, 115, 232, 0.18)',
-  boxShadow: 'var(--shadow-sm)',
-};
-
 const InfoRow = ({ icon: Icon, label, value, emptyLabel = 'Not provided' }: InfoRowProps) => (
-  <div className="flex items-start gap-3 rounded-2xl p-4 text-sm backdrop-blur-sm" style={infoRowStyle}>
-    <Icon className="mt-1 h-5 w-5 text-[rgba(26,115,232,0.7)]" aria-hidden="true" />
+  <div className="flex items-start gap-3 rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-sm shadow-md shadow-slate-200/60 backdrop-blur-md transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-800/80 dark:bg-slate-900/70 dark:shadow-slate-900/60">
+    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/15 via-sky-500/10 to-transparent text-indigo-500 dark:text-indigo-300">
+      <Icon className="h-5 w-5" aria-hidden="true" />
+    </span>
     <div className="space-y-1">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[rgba(26,115,232,0.85)]">
-        {label}
-      </p>
-      <p className="text-sm text-[var(--color-text)]">{value || emptyLabel}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500 dark:text-indigo-300">{label}</p>
+      <p className="text-sm text-slate-700 dark:text-slate-200">{value || emptyLabel}</p>
     </div>
   </div>
 );
+
+const sectionMotion = {
+  initial: { opacity: 0, y: 24 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.24, ease: 'easeOut' as const },
+} as const;
 
 type StatusVariant = 'default' | 'info' | 'success' | 'warning';
 
 const StatusBadge = ({ children, variant = 'default' }: { children: ReactNode; variant?: StatusVariant }) => {
   const variants: Record<StatusVariant, string> = {
     default:
-      'bg-[rgba(26,115,232,0.08)] text-[var(--color-text)] shadow-sm backdrop-blur-sm border border-[rgba(26,115,232,0.18)]',
-    info: 'bg-[rgba(26,115,232,0.12)] text-[rgba(26,115,232,0.9)] shadow-sm border border-[rgba(26,115,232,0.24)]',
+      'border border-indigo-200/70 bg-white/80 text-indigo-600 shadow-sm shadow-indigo-200/40 backdrop-blur-md dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-200',
+    info:
+      'border border-sky-300/70 bg-sky-100/70 text-sky-700 shadow-sm shadow-sky-200/40 backdrop-blur-md dark:border-sky-500/40 dark:bg-sky-500/20 dark:text-sky-100',
     success:
-      'bg-[rgba(34,197,94,0.12)] text-[rgba(22,163,74,0.95)] shadow-sm border border-[rgba(22,163,74,0.24)]',
+      'border border-emerald-300/70 bg-emerald-100/70 text-emerald-700 shadow-sm shadow-emerald-200/40 backdrop-blur-md dark:border-emerald-500/40 dark:bg-emerald-500/20 dark:text-emerald-100',
     warning:
-      'bg-[rgba(245,158,11,0.12)] text-[rgba(217,119,6,0.95)] shadow-sm border border-[rgba(217,119,6,0.24)]',
+      'border border-amber-300/70 bg-amber-100/70 text-amber-700 shadow-sm shadow-amber-200/40 backdrop-blur-md dark:border-amber-500/40 dark:bg-amber-500/20 dark:text-amber-100',
   };
 
   return (
@@ -191,11 +174,13 @@ const StatusBadge = ({ children, variant = 'default' }: { children: ReactNode; v
 };
 
 const ProfileSkeleton = () => (
-  <main className="profile-page profile-page--loading">
-    <div className="profile-page__container mx-auto flex max-w-3xl flex-col gap-4 p-6">
-      <Skeleton className="h-56 w-full rounded-2xl" />
-      <Skeleton className="h-40 w-full rounded-2xl" />
-      <Skeleton className="h-40 w-full rounded-2xl" />
+  <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
+    <div className={cn(styles.pageShell__inner, 'mx-auto grid max-w-6xl gap-6 px-4 sm:px-6 lg:grid-cols-[320px,1fr] lg:px-8')}>
+      <Skeleton className="h-80 w-full rounded-3xl border border-slate-200/70 bg-white/80 shadow-xl dark:border-slate-800/80 dark:bg-slate-900/70" />
+      <div className="space-y-4">
+        <Skeleton className="h-36 w-full rounded-3xl border border-slate-200/70 bg-white/80 shadow-xl dark:border-slate-800/80 dark:bg-slate-900/70" />
+        <Skeleton className="h-36 w-full rounded-3xl border border-slate-200/70 bg-white/80 shadow-xl dark:border-slate-800/80 dark:bg-slate-900/70" />
+      </div>
     </div>
   </main>
 );
@@ -212,6 +197,7 @@ const Profile = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isVerifyOpen, setIsVerifyOpen] = useState(false);
   const [isBusinessOpen, setIsBusinessOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'preferences'>('profile');
 
   const editForm = useForm<EditProfileFormValues>({
     resolver: createZodResolver(editProfileSchema),
@@ -398,25 +384,90 @@ const Profile = () => {
     return actions;
   }, [user]);
 
+  const tabs = useMemo(
+    () => [
+      {
+        key: 'profile' as const,
+        label: 'Profile',
+        content: (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InfoRow icon={Phone} label="Phone" value={user?.phone} />
+              <InfoRow icon={Mail} label="Email" value={user?.email ?? undefined} />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InfoRow icon={BriefcaseBusiness} label="Profession" value={user?.profession} />
+              <InfoRow icon={Sparkles} label="Theme preference" value={themeLabel} />
+            </div>
+            <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/60 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/70 dark:shadow-slate-950/40">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-300">Bio</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                {user?.bio || 'Tell customers more about you by adding a short bio.'}
+              </p>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: 'addresses' as const,
+        label: 'Addresses',
+        content: (
+          <div className="space-y-4">
+            <InfoRow icon={MapPin} label="Location" value={user?.location} />
+            <InfoRow icon={Home} label="Address" value={user?.address} />
+            <div className="rounded-3xl border border-dashed border-indigo-200 bg-indigo-500/5 p-6 text-sm text-slate-600 shadow-md dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-slate-200">
+              Add multiple delivery addresses and pin favourite locations. This feature is coming soon.
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: 'preferences' as const,
+        label: 'Preferences',
+        content: (
+          <div className="space-y-4">
+            <div className="rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/60 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/70 dark:shadow-slate-950/40">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">Theme</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Currently set to {themeLabel}.</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InfoRow icon={UserRoundCog} label="Role" value={user?.role} />
+              <InfoRow icon={ShieldCheck} label="Verification" value={user?.verificationStatus} />
+            </div>
+            <div className="rounded-3xl border border-slate-200/70 bg-gradient-to-br from-indigo-500/10 via-sky-500/10 to-white/70 p-6 shadow-md shadow-slate-200/60 dark:border-slate-700/70 dark:bg-gradient-to-br dark:from-slate-900 dark:via-indigo-900/40 dark:to-slate-900">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">Personalised tips</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Set shopping preferences, notification alerts and privacy controls. More controls are on the way.
+              </p>
+            </div>
+          </div>
+        ),
+      },
+    ],
+    [themeLabel, user?.address, user?.bio, user?.email, user?.location, user?.phone, user?.profession, user?.role, user?.verificationStatus],
+  );
+
+  const activeTabContent = useMemo(() => tabs.find((tab) => tab.key === activeTab)?.content, [activeTab, tabs]);
+
   if (loadState === 'loading') {
     return <ProfileSkeleton />;
   }
 
   if (loadState === 'error') {
     return (
-      <main className="profile-page profile-page--error min-h-screen" style={pageBackgroundStyle}>
-        <div className="profile-page__container mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
-          <Card className="profile-page__hero-card overflow-hidden border border-transparent" style={heroCardStyle}>
-            <CardContent className="flex flex-col items-start gap-4 p-8 text-left">
-              <CardTitle className="flex items-center gap-2 text-xl text-[var(--color-text)]">
-                <ShieldCheck className="h-6 w-6 text-red-500" aria-hidden="true" />
+      <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
+        <div className={cn(styles.pageShell__inner, 'mx-auto max-w-4xl px-4 pb-20 pt-10 sm:px-6 lg:px-8')}>
+          <Card className="rounded-3xl border border-slate-200/80 bg-white/90 shadow-2xl shadow-slate-200/70 backdrop-blur-md dark:border-slate-800/70 dark:bg-slate-900/70 dark:shadow-slate-950/40">
+            <CardContent className="flex flex-col gap-5 p-8 text-left">
+              <CardTitle className="flex items-center gap-3 text-2xl font-semibold text-slate-900 dark:text-white">
+                <ShieldCheck className="h-6 w-6 text-rose-500" aria-hidden="true" />
                 Unable to load profile
               </CardTitle>
-                  <CardDescription className="text-base text-[var(--color-muted)]">
+              <CardDescription className="text-base text-slate-600 dark:text-slate-300">
                 {error || 'Please try again in a moment.'}
               </CardDescription>
-              <div className="flex flex-wrap gap-3">
-                <Button onClick={() => fetchProfile()} className="rounded-full px-6">
+              <div>
+                <Button onClick={() => fetchProfile()} className="rounded-full px-6 py-2 text-sm font-semibold">
                   Retry
                 </Button>
               </div>
@@ -429,15 +480,15 @@ const Profile = () => {
 
   if (!user) {
     return (
-      <main className="profile-page profile-page--empty min-h-screen" style={pageBackgroundStyle}>
-        <div className="profile-page__container mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
-          <Card className="profile-page__hero-card overflow-hidden border border-transparent" style={heroCardStyle}>
-            <CardContent className="flex flex-col items-start gap-4 p-8 text-left">
-              <CardTitle className="text-xl text-[var(--color-text)]">No profile information</CardTitle>
-              <CardDescription className="text-base text-[var(--color-muted)]">
+      <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
+        <div className={cn(styles.pageShell__inner, 'mx-auto max-w-4xl px-4 pb-20 pt-10 sm:px-6 lg:px-8')}>
+          <Card className="rounded-3xl border border-slate-200/80 bg-white/90 shadow-2xl shadow-slate-200/70 backdrop-blur-md dark:border-slate-800/70 dark:bg-slate-900/70 dark:shadow-slate-950/40">
+            <CardContent className="flex flex-col gap-5 p-8 text-left">
+              <CardTitle className="text-2xl font-semibold text-slate-900 dark:text-white">No profile information</CardTitle>
+              <CardDescription className="text-base text-slate-600 dark:text-slate-300">
                 We could not find your profile details. Try refreshing the page or contact support if the issue persists.
               </CardDescription>
-              <Button onClick={() => fetchProfile()} className="rounded-full px-6">
+              <Button onClick={() => fetchProfile()} className="w-full rounded-full px-6 py-3 text-sm font-semibold sm:w-auto">
                 Refresh
               </Button>
             </CardContent>
@@ -460,145 +511,182 @@ const Profile = () => {
     : 'Light';
 
   return (
-    <main className="profile-page min-h-screen" style={pageBackgroundStyle}>
-      <div className="profile-page__container mx-auto max-w-4xl space-y-8 px-4 pb-16 pt-10 sm:px-6 lg:px-8">
-        <Card className="profile-page__hero-card overflow-hidden border border-transparent" style={heroCardStyle}>
-          <CardHeader
-            className="border-none pb-0"
-            style={{
-              background: 'linear-gradient(120deg, rgba(26,115,232,0.1), transparent 70%)',
-            }}
+    <>
+      <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
+        <div className={cn(styles.pageShell__inner, 'mx-auto max-w-6xl px-4 pb-28 pt-10 sm:px-6 lg:px-8')}>
+          <div className="grid gap-8 lg:grid-cols-[320px,1fr]">
+          <motion.section
+            initial={sectionMotion.initial}
+            animate={sectionMotion.animate}
+            transition={sectionMotion.transition}
+            className="space-y-6"
           >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-start gap-4">
-                {user.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={`${user.name}'s avatar`}
-                    className="h-20 w-20 rounded-full object-cover ring-4 ring-[rgba(26,115,232,0.2)]"
-                  />
-                ) : (
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[rgba(26,115,232,0.12)] text-xl font-semibold text-[rgba(26,115,232,0.95)] ring-4 ring-[rgba(26,115,232,0.2)]">
-                    <span aria-hidden="true">{initials}</span>
-                    <span className="sr-only">{user.name} avatar</span>
+            <Card className="relative overflow-hidden rounded-3xl border border-indigo-200/60 bg-white/90 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/70 dark:shadow-indigo-900/40">
+              <div className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-500/15 via-sky-500/15 to-transparent" aria-hidden="true" />
+              <CardHeader className="relative space-y-6 border-none p-8">
+                <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={`${user.name}'s avatar`}
+                        className="h-24 w-24 rounded-2xl border-4 border-white/80 object-cover shadow-xl dark:border-slate-900/70"
+                      />
+                    ) : (
+                      <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/30 via-sky-500/20 to-transparent text-2xl font-semibold text-indigo-600 shadow-xl dark:text-indigo-200">
+                        <span aria-hidden="true">{initials}</span>
+                        <span className="sr-only">{user.name} avatar</span>
+                      </div>
+                    )}
+                    <div className="space-y-3">
+                      <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-500 dark:text-indigo-300">
+                        <UserRoundCog className="h-4 w-4" aria-hidden="true" />
+                        Profile overview
+                      </div>
+                      <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
+                        {user.name}
+                      </CardTitle>
+                      <CardDescription className="max-w-md text-sm text-slate-600 dark:text-slate-300 md:text-base">
+                        Manage how your information appears across Manacity.
+                      </CardDescription>
+                      <div className="flex flex-wrap gap-3 text-sm text-slate-600 dark:text-slate-300">
+                        <span className="inline-flex items-center gap-2">
+                          <Phone className="h-4 w-4" aria-hidden="true" />
+                          {user.phone}
+                        </span>
+                        {user.email ? (
+                          <span className="inline-flex items-center gap-2">
+                            <Mail className="h-4 w-4" aria-hidden="true" />
+                            {user.email}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
-                )}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-[rgba(26,115,232,0.9)]">
-                    <UserRoundCog className="h-4 w-4" aria-hidden="true" />
-                    <span>Profile overview</span>
-                  </div>
-                  <CardTitle className="text-2xl font-semibold text-[var(--color-text)]">
-                    {user.name}
-                  </CardTitle>
-                  <CardDescription className="max-w-md text-base text-[var(--color-muted)]">
-                    Manage how your information appears across Manacity.
-                  </CardDescription>
-                  <div className="flex flex-wrap gap-2 text-sm text-[var(--color-muted)]">
-                    <span className="inline-flex items-center gap-2">
-                      <Phone className="h-4 w-4" aria-hidden="true" />
-                      {user.phone}
-                    </span>
-                    {user.email ? (
-                      <span className="inline-flex items-center gap-2">
-                        <Mail className="h-4 w-4" aria-hidden="true" />
-                        {user.email}
-                      </span>
+                  <div className="flex flex-wrap gap-2">
+                    <StatusBadge>
+                      <UserRound className="h-4 w-4" aria-hidden="true" /> {user.role}
+                    </StatusBadge>
+                    {user.verificationStatus !== 'none' ? (
+                      <StatusBadge variant={user.verificationStatus === 'approved' ? 'success' : 'info'}>
+                        <BadgeCheck className="h-4 w-4" aria-hidden="true" /> {user.verificationStatus}
+                      </StatusBadge>
+                    ) : null}
+                    {user.businessStatus && user.businessStatus !== 'none' ? (
+                      <StatusBadge variant={user.businessStatus === 'approved' ? 'success' : 'warning'}>
+                        <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" /> {user.businessStatus}
+                      </StatusBadge>
                     ) : null}
                   </div>
                 </div>
-              </div>
-              <div className="flex flex-col items-start gap-3 sm:items-end">
-                <div className="flex flex-wrap justify-end gap-2">
-                  <StatusBadge>
-                    <UserRound className="h-4 w-4" aria-hidden="true" /> {user.role}
-                  </StatusBadge>
-                  {user.verificationStatus !== 'none' ? (
-                    <StatusBadge variant={user.verificationStatus === 'approved' ? 'success' : 'info'}>
-                      <BadgeCheck className="h-4 w-4" aria-hidden="true" /> {user.verificationStatus}
-                    </StatusBadge>
-                  ) : null}
-                  {user.businessStatus && user.businessStatus !== 'none' ? (
-                    <StatusBadge variant={user.businessStatus === 'approved' ? 'success' : 'warning'}>
-                      <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" /> {user.businessStatus}
-                    </StatusBadge>
-                  ) : null}
-                </div>
+              </CardHeader>
+              <CardContent className="space-y-6 px-8 pb-8 pt-0">
                 {quickActions.length > 0 ? (
-                  <div className="flex flex-wrap justify-end gap-2">
-                    {quickActions.map((action) => (
-                      <Button
-                        key={action.label}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full border-[rgba(26,115,232,0.24)] text-[rgba(26,115,232,0.95)] transition hover:border-[rgba(26,115,232,0.45)] hover:bg-[rgba(26,115,232,0.08)] hover:text-[rgba(26,115,232,1)]"
-                        onClick={() => navigate(action.path)}
-                      >
-                        {action.label}
-                      </Button>
-                    ))}
+                  <div className="rounded-2xl border border-indigo-200/60 bg-white/70 p-4 shadow-md shadow-indigo-200/30 backdrop-blur-md dark:border-indigo-500/30 dark:bg-slate-900/70 dark:shadow-indigo-900/30">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-500 dark:text-indigo-300">
+                      Quick navigation
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {quickActions.map((action) => (
+                        <Button
+                          key={action.label}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full border-indigo-200/80 bg-white/70 text-indigo-600 shadow-sm hover:border-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-700 dark:border-indigo-500/40 dark:bg-slate-900/80 dark:text-indigo-200 dark:hover:bg-indigo-500/20"
+                          onClick={() => navigate(action.path)}
+                        >
+                          {action.label}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 ) : null}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="profile-page__details space-y-6">
-            <div className="profile-page__detail-grid grid gap-4 sm:grid-cols-2">
-              <InfoRow icon={Phone} label="Phone" value={user.phone} />
-              <InfoRow icon={Mail} label="Email" value={user.email ?? undefined} />
-            </div>
-            <div className="profile-page__detail-grid grid gap-4 sm:grid-cols-2">
-              <InfoRow icon={BriefcaseBusiness} label="Profession" value={user.profession} />
-              <InfoRow icon={Sparkles} label="Theme preference" value={themeLabel} />
-            </div>
-            <div className="profile-page__detail-grid grid gap-4 sm:grid-cols-2">
-              <InfoRow icon={MapPin} label="Location" value={user.location} />
-              <InfoRow icon={Home} label="Address" value={user.address} />
-            </div>
-            <div className="rounded-2xl p-5 shadow-sm backdrop-blur-sm" style={bioCardStyle}>
-              <p className="text-xs font-semibold uppercase tracking-wide text-[rgba(26,115,232,0.85)]">Bio</p>
-              <p className="mt-1 text-sm leading-relaxed text-[var(--color-text)]">
-                {user.bio || 'Tell customers more about you by adding a short bio.'}
-              </p>
-            </div>
-          </CardContent>
-          <CardFooter
-            className="profile-page__actions flex flex-col gap-3 sm:flex-row sm:justify-end"
-            style={{
-              borderTop: '1px solid rgba(26, 115, 232, 0.18)',
-              background: 'linear-gradient(120deg, rgba(26,115,232,0.08), transparent 70%)',
-            }}
+                <div className="rounded-2xl border border-indigo-100/60 bg-gradient-to-r from-indigo-500/10 via-transparent to-transparent p-5 text-sm text-slate-600 shadow-md shadow-indigo-200/40 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-slate-200">
+                  Keep your profile complete to get personalised recommendations and quicker approvals for business features.
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col gap-3 rounded-b-3xl border-t border-indigo-200/60 bg-gradient-to-r from-indigo-500/15 via-transparent to-transparent p-6 sm:flex-row sm:flex-wrap">
+                <Button className="w-full rounded-full px-6 py-2 font-semibold sm:flex-1" onClick={() => setIsEditOpen(true)}>
+                  Edit profile
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full rounded-full px-6 py-2 font-semibold sm:flex-1"
+                  disabled={businessDisabled}
+                  onClick={() => setIsBusinessOpen(true)}
+                >
+                  {businessButtonLabel}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full rounded-full px-6 py-2 font-semibold text-indigo-600 hover:bg-indigo-500/10 dark:border-indigo-500/40 dark:text-indigo-200 dark:hover:bg-indigo-500/20 sm:flex-1"
+                  disabled={verificationDisabled}
+                  onClick={() => setIsVerifyOpen(true)}
+                >
+                  {verificationButtonLabel}
+                </Button>
+              </CardFooter>
+            </Card>
+          </motion.section>
+          <motion.section
+            initial={sectionMotion.initial}
+            animate={sectionMotion.animate}
+            transition={{ ...sectionMotion.transition, delay: 0.08 }}
+            className="space-y-6"
           >
-            <Button type="button" className="w-full rounded-full px-6 font-semibold sm:w-auto" onClick={() => setIsEditOpen(true)}>
-              Edit profile
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full rounded-full px-6 font-semibold sm:w-auto"
-              disabled={businessDisabled}
-              onClick={() => setIsBusinessOpen(true)}
-            >
-              {businessButtonLabel}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full rounded-full px-6 font-semibold sm:w-auto border-[rgba(26,115,232,0.24)] text-[rgba(26,115,232,0.95)] hover:border-[rgba(26,115,232,0.45)] hover:bg-[rgba(26,115,232,0.08)]"
-              disabled={verificationDisabled}
-              onClick={() => setIsVerifyOpen(true)}
-            >
-              {verificationButtonLabel}
-            </Button>
-          </CardFooter>
-        </Card>
+            <Card className="rounded-3xl border border-slate-200/70 bg-white/90 shadow-2xl shadow-slate-200/60 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-900/70 dark:shadow-slate-950/40">
+              <CardHeader className="space-y-6 border-none p-8">
+                <div className="space-y-2">
+                  <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
+                    Account dashboard
+                  </CardTitle>
+                  <CardDescription className="text-sm text-slate-600 dark:text-slate-300 md:text-base">
+                    Review your profile details, saved addresses and personal preferences.
+                  </CardDescription>
+                </div>
+                <div className="flex flex-wrap gap-2 rounded-full border border-slate-200/60 bg-white/70 p-1 dark:border-slate-700/70 dark:bg-slate-900/60">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setActiveTab(tab.key)}
+                      className={cn(
+                        'rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500',
+                        activeTab === tab.key
+                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-400/40 dark:bg-indigo-500 dark:shadow-indigo-900/50'
+                          : 'text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-800',
+                      )}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </CardHeader>
+              <CardContent className="px-8 pb-10">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  className="space-y-6"
+                >
+                  {activeTabContent}
+                </motion.div>
+              </CardContent>
+            </Card>
+          </motion.section>
+          </div>
+        </div>
+      </main>
 
       <ModalSheet open={isEditOpen} onClose={() => setIsEditOpen(false)}>
         <div className="space-y-6 p-6">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-[var(--color-text)]">Edit profile</h3>
-            <p className="text-sm text-[var(--color-muted)]">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Edit profile</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
               Update your profile details. Fields marked with an asterisk are required.
             </p>
           </div>
@@ -741,8 +829,8 @@ const Profile = () => {
       <ModalSheet open={isVerifyOpen} onClose={() => setIsVerifyOpen(false)}>
         <div className="space-y-6 p-6">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-[var(--color-text)]">Request verification</h3>
-            <p className="text-sm text-[var(--color-muted)]">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Request verification</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
               Provide details that help us confirm your professional credentials.
             </p>
           </div>
@@ -791,7 +879,7 @@ const Profile = () => {
                         {...field}
                       />
                     </FormControl>
-                    <p className="text-xs text-[var(--color-muted)]">
+                    <p className="text-xs text-slate-500 dark:text-slate-300">
                       Separate multiple links with commas.
                     </p>
                     {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
@@ -823,8 +911,8 @@ const Profile = () => {
       <ModalSheet open={isBusinessOpen} onClose={() => setIsBusinessOpen(false)}>
         <div className="space-y-6 p-6">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-[var(--color-text)]">Request business account</h3>
-            <p className="text-sm text-[var(--color-muted)]">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Request business account</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
               Tell us about your business to start selling on Manacity.
             </p>
           </div>
@@ -933,8 +1021,7 @@ const Profile = () => {
           </Form>
         </div>
       </ModalSheet>
-    </div>
-  </main>
+    </>
   );
 };
 

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { BadgeIndianRupee, CreditCard, Lock, ShieldCheck } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
+import Badge from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';

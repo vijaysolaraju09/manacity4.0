@@ -4,6 +4,11 @@
   gap: var(--space-2);
 }
 
+.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .button {
   width: 32px;
   height: 32px;

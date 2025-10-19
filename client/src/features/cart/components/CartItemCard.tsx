@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Minus, Plus, Tag, Trash2, Truck } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
+import Badge from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import QuantityStepper from '@/components/ui/QuantityStepper/QuantityStepper';

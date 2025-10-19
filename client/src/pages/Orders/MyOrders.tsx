@@ -15,7 +15,6 @@ import type { RootState, AppDispatch } from '@/store';
 import {
   cancelOrder,
   fetchMyOrders,
-  rateOrder,
   selectMyOrders,
   selectOrdersByStatus,
   type Order,
@@ -106,23 +105,6 @@ const MyOrders = () => {
       showToast('Order cancelled', 'success');
     } catch (err) {
       showToast((err as Error)?.message ?? 'Could not cancel order', 'error');
-    }
-  };
-
-  const handleRate = async (order: Order) => {
-    const ratingInput = window.prompt('Rate your order (1-5):', order.rating ? String(order.rating) : '5');
-    if (!ratingInput) return;
-    const rating = Number(ratingInput);
-    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
-      showToast('Please enter a rating between 1 and 5.', 'error');
-      return;
-    }
-    const review = window.prompt('Share more about your experience (optional):', order.review || '');
-    try {
-      await dispatch(rateOrder({ id: order.id, rating, review: review ? review.trim() : undefined })).unwrap();
-      showToast('Thanks for your feedback!', 'success');
-    } catch (err) {
-      showToast((err as Error)?.message ?? 'Unable to submit rating', 'error');
     }
   };
 

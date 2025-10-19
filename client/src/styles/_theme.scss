@@ -82,6 +82,14 @@
   --color-text-secondary: var(--color-muted);
   --overlay-bg: rgba(0, 0, 0, 0.4);
 
+  /* Modern surface tokens */
+  --background: #f8fafc;
+  --muted: #e2e8f0;
+  --primary: var(--color-primary);
+  --border: var(--color-border);
+  --background-dark: #020817;
+  --muted-dark: #0f172a;
+
   /* Legacy colour aliases */
   --color-card: var(--color-surface);
 }
@@ -131,6 +139,9 @@
   /* Legacy colour aliases */
   --color-card: var(--color-surface);
   --overlay-bg: rgba(0, 0, 0, 0.4);
+
+  --background: #f8fafc;
+  --muted: #e2e8f0;
 }
 
 /* Dark theme */
@@ -158,6 +169,14 @@
   --color-card: var(--color-surface);
   --overlay-bg: rgba(0, 0, 0, 0.6);
   --color-text-secondary: var(--color-muted);
+
+  --background: var(--background-dark);
+  --muted: var(--muted-dark);
+}
+
+.dark {
+  --background: var(--background-dark);
+  --muted: var(--muted-dark);
 }
 
 /* Colourful theme with brand accents */

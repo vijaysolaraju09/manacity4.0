@@ -4,10 +4,14 @@ import { cn } from '@/lib/utils';
 const badgeBase =
   'inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 shadow-sm dark:border-blue-400/40 dark:bg-blue-500/15 dark:text-blue-100';
 
-export type BadgeProps = HTMLAttributes<HTMLSpanElement> & { variant?: 'default' | 'outline' | 'success' | 'warning' };
+export type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
+  variant?: 'default' | 'secondary' | 'outline' | 'success' | 'warning';
+};
 
 const variantClass: Record<NonNullable<BadgeProps['variant']>, string> = {
   default: badgeBase,
+  secondary:
+    'inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 shadow-sm dark:border-slate-700/40 dark:bg-slate-800/40 dark:text-slate-100',
   outline:
     'inline-flex items-center rounded-full border border-slate-300 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:text-slate-200',
   success:

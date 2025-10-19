@@ -10,6 +10,7 @@ export interface QuantityStepperProps {
   id?: string;
   ariaLabel?: string;
   ariaDescribedBy?: string;
+  disabled?: boolean;
 }
 
 const QuantityStepper = ({
@@ -21,9 +22,20 @@ const QuantityStepper = ({
   id,
   ariaLabel,
   ariaDescribedBy,
+  disabled = false,
 }: QuantityStepperProps) => {
-  const dec = () => value > min && onChange(value - 1);
-  const inc = () => value < max && onChange(value + 1);
+  const dec = () => {
+    if (disabled) return;
+    if (value > min) {
+      onChange(value - 1);
+    }
+  };
+  const inc = () => {
+    if (disabled) return;
+    if (value < max) {
+      onChange(value + 1);
+    }
+  };
 
   return (
     <div
@@ -31,14 +43,17 @@ const QuantityStepper = ({
       role="group"
       aria-label={ariaLabel}
       aria-describedby={ariaDescribedBy}
-      className={[styles.stepper, className].filter(Boolean).join(' ')}
+      aria-disabled={disabled}
+      className={[styles.stepper, disabled ? styles.disabled : undefined, className]
+        .filter(Boolean)
+        .join(' ')}
     >
       <motion.button
         type="button"
         className={styles.button}
         whileTap={{ scale: 0.95 }}
         onClick={dec}
-        disabled={value <= min}
+        disabled={disabled || value <= min}
         aria-label="Decrease quantity"
       >
         -
@@ -49,7 +64,7 @@ const QuantityStepper = ({
         className={styles.button}
         whileTap={{ scale: 0.95 }}
         onClick={inc}
-        disabled={value >= max}
+        disabled={disabled || value >= max}
         aria-label="Increase quantity"
       >
         +

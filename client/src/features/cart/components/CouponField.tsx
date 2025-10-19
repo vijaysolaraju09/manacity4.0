@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
 import { Loader2, Ticket, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';

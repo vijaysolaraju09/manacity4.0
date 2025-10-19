@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Building2,
+  ChevronRight,
   MinusCircle,
   PlusCircle,
   Shield,
@@ -25,6 +26,8 @@ import { formatINR } from '@/utils/currency';
 import showToast from '@/components/ui/Toast';
 import fallbackImage from '@/assets/no-image.svg';
 import { paths } from '@/routes/paths';
+import { cn } from '@/lib/utils';
+import styles from '@/styles/PageShell.module.scss';
 import {
   clearCart,
   removeItem,
@@ -48,6 +51,12 @@ type ConfirmState =
       message: string;
     }
   | null;
+
+const sectionMotion = {
+  initial: { opacity: 0, y: 24 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.22, ease: 'easeOut' as const },
+} as const;
 
 const Cart = () => {
   const dispatch = useDispatch();
@@ -232,12 +241,15 @@ const Cart = () => {
     setConfirmState(null);
   };
 
-  const cartContainerClasses = 'min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900';
+  const cartContainerClasses = cn(
+    styles.pageShell,
+    'bg-transparent text-slate-900 dark:text-slate-100',
+  );
 
   if (status === 'loading') {
     return (
       <main className={cartContainerClasses} aria-busy="true">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className={cn(styles.pageShell__inner, 'mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8')}>
           <CartSkeleton />
         </div>
       </main>
@@ -247,7 +259,7 @@ const Cart = () => {
   if (status === 'error') {
     return (
       <main className={cartContainerClasses}>
-        <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+        <div className={cn(styles.pageShell__inner, 'mx-auto max-w-2xl px-4 py-16 sm:px-6')}>
           <ErrorCard
             title="We couldn't load your cart"
             message="Please refresh to try again."
@@ -261,7 +273,7 @@ const Cart = () => {
   if (items.length === 0) {
     return (
       <main className={cartContainerClasses}>
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+        <div className={cn(styles.pageShell__inner, 'mx-auto max-w-6xl px-4 py-16 sm:px-6')}>
           <div className="flex flex-col items-start gap-6 pb-10">
             <Button variant="ghost" className="inline-flex items-center gap-2 px-0 text-slate-600 dark:text-slate-300" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -278,96 +290,114 @@ const Cart = () => {
 
   return (
     <main className={cartContainerClasses}>
-      <div className="mx-auto max-w-7xl px-4 pb-32 pt-12 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-10">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  className="h-10 w-10 rounded-full border border-slate-200/60 bg-white/80 text-slate-600 shadow-sm hover:border-blue-200 hover:text-blue-600 dark:border-slate-800/70 dark:bg-slate-900/60 dark:text-slate-300"
-                  onClick={() => navigate(-1)}
-                  aria-label="Go back"
-                >
-                  <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                </Button>
-                <div>
-                  <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Shopping cart</h1>
-                  <p className="text-sm text-slate-500 dark:text-slate-300">
-                    {items.length} item{items.length === 1 ? '' : 's'} curated from neighbourhood shops
-                  </p>
+      <div className={cn(styles.pageShell__inner, 'mx-auto max-w-7xl px-4 pb-32 pt-12 sm:px-6 lg:px-8')}>
+        <div className="flex flex-col gap-12">
+          <motion.section
+            initial={sectionMotion.initial}
+            animate={sectionMotion.animate}
+            transition={sectionMotion.transition}
+            className="space-y-6"
+          >
+            <div className="flex flex-col gap-6 rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/15 via-white/90 to-white/70 p-6 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/70 dark:shadow-indigo-900/40">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-start gap-4">
+                  <Button
+                    variant="ghost"
+                    className="h-11 w-11 rounded-full border border-indigo-200/60 bg-white/80 text-indigo-600 shadow-sm hover:border-indigo-400 hover:text-indigo-700 dark:border-indigo-500/30 dark:bg-slate-900/70 dark:text-indigo-200"
+                    onClick={() => navigate(-1)}
+                    aria-label="Go back"
+                  >
+                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                  <div className="space-y-2">
+                    <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Shopping cart</h1>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      {items.length} item{items.length === 1 ? '' : 's'} curated from neighbourhood shops.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleContinueShopping}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 transition hover:text-indigo-700 dark:text-indigo-300"
+                    >
+                      Continue shopping
+                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-col items-start gap-2 rounded-full bg-indigo-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200 sm:flex-row sm:items-center">
+                  <Shield className="h-4 w-4" aria-hidden="true" />
+                  Secure checkout • Trusted shops
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
-                <Shield className="h-4 w-4" aria-hidden="true" />
-                Secure checkout • Trusted shops
+              <div className="grid gap-4 rounded-3xl border border-slate-200/70 bg-white/90 p-4 shadow-xl shadow-slate-200/60 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-900/70 dark:shadow-slate-950/50 lg:grid-cols-[1.2fr_minmax(0,1fr)] lg:items-center">
+                <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5 rounded-full border border-slate-300 text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600"
+                    checked={allSelected}
+                    onChange={(event) => handleSelectAll(event.target.checked)}
+                    aria-label="Select all items"
+                  />
+                  Select all
+                  <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-semibold text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200">
+                    {selectedItems.length} chosen
+                  </span>
+                </label>
+                <div className="flex flex-col gap-3 text-sm text-slate-600 dark:text-slate-300 lg:flex-row lg:items-center lg:justify-end lg:gap-4">
+                  <div className="flex items-center gap-3">
+                    <span>Subtotal</span>
+                    <span className="text-base font-semibold text-slate-900 dark:text-white">{formatINR(subtotalPaise)}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                      onClick={handleBulkSave}
+                      disabled={selectedItems.length === 0}
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Save for later
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="rounded-full px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-rose-400 dark:hover:bg-rose-500/20"
+                      onClick={handleBulkRemove}
+                      disabled={selectedItems.length === 0}
+                    >
+                      <MinusCircle className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Remove selected
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                      onClick={handleClear}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Clear cart
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
+          </motion.section>
 
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70">
-              <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 rounded-full border border-slate-300 text-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700"
-                  checked={allSelected}
-                  onChange={(event) => handleSelectAll(event.target.checked)}
-                  aria-label="Select all items"
-                />
-                Select all
-              </label>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                <span aria-live="polite">{selectedItems.length} selected</span>
-                <span className="hidden h-4 w-px bg-slate-200 sm:inline-block dark:bg-slate-700" />
-                <span className="font-semibold text-slate-900 dark:text-white">{formatINR(subtotalPaise)}</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                  onClick={handleBulkSave}
-                  disabled={selectedItems.length === 0}
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Save for later
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-rose-400 dark:hover:bg-rose-500/20"
-                  onClick={handleBulkRemove}
-                  disabled={selectedItems.length === 0}
-                >
-                  <MinusCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Remove selected
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-slate-800"
-                  onClick={handleClear}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Clear cart
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+          <motion.section
+            initial={sectionMotion.initial}
+            animate={sectionMotion.animate}
+            transition={{ ...sectionMotion.transition, delay: 0.05 }}
+            className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
+          >
             <section aria-labelledby="cart-items" className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 id="cart-items" className="text-xl font-semibold text-slate-900 dark:text-white">
                   Items in your cart
                 </h2>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
-                  onClick={handleContinueShopping}
-                >
-                  Continue shopping
-                </Button>
+                <span className="rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200">
+                  {itemCount} items
+                </span>
               </div>
               <AnimatePresence mode="popLayout">
                 {items.map((item) => (
@@ -383,7 +413,12 @@ const Cart = () => {
                 ))}
               </AnimatePresence>
             </section>
-            <aside className="space-y-4">
+            <motion.aside
+              initial={sectionMotion.initial}
+              animate={sectionMotion.animate}
+              transition={{ ...sectionMotion.transition, delay: 0.1 }}
+              className="space-y-4 lg:sticky lg:top-32"
+            >
               <CartSummaryCard
                 subtotalPaise={subtotalPaise}
                 discountPaise={0}
@@ -398,7 +433,7 @@ const Cart = () => {
                 itemCount={itemCount}
                 freeShippingThresholdPaise={FREE_SHIPPING_THRESHOLD_PAISE}
               />
-              <div className="hidden rounded-3xl border border-slate-200/80 bg-white/80 p-4 text-sm text-slate-600 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70 dark:text-slate-300 lg:flex lg:flex-col lg:gap-3">
+              <div className="hidden rounded-3xl border border-slate-200/70 bg-white/90 p-5 text-sm text-slate-600 shadow-xl shadow-slate-200/60 backdrop-blur-lg dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-slate-300 lg:flex lg:flex-col lg:gap-3">
                 <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
                   <Building2 className="h-4 w-4" aria-hidden="true" />
                   We partner with trusted neighbourhood shops for genuine products.
@@ -408,8 +443,8 @@ const Cart = () => {
                   Checkout once, receive consolidated delivery updates.
                 </div>
               </div>
-            </aside>
-          </div>
+            </motion.aside>
+          </motion.section>
         </div>
       </div>
 

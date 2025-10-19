@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -21,6 +22,7 @@ import {
   type OrderStatus,
 } from '@/store/orders';
 import { clearCart, addItem } from '@/store/slices/cartSlice';
+import styles from '@/styles/PageShell.module.scss';
 
 const statusOptions: (OrderStatus | 'all')[] = [
   'all',
@@ -50,6 +52,12 @@ const statusLabels: Record<OrderStatus | 'all', string> = {
 };
 
 const cancellableStatuses = new Set<OrderStatus>(['pending', 'placed', 'confirmed', 'accepted', 'preparing']);
+
+const sectionMotion = {
+  initial: { opacity: 0, y: 24 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.22, ease: 'easeOut' as const },
+} as const;
 
 const MyOrders = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -123,7 +131,7 @@ const MyOrders = () => {
   const renderOrders = () => {
     if (ordersList.length === 0) {
       return (
-        <Card className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-slate-200/80 bg-white/90 p-12 text-center shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70">
+        <Card className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/10 via-white/90 to-white/70 p-12 text-center shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/70 dark:shadow-indigo-900/40">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">No orders yet</h2>
           <p className="max-w-md text-sm text-slate-500 dark:text-slate-300">
             Explore products from neighbourhood shops and place your first order. We will keep a premium track of every purchase here.
@@ -136,16 +144,22 @@ const MyOrders = () => {
     return (
       <div className="space-y-6">
         {ordersList.map((order) => (
-          <OrderListItem
+          <motion.div
             key={order.id}
-            order={order}
-            onView={() => navigate(paths.orders.detail(order.id))}
-            onTrack={handleTrack}
-            onInvoice={handleInvoice}
-            onReorder={() => handleReorder(order)}
-            onCancel={cancellableStatuses.has(order.status) ? () => handleCancel(order) : undefined}
-            onReturn={order.status === 'delivered' ? handleReturn : undefined}
-          />
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <OrderListItem
+              order={order}
+              onView={() => navigate(paths.orders.detail(order.id))}
+              onTrack={handleTrack}
+              onInvoice={handleInvoice}
+              onReorder={() => handleReorder(order)}
+              onCancel={cancellableStatuses.has(order.status) ? () => handleCancel(order) : undefined}
+              onReturn={order.status === 'delivered' ? handleReturn : undefined}
+            />
+          </motion.div>
         ))}
       </div>
     );
@@ -153,8 +167,8 @@ const MyOrders = () => {
 
   if (isError) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
+        <div className={cn(styles.pageShell__inner, 'mx-auto max-w-6xl px-4 py-16 sm:px-6')}>
           <ErrorCard title="Unable to load orders" message={mineState.error ?? 'Please retry in a moment.'} onRetry={handleRetry} />
         </div>
       </main>
@@ -162,51 +176,67 @@ const MyOrders = () => {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
-      <div className="mx-auto max-w-6xl px-4 pb-24 pt-12 sm:px-6">
-        <header className="flex flex-col gap-4 pb-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">My orders</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-300">
-                Track your deliveries, download invoices and rate your experiences.
-              </p>
-            </div>
-            {isLoading ? (
-              <div className="flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm text-slate-500 shadow-sm dark:bg-slate-900/70 dark:text-slate-300">
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                Syncing latest orders…
+    <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
+      <div className={cn(styles.pageShell__inner, 'mx-auto max-w-6xl px-4 pb-24 pt-12 sm:px-6')}>
+        <motion.header
+          initial={sectionMotion.initial}
+          animate={sectionMotion.animate}
+          transition={sectionMotion.transition}
+          className="flex flex-col gap-6 pb-10"
+        >
+          <div className="flex flex-col gap-6 rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/15 via-white/90 to-white/70 p-6 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/70 dark:shadow-indigo-900/40">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">My orders</h1>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Track deliveries, download invoices and rate your neighbourhood shopping experiences.
+                </p>
               </div>
-            ) : null}
+              {isLoading ? (
+                <div className="flex items-center gap-2 rounded-full bg-indigo-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200">
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  Syncing orders…
+                </div>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap gap-2 rounded-3xl border border-indigo-200/60 bg-white/90 p-2 shadow-xl shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-slate-900/70">
+              {statusOptions.map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setActiveStatus(status)}
+                  className={cn(
+                    'rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500',
+                    activeStatus === status
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-400/40 dark:bg-indigo-500 dark:shadow-indigo-900/50'
+                      : 'text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-800',
+                  )}
+                >
+                  {statusLabels[status]}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2 rounded-3xl border border-slate-200/80 bg-white/90 p-2 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70">
-            {statusOptions.map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => setActiveStatus(status)}
-                className={cn(
-                  'rounded-full px-4 py-2 text-sm font-semibold transition',
-                  activeStatus === status
-                    ? 'bg-blue-600 text-white shadow'
-                    : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
-                )}
-              >
-                {statusLabels[status]}
-              </button>
-            ))}
-          </div>
-        </header>
+        </motion.header>
 
-        {isLoading && ordersList.length === 0 ? (
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="h-40 rounded-3xl border border-slate-200/70 bg-white/80 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/70" />
-            ))}
-          </div>
-        ) : (
-          renderOrders()
-        )}
+        <motion.div
+          initial={sectionMotion.initial}
+          animate={sectionMotion.animate}
+          transition={{ ...sectionMotion.transition, delay: 0.05 }}
+        >
+          {isLoading && ordersList.length === 0 ? (
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-40 rounded-3xl border border-slate-200/70 bg-white/80 shadow-xl shadow-slate-200/60 dark:border-slate-800/70 dark:bg-slate-900/70"
+                />
+              ))}
+            </div>
+          ) : (
+            renderOrders()
+          )}
+        </motion.div>
       </div>
     </main>
   );

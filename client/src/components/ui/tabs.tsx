@@ -71,7 +71,7 @@ const TabsList = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
         ref={ref}
         role="tablist"
         className={cn(
-          'inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200/70 bg-background/80 p-1 text-slate-500 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-background/40 dark:text-slate-300',
+          'inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200/70 bg-white/80 p-1 text-slate-500 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300',
           className,
         )}
         {...props}
@@ -107,7 +107,7 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
           }
         }}
         className={cn(
-          'inline-flex min-w-[7rem] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border data-[state=active]:border-slate-200 data-[state=active]:bg-background data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:data-[state=active]:border-slate-700 dark:data-[state=active]:text-white',
+          'inline-flex min-w-[7rem] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border data-[state=active]:border-slate-200 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:data-[state=active]:border-slate-700 dark:data-[state=active]:text-white',
           className,
         )}
         {...props}

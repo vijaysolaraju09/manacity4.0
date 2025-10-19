@@ -295,7 +295,7 @@ const Cart = () => {
 
   const allSelected = selectedIds.size === items.length && items.length > 0;
   const stepperButtonClasses =
-    'flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-background text-foreground transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-40';
+    'flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-slate-900 transition hover:border-blue-600 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-40';
 
   return (
     <main className={cartContainerClasses}>
@@ -307,12 +307,12 @@ const Cart = () => {
             transition={sectionMotion.transition}
             className="space-y-6"
           >
-            <div className="flex flex-col gap-6 rounded-3xl border border-[var(--border)] bg-background/80 p-6 shadow-xl backdrop-blur">
+            <div className="flex flex-col gap-6 rounded-3xl border border-[var(--border)] bg-white/80 p-6 shadow-xl backdrop-blur">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-start gap-4">
                   <Button
                     variant="ghost"
-                    className="h-11 w-11 rounded-full border border-[var(--border)] bg-background text-foreground shadow-sm hover:border-primary/40 hover:text-primary"
+                    className="h-11 w-11 rounded-full border border-[var(--border)] bg-white text-slate-900 shadow-sm hover:border-blue-600/40 hover:text-blue-600"
                     onClick={() => navigate(-1)}
                     aria-label="Go back"
                   >
@@ -320,14 +320,14 @@ const Cart = () => {
                   </Button>
                   <div className="space-y-3">
                     <h1 className="text-3xl font-semibold tracking-tight">Shopping cart</h1>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-slate-600">
                       {items.length} item{items.length === 1 ? '' : 's'} curated from neighbourhood shops.
                     </p>
                     <div className="flex flex-wrap gap-3 text-sm font-semibold">
                       <button
                         type="button"
                         onClick={handleContinueShopping}
-                        className="inline-flex items-center gap-2 text-primary transition hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        className="inline-flex items-center gap-2 text-blue-600 transition hover:text-blue-600/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
                       >
                         Continue shopping
                         <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -344,7 +344,7 @@ const Cart = () => {
                     </div>
                   </div>
                 </div>
-                <div className="rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                <div className="rounded-full bg-slate-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">
                   Trusted checkout • Secure payments
                 </div>
               </div>
@@ -352,20 +352,20 @@ const Cart = () => {
                 <label className="flex items-center gap-3 text-sm font-semibold">
                   <input
                     type="checkbox"
-                    className="h-5 w-5 rounded-md border border-[var(--border)] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="h-5 w-5 rounded-md border border-[var(--border)] text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                     checked={allSelected}
                     onChange={(event) => handleSelectAll(event.target.checked)}
                     aria-label="Select all items"
                   />
                   <span>Select all</span>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                  <span className="rounded-full bg-blue-600/10 px-2 py-0.5 text-xs font-semibold text-blue-600">
                     {selectedItems.length} selected
                   </span>
                 </label>
                 <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-slate-600">
                     Subtotal:
-                    <span className="ml-2 font-semibold text-foreground">{formatINR(subtotalPaise)}</span>
+                    <span className="ml-2 font-semibold text-slate-900">{formatINR(subtotalPaise)}</span>
                   </span>
                   <Button
                     type="button"
@@ -410,7 +410,7 @@ const Cart = () => {
                   <h2 id="cart-items" className="text-xl font-semibold">
                     Items in your cart
                   </h2>
-                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">
                     {itemCount} item{itemCount === 1 ? '' : 's'}
                   </span>
                 </div>
@@ -435,7 +435,7 @@ const Cart = () => {
                             <label className="pt-1">
                               <input
                                 type="checkbox"
-                                className="h-5 w-5 rounded-md border border-[var(--border)] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                className="h-5 w-5 rounded-md border border-[var(--border)] text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                                 checked={selected}
                                 onChange={(event) => handleSelectItem(item.productId, event.target.checked)}
                                 aria-label={`Select ${item.name}`}
@@ -452,7 +452,7 @@ const Cart = () => {
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div className="space-y-1">
                                 {item.brand ? (
-                                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                                     {item.brand}
                                   </p>
                                 ) : null}
@@ -470,7 +470,7 @@ const Cart = () => {
                                 ) : null}
                               </div>
                             </div>
-                            <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+                            <div className="flex flex-col gap-2 text-xs text-slate-600">
                               <span>{item.availabilityLabel ?? 'In stock'}</span>
                               {item.deliveryMessage ? <span>{item.deliveryMessage}</span> : null}
                               {item.shippingNote ? <span>{item.shippingNote}</span> : null}
@@ -481,7 +481,7 @@ const Cart = () => {
                           <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="flex flex-wrap items-center gap-3">
                               <div className="flex items-center gap-2" role="group" aria-label={`Update quantity for ${item.name}`}>
-                                <span className="text-xs font-semibold uppercase text-muted-foreground">Qty</span>
+                                <span className="text-xs font-semibold uppercase text-slate-600">Qty</span>
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
@@ -505,11 +505,11 @@ const Cart = () => {
                                   </button>
                                 </div>
                               </div>
-                              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground">
+                              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
                                 <button
                                   type="button"
                                   onClick={() => handleSaveForLater(item.name)}
-                                  className="rounded-full px-3 py-1 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                                  className="rounded-full px-3 py-1 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
                                 >
                                   Save for later
                                 </button>
@@ -523,7 +523,7 @@ const Cart = () => {
                               </div>
                             </div>
                             <div className="flex flex-col items-end">
-                              <span className="text-xs text-muted-foreground">Line total</span>
+                              <span className="text-xs text-slate-600">Line total</span>
                               <span className="text-lg font-semibold">{formatINR(item.lineTotalPaise)}</span>
                             </div>
                           </div>
@@ -539,7 +539,7 @@ const Cart = () => {
                   <h2 id="cart-summary" className="text-lg font-semibold">
                     Price details
                   </h2>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-slate-600">
                     {selectedItems.length} item{selectedItems.length === 1 ? '' : 's'} selected
                   </p>
                 </div>
@@ -553,15 +553,15 @@ const Cart = () => {
                 />
 
                 <div className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between text-muted-foreground">
+                  <div className="flex items-center justify-between text-slate-600">
                     <span>Item total</span>
-                    <span className="font-semibold text-foreground">{formatINR(subtotalPaise)}</span>
+                    <span className="font-semibold text-slate-900">{formatINR(subtotalPaise)}</span>
                   </div>
                   <div className="flex items-center justify-between text-emerald-600">
                     <span>Discounts</span>
                     <span>-{formatINR(0)}</span>
                   </div>
-                  <div className="flex items-center justify-between text-muted-foreground">
+                  <div className="flex items-center justify-between text-slate-600">
                     <span>Shipping</span>
                     <span>Calculated at checkout</span>
                   </div>
@@ -585,7 +585,7 @@ const Cart = () => {
                 >
                   Proceed to checkout
                 </Button>
-                <p className="text-center text-xs text-muted-foreground">Secure checkout powered by Manacity Pay</p>
+                <p className="text-center text-xs text-slate-600">Secure checkout powered by Manacity Pay</p>
               </aside>
             </div>
           </motion.section>
@@ -594,9 +594,9 @@ const Cart = () => {
 
       <div className={cn(cartStyles.bottomSheet, 'lg:hidden')} role="region" aria-label="Cart summary">
         <div className="flex flex-col">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">Total</span>
           <span className="text-lg font-semibold">{formatINR(totalPaise)}</span>
-          <span className="text-xs text-muted-foreground">{itemCount} item{itemCount === 1 ? '' : 's'}</span>
+          <span className="text-xs text-slate-600">{itemCount} item{itemCount === 1 ? '' : 's'}</span>
         </div>
         <Button
           type="button"

@@ -384,6 +384,11 @@ const Profile = () => {
     return actions;
   }, [user]);
 
+  const themeLabel = useMemo(() => {
+    const theme = user?.preferences?.theme ?? 'light';
+    return theme ? `${theme.charAt(0).toUpperCase()}${theme.slice(1)}` : 'Light';
+  }, [user?.preferences?.theme]);
+
   const tabs = useMemo(
     () => [
       {
@@ -506,9 +511,6 @@ const Profile = () => {
       ? 'Business request pending'
       : 'Request business';
   const verificationButtonLabel = verificationDisabled ? 'Verified' : 'Request verification';
-  const themeLabel = user.preferences?.theme
-    ? `${user.preferences.theme.charAt(0).toUpperCase()}${user.preferences.theme.slice(1)}`
-    : 'Light';
 
   return (
     <>

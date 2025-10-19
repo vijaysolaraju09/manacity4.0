@@ -134,7 +134,7 @@ const OrderDetail = () => {
 
   const orderItems = order.items ?? [];
   const totalItems = orderItems.reduce((sum, item) => sum + item.qty, 0);
-  const grandTotalPaise = order.totals?.grandTotalPaise ?? orderItems.reduce((sum, item) => sum + item.subtotalPaise, 0);
+  const grandTotalPaise = order.totals?.grandPaise ?? orderItems.reduce((sum, item) => sum + item.subtotalPaise, 0);
   const canCancel = authUserId && order.customer.id === authUserId && cancellableStatuses.has(order.status);
   const canRate = authUserId && order.customer.id === authUserId && order.status === 'delivered';
 
@@ -217,7 +217,7 @@ const OrderDetail = () => {
                 <div className="rounded-2xl border border-indigo-200/60 bg-white/80 p-4 shadow-md shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-slate-900/70 dark:text-slate-200">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-500 dark:text-indigo-300">Delivery</p>
                   <p className="mt-2 font-semibold text-slate-900 dark:text-white">{order.fulfillment?.type ?? 'Standard delivery'}</p>
-                  <p>{order.fulfillment?.etaLabel ?? 'We will notify you with live updates.'}</p>
+                  <p>{order.fulfillment?.eta ?? 'We will notify you with live updates.'}</p>
                 </div>
                 <div className="rounded-2xl border border-indigo-200/60 bg-white/80 p-4 shadow-md shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-slate-900/70 dark:text-slate-200">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-500 dark:text-indigo-300">Payment</p>

@@ -87,26 +87,6 @@
         font-weight: 600;
       }
 
-      &.order-now {
-        flex: none;
-        position: relative;
-        top: -1rem;
-        background: $primary-color;
-        color: #fff;
-        border-radius: 50%;
-        width: 64px;
-        height: 64px;
-        justify-content: center;
-        align-items: center;
-
-        span {
-          display: none;
-        }
-
-        svg {
-          font-size: 1.8rem;
-        }
-      }
     }
   }
 

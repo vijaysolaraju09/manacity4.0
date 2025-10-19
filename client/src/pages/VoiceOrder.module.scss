@@ -39,7 +39,8 @@
 }
 
 .transcript {
-  @apply mt-4 min-h-24 bg-muted/30 p-3 rounded-lg text-sm;
+  @apply mt-4 min-h-24 p-3 rounded-lg text-sm;
+  background-color: rgb(var(--color-muted-rgb) / 0.3);
 }
 
 .examples {

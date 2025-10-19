@@ -1,6 +1,7 @@
 @reference "../styles/main.css";
 .consoleCard {
-  @apply bg-background border border-border rounded-2xl shadow-lg p-6 mb-6;
+  @apply bg-background border rounded-2xl shadow-lg p-6 mb-6;
+  border-color: var(--border);
 }
 
 .micButton {
@@ -47,7 +48,8 @@
   @apply mt-6;
 
   .tabs {
-    @apply flex gap-4 mb-4 border-b border-border;
+    @apply flex gap-4 mb-4 border-b;
+    border-bottom-color: var(--border);
 
     & button {
       @apply py-2 px-3;
@@ -61,10 +63,12 @@
   }
 
   .productRow {
-    @apply flex items-center justify-between p-4 mb-3 border border-border rounded-2xl shadow-sm;
+    @apply flex items-center justify-between p-4 mb-3 border rounded-2xl shadow-sm;
+    border-color: var(--border);
   }
 }
 
 .summary {
-  @apply fixed bottom-0 inset-x-0 p-4 bg-background/80 backdrop-blur border-t border-border flex justify-between items-center;
+  @apply fixed bottom-0 inset-x-0 p-4 bg-background/80 backdrop-blur border-t flex justify-between items-center;
+  border-top-color: var(--border);
 }

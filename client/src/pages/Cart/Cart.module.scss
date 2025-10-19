@@ -4,7 +4,8 @@
 }
 
 .itemCard {
-  @apply flex gap-4 p-4 bg-background border border-border rounded-2xl shadow-sm hover:shadow-md transition;
+  @apply flex gap-4 p-4 bg-background border rounded-2xl shadow-sm hover:shadow-md transition;
+  border-color: var(--border);
 }
 
 .itemImg {
@@ -33,13 +34,16 @@
 }
 
 .bulkBar {
-  @apply flex justify-between items-center bg-muted/30 px-4 py-2 rounded-xl border border-border;
+  @apply flex justify-between items-center bg-muted/30 px-4 py-2 rounded-xl border;
+  border-color: var(--border);
 }
 
 .summary {
-  @apply sticky top-20 p-4 bg-background border border-border rounded-2xl shadow-md;
+  @apply sticky top-20 p-4 bg-background border rounded-2xl shadow-md;
+  border-color: var(--border);
 }
 
 .bottomSheet {
-  @apply fixed bottom-0 inset-x-0 p-4 bg-background/80 backdrop-blur border-t border-border flex justify-between items-center;
+  @apply fixed bottom-0 inset-x-0 p-4 bg-background/80 backdrop-blur border-t flex justify-between items-center;
+  border-top-color: var(--border);
 }

@@ -17,7 +17,6 @@ import {
   Loader2,
   Mic,
   MicOff,
-  RefreshCcw,
   ShoppingBag,
   ShoppingCart,
   Sparkles,

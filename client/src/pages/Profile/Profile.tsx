@@ -135,7 +135,7 @@ interface InfoRowProps {
 }
 
 const InfoRow = ({ icon: Icon, label, value, emptyLabel = 'Not provided' }: InfoRowProps) => (
-  <div className="flex items-start gap-3 rounded-xl border border-slate-200/70 bg-background/80 px-4 py-3 text-sm shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-background/40">
+  <div className="flex items-start gap-3 rounded-xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-white/40">
     <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-300">
       <Icon className="h-5 w-5" aria-hidden="true" />
     </span>
@@ -436,7 +436,7 @@ const Profile = () => {
               <InfoRow icon={BriefcaseBusiness} label="Profession" value={user?.profession} />
               <InfoRow icon={Sparkles} label="Theme preference" value={themeLabel} />
             </div>
-            <div className="rounded-xl border border-slate-200/70 bg-background/80 p-4 text-sm leading-relaxed text-slate-700 shadow-sm dark:border-slate-700 dark:bg-background/40 dark:text-slate-200">
+            <div className="rounded-xl border border-slate-200/70 bg-white/80 p-4 text-sm leading-relaxed text-slate-700 shadow-sm dark:border-slate-700 dark:bg-white/40 dark:text-slate-200">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-500 dark:text-blue-300">Bio</p>
               <p className="mt-2">
                 {user?.bio || 'Tell customers more about you by adding a short bio.'}
@@ -452,7 +452,7 @@ const Profile = () => {
           <div className="space-y-4">
             <InfoRow icon={MapPin} label="Location" value={user?.location} />
             <InfoRow icon={Home} label="Address" value={user?.address} />
-            <div className="rounded-xl border border-dashed border-slate-300 bg-background/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-background/40 dark:text-slate-300">
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-white/40 dark:text-slate-300">
               Add multiple delivery addresses and pin favourite locations. This feature is coming soon.
             </div>
           </div>
@@ -463,7 +463,7 @@ const Profile = () => {
         label: 'Preferences',
         content: (
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-200/70 bg-background/80 p-4 text-sm shadow-sm dark:border-slate-700 dark:bg-background/40">
+            <div className="rounded-xl border border-slate-200/70 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-700 dark:bg-white/40">
               <p className="text-sm font-semibold text-slate-900 dark:text-white">Theme</p>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Currently set to {themeLabel}.</p>
             </div>
@@ -630,7 +630,7 @@ const Profile = () => {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="rounded-lg border-slate-200/80 bg-background/80 text-slate-700 transition hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:bg-background/40 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:text-blue-300"
+                            className="rounded-lg border-slate-200/80 bg-white/80 text-slate-700 transition hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:bg-white/40 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:text-blue-300"
                             onClick={() => navigate(action.path)}
                           >
                             {action.label}
@@ -660,7 +660,7 @@ const Profile = () => {
                     {verificationButtonLabel}
                   </Button>
                 </div>
-                <div className="rounded-xl border border-dashed border-slate-200/80 bg-background/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-background/40 dark:text-slate-300">
+                <div className="rounded-xl border border-dashed border-slate-200/80 bg-white/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-white/40 dark:text-slate-300">
                   Keep your profile complete to get personalised recommendations and quicker approvals for business features.
                 </div>
               </div>

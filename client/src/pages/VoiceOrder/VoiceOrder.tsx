@@ -1039,7 +1039,6 @@ const VoiceOrder = () => {
             </Card>
           </div>
         </motion.div>
-        </div>
       </div>
     </main>
   );

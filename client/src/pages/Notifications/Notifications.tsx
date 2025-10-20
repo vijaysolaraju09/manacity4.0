@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import clsx from 'clsx';
+import { cn } from '@/utils/cn';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '@/store';
 import {
@@ -100,7 +100,7 @@ const Notifications = () => {
             type="button"
             role="tab"
             aria-selected={activeFilter === filter}
-            className={clsx(styles.filterButton, {
+            className={cn(styles.filterButton, {
               [styles.active]: activeFilter === filter,
             })}
             onClick={() => setActiveFilter(filter)}
@@ -125,7 +125,7 @@ const Notifications = () => {
         <>
           {Object.entries(grouped).map(([date, dayItems]) => (
             <div key={date} className={styles.group}>
-              <h4 className={clsx(styles.title, 'text-gray-700')}>{date}</h4>
+              <h4 className={cn(styles.title, 'text-gray-700')}>{date}</h4>
               {dayItems.map((notif) => (
                 <div key={notif._id} className={styles.card}>
                   <div className={styles.content}>
@@ -136,7 +136,7 @@ const Notifications = () => {
                       onSwipeLeft={() => handleMarkRead(notif._id)}
                     />
                   </div>
-                  <div className={clsx(styles.meta, styles.actions)}>
+                  <div className={cn(styles.meta, styles.actions)}>
                     {!notif.read && (
                       <button type="button" onClick={() => handleMarkRead(notif._id)}>
                         Mark read

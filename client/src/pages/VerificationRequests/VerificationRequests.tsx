@@ -24,6 +24,11 @@ type RequestRow = Request & {
   actions?: string;
 };
 
+type RequestStatus = 'approved' | 'pending' | 'rejected';
+
+const isRequestStatus = (value: string): value is RequestStatus =>
+  value === 'approved' || value === 'pending' || value === 'rejected';
+
 interface RequestResponse {
   requests: Request[];
   total: number;
@@ -145,9 +150,12 @@ const VerificationRequests = () => {
         label: 'Status',
         render: (r) => {
           const normalized = (r.status || '').toLowerCase();
-          const className = statusClassMap[normalized] ?? styles.statusPending;
-          const label = normalized
-            ? normalized.charAt(0).toUpperCase() + normalized.slice(1)
+          const statusKey = isRequestStatus(normalized) ? normalized : undefined;
+          const className = statusKey
+            ? statusClassMap[statusKey]
+            : styles.statusPending;
+          const label = statusKey
+            ? statusKey.charAt(0).toUpperCase() + statusKey.slice(1)
             : 'Unknown';
           return (
             <span className={`${styles.statusChip} ${className}`}>

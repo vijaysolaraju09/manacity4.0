@@ -5,6 +5,7 @@ import styles from './Verified.module.scss';
 import fallbackImage from '@/assets/no-image.svg';
 import { fetchVerified } from '@/store/verified';
 import type { RootState } from '@/store';
+import type { VerifiedCard } from '@/types/verified';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorCard from '@/components/ui/ErrorCard';
 import SkeletonList from '@/components/ui/SkeletonList';
@@ -30,7 +31,71 @@ const VerifiedList = () => {
     return () => clearTimeout(handle);
   }, [profession, location, d]);
 
-  const safeItems = useMemo(() => (Array.isArray(items) ? items : []), [items]);
+  const safeItems = useMemo(() => {
+    if (!Array.isArray(items)) return [] as VerifiedCard[];
+
+    return (items as Array<Record<string, unknown>>)
+      .map((raw, index) => {
+        if (!raw || typeof raw !== 'object') return null;
+
+        const rawUser =
+          raw.user && typeof raw.user === 'object' ? (raw.user as Record<string, unknown>) : {};
+
+        const idSource = [raw._id, raw.id, rawUser._id].find(
+          (value) => typeof value === 'string' && value.trim().length > 0,
+        );
+        const id = (idSource as string | undefined) ?? `verified-${index}`;
+
+        const name =
+          typeof rawUser.name === 'string' && rawUser.name.trim().length > 0
+            ? rawUser.name.trim()
+            : 'Unnamed professional';
+
+        const location =
+          typeof rawUser.location === 'string' && rawUser.location.trim().length > 0
+            ? rawUser.location.trim()
+            : undefined;
+
+        const profession =
+          typeof raw.profession === 'string' && raw.profession.trim().length > 0
+            ? raw.profession.trim()
+            : '';
+
+        const portfolio = Array.isArray(raw.portfolio)
+          ? raw.portfolio.filter((entry) => typeof entry === 'string' && entry.trim().length > 0)
+          : [];
+
+        return {
+          id,
+          _id: id,
+          user: {
+            _id:
+              (typeof rawUser._id === 'string' && rawUser._id.trim().length > 0
+                ? rawUser._id.trim()
+                : id) || id,
+            name,
+            phone: typeof rawUser.phone === 'string' ? rawUser.phone : '',
+            location,
+            address:
+              typeof rawUser.address === 'string' && rawUser.address.trim().length > 0
+                ? rawUser.address.trim()
+                : undefined,
+          },
+          profession,
+          bio: typeof raw.bio === 'string' ? raw.bio : '',
+          portfolio,
+          status:
+            raw.status === 'approved' || raw.status === 'rejected'
+              ? (raw.status as VerifiedCard['status'])
+              : 'pending',
+          ratingAvg: typeof raw.ratingAvg === 'number' ? raw.ratingAvg : 0,
+          ratingCount: typeof raw.ratingCount === 'number' ? raw.ratingCount : 0,
+          createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : undefined,
+          updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : undefined,
+        } satisfies VerifiedCard;
+      })
+      .filter(Boolean) as VerifiedCard[];
+  }, [items]);
   const isLoading = status === 'loading';
   const hasError = status === 'failed';
   const hasItems = safeItems.length > 0;
@@ -76,10 +141,16 @@ const VerifiedList = () => {
             .split(/[,/]/)
             .map((tag) => tag.trim())
             .filter((tag) => tag.length > 0);
-          const tags = professionTags.length > 0 ? professionTags : [v.profession].filter(Boolean);
+          const tags =
+            professionTags.length > 0
+              ? professionTags
+              : v.profession
+              ? [v.profession]
+              : ['Profession not provided'];
           const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
             v.user.name,
           )}&background=random`;
+          const locationLabel = v.user.location || 'Location not provided';
           return (
             <button
               key={v._id}
@@ -98,7 +169,7 @@ const VerifiedList = () => {
               />
               <div className={styles.details}>
                 <h3 className={styles.title}>{v.user.name}</h3>
-                <p className={styles.meta}>{v.user.location || 'Location not provided'}</p>
+                <p className={styles.meta}>{locationLabel}</p>
                 <div className={styles.tags}>
                   {tags.map((tag) => (
                     <span key={`${v._id}-${tag}`}>{tag}</span>

@@ -1,177 +1,88 @@
-@import "../../../styles/variables";
-@import "../../../styles/mixins";
+@reference "../../../styles/main.css";
 
 .login-page {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  min-height: 100vh;
-  background: #fff;
+  @apply min-h-screen bg-gray-50 flex flex-col justify-center px-4 py-12;
+}
 
-  .info-panel {
-    display: none;
+@media (min-width: 768px) {
+  .login-page {
+    @apply flex-row items-center gap-12;
   }
+}
 
-  @include respond(md) {
-    flex-direction: row;
-    gap: 4rem;
+.info-panel {
+  @apply hidden md:flex flex-col gap-3 text-left text-gray-600;
+  max-width: 18rem;
+}
 
-    .info-panel {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      max-width: 320px;
-      text-align: left;
+.info-panel img {
+  width: 120px;
+  border-radius: 1rem;
+}
 
-      img {
-        width: 120px;
-        margin-bottom: 1rem;
-      }
+.panel {
+  @apply bg-white rounded-2xl shadow-lg;
+  border: 1px solid #e5e7eb;
+  padding: 1.25rem;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 auto;
+}
 
-      h1 {
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
-      }
+.title {
+  @apply text-2xl font-semibold tracking-tight mb-2 text-gray-900;
+}
 
-      p {
-        color: #555;
-      }
-    }
+.hint {
+  @apply text-sm text-gray-600 mb-4;
+}
 
-    .form-card {
-      max-width: 420px;
-    }
-  }
+.logo {
+  width: 80px;
+  margin: 0 auto 1rem;
+  display: block;
+}
 
-  @include respond(lg) {
-    gap: 6rem;
+form {
+  @apply mt-4;
+}
 
-    .info-panel {
-      img {
-        width: 140px;
-      }
+.control {
+  @apply mb-3;
+}
 
-      h1 {
-        font-size: 2rem;
-      }
-    }
+.control label {
+  @apply text-sm text-gray-700 mb-1 block;
+}
 
-    .form-card {
-      max-width: 480px;
-    }
-  }
+.control input {
+  @apply w-full rounded-lg border border-gray-300 px-3 py-2;
+}
 
-  .form-card {
-    width: 100%;
-    max-width: 400px;
-    @include glass-card;
-    padding: 2rem;
-    text-align: center;
+.error {
+  @apply text-sm text-red-600 mt-1;
+}
 
-    .logo {
-      width: 100px;
-      margin: 0 auto 1.5rem;
-      display: block;
-    }
+.error.general {
+  @apply text-center;
+}
 
-    h2 {
-      font-size: 1.6rem;
-      color: #222;
-      margin-bottom: 1.5rem;
-    }
+.actions {
+  @apply mt-4;
+}
 
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+.actions button {
+  @apply w-full rounded-lg bg-blue-600 text-white px-4 py-2 hover:bg-blue-700;
+}
 
-      label {
-        text-align: left;
-        font-size: 0.95rem;
-        font-weight: 600;
+.links {
+  @apply mt-4 text-center text-sm text-blue-600;
+}
 
-        input {
-          width: 100%;
-          padding: 0.75rem;
-          margin-top: 0.4rem;
-          border: 1px solid #ccc;
-          border-radius: 8px;
-          font-size: 1rem;
-          outline: none;
+.back {
+  @apply mt-4 text-sm text-gray-600 text-center cursor-pointer;
+}
 
-          &:focus {
-            border-color: $primary-color;
-          }
-        }
-
-        .password-field {
-          position: relative;
-          display: flex;
-          align-items: center;
-
-          input {
-            padding-right: 3rem;
-          }
-
-          .toggle {
-            position: absolute;
-            right: 0.75rem;
-            background: none;
-            border: none;
-            color: $primary-color;
-            cursor: pointer;
-            font-size: 0.85rem;
-          }
-        }
-      }
-
-      .error {
-        color: red;
-        font-size: 0.85rem;
-        margin-top: 0.25rem;
-        display: block;
-      }
-
-      .error.general {
-        text-align: center;
-      }
-
-      .login-btn {
-        @include button-style($primary-color, #fff);
-        width: 100%;
-        margin-top: 0.5rem;
-      }
-    }
-
-    .links {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 1rem;
-      font-size: 0.9rem;
-
-      span,
-      a {
-        color: $primary-color;
-        cursor: pointer;
-        text-decoration: none;
-
-        &:hover {
-          text-decoration: underline;
-        }
-      }
-    }
-
-    .back {
-      margin-top: 1.5rem;
-      font-size: 0.9rem;
-      color: #666;
-      cursor: pointer;
-
-      &:hover {
-        color: $primary-color;
-      }
-    }
-  }
+.back:hover {
+  color: #1d4ed8;
 }

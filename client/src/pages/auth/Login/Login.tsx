@@ -56,49 +56,53 @@ const Login = () => {
         <p>Sign in to continue exploring your city.</p>
       </div>
       <motion.div
-        className="form-card"
+        className="panel"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: 'easeOut' }}
       >
         <img src={logo} alt="Manacity Logo" className="logo" onError={(e) => (e.currentTarget.src = fallbackImage)} />
 
-        <h2>Login</h2>
+        <h2 className="title">Login</h2>
+        <p className="hint">Enter your credentials to continue exploring your city.</p>
 
         <form onSubmit={handleSubmit} noValidate>
-          <label>
-            Phone Number
+          <div className="control">
+            <label htmlFor="login-phone">Phone Number</label>
             <input
+              id="login-phone"
               type="text"
               name="phone"
               placeholder="Enter phone number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
-          </label>
+          </div>
 
-          <label>
-            Password
+          <div className="control">
+            <label htmlFor="login-password">Password</label>
             <input
+              id="login-password"
               type="password"
               name="password"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-          </label>
+          </div>
 
-          {error && <span className="error">{error}</span>}
+          {error && <div className="error">{error}</div>}
 
-          <motion.button
-            type="submit"
-            className="login-btn"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            disabled={loading}
-          >
-            {loading ? <Loader /> : 'Login'}
-          </motion.button>
+          <div className="actions">
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              disabled={loading}
+            >
+              {loading ? <Loader /> : 'Login'}
+            </motion.button>
+          </div>
         </form>
 
         <div className="links">

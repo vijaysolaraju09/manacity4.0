@@ -1,36 +1,76 @@
 @reference "../../styles/main.css";
-.events {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+
+.page {
+  @apply space-y-6;
 }
 
 .header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  @apply flex flex-col gap-1;
+}
 
-  h2 {
-    margin: 0;
-    font-size: 1.6rem;
-    color: var(--color-primary);
-  }
+.header h2 {
+  @apply text-2xl font-semibold text-gray-900;
+}
 
-  p {
-    margin: 0;
-    color: var(--color-text-secondary);
-  }
+.header p {
+  @apply text-sm text-gray-600;
+}
+
+.filters {
+  @apply flex gap-2 mb-4;
 }
 
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1rem;
+  @apply grid gap-4;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-@media (max-width: 600px) {
-  .events {
-    padding: 1rem;
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-md;
+  border: 1px solid #e5e7eb;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
+  transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 24px rgba(15, 23, 42, 0.1);
+}
+
+.thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 0.75rem;
+}
+
+.meta {
+  @apply text-sm text-gray-600 space-y-1;
+}
+
+.badges {
+  @apply flex flex-wrap gap-2 text-xs;
+}
+
+.badges span {
+  @apply bg-gray-100 px-2 py-1 rounded;
+}
+
+.actions {
+  @apply mt-2 flex items-center gap-2 text-sm text-gray-600;
+  flex-wrap: wrap;
+}
+
+.cardTitle {
+  @apply text-lg font-semibold text-gray-900;
 }

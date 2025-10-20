@@ -595,28 +595,10 @@ const Profile = () => {
                 </div>
                 <div className={styles.divider} />
                 <div>
-                  <h2 className={styles.sectionTitle}>Personal info</h2>
-                  <div className="space-y-3">
-                    <InfoRow icon={BriefcaseBusiness} label="Profession" value={user.profession} />
-                    <InfoRow icon={Sparkles} label="Theme preference" value={themeLabel} />
-                    <InfoRow icon={UserRound} label="Role" value={user.role} />
-                  </div>
-                </div>
-                <div className={styles.divider} />
-                <div>
-                  <h2 className={styles.sectionTitle}>Contact</h2>
-                  <div className="space-y-3">
-                    <InfoRow icon={Phone} label="Phone" value={user.phone} />
-                    <InfoRow icon={Mail} label="Email" value={user.email ?? undefined} />
-                  </div>
-                </div>
-                <div className={styles.divider} />
-                <div>
-                  <h2 className={styles.sectionTitle}>Address</h2>
-                  <div className="space-y-3">
-                    <InfoRow icon={MapPin} label="Location" value={user.location} />
-                    <InfoRow icon={Home} label="Address" value={user.address} />
-                  </div>
+                  <h2 className={styles.sectionTitle}>Account dashboard</h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    Review and manage your personal information, contact details and addresses in the dashboard below.
+                  </p>
                 </div>
                 {quickActions.length > 0 ? (
                   <>

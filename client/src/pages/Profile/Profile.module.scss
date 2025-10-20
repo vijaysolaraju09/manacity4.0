@@ -48,8 +48,15 @@
 
 .actionRow {
   display: flex;
+  flex-direction: column;
   gap: 0.75rem;
   margin-top: 1rem;
+}
+
+@media (min-width: 640px) {
+  .actionRow {
+    flex-direction: row;
+  }
 }
 
 .actionRow > button {

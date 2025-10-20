@@ -1,5 +1,5 @@
-import './Notifications.scss';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import clsx from 'clsx';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '@/store';
 import {
@@ -13,6 +13,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import ErrorCard from '@/components/ui/ErrorCard';
 import SkeletonList from '@/components/ui/SkeletonList';
 import showToast from '@/components/ui/Toast';
+import styles from './Notifications.module.scss';
 
 const filterLabels: Record<string, string> = {
   all: 'All',
@@ -91,15 +92,17 @@ const Notifications = () => {
   const hasNotifications = filtered.length > 0;
 
   return (
-    <div className="notifications-page">
-      <div className="notif-filters" role="tablist">
+    <div className={styles.page}>
+      <div className={styles.filters} role="tablist">
         {filters.map((filter) => (
           <button
             key={filter}
             type="button"
             role="tab"
             aria-selected={activeFilter === filter}
-            className={activeFilter === filter ? 'active' : ''}
+            className={clsx(styles.filterButton, {
+              [styles.active]: activeFilter === filter,
+            })}
             onClick={() => setActiveFilter(filter)}
           >
             {filterLabels[filter]}
@@ -121,23 +124,29 @@ const Notifications = () => {
       ) : (
         <>
           {Object.entries(grouped).map(([date, dayItems]) => (
-            <div key={date} className="notif-group">
-              <h4 className="group-date">{date}</h4>
+            <div key={date} className={styles.group}>
+              <h4 className={clsx(styles.title, 'text-gray-700')}>{date}</h4>
               {dayItems.map((notif) => (
-                <div key={notif._id} className="notif-card">
-                  <NotificationCard
-                    message={notif.message}
-                    timestamp={notif.createdAt}
-                    read={notif.read}
-                    onSwipeLeft={() => handleMarkRead(notif._id)}
-                  />
-                  <div className="notif-actions">
+                <div key={notif._id} className={styles.card}>
+                  <div className={styles.content}>
+                    <NotificationCard
+                      message={notif.message}
+                      timestamp={notif.createdAt}
+                      read={notif.read}
+                      onSwipeLeft={() => handleMarkRead(notif._id)}
+                    />
+                  </div>
+                  <div className={clsx(styles.meta, styles.actions)}>
                     {!notif.read && (
                       <button type="button" onClick={() => handleMarkRead(notif._id)}>
                         Mark read
                       </button>
                     )}
-                    <button type="button" onClick={() => handleDelete(notif._id)}>
+                    <button
+                      type="button"
+                      className="hover:text-red-600"
+                      onClick={() => handleDelete(notif._id)}
+                    >
                       Delete
                     </button>
                   </div>

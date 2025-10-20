@@ -1,102 +1,82 @@
-@reference "../../styles/main.css";
-@import "../../styles/variables";
-@import "../../styles/mixins";
-
 .orderNow {
-  padding: 2rem;
-  text-align: center;
+  @apply max-w-3xl mx-auto px-4 py-6 space-y-6 text-center;
+}
 
-  h2 {
-    font-size: 1.6rem;
-    margin-bottom: 1rem;
-  }
+.orderNow h2 {
+  @apply text-2xl font-semibold text-gray-900;
+}
 
-  .mic-wrapper {
-    margin: 2rem auto;
-    width: 120px;
-    height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: $primary-color;
-    color: #fff;
-    font-size: 3rem;
-    cursor: pointer;
-  }
+.orderNow p {
+  @apply text-sm text-gray-600;
+}
 
-  .listening {
-    animation: pulse 1.2s infinite ease-in-out;
-  }
+.micWrapper {
+  width: 120px;
+  height: 120px;
+  @apply mx-auto flex items-center justify-center rounded-full bg-blue-500 text-white text-4xl shadow-lg transition-transform;
+}
 
-  .transcript {
-    margin-top: 1rem;
-    font-size: 1rem;
-    color: #333;
-    min-height: 1.5rem;
-  }
+.listening {
+  animation: pulse 1.2s infinite ease-in-out;
+}
 
-  .text-input {
-    margin-top: 1rem;
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
+.transcript {
+  min-height: 1.5rem;
+  @apply text-base text-gray-700;
+}
 
-    input {
-      flex: 1;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
+.textInput {
+  @apply flex items-center justify-center gap-2;
+}
 
-    button {
-      padding: 0.5rem 0.75rem;
-      background: $primary-color;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-  }
+.textInput input {
+  @apply flex-1 px-3 py-2 border border-gray-200 rounded-lg;
+}
 
-  .results {
-    margin-top: 2rem;
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  }
+.textInput button {
+  @apply px-4 py-2 bg-blue-500 text-white rounded-lg shadow-sm;
+}
 
-  .product-card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.resultsGrid {
+  @apply grid gap-4;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
 
-    h4 {
-      margin: 0.5rem 0;
-    }
+.panel {
+  @apply bg-white rounded-2xl shadow-lg;
+  border: 1px solid #e5e7eb;
+  padding: 1rem;
+}
 
-    p {
-      margin: 0.25rem 0;
-    }
-  }
+.line {
+  @apply flex justify-between py-2 border-b;
+  border-color: #e5e7eb;
+}
 
-  .review-btn {
-    margin-top: 1rem;
-    padding: 0.5rem 1rem;
-    background: $primary-color;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
+.line:last-child {
+  border-bottom: none;
+}
+
+.reviewButton {
+  @apply inline-flex items-center justify-center px-5 py-2.5 bg-blue-500 text-white rounded-full shadow-md transition;
+}
+
+.reviewButton:disabled {
+  @apply opacity-70 cursor-not-allowed;
+}
+
+.sheetContent {
+  @apply space-y-4;
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }

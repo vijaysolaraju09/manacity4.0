@@ -83,7 +83,7 @@ const TabLayout = () => {
       </motion.button>
 
       <motion.nav
-        className="tab-bar"
+        className="tab-bar tabs"
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
@@ -133,7 +133,7 @@ const TabLayout = () => {
             <button
               key={tab.name}
               type="button"
-              className={location.pathname === tab.path ? 'active' : ''}
+              className={location.pathname === tab.path ? 'tab active' : 'tab'}
               onClick={() => navigate(tab.path)}
               aria-label={tab.name}
             >

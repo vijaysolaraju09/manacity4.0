@@ -8,9 +8,9 @@ import type { RootState } from '../../store';
 import ModalSheet from '../../components/base/ModalSheet';
 import Loader from '../../components/Loader';
 import showToast from '../../components/ui/Toast';
-import styles from './OrderNow.module.scss';
 import { createOrder } from '@/api/orders';
 import { formatINR } from '@/utils/currency';
+import styles from './OrderNow.module.scss';
 
 interface Product {
   _id: string;
@@ -145,14 +145,18 @@ const OrderNow = () => {
     <div className={styles.orderNow}>
       <h2>Order Now</h2>
       <p>Say or type your order (e.g., "2 chicken biryani")</p>
-      <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+      <select
+        value={language}
+        onChange={(e) => setLanguage(e.target.value)}
+        className="mx-auto w-full max-w-xs rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm"
+      >
         <option value="en-US">English</option>
         <option value="hi-IN">Hindi</option>
         <option value="te-IN">Telugu</option>
       </select>
       {hasSupport && (
         <motion.div
-          className={`${styles['mic-wrapper']} ${listening ? styles.listening : ''}`}
+          className={`${styles.micWrapper} ${listening ? styles.listening : ''}`}
           whileTap={{ scale: 0.9 }}
           onClick={toggleListening}
         >
@@ -161,7 +165,7 @@ const OrderNow = () => {
       )}
       <div className={styles.transcript}>{transcript}</div>
       {!hasSupport && (
-        <div className={styles['text-input']}>
+        <div className={styles.textInput}>
           <input
             type="text"
             value={manual}
@@ -171,39 +175,57 @@ const OrderNow = () => {
           <button onClick={handleManual}>Parse</button>
         </div>
       )}
-      <div className={styles.results}>
+      <div className={styles.resultsGrid}>
         {matched.map((m) => (
           <motion.div
             key={m.product._id}
-            className={styles['product-card']}
+            className={`${styles.panel} text-left space-y-2`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <h4>{m.product.name}</h4>
-            <p>Qty: {m.quantity}</p>
-            <p>{formatINR(m.product.pricePaise)}</p>
-            <p>{m.shop.name}</p>
+            <h4 className="text-lg font-semibold text-gray-900">{m.product.name}</h4>
+            <div className={styles.line}>
+              <span className="text-sm text-gray-600">Quantity</span>
+              <span className="font-medium text-gray-900">{m.quantity}</span>
+            </div>
+            <div className={styles.line}>
+              <span className="text-sm text-gray-600">Price</span>
+              <span className="font-medium text-gray-900">{formatINR(m.product.pricePaise)}</span>
+            </div>
+            <p className="text-sm text-gray-600">{m.shop.name}</p>
           </motion.div>
         ))}
       </div>
       {matched.length > 0 && (
-        <button className={styles['review-btn']} onClick={() => setConfirmOpen(true)}>
+        <button className={styles.reviewButton} onClick={() => setConfirmOpen(true)}>
           Review Order
         </button>
       )}
       <ModalSheet open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <h3>Confirm Order</h3>
-        {matched.map((m) => (
-          <div key={m.product._id} className={styles['product-card']}>
-            <h4>{m.product.name}</h4>
-            <p>Qty: {m.quantity}</p>
-            <p>{formatINR(m.product.pricePaise * m.quantity)}</p>
+        <div className={`${styles.panel} ${styles.sheetContent}`}>
+          <h3 className="text-lg font-semibold text-gray-900">Confirm Order</h3>
+          <div className="space-y-2">
+            {matched.map((m) => (
+              <div key={m.product._id} className={styles.line}>
+                <span className="text-sm text-gray-600">{m.product.name}</span>
+                <span className="font-medium text-gray-900">
+                  {formatINR(m.product.pricePaise * m.quantity)}
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
-        <p>Total: {formatINR(totalPaise)}</p>
-        <button onClick={placeOrder} disabled={placing}>
-          {placing ? <Loader /> : 'Place Order'}
-        </button>
+          <div className={`${styles.line} font-semibold text-gray-900`}>
+            <span>Total</span>
+            <span>{formatINR(totalPaise)}</span>
+          </div>
+          <button
+            onClick={placeOrder}
+            disabled={placing}
+            className="w-full rounded-xl bg-blue-500 px-4 py-2.5 text-white shadow-md transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {placing ? <Loader /> : 'Place Order'}
+          </button>
+        </div>
       </ModalSheet>
     </div>
   );

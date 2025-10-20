@@ -1,19 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AiFillStar } from 'react-icons/ai';
-import { FiPhone, FiArrowLeft, FiShare2 } from 'react-icons/fi';
+import { FiPhone, FiArrowLeft, FiShare2, FiMinus, FiPlus } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '@/store';
 import { fetchShopById, fetchProductsByShop } from '@/store/shops';
+import { selectByShop, type CartItem } from '@/store/slices/cartSlice';
+import { useCartActions } from '@/hooks/useCartActions';
 import Shimmer from '../../components/Shimmer';
 import ProductCard, {
   type Product as ProductCardProduct,
 } from '../../components/ui/ProductCard.tsx';
 import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCard';
 import EmptyState from '../../components/ui/EmptyState';
-import OrderModal from '../../components/ui/OrderModal/OrderModal';
 import showToast from '../../components/ui/Toast';
-import styles from '../Shops/ShopDetail.module.scss';
+import productCardStyles from '../../components/ui/ProductCard.module.scss';
+import shopStyles from '../Shops/ShopDetail.module.scss';
 import fallbackImage from '../../assets/no-image.svg';
 
 const ShopDetails = () => {
@@ -27,9 +29,20 @@ const ShopDetails = () => {
   } = useSelector((s: RootState) => s.shops);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('relevance');
-  const [selected, setSelected] = useState<ProductCardProduct | null>(null);
-  const [orderOpen, setOrderOpen] = useState(false);
   const [tab, setTab] = useState<'all' | 'available'>('all');
+  const { updateCartQuantity, removeFromCart } = useCartActions();
+
+  const shopId = shop?._id ?? '';
+  const cartSelector = useMemo(() => (shopId ? selectByShop(shopId) : null), [shopId]);
+  const cartItems = useSelector((state: RootState) =>
+    cartSelector ? cartSelector(state) : ([] as CartItem[]),
+  );
+  const cartQuantities = useMemo(() => {
+    return cartItems.reduce<Record<string, number>>((acc, item) => {
+      acc[item.productId] = item.qty;
+      return acc;
+    }, {});
+  }, [cartItems]);
 
   useEffect(() => {
     if (id) {
@@ -56,10 +69,10 @@ const ShopDetails = () => {
   if (status === 'loading' || !shop)
     return (
       <div className="px-4 py-6 md:px-6 lg:px-8">
-        <div className={styles.header}>
+        <div className={shopStyles.header}>
           <Shimmer style={{ width: '100%', height: 200 }} className="rounded-2xl" />
         </div>
-        <div className={styles.products}>
+        <div className={shopStyles.products}>
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonProductCard key={i} />
           ))}
@@ -119,7 +132,7 @@ const ShopDetails = () => {
         </button>
       </div>
 
-      <div className={styles.header}>
+      <div className={shopStyles.header}>
         <div className="flex flex-col gap-4 lg:flex-row">
           <img
             className="h-44 w-full rounded-2xl object-cover lg:h-52 lg:w-64"
@@ -152,7 +165,7 @@ const ShopDetails = () => {
       </div>
 
       {displayGallery.length > 0 && (
-        <div className={styles.gallery}>
+        <div className={shopStyles.gallery}>
           {displayGallery.map((img: string, index: number) => (
             <img
               key={index}
@@ -166,7 +179,7 @@ const ShopDetails = () => {
       )}
 
       {description && (
-        <div className={styles.about}>
+        <div className={shopStyles.about}>
           <h3 className="text-lg font-semibold text-gray-900">About</h3>
           <p className="mt-2 text-sm text-gray-600">{description}</p>
         </div>
@@ -213,40 +226,55 @@ const ShopDetails = () => {
         </div>
       </div>
 
-      <div className={styles.products}>
+      <div className={shopStyles.products}>
         {filtered.length === 0 ? (
           <EmptyState message="No products found" />
         ) : (
           filtered.map((product) => {
             const cardProduct = buildCardProduct(product);
-            const openOrderModal = () => {
-              setSelected(cardProduct);
-              setOrderOpen(true);
+            const quantity = cartQuantities[cardProduct._id] ?? 0;
+            const decrease = () => {
+              const nextQty = quantity - 1;
+              if (nextQty <= 0) {
+                removeFromCart(cardProduct._id);
+                showToast('Removed from cart');
+              } else {
+                updateCartQuantity(cardProduct._id, nextQty);
+              }
             };
-            const handleAddToCart = () => {
-              openOrderModal();
-              return false;
+            const increase = () => {
+              updateCartQuantity(cardProduct._id, quantity + 1);
             };
+            const actions =
+              quantity > 0 ? (
+                <div className={productCardStyles.quantityControls}>
+                  <button
+                    type="button"
+                    onClick={decrease}
+                    aria-label={`Decrease quantity of ${cardProduct.name}`}
+                  >
+                    <FiMinus />
+                  </button>
+                  <span aria-live="polite">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={increase}
+                    aria-label={`Increase quantity of ${cardProduct.name}`}
+                  >
+                    <FiPlus />
+                  </button>
+                </div>
+              ) : undefined;
             return (
               <ProductCard
                 key={product._id}
                 product={cardProduct}
-                onClick={openOrderModal}
-                onOrder={handleAddToCart}
+                actions={actions}
               />
             );
           })
         )}
       </div>
-      <OrderModal
-        open={orderOpen}
-        onClose={() => {
-          setOrderOpen(false);
-          setSelected(null);
-        }}
-        product={selected}
-        shopId={shop._id}
-      />
     </div>
   );
 };

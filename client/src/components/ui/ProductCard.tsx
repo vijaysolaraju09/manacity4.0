@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { AiFillStar } from 'react-icons/ai';
 import fallbackImage from '../../assets/no-image.svg';
@@ -27,6 +28,7 @@ interface Props {
   onClick?: () => void;
   onOrder?: () => void | boolean | Promise<void | boolean>;
   className?: string;
+  actions?: ReactNode;
 }
 
 const ProductCard = ({
@@ -35,6 +37,7 @@ const ProductCard = ({
   onClick,
   onOrder,
   className = '',
+  actions,
 }: Props) => {
   const computedDiscount =
     product.discountPercent !== undefined
@@ -87,7 +90,14 @@ const ProductCard = ({
       </div>
       {showActions && (
         <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
-          <AddToCartButton product={product} qty={1} onAdd={onOrder} />
+          {actions ?? (
+            <AddToCartButton
+              product={product}
+              qty={1}
+              onAdd={onOrder}
+              className={styles.actionButton}
+            />
+          )}
         </div>
       )}
     </motion.div>

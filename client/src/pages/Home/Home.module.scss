@@ -1,0 +1,41 @@
+.hero {
+  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+  padding: 2rem 0;
+}
+
+.section {
+  margin-block: 2rem;
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-lg;
+  border: 1px solid #e5e7eb;
+  transition: transform 0.15s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.sectionHeader {
+  @apply flex items-center justify-between mb-3;
+
+  h2 {
+    @apply text-xl md:text-2xl font-semibold tracking-tight;
+  }
+
+  a {
+    @apply text-sm text-gray-600 hover:text-gray-800;
+  }
+}
+
+.grid {
+  @apply grid gap-4;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

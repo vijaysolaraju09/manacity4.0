@@ -1,4 +1,4 @@
-import './Home.scss';
+import styles from './Home.module.scss';
 import { motion } from 'framer-motion';
 import { Mic } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import ProductCard from '../../components/ui/ProductCard.tsx';
 import SectionHeader from '../../components/ui/SectionHeader';
-import HorizontalCarousel from '../../components/ui/HorizontalCarousel';
 import EmptyState from '../../components/ui/EmptyState';
 import { fetchShops } from '@/store/shops';
 import { fetchVerified } from '@/store/verified';
@@ -90,85 +89,93 @@ const Home = () => {
   }, [d, events.status, events.lastQueryKey, featuredEventsKey, featuredEventsParams]);
 
   return (
-    <div className="home">
-      <div className="section">
-        <SectionHeader title="Admin Banners" />
-        {bannerStatus === 'loading' ? (
-          <SkeletonList count={1} lines={1} />
-        ) : bannerStatus === 'failed' ? (
-          <ErrorCard
-            message={bannerError || 'Failed to load banners'}
-            onRetry={() => {
-              void loadBanners();
-            }}
-          />
-        ) : (banners ?? []).length === 0 ? (
-          <EmptyState
-            title="No banners configured"
-            message="Add a banner to highlight announcements, offers, or important updates for your community."
-            ctaLabel="Refresh"
-            onCtaClick={() => {
-              void loadBanners();
-            }}
-          />
-        ) : (
-          <HorizontalCarousel>
-            {(banners ?? []).map((b) => (
-              <motion.img
-                key={b._id}
-                src={b.image || fallbackImage}
-                alt={b.message || 'banner'}
-                loading="lazy"
-                style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+    <div className="space-y-12">
+      <section className={`${styles.hero}`}>
+        <div className="px-4 md:px-6 lg:px-8 space-y-8">
+          <div className={styles.section}>
+            <SectionHeader title="Admin Banners" className={styles.sectionHeader} />
+            {bannerStatus === 'loading' ? (
+              <SkeletonList count={1} lines={1} />
+            ) : bannerStatus === 'failed' ? (
+              <ErrorCard
+                message={bannerError || 'Failed to load banners'}
+                onRetry={() => {
+                  void loadBanners();
+                }}
               />
-            ))}
-          </HorizontalCarousel>
-        )}
-      </div>
+            ) : (banners ?? []).length === 0 ? (
+              <EmptyState
+                title="No banners configured"
+                message="Add a banner to highlight announcements, offers, or important updates for your community."
+                ctaLabel="Refresh"
+                onCtaClick={() => {
+                  void loadBanners();
+                }}
+              />
+            ) : (
+              <div className={styles.grid}>
+                {(banners ?? []).map((b) => (
+                  <motion.div
+                    key={b._id}
+                    className={`${styles.card} overflow-hidden`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <img
+                      src={b.image || fallbackImage}
+                      alt={b.message || 'banner'}
+                      loading="lazy"
+                      className="h-44 w-full object-cover"
+                      onError={(e) => (e.currentTarget.src = fallbackImage)}
+                    />
+                    {b.message && (
+                      <div className="px-4 py-3">
+                        <p className="text-sm text-gray-600">{b.message}</p>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
 
-      <div className="section">
-        <motion.div
-          className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <div className="flex flex-col gap-2">
-            <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
-              <Mic className="h-4 w-4" aria-hidden="true" /> Voice Order
-            </span>
-            <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">Speak groceries into your cart</h2>
-            <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-              Talk to Manacity in Telugu, Hindi or English. We instantly parse your request, surface matching products across neighbourhood shops and let you checkout from one place.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button className="gap-2" size="lg" onClick={() => navigate(paths.voiceOrder())}>
-              <Mic className="h-4 w-4" aria-hidden="true" /> Try Voice Order
-            </Button>
-            <Button
-              variant="secondary"
-              className="gap-2"
-              onClick={() => navigate(paths.voiceOrder())}
-            >
-              Learn more
-            </Button>
-          </div>
-          <ul className="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400">
-            <li className="rounded-full border border-blue-200 bg-white/80 px-3 py-1 dark:border-blue-500/30 dark:bg-slate-900/80">
-              “oka kilo tomatolu”
-            </li>
-            <li className="rounded-full border border-blue-200 bg-white/80 px-3 py-1 dark:border-blue-500/30 dark:bg-slate-900/80">
-              “2 kg bendakayalu”
-            </li>
-            <li className="rounded-full border border-blue-200 bg-white/80 px-3 py-1 dark:border-blue-500/30 dark:bg-slate-900/80">
-              “tomato one kilo”
-            </li>
-          </ul>
-        </motion.div>
-      </div>
+          <motion.div
+            className={`${styles.card} overflow-hidden px-4 py-6 md:px-6 lg:px-8`}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col gap-3">
+                <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                  <Mic className="h-4 w-4" aria-hidden="true" /> Voice Order
+                </span>
+                <h2 className="text-2xl font-semibold text-gray-900">Speak groceries into your cart</h2>
+                <p className="max-w-2xl text-sm text-gray-600">
+                  Talk to Manacity in Telugu, Hindi or English. We instantly parse your request, surface matching products across neighbourhood shops and let you checkout from one place.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Button className="gap-2" size="lg" onClick={() => navigate(paths.voiceOrder())}>
+                  <Mic className="h-4 w-4" aria-hidden="true" /> Try Voice Order
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={() => navigate(paths.voiceOrder())}
+                >
+                  Learn more
+                </Button>
+              </div>
+            </div>
+            <ul className="mt-6 flex flex-wrap gap-3 text-xs text-gray-600">
+              <li className="rounded-full border border-gray-200 bg-gray-100 px-3 py-1">“oka kilo tomatolu”</li>
+              <li className="rounded-full border border-gray-200 bg-gray-100 px-3 py-1">“2 kg bendakayalu”</li>
+              <li className="rounded-full border border-gray-200 bg-gray-100 px-3 py-1">“tomato one kilo”</li>
+            </ul>
+          </motion.div>
+        </div>
+      </section>
 
       <Section
         title="Featured Shops"
@@ -240,10 +247,16 @@ const Section = ({
   linkLabel,
 }: SectionProps) => {
   const loading = status === 'loading' || status === 'idle';
+  const items = Array.isArray(data) ? data : [];
   if (loading)
     return (
-      <div className="section">
-        <SectionHeader title={title} onClick={() => navigate(path)} linkLabel={linkLabel} />
+      <section className={`${styles.section} px-4 md:px-6 lg:px-8`}>
+        <SectionHeader
+          title={title}
+          onClick={() => navigate(path)}
+          linkLabel={linkLabel}
+          className={styles.sectionHeader}
+        />
         {type === 'product' ? (
           <ProductsSkeleton />
         ) : type === 'event' ? (
@@ -251,27 +264,42 @@ const Section = ({
         ) : (
           <ShopsSkeleton />
         )}
-      </div>
+      </section>
     );
   if (status === 'failed')
     return (
-      <div className="section">
-        <SectionHeader title={title} onClick={() => navigate(path)} linkLabel={linkLabel} />
+      <section className={`${styles.section} px-4 md:px-6 lg:px-8`}>
+        <SectionHeader
+          title={title}
+          onClick={() => navigate(path)}
+          linkLabel={linkLabel}
+          className={styles.sectionHeader}
+        />
         <ErrorCard message={error || `Failed to load ${title}`} onRetry={onRetry} />
-      </div>
+      </section>
     );
-  if (status === 'succeeded' && data.length === 0)
+  if (status === 'succeeded' && items.length === 0)
     return (
-      <div className="section">
-        <SectionHeader title={title} onClick={() => navigate(path)} linkLabel={linkLabel} />
+      <section className={`${styles.section} px-4 md:px-6 lg:px-8`}>
+        <SectionHeader
+          title={title}
+          onClick={() => navigate(path)}
+          linkLabel={linkLabel}
+          className={styles.sectionHeader}
+        />
         <EmptyState message={`No ${title.toLowerCase()}`} />
-      </div>
+      </section>
     );
   return (
-    <div className="section">
-      <SectionHeader title={title} onClick={() => navigate(path)} linkLabel={linkLabel} />
-      <HorizontalCarousel>
-        {data.map((item: any) => {
+    <section className={`${styles.section} px-4 md:px-6 lg:px-8`}>
+      <SectionHeader
+        title={title}
+        onClick={() => navigate(path)}
+        linkLabel={linkLabel}
+        className={styles.sectionHeader}
+      />
+      <div className={styles.grid}>
+        {items.map((item: any) => {
           if (type === 'product') {
             return (
               <ProductCard
@@ -314,33 +342,34 @@ const Section = ({
             );
           }
 
+          const eventId = item._id;
           return (
             <motion.div
-              key={item._id}
-              className="card"
-              whileHover={{ scale: 1.03 }}
-              onClick={() => navigate(paths.events.detail(item._id))}
+              key={eventId}
+              className={`${styles.card} overflow-hidden`}
+              whileHover={{ scale: 1.01 }}
+              onClick={() => navigate(paths.events.detail(eventId))}
             >
               <img
                 src={item.bannerUrl || item.coverUrl || fallbackImage}
                 alt={item.title || item.name}
                 loading="lazy"
-                width={150}
-                height={150}
-                style={{ objectFit: 'cover', aspectRatio: '1 / 1' }}
+                className="h-40 w-full object-cover"
                 onError={(e) => (e.currentTarget.src = fallbackImage)}
               />
-              <div className="card-info">
-                <h4>{item.title || item.name}</h4>
+              <div className="px-4 py-3">
+                <h4 className="text-base font-semibold text-gray-900">
+                  {item.title || item.name}
+                </h4>
                 {type === 'event' && (
-                  <p>{formatDateTime(item.startAt)}</p>
+                  <p className="mt-1 text-sm text-gray-600">{formatDateTime(item.startAt)}</p>
                 )}
               </div>
             </motion.div>
           );
         })}
-      </HorizontalCarousel>
-    </div>
+      </div>
+    </section>
   );
 };
 

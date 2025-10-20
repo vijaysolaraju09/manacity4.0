@@ -13,7 +13,7 @@ import SkeletonProductCard from '../../components/ui/Skeletons/SkeletonProductCa
 import EmptyState from '../../components/ui/EmptyState';
 import OrderModal from '../../components/ui/OrderModal/OrderModal';
 import showToast from '../../components/ui/Toast';
-import './ShopDetails.scss';
+import styles from '../Shops/ShopDetail.module.scss';
 import fallbackImage from '../../assets/no-image.svg';
 
 const ShopDetails = () => {
@@ -55,14 +55,11 @@ const ShopDetails = () => {
 
   if (status === 'loading' || !shop)
     return (
-      <div className="shop-details">
-        <div className="hero">
-          <Shimmer style={{ width: '100%', height: 200 }} className="rounded" />
+      <div className="px-4 py-6 md:px-6 lg:px-8">
+        <div className={styles.header}>
+          <Shimmer style={{ width: '100%', height: 200 }} className="rounded-2xl" />
         </div>
-        <div className="filters">
-          <Shimmer style={{ height: 36, width: '100%' }} />
-        </div>
-        <div className="product-grid">
+        <div className={styles.products}>
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonProductCard key={i} />
           ))}
@@ -72,28 +69,47 @@ const ShopDetails = () => {
 
   if (status === 'failed' || !shop)
     return (
-      <div className="shop-details">
+      <div className="px-4 py-6 md:px-6 lg:px-8">
         <EmptyState message={error || 'Failed to load shop'} />
       </div>
     );
 
+  const galleryImages = Array.isArray((shop as any)?.gallery)
+    ? (shop as any).gallery
+    : Array.isArray((shop as any)?.images)
+    ? (shop as any).images
+    : [];
+  const displayGallery = galleryImages.filter((img: unknown) => typeof img === 'string' && img).slice(0, 3);
+  const description = (shop as any)?.description || (shop as any)?.about;
+
   return (
-    <div className="shop-details">
-      <div className="mini-toolbar">
-        <button onClick={() => window.history.back()} aria-label="Back">
+    <div className="space-y-4 px-4 py-6 md:px-6 lg:px-8">
+      <div className="flex items-center gap-3 text-gray-600">
+        <button
+          type="button"
+          onClick={() => window.history.back()}
+          aria-label="Back"
+          className="rounded-full border border-gray-200 p-2 hover:text-gray-800"
+        >
           <FiArrowLeft />
         </button>
         {shop.contact && (
-          <a href={`tel:${shop.contact}`} aria-label="Call">
+          <a
+            className="rounded-full border border-gray-200 p-2 hover:text-gray-800"
+            href={`tel:${shop.contact}`}
+            aria-label="Call"
+          >
             <FiPhone />
           </a>
         )}
         <button
+          type="button"
+          className="rounded-full border border-gray-200 p-2 hover:text-gray-800"
           onClick={() => {
             if (navigator.share) {
-              navigator.share({ title: shop.name, url: window.location.href });
+              void navigator.share({ title: shop.name, url: window.location.href });
             } else {
-              navigator.clipboard.writeText(window.location.href);
+              void navigator.clipboard.writeText(window.location.href);
               showToast('Link copied');
             }
           }}
@@ -103,60 +119,101 @@ const ShopDetails = () => {
         </button>
       </div>
 
-      <div className="hero">
-        <img
-          className="cover"
-          src={shop.banner || shop.image || fallbackImage}
-          alt={shop.name}
-          onError={(e) => (e.currentTarget.src = fallbackImage)}
-        />
-        <div className="overlay">
-          <h2>{shop.name}</h2>
-          {shop.ratingAvg !== undefined && (
-            <div className="rating">
-              <AiFillStar color="var(--color-warning)" />
-              <span>{shop.ratingAvg.toFixed(1)}</span>
+      <div className={styles.header}>
+        <div className="flex flex-col gap-4 lg:flex-row">
+          <img
+            className="h-44 w-full rounded-2xl object-cover lg:h-52 lg:w-64"
+            src={shop.banner || shop.image || fallbackImage}
+            alt={shop.name}
+            onError={(e) => (e.currentTarget.src = fallbackImage)}
+          />
+          <div className="flex flex-1 flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-2xl font-semibold text-gray-900">{shop.name}</h2>
+              {typeof shop.ratingAvg === 'number' && Number.isFinite(shop.ratingAvg) && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+                  <AiFillStar className="text-yellow-500" />
+                  {shop.ratingAvg.toFixed(1)}
+                </span>
+              )}
             </div>
-          )}
-          <p className="address">{shop.address || shop.location}</p>
-          {shop.isOpen !== undefined && (
-            <span className={`status ${shop.isOpen ? 'open' : 'closed'}`}>
-              {shop.isOpen ? 'Open' : 'Closed'}
-            </span>
-          )}
+            <p className="text-sm text-gray-600">{shop.address || shop.location}</p>
+            <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+              {shop.category && <span className="rounded-full bg-gray-100 px-3 py-1">{shop.category}</span>}
+              {shop.isOpen !== undefined && (
+                <span className="rounded-full bg-gray-100 px-3 py-1">
+                  {shop.isOpen ? 'Open now' : 'Closed'}
+                </span>
+              )}
+              {shop.contact && <span className="rounded-full bg-gray-100 px-3 py-1">{shop.contact}</span>}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="tabs">
-        <button
-          className={tab === 'all' ? 'active' : ''}
-          onClick={() => setTab('all')}
-        >
-          All Products
-        </button>
-        <button
-          className={tab === 'available' ? 'active' : ''}
-          onClick={() => setTab('available')}
-        >
-          Available
-        </button>
+      {displayGallery.length > 0 && (
+        <div className={styles.gallery}>
+          {displayGallery.map((img: string, index: number) => (
+            <img
+              key={index}
+              src={img}
+              alt={`Gallery image ${index + 1}`}
+              className="h-28 w-full rounded-xl object-cover"
+              onError={(e) => (e.currentTarget.src = fallbackImage)}
+            />
+          ))}
+        </div>
+      )}
+
+      {description && (
+        <div className={styles.about}>
+          <h3 className="text-lg font-semibold text-gray-900">About</h3>
+          <p className="mt-2 text-sm text-gray-600">{description}</p>
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className={`rounded-full px-4 py-2 text-sm font-medium ${
+              tab === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
+            }`}
+            onClick={() => setTab('all')}
+          >
+            All Products
+          </button>
+          <button
+            type="button"
+            className={`rounded-full px-4 py-2 text-sm font-medium ${
+              tab === 'available' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
+            }`}
+            onClick={() => setTab('available')}
+          >
+            Available
+          </button>
+        </div>
+        <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <input
+            type="text"
+            placeholder="Search products"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 md:max-w-md"
+          />
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-48"
+          >
+            <option value="relevance">Sort: Relevance</option>
+            <option value="priceAsc">Price: Low to High</option>
+            <option value="priceDesc">Price: High to Low</option>
+          </select>
+        </div>
       </div>
 
-      <div className="filters">
-        <input
-          type="text"
-          placeholder="Search products"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select value={sort} onChange={(e) => setSort(e.target.value)}>
-          <option value="relevance">Sort: Relevance</option>
-          <option value="priceAsc">Price: Low to High</option>
-          <option value="priceDesc">Price: High to Low</option>
-        </select>
-      </div>
-
-      <div className="product-grid">
+      <div className={styles.products}>
         {filtered.length === 0 ? (
           <EmptyState message="No products found" />
         ) : (

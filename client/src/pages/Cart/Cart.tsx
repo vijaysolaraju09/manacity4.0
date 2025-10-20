@@ -187,11 +187,15 @@ const Cart = () => {
   };
 
   const handleContinueShopping = () => {
-    if (typeof paths.products?.list === 'function') {
-      navigate(paths.products.list());
+    if (typeof paths.shops === 'function') {
+      navigate(paths.shops());
       return;
     }
-    navigate(paths.home?.() ?? '/');
+    if (typeof paths.home === 'function') {
+      navigate(paths.home());
+      return;
+    }
+    navigate('/shops');
   };
 
   const handleViewOrders = () => {

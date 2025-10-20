@@ -1,20 +1,30 @@
 @reference "../../styles/main.css";
 
 .page {
-  @apply space-y-6;
+  display: flex;
+  flex-direction: column;
+}
+
+.page > * + * {
+  margin-top: 1.5rem;
 }
 
 .filters {
-  @apply flex gap-2 mb-4;
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .grid {
-  @apply grid gap-4;
+  display: grid;
+  gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .card {
-  @apply bg-white rounded-2xl shadow-md;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -2px rgba(0,0,0,0.10);
   border: 1px solid #e5e7eb;
   padding: 1rem;
   display: flex;
@@ -38,32 +48,52 @@
 }
 
 .details {
-  @apply flex-1 space-y-1;
+  flex: 1 1 0%;
+}
+
+.details > * + * {
+  margin-top: 0.25rem;
 }
 
 .title {
-  @apply text-base font-semibold text-gray-900;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+  color: #111827;
 }
 
 .meta {
-  @apply text-sm text-gray-600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
 }
 
 .tags {
-  @apply flex gap-2;
+  display: flex;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
 .tags span {
-  @apply text-xs px-2 py-1 rounded bg-gray-100;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-radius: 0.25rem;
+  background-color: #f3f4f6;
 }
 
 .skeletonGrid {
-  @apply grid gap-4;
+  display: grid;
+  gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .cardSkeleton {
-  @apply bg-white rounded-2xl shadow-md p-4;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -2px rgba(0,0,0,0.10);
+  padding: 1rem;
 }
-

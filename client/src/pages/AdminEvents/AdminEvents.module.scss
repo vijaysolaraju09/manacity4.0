@@ -3,11 +3,18 @@
 }
 
 .toolbar {
-  @apply flex flex-wrap gap-2 justify-between items-center mb-3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
 }
 
 .tableWrap {
-  @apply bg-white rounded-2xl shadow-lg;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
   border: 1px solid #e5e7eb;
   overflow: hidden;
 }
@@ -19,7 +26,11 @@
 }
 
 .th {
-  @apply text-left text-sm font-semibold text-gray-700;
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: #374151;
   background: #f9fafb;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e5e7eb;
@@ -29,7 +40,9 @@
 }
 
 .td {
-  @apply text-sm text-gray-700;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #374151;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -43,15 +56,35 @@
 }
 
 .actions {
-  @apply flex flex-wrap gap-2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 
   button {
-    @apply px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    border-radius: 0.375rem;
+    background-color: #f3f4f6;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: #e5e7eb;
+    }
   }
 }
 
 .statusChip {
-  @apply inline-flex items-center px-2 py-1 rounded-md text-xs;
+  display: inline-flex;
+  align-items: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
 }
 
 .statusApproved {
@@ -70,11 +103,15 @@
 }
 
 .header {
-  @apply flex flex-col gap-4;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .subtitle {
-  @apply text-sm text-gray-600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
   max-width: 36rem;
 }
 
@@ -96,11 +133,19 @@
 }
 
 .summaryLabel {
-  @apply text-xs font-semibold uppercase tracking-wide text-gray-500;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  color: #6b7280;
 }
 
 .summaryValue {
-  @apply text-2xl font-semibold text-gray-900;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  color: #111827;
 }
 
 .summaryProgress {
@@ -108,40 +153,56 @@
   border-radius: 999px;
   background: #e5e7eb;
   overflow: hidden;
+}
 
-  div {
-    height: 100%;
-    background: #2563eb;
-    transition: width 0.3s ease;
-  }
+.summaryProgress div {
+  height: 100%;
+  background: #2563eb;
+  transition: width 0.3s ease;
 }
 
 .filters {
-  @apply flex flex-wrap gap-3 items-center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
 }
 
 .eventTitle {
-  @apply flex flex-col gap-1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .eventTitleName {
-  @apply font-semibold text-gray-900;
+  font-weight: 600;
+  color: #111827;
 }
 
 .eventTitleMeta {
-  @apply text-xs text-gray-500;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: #6b7280;
 }
 
 .eventSchedule {
-  @apply flex flex-col gap-1 text-xs text-gray-600;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: #4b5563;
 }
 
 .registrationCell {
-  @apply flex flex-col gap-1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .registrationValue {
-  @apply font-semibold text-gray-800;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 .registrationProgress {
@@ -150,26 +211,52 @@
   border-radius: 999px;
   background: #e5e7eb;
   overflow: hidden;
+}
 
-  div {
-    position: absolute;
-    inset: 0;
-    background: #2563eb;
-    transition: width 0.3s ease;
-  }
+.registrationProgress div {
+  position: absolute;
+  inset: 0;
+  background: #2563eb;
+  transition: width 0.3s ease;
 }
 
 .tableFooter {
-  @apply flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-gray-50 text-sm text-gray-600;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  background-color: #f9fafb;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
   border-top: 1px solid #e5e7eb;
 }
 
 .detailActions {
-  @apply flex flex-wrap justify-end gap-2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
 
-  button {
-    @apply px-3 py-1 rounded-md border border-gray-200 text-sm text-gray-700;
-  }
+.detailActions button {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #e5e7eb;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #374151;
+  background-color: transparent;
 }
 
 .modal {
@@ -195,15 +282,30 @@
 }
 
 .formField {
-  @apply flex flex-col gap-2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 
-  label {
-    @apply text-sm font-semibold text-gray-600;
-  }
+.formField label {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: #4b5563;
+}
 
-  input {
-    @apply rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700;
-  }
+.formField input {
+  border-radius: 0.5rem;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #e5e7eb;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #374151;
 }
 
 .formFieldGrid {
@@ -213,23 +315,35 @@
 }
 
 .modalActions {
-  @apply flex justify-end gap-2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
 
-  button {
-    @apply px-3 py-2 rounded-md bg-gray-900 text-white;
+.modalActions button {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0.375rem;
+  background-color: #111827;
+  color: #ffffff;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
 
-    &:disabled {
-      @apply opacity-70;
-    }
-  }
+.modalActions button:disabled {
+  opacity: 0.7;
+}
 
-  button[type='button'] {
-    @apply bg-gray-100 text-gray-700;
-  }
+.modalActions button[type='button'] {
+  background-color: #f3f4f6;
+  color: #374151;
 }
 
 .fieldError {
-  @apply text-sm text-red-600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #dc2626;
 }
 
 .eventDetail {
@@ -239,16 +353,21 @@
 }
 
 .eventDetail dt {
-  @apply text-sm font-semibold text-gray-500;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: #6b7280;
 }
 
 .eventDetail dd {
   margin: 0;
-  @apply text-sm text-gray-800;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #1f2937;
 }
 
 .modalContentDetail {
-  @apply gap-3;
+  gap: 0.75rem;
 }
 
 .badgeDraft {

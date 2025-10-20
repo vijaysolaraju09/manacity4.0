@@ -1,17 +1,41 @@
 .shell {
-  @apply min-h-screen;
+  min-height: 100vh;
   background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
 }
 
 .content {
-  @apply max-w-7xl mx-auto px-4 md:px-6 lg:px-8;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .pageShell {
-  @apply min-h-screen;
+  min-height: 100vh;
   background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
 }
 
 .pageShell__inner {
-  @apply max-w-7xl mx-auto px-4 md:px-6 lg:px-8;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 768px) {
+  .content,
+  .pageShell__inner {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content,
+  .pageShell__inner {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
 }

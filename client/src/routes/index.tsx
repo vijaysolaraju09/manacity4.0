@@ -5,7 +5,6 @@ import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 import TabLayout from '@/layouts/TabLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import Loader from '@/components/Loader';
-import FloatingCart from '@/components/ui/FloatingCart';
 import ScrollToTop from './ScrollToTop';
 
 const Landing = lazy(() => import('@/pages/Landing/Landing'));
@@ -54,7 +53,6 @@ const RootLayout = () => (
   <>
     <ScrollToTop />
     <SuspendedOutlet />
-    <FloatingCart />
   </>
 );
 

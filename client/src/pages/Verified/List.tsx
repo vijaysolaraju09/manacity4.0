@@ -34,9 +34,11 @@ const VerifiedList = () => {
   const safeItems = useMemo(() => {
     if (!Array.isArray(items)) return [] as VerifiedCard[];
 
-    return (items as Array<Record<string, unknown>>)
-      .map((raw, index) => {
-        if (!raw || typeof raw !== 'object') return null;
+    return (items as unknown[])
+      .map((rawItem, index) => {
+        if (!rawItem || typeof rawItem !== 'object') return null;
+
+        const raw = rawItem as Record<string, unknown>;
 
         const rawUser =
           raw.user && typeof raw.user === 'object' ? (raw.user as Record<string, unknown>) : {};

@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import DateTimePicker from '../../components/common/DateTimePicker';
+import styles from './AdminEvents.module.scss';
 
 export interface EventFormValues {
   title: string;
@@ -41,9 +42,9 @@ const EventForm = forwardRef<HTMLFormElement, EventFormProps>(
     };
 
     return (
-      <form ref={ref} className="modal-content modal-content--form" onSubmit={handleSubmit}>
+      <form ref={ref} className={styles.modalContent} onSubmit={handleSubmit}>
         <h3>{heading}</h3>
-        <div className="form-field">
+        <div className={styles.formField}>
           <label htmlFor="event-title">Title</label>
           <input
             id="event-title"
@@ -56,13 +57,13 @@ const EventForm = forwardRef<HTMLFormElement, EventFormProps>(
             required
           />
           {errors.title ? (
-            <p id="event-title-error" className="field-error">
+            <p id="event-title-error" className={styles.fieldError}>
               {errors.title}
             </p>
           ) : null}
         </div>
 
-        <div className="form-field-grid">
+        <div className={styles.formFieldGrid}>
           <DateTimePicker
             id="event-start"
             label="Start"
@@ -82,7 +83,7 @@ const EventForm = forwardRef<HTMLFormElement, EventFormProps>(
           />
         </div>
 
-        <div className="form-field">
+        <div className={styles.formField}>
           <label htmlFor="event-capacity">Capacity</label>
           <input
             id="event-capacity"
@@ -97,13 +98,13 @@ const EventForm = forwardRef<HTMLFormElement, EventFormProps>(
             required
           />
           {errors.capacity ? (
-            <p id="event-capacity-error" className="field-error">
+            <p id="event-capacity-error" className={styles.fieldError}>
               {errors.capacity}
             </p>
           ) : null}
         </div>
 
-        <div className="modal-actions">
+        <div className={styles.modalActions}>
           <button type="submit" disabled={saving}>
             {saving ? 'Saving…' : submitLabel}
           </button>

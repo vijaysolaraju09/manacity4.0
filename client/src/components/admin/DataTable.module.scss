@@ -1,26 +1,32 @@
-@reference "../../styles/main.css";
-.wrapper {
+.container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.scroller {
   width: 100%;
   overflow-x: auto;
 }
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
 
-  th,
-  td {
-    padding: var(--space-2) var(--space-3);
-    text-align: left;
-    border-bottom: 1px solid var(--color-border);
-  }
+.headerRow {
+  background: transparent;
+}
 
-  thead th {
-    background: var(--color-surface);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
+.headerCell,
+.cell {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .sortButton {
@@ -28,48 +34,45 @@
   background: none;
   border: none;
   padding: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 0.25rem;
   cursor: pointer;
   color: inherit;
   font: inherit;
   text-align: left;
 }
 
-.filtersRow {
-  th {
-    padding: var(--space-1) var(--space-2);
-  }
+.filtersRow input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: #ffffff;
+}
 
-  input {
-    width: 100%;
-    padding: var(--space-1);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    background: var(--color-bg);
-    color: var(--color-text);
-  }
+.row {
+  transition: background-color 0.2s ease;
 }
 
 .empty {
   text-align: center;
-  padding: var(--space-4);
-  color: var(--color-muted);
+  padding: 1.5rem;
+  color: #6b7280;
 }
 
 .pagination {
-  margin-top: var(--space-3);
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: var(--space-2);
+  gap: 0.75rem;
 
   button {
-    padding: var(--space-1) var(--space-2);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    background: var(--color-bg);
+    padding: 0.4rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #ffffff;
+    font-size: 0.875rem;
     cursor: pointer;
 
     &:disabled {
@@ -94,16 +97,18 @@
   }
 
   .row {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--space-3);
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
   }
 
   .cell {
     display: flex;
     justify-content: space-between;
-    padding: var(--space-2);
-    border-bottom: 1px solid var(--color-border);
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
 
     &:last-child {
       border-bottom: none;
@@ -112,7 +117,7 @@
     &::before {
       content: attr(data-label);
       font-weight: 600;
-      margin-right: var(--space-2);
+      color: #4b5563;
     }
   }
 

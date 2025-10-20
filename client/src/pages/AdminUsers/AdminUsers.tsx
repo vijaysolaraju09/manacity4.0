@@ -22,6 +22,7 @@ import ErrorCard from '@/components/ui/ErrorCard';
 import Select from '@/components/ui/select';
 import SkeletonList from '@/components/ui/SkeletonList';
 import showToast from '@/components/ui/Toast';
+import styles from './AdminUsers.module.scss';
 
 interface User {
   _id: string;
@@ -158,6 +159,8 @@ const AdminUsers = () => {
       {
         key: 'name',
         header: 'User',
+        className: styles.th,
+        cellClassName: styles.td,
         render: (user) => (
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10 text-sm font-semibold uppercase text-blue-600 dark:bg-blue-500/20 dark:text-blue-200">
@@ -173,6 +176,8 @@ const AdminUsers = () => {
       {
         key: 'role',
         header: 'Role',
+        className: styles.th,
+        cellClassName: styles.td,
         render: (user) => (
           <div className="flex items-center gap-2">
             <Select
@@ -197,23 +202,27 @@ const AdminUsers = () => {
       {
         key: 'isVerified',
         header: 'Verification',
+        className: styles.th,
+        cellClassName: styles.td,
         render: (user) =>
           user.isVerified ? (
-            <Badge variant="success" className="gap-1">
-              <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className={`${styles.statusChip} ${styles.statusApproved}`}>
+              <BadgeCheck className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
               Verified
-            </Badge>
+            </span>
           ) : (
-            <Badge variant="outline" className="gap-1">
-              <ShieldQuestion className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className={`${styles.statusChip} ${styles.statusPending}`}>
+              <ShieldQuestion className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
               Pending
-            </Badge>
+            </span>
           ),
       },
       {
         key: 'ordersCount',
         header: 'Orders',
         align: 'center',
+        className: styles.th,
+        cellClassName: styles.td,
         render: (user) => (
           <span className="inline-flex min-w-[3rem] items-center justify-center rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 dark:bg-slate-800/70 dark:text-slate-100">
             {user.ordersCount ?? 0}
@@ -224,6 +233,8 @@ const AdminUsers = () => {
         key: 'createdAt',
         header: 'Joined',
         sortable: true,
+        className: styles.th,
+        cellClassName: styles.td,
         render: (user) => (
           <span className="text-sm text-slate-600 dark:text-slate-300">{formatDate(user.createdAt)}</span>
         ),
@@ -232,8 +243,10 @@ const AdminUsers = () => {
         key: 'actions',
         header: 'Actions',
         align: 'right',
+        className: styles.th,
+        cellClassName: `${styles.td} ${styles.actions}`,
         render: (user) => (
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className={`${styles.actions} flex flex-wrap items-center justify-end`}>
             <Button
               type="button"
               variant="outline"
@@ -275,63 +288,65 @@ const AdminUsers = () => {
   );
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="space-y-1">
+    <div className={`${styles.page} space-y-6 px-4`}>
+      <div className={styles.header}>
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Users</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Monitor user roles, verification status, and account activity in one place.
         </p>
       </div>
 
-      <FilterBar
-        searchPlaceholder="Search name or phone"
-        searchValue={query}
-        onSearchChange={(value) => {
-          setQuery(value);
-          setPage(1);
-        }}
-        filters={[
-          {
-            id: 'role',
-            label: 'Role',
-            value: role,
-            placeholder: 'All roles',
-            options: [
-              { label: 'Customer', value: 'customer' },
-              { label: 'Verified', value: 'verified' },
-              { label: 'Business', value: 'business' },
-              { label: 'Admin', value: 'admin' },
-            ],
-            onChange: (value) => {
-              setRole(value);
-              setPage(1);
-            },
-          },
-          {
-            id: 'verification',
-            label: 'Verification',
-            value: verified,
-            placeholder: 'All users',
-            options: [
-              { label: 'Verified', value: 'true' },
-              { label: 'Unverified', value: 'false' },
-            ],
-            onChange: (value) => {
-              setVerified(value);
-              setPage(1);
-            },
-          },
-        ]}
-        dateRange={{
-          value: createdRange,
-          onChange: (value) => {
-            setCreatedRange(value);
+      <div className={styles.toolbar}>
+        <FilterBar
+          searchPlaceholder="Search name or phone"
+          searchValue={query}
+          onSearchChange={(value) => {
+            setQuery(value);
             setPage(1);
-          },
-          label: 'Joined between',
-        }}
-        onReset={hasActiveFilters ? handleResetFilters : undefined}
-      />
+          }}
+          filters={[
+            {
+              id: 'role',
+              label: 'Role',
+              value: role,
+              placeholder: 'All roles',
+              options: [
+                { label: 'Customer', value: 'customer' },
+                { label: 'Verified', value: 'verified' },
+                { label: 'Business', value: 'business' },
+                { label: 'Admin', value: 'admin' },
+              ],
+              onChange: (value) => {
+                setRole(value);
+                setPage(1);
+              },
+            },
+            {
+              id: 'verification',
+              label: 'Verification',
+              value: verified,
+              placeholder: 'All users',
+              options: [
+                { label: 'Verified', value: 'true' },
+                { label: 'Unverified', value: 'false' },
+              ],
+              onChange: (value) => {
+                setVerified(value);
+                setPage(1);
+              },
+            },
+          ]}
+          dateRange={{
+            value: createdRange,
+            onChange: (value) => {
+              setCreatedRange(value);
+              setPage(1);
+            },
+            label: 'Joined between',
+          }}
+          onReset={hasActiveFilters ? handleResetFilters : undefined}
+        />
+      </div>
 
       {loading && !hasUsers ? <SkeletonList count={pageSize} /> : null}
 
@@ -392,6 +407,7 @@ const AdminUsers = () => {
           }
           sortState={sortState}
           onSort={handleSortChange}
+          className={styles.tableWrap}
         />
       ) : null}
     </div>

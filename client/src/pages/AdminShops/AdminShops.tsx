@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   fetchShops,
   updateShop as apiUpdateShop,
@@ -9,9 +9,8 @@ import DataTable, { type Column } from '../../components/admin/DataTable';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorCard from '../../components/ui/ErrorCard';
 import SkeletonList from '../../components/ui/SkeletonList';
-import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
-import './AdminShops.scss';
+import styles from './AdminShops.module.scss';
 
 interface Shop {
   _id: string;
@@ -25,6 +24,12 @@ interface Shop {
 }
 
 type ShopRow = Shop & { actions?: string };
+
+const statusLabels: Record<Shop['status'], string> = {
+  active: 'Active',
+  pending: 'Pending',
+  suspended: 'Suspended',
+};
 
 const AdminShops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
@@ -88,7 +93,7 @@ const AdminShops = () => {
     }
   };
 
-  const handleToggleStatus = async (shop: Shop) => {
+  const handleToggleStatus = useCallback(async (shop: Shop) => {
     try {
       const newStatus = shop.status === 'active' ? 'suspended' : 'active';
       await apiUpdateShop(shop._id, { status: newStatus });
@@ -98,90 +103,133 @@ const AdminShops = () => {
     } catch {
       showToast('Failed to update status', 'error');
     }
-  };
+  }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete shop?')) return;
-    try {
-      await apiDeleteShop(id);
-      setShops((prev) => prev.filter((s) => s._id !== id));
-      showToast('Shop deleted');
-      load();
-    } catch {
-      showToast('Failed to delete shop', 'error');
-    }
-  };
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!confirm('Delete shop?')) return;
+      try {
+        await apiDeleteShop(id);
+        setShops((prev) => prev.filter((s) => s._id !== id));
+        showToast('Shop deleted');
+        load();
+      } catch {
+        showToast('Failed to delete shop', 'error');
+      }
+    },
+    [load],
+  );
 
-  const columns: Column<ShopRow>[] = [
-    { key: 'name', label: 'Name' },
-    { key: 'owner', label: 'Owner' },
-    { key: 'category', label: 'Category' },
-    { key: 'location', label: 'Location' },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (s) => <StatusChip status={s.status} />,
-    },
-    { key: 'productsCount', label: 'Products' },
-    {
-      key: 'createdAt',
-      label: 'Created',
-      render: (s) => new Date(s.createdAt).toLocaleDateString(),
-    },
-    {
-      key: 'actions',
-      label: '',
-      render: (s) => (
-        <div className="actions">
-          <button onClick={() => setEdit(s)}>Edit</button>
-          <button onClick={() => handleToggleStatus(s)}>
-            {s.status === 'active' ? 'Suspend' : 'Activate'}
-          </button>
-          <button onClick={() => handleDelete(s._id)}>Delete</button>
-        </div>
-      ),
-    },
-  ];
+  const rows: ShopRow[] = useMemo(
+    () => (shops ?? []).map((shop) => ({ ...shop })),
+    [shops],
+  );
+
+  const columns: Column<ShopRow>[] = useMemo(
+    () => [
+      { key: 'name', label: 'Name' },
+      { key: 'owner', label: 'Owner' },
+      { key: 'category', label: 'Category' },
+      { key: 'location', label: 'Location' },
+      {
+        key: 'status',
+        label: 'Status',
+        render: (s) => {
+          const normalized = (s.status || 'pending').toLowerCase() as Shop['status'];
+          const className =
+            normalized === 'active'
+              ? styles.statusApproved
+              : normalized === 'suspended'
+              ? styles.statusRejected
+              : styles.statusPending;
+          return (
+            <span className={`${styles.statusChip} ${className}`}>
+              {statusLabels[normalized] ?? 'Status'}
+            </span>
+          );
+        },
+      },
+      { key: 'productsCount', label: 'Products' },
+      {
+        key: 'createdAt',
+        label: 'Created',
+        render: (s) => new Date(s.createdAt).toLocaleDateString(),
+      },
+      {
+        key: 'actions',
+        label: 'Actions',
+        render: (s) => (
+          <>
+            <button onClick={() => setEdit(s)}>Edit</button>
+            <button onClick={() => handleToggleStatus(s)}>
+              {s.status === 'active' ? 'Suspend' : 'Activate'}
+            </button>
+            <button onClick={() => handleDelete(s._id)}>Delete</button>
+          </>
+        ),
+      },
+    ],
+    [handleDelete, handleToggleStatus],
+  );
+
+  const hasShops = rows.length > 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div className="admin-shops">
-      <h2>Shops</h2>
-      <div className="filters">
-        <input
-          placeholder="Search by name or owner"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setPage(1);
-          }}
-        />
-        <input
-          placeholder="Category"
-          value={category}
-          onChange={(e) => {
-            setCategory(e.target.value);
-            setPage(1);
-          }}
-        />
-        <select
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="pending">Pending</option>
-          <option value="suspended">Suspended</option>
-        </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value)}>
-          <option value="-createdAt">Newest</option>
-          <option value="createdAt">Oldest</option>
-        </select>
+    <div className={`${styles.page} space-y-6 px-4`}>
+      <div className="space-y-1">
+        <h2 className="text-2xl font-semibold text-gray-900">Shops</h2>
+        <p className="text-sm text-gray-600">
+          Manage storefronts, update statuses, and keep listings current.
+        </p>
       </div>
+
+      <div className={styles.toolbar}>
+        <div className={styles.filtersGroup}>
+          <input
+            placeholder="Search by name or owner"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            className="w-48 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
+          />
+          <input
+            placeholder="Category"
+            value={category}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setPage(1);
+            }}
+            className="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
+          />
+          <select
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+          >
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="suspended">Suspended</option>
+          </select>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+          >
+            <option value="-createdAt">Newest</option>
+            <option value="createdAt">Oldest</option>
+          </select>
+        </div>
+        <span className="text-sm text-gray-500">Total shops: {total}</span>
+      </div>
+
       {(() => {
-        const hasShops = (shops ?? []).length > 0;
         if (loading && !hasShops) {
           return <SkeletonList count={pageSize} />;
         }
@@ -210,41 +258,77 @@ const AdminShops = () => {
         return (
           <DataTable<ShopRow>
             columns={columns}
-            rows={(shops ?? []) as ShopRow[]}
+            rows={rows}
             page={page}
             pageSize={pageSize}
             total={total}
             onPageChange={setPage}
             loading={loading}
+            classNames={{
+              tableWrap: styles.tableWrap,
+              table: styles.table,
+              th: styles.th,
+              td: styles.td,
+              row: styles.row,
+              actions: styles.actions,
+              empty: styles.td,
+            }}
           />
         );
       })()}
+
+      {hasShops ? (
+        <div className={styles.tableFooter}>
+          <span>
+            Showing page {page} of {totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-md border border-gray-200 px-3 py-1 text-sm text-gray-700"
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={page <= 1}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="rounded-md border border-gray-200 px-3 py-1 text-sm text-gray-700"
+              onClick={() => setPage((prev) => (prev < totalPages ? prev + 1 : prev))}
+              disabled={page >= totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {edit && (
-        <div className="modal">
-          <form className="modal-content" onSubmit={handleSave}>
-            <h3>Edit Shop</h3>
-            <label>
+        <div className={styles.modal}>
+          <form className={styles.modalContent} onSubmit={handleSave}>
+            <h3 className="text-lg font-semibold text-gray-900">Edit Shop</h3>
+            <label className={styles.formField}>
               Name
               <input
                 value={edit.name}
                 onChange={(e) => setEdit({ ...edit, name: e.target.value })}
               />
             </label>
-            <label>
+            <label className={styles.formField}>
               Category
               <input
                 value={edit.category}
                 onChange={(e) => setEdit({ ...edit, category: e.target.value })}
               />
             </label>
-            <label>
+            <label className={styles.formField}>
               Location
               <input
                 value={edit.location}
                 onChange={(e) => setEdit({ ...edit, location: e.target.value })}
               />
             </label>
-            <div className="modal-actions">
+            <div className={styles.modalActions}>
               <button type="submit" disabled={saving}>
                 {saving ? 'Saving...' : 'Save'}
               </button>

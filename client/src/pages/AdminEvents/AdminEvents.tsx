@@ -14,12 +14,11 @@ import DataTable, { type Column } from '../../components/admin/DataTable';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorCard from '../../components/ui/ErrorCard';
 import SkeletonList from '../../components/ui/SkeletonList';
-import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
 import useDebounce from '../../hooks/useDebounce';
 import useFocusTrap from '../../hooks/useFocusTrap';
 import EventForm, { type EventFormErrors, type EventFormValues } from './EventForm';
-import './AdminEvents.scss';
+import styles from './AdminEvents.module.scss';
 
 interface EventItem {
   _id: string;
@@ -119,6 +118,31 @@ const lifecycleErrorMessages: Record<LifecycleAction, string> = {
   start: 'Failed to start event',
   complete: 'Failed to complete event',
   cancel: 'Failed to cancel event',
+};
+
+const normalizeStatus = (status?: string) => (status ?? '').toLowerCase();
+
+const getStatusBadgeClass = (status?: string) => {
+  switch (normalizeStatus(status)) {
+    case 'published':
+      return `${styles.statusChip} ${styles.badgePublished}`;
+    case 'ongoing':
+      return `${styles.statusChip} ${styles.badgeOngoing}`;
+    case 'completed':
+      return `${styles.statusChip} ${styles.badgeCompleted}`;
+    case 'canceled':
+      return `${styles.statusChip} ${styles.badgeCanceled}`;
+    case 'upcoming':
+      return `${styles.statusChip} ${styles.statusPending}`;
+    default:
+      return `${styles.statusChip} ${styles.badgeDraft}`;
+  }
+};
+
+const getStatusLabel = (status?: string) => {
+  const normalized = normalizeStatus(status);
+  if (!normalized) return 'Draft';
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
 const validateForm = (values: EventFormValues): EventFormErrors => {
@@ -279,6 +303,9 @@ const AdminEvents = () => {
     return { ...base, fillRate };
   })();
 
+  const hasEvents = (events ?? []).length > 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
   const openCreate = () => {
     setEdit(null);
     setDetail(null);
@@ -392,9 +419,9 @@ const AdminEvents = () => {
       key: 'title',
       label: 'Event',
       render: (event) => (
-        <div className="event-title">
-          <span className="event-title__name">{event.title}</span>
-          <span className="event-title__meta">Starts {formatDateTime(event.startAt)}</span>
+        <div className={styles.eventTitle}>
+          <span className={styles.eventTitleName}>{event.title}</span>
+          <span className={styles.eventTitleMeta}>Starts {formatDateTime(event.startAt)}</span>
         </div>
       ),
     },
@@ -402,9 +429,9 @@ const AdminEvents = () => {
       key: 'startAt',
       label: 'Schedule',
       render: (event) => (
-        <div className="event-schedule">
+        <div className={styles.eventSchedule}>
           <span>{formatDateTime(event.startAt)}</span>
-          <span aria-hidden className="event-schedule__arrow">→</span>
+          <span aria-hidden>→</span>
           <span>{formatDateTime(event.endAt)}</span>
         </div>
       ),
@@ -412,21 +439,22 @@ const AdminEvents = () => {
     {
       key: 'status',
       label: 'Status',
-      render: (event) => <StatusChip status={(event.status as any) ?? 'upcoming'} />,
+      render: (event) => (
+        <span className={getStatusBadgeClass(event.status)}>
+          {getStatusLabel(event.status)}
+        </span>
+      ),
     },
     {
       key: 'registered',
       label: 'Registrations',
       render: (event) => (
-        <div className="registration-cell">
-          <span className="registration-cell__value">
+        <div className={styles.registrationCell}>
+          <span className={styles.registrationValue}>
             {event.registered ?? 0} / {event.capacity ?? 0}
           </span>
-          <div className="registration-progress" aria-hidden>
-            <div
-              className="registration-progress__bar"
-              style={{ width: `${getRegistrationProgress(event)}%` }}
-            />
+          <div className={styles.registrationProgress} aria-hidden>
+            <div style={{ width: `${getRegistrationProgress(event)}%` }} />
           </div>
         </div>
       ),
@@ -435,7 +463,7 @@ const AdminEvents = () => {
       key: 'actions',
       label: 'Actions',
       render: (event) => (
-        <div className="actions" data-label="Actions">
+        <>
           {getLifecycleActions(event.status).map((action) => {
             const key = `${action}:${event._id}`;
             const isBusy = lifecycleBusy === key;
@@ -471,65 +499,58 @@ const AdminEvents = () => {
           >
             Delete
           </button>
-        </div>
+        </>
       ),
     },
   ];
 
   return (
-    <div className="admin-events">
-      <header className="admin-events__header">
+    <div className={`${styles.page} space-y-6 px-4`}>
+      <header className={styles.header}>
         <div>
-          <h2>Events</h2>
-          <p className="admin-events__subtitle">
+          <h2 className="text-2xl font-semibold text-gray-900">Events</h2>
+          <p className={styles.subtitle}>
             Review upcoming activities, keep schedules accurate, and monitor registrations in real time.
           </p>
         </div>
-        <div className="summary-grid" role="status" aria-live="polite">
-          <article className="summary-card">
-            <h3>Visible</h3>
-            <p>{summary.visible}</p>
+        <div className={styles.summaryGrid} role="status" aria-live="polite">
+          <article className={styles.summaryCard}>
+            <span className={styles.summaryLabel}>Visible</span>
+            <span className={styles.summaryValue}>{summary.visible}</span>
           </article>
-          <article className="summary-card">
-            <h3>Upcoming</h3>
-            <p>{summary.upcoming}</p>
+          <article className={styles.summaryCard}>
+            <span className={styles.summaryLabel}>Upcoming</span>
+            <span className={styles.summaryValue}>{summary.upcoming}</span>
           </article>
-          <article className="summary-card">
-            <h3>Ongoing</h3>
-            <p>{summary.ongoing}</p>
+          <article className={styles.summaryCard}>
+            <span className={styles.summaryLabel}>Ongoing</span>
+            <span className={styles.summaryValue}>{summary.ongoing}</span>
           </article>
-          <article className="summary-card">
-            <h3>Registrations</h3>
-            <p>
+          <article className={styles.summaryCard}>
+            <span className={styles.summaryLabel}>Registrations</span>
+            <span className={styles.summaryValue}>
               {summary.registered} / {summary.capacity || '—'}
-            </p>
-            <div className="summary-card__progress" aria-hidden>
+            </span>
+            <div className={styles.summaryProgress} aria-hidden>
               <div style={{ width: `${summary.fillRate}%` }} />
             </div>
           </article>
         </div>
       </header>
 
-      <div className="admin-events__filters">
-        <div className="filters__group">
-          <label htmlFor="event-search" className="sr-only">
-            Search events
-          </label>
+      <div className={styles.toolbar}>
+        <div className={`${styles.filters} flex-1`}>
           <input
             id="event-search"
-            className="filters__search"
             placeholder="Search title"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
               setPage(1);
             }}
+            className="w-48 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
+            aria-label="Search events"
           />
-        </div>
-        <div className="filters__group">
-          <label htmlFor="event-status" className="sr-only">
-            Filter by status
-          </label>
           <select
             id="event-status"
             value={status}
@@ -537,17 +558,14 @@ const AdminEvents = () => {
               setStatus(e.target.value);
               setPage(1);
             }}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+            aria-label="Filter by status"
           >
             <option value="">All statuses</option>
             <option value="upcoming">Upcoming</option>
             <option value="ongoing">Ongoing</option>
             <option value="past">Past</option>
           </select>
-        </div>
-        <div className="filters__group">
-          <label htmlFor="event-sort" className="sr-only">
-            Sort events
-          </label>
           <select
             id="event-sort"
             value={sort}
@@ -555,6 +573,8 @@ const AdminEvents = () => {
               setSort(e.target.value);
               setPage(1);
             }}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+            aria-label="Sort events"
           >
             <option value="-startAt">Start: Newest first</option>
             <option value="startAt">Start: Oldest first</option>
@@ -562,13 +582,16 @@ const AdminEvents = () => {
             <option value="endAt">End: Oldest first</option>
           </select>
         </div>
-        <button type="button" className="filters__cta" onClick={openCreate}>
+        <button
+          type="button"
+          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
+          onClick={openCreate}
+        >
           Add event
         </button>
       </div>
 
       {(() => {
-        const hasEvents = (events ?? []).length > 0;
         if (loading && !hasEvents) {
           return <SkeletonList count={pageSize} />;
         }
@@ -603,12 +626,47 @@ const AdminEvents = () => {
             total={total}
             onPageChange={setPage}
             loading={loading}
+            classNames={{
+              tableWrap: styles.tableWrap,
+              table: styles.table,
+              th: styles.th,
+              td: styles.td,
+              row: styles.row,
+              actions: styles.actions,
+              empty: styles.td,
+            }}
           />
         );
       })()}
 
+      {hasEvents ? (
+        <div className={styles.tableFooter}>
+          <span>
+            Showing page {page} of {totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-md border border-gray-200 px-3 py-1 text-sm text-gray-700"
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={page <= 1}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="rounded-md border border-gray-200 px-3 py-1 text-sm text-gray-700"
+              onClick={() => setPage((prev) => (prev < totalPages ? prev + 1 : prev))}
+              disabled={page >= totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {createOpen && (
-        <div className="modal" role="dialog" aria-modal="true">
+        <div className={styles.modal} role="dialog" aria-modal="true">
           <EventForm
             ref={createRef}
             heading="Create event"
@@ -627,7 +685,7 @@ const AdminEvents = () => {
       )}
 
       {edit && (
-        <div className="modal" role="dialog" aria-modal="true">
+        <div className={styles.modal} role="dialog" aria-modal="true">
           <EventForm
             ref={editRef}
             heading="Edit event"
@@ -646,14 +704,19 @@ const AdminEvents = () => {
       )}
 
       {detail && (
-        <div className="modal" role="dialog" aria-modal="true">
-          <div ref={detailRef} className="modal-content modal-content--detail">
+        <div className={styles.modal} role="dialog" aria-modal="true">
+          <div
+            ref={detailRef}
+            className={`${styles.modalContent} ${styles.modalContentDetail}`}
+          >
             <h3>{detail.title}</h3>
-            <dl className="event-detail">
+            <dl className={styles.eventDetail}>
               <div>
                 <dt>Status</dt>
                 <dd>
-                  <StatusChip status={(detail.status as any) ?? 'upcoming'} />
+                  <span className={getStatusBadgeClass(detail.status)}>
+                    {getStatusLabel(detail.status)}
+                  </span>
                 </dd>
               </div>
               <div>
@@ -671,7 +734,7 @@ const AdminEvents = () => {
                 </dd>
               </div>
             </dl>
-            <div className="detail-actions">
+            <div className={styles.detailActions}>
               {getLifecycleActions(detail.status).map((action) => {
                 const key = `${action}:${detail._id}`;
                 const isBusy = lifecycleBusy === key;

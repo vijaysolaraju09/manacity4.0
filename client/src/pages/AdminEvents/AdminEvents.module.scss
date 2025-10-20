@@ -1,0 +1,277 @@
+.page {
+  padding-block: 1rem;
+}
+
+.toolbar {
+  @apply flex flex-wrap gap-2 justify-between items-center mb-3;
+}
+
+.tableWrap {
+  @apply bg-white rounded-2xl shadow-lg;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.th {
+  @apply text-left text-sm font-semibold text-gray-700;
+  background: #f9fafb;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.td {
+  @apply text-sm text-gray-700;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.row {
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.actions {
+  @apply flex flex-wrap gap-2;
+
+  button {
+    @apply px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200;
+  }
+}
+
+.statusChip {
+  @apply inline-flex items-center px-2 py-1 rounded-md text-xs;
+}
+
+.statusApproved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusPending {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.statusRejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.header {
+  @apply flex flex-col gap-4;
+}
+
+.subtitle {
+  @apply text-sm text-gray-600;
+  max-width: 36rem;
+}
+
+.summaryGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.summaryCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summaryLabel {
+  @apply text-xs font-semibold uppercase tracking-wide text-gray-500;
+}
+
+.summaryValue {
+  @apply text-2xl font-semibold text-gray-900;
+}
+
+.summaryProgress {
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+
+  div {
+    height: 100%;
+    background: #2563eb;
+    transition: width 0.3s ease;
+  }
+}
+
+.filters {
+  @apply flex flex-wrap gap-3 items-center;
+}
+
+.eventTitle {
+  @apply flex flex-col gap-1;
+}
+
+.eventTitleName {
+  @apply font-semibold text-gray-900;
+}
+
+.eventTitleMeta {
+  @apply text-xs text-gray-500;
+}
+
+.eventSchedule {
+  @apply flex flex-col gap-1 text-xs text-gray-600;
+}
+
+.registrationCell {
+  @apply flex flex-col gap-1;
+}
+
+.registrationValue {
+  @apply font-semibold text-gray-800;
+}
+
+.registrationProgress {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+
+  div {
+    position: absolute;
+    inset: 0;
+    background: #2563eb;
+    transition: width 0.3s ease;
+  }
+}
+
+.tableFooter {
+  @apply flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-gray-50 text-sm text-gray-600;
+  border-top: 1px solid #e5e7eb;
+}
+
+.detailActions {
+  @apply flex flex-wrap justify-end gap-2;
+
+  button {
+    @apply px-3 py-1 rounded-md border border-gray-200 text-sm text-gray-700;
+  }
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 100;
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+  padding: 1.5rem;
+  width: min(460px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.formField {
+  @apply flex flex-col gap-2;
+
+  label {
+    @apply text-sm font-semibold text-gray-600;
+  }
+
+  input {
+    @apply rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700;
+  }
+}
+
+.formFieldGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.modalActions {
+  @apply flex justify-end gap-2;
+
+  button {
+    @apply px-3 py-2 rounded-md bg-gray-900 text-white;
+
+    &:disabled {
+      @apply opacity-70;
+    }
+  }
+
+  button[type='button'] {
+    @apply bg-gray-100 text-gray-700;
+  }
+}
+
+.fieldError {
+  @apply text-sm text-red-600;
+}
+
+.eventDetail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.eventDetail dt {
+  @apply text-sm font-semibold text-gray-500;
+}
+
+.eventDetail dd {
+  margin: 0;
+  @apply text-sm text-gray-800;
+}
+
+.modalContentDetail {
+  @apply gap-3;
+}
+
+.badgeDraft {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.badgePublished {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badgeOngoing {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.badgeCompleted {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badgeCanceled {
+  background: #fee2e2;
+  color: #991b1b;
+}

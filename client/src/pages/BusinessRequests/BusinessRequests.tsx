@@ -7,9 +7,8 @@ import {
   type BusinessRequestParams,
 } from '../../api/admin';
 import DataTable, { type Column } from '../../components/admin/DataTable';
-import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
-import './BusinessRequests.scss';
+import styles from './BusinessRequests.module.scss';
 
 interface ShopRequest {
   _id: string;
@@ -105,11 +104,17 @@ const BusinessRequests = () => {
     }
   };
 
+  const statusClassMap: Record<string, string> = {
+    approved: styles.statusApproved,
+    pending: styles.statusPending,
+    rejected: styles.statusRejected,
+  };
+
   const columns: Column<RequestRow>[] = [
     {
       key: 'owner',
       label: 'User',
-      render: (r) => r.owner?.name,
+      render: (r) => r.owner?.name ?? '—',
     },
     { key: 'name', label: 'Shop Name' },
     { key: 'category', label: 'Category' },
@@ -123,7 +128,18 @@ const BusinessRequests = () => {
     {
       key: 'status',
       label: 'Status',
-      render: (r) => <StatusChip status={r.status as any} />,
+      render: (r) => {
+        const normalized = (r.status || '').toLowerCase();
+        const className = statusClassMap[normalized] ?? styles.statusPending;
+        const label = normalized
+          ? normalized.charAt(0).toUpperCase() + normalized.slice(1)
+          : 'Unknown';
+        return (
+          <span className={`${styles.statusChip} ${className}`}>
+            {label}
+          </span>
+        );
+      },
     },
     {
       key: 'actions',
@@ -147,44 +163,76 @@ const BusinessRequests = () => {
     },
   ];
 
+  const hasRequests = (requests ?? []).length > 0;
+
   return (
-    <div className="business-requests">
-      <h1>Business Requests</h1>
-      <div className="filters">
-        <select
-          value={status}
-          onChange={(e) => updateParam('status', e.target.value)}
-        >
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Category"
-          value={category}
-          onChange={(e) => updateParam('category', e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Location"
-          value={location}
-          onChange={(e) => updateParam('location', e.target.value)}
-        />
+    <div className={`${styles.page} space-y-6 px-4`}>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold text-gray-900">Business Requests</h1>
+        <p className="text-sm text-gray-600">
+          Review new shop submissions and approve or reject requests with a single click.
+        </p>
       </div>
+
+      <div className={styles.toolbar}>
+        <div className={styles.filtersGroup}>
+          <select
+            value={status}
+            onChange={(e) => updateParam('status', e.target.value)}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+          >
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <input
+            type="text"
+            placeholder="Category"
+            value={category}
+            onChange={(e) => updateParam('category', e.target.value)}
+            className="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
+          />
+          <input
+            type="text"
+            placeholder="Location"
+            value={location}
+            onChange={(e) => updateParam('location', e.target.value)}
+            className="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
+          />
+        </div>
+        <span className="text-sm text-gray-500">Total requests: {total}</span>
+      </div>
+
       <DataTable<RequestRow>
         columns={columns}
-        rows={requests as RequestRow[]}
+        rows={(requests ?? []) as RequestRow[]}
         page={1}
-        pageSize={requests.length || 1}
+        pageSize={Math.max((requests ?? []).length, 1)}
         total={total}
         onPageChange={() => {}}
         loading={loading}
+        classNames={{
+          tableWrap: styles.tableWrap,
+          table: styles.table,
+          th: styles.th,
+          td: styles.td,
+          row: styles.row,
+          actions: styles.actions,
+          empty: styles.td,
+        }}
       />
+
+      {hasRequests ? (
+        <div className={styles.tableFooter}>
+          <span>
+            Showing {Math.min((requests ?? []).length, total)} of {total}
+          </span>
+          <span>Updated just now</span>
+        </div>
+      ) : null}
     </div>
   );
 };
 
 export default BusinessRequests;
-

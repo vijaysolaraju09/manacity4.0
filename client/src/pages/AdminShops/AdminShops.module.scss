@@ -1,0 +1,129 @@
+.page {
+  padding-block: 1rem;
+}
+
+.toolbar {
+  @apply flex flex-wrap gap-2 justify-between items-center mb-3;
+}
+
+.tableWrap {
+  @apply bg-white rounded-2xl shadow-lg;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.th {
+  @apply text-left text-sm font-semibold text-gray-700;
+  background: #f9fafb;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.td {
+  @apply text-sm text-gray-700;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.row {
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.actions {
+  @apply flex flex-wrap gap-2;
+
+  button {
+    @apply px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200;
+  }
+}
+
+.statusChip {
+  @apply inline-flex items-center px-2 py-1 rounded-md text-xs;
+}
+
+.statusApproved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusPending {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.statusRejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.tableFooter {
+  @apply flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-gray-50 text-sm text-gray-600;
+  border-top: 1px solid #e5e7eb;
+}
+
+.filtersGroup {
+  @apply flex flex-wrap gap-2;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 100;
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+  padding: 1.5rem;
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modalActions {
+  @apply flex justify-end gap-2;
+
+  button {
+    @apply px-3 py-2 rounded-md bg-gray-900 text-white;
+
+    &:disabled {
+      @apply opacity-70;
+    }
+  }
+
+  button[type='button'] {
+    @apply bg-gray-100 text-gray-700;
+  }
+}
+
+.formField {
+  @apply flex flex-col gap-2;
+
+  label {
+    @apply text-sm font-semibold text-gray-600;
+  }
+
+  input {
+    @apply rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700;
+  }
+}

@@ -1,14 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   fetchVerificationRequests,
   updateVerificationRequest,
 } from '../../api/admin';
 import DataTable, { type Column } from '../../components/admin/DataTable';
-import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
 import { toItem, toErrorMessage } from '../../lib/response';
-import './VerificationRequests.scss';
+import styles from './VerificationRequests.module.scss';
 
 interface Request {
   _id: string;
@@ -111,82 +110,138 @@ const VerificationRequests = () => {
     [requests, loadRequests],
   );
 
-  const rows: RequestRow[] = requests.map((r) => ({
-    ...r,
-    name: r.user.name,
-    phone: r.user.phone,
-  }));
+  const rows: RequestRow[] = useMemo(
+    () =>
+      (requests ?? []).map((r) => ({
+        ...r,
+        name: r.user.name,
+        phone: r.user.phone,
+      })),
+    [requests],
+  );
 
-  const columns: Column<RequestRow>[] = [
-    { key: 'name', label: 'Name' },
-    { key: 'phone', label: 'Phone' },
-    { key: 'profession', label: 'Profession' },
-    { key: 'bio', label: 'Bio' },
-    {
-      key: 'createdAt',
-      label: 'Requested At',
-      render: (r) => new Date(r.createdAt).toLocaleDateString(),
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (r) => <StatusChip status={r.status as any} />,
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (r) => (
-        <>
-          <button
-            onClick={() => handleAction(r._id, 'approved')}
-            disabled={actionId === r._id || r.status === 'approved'}
-          >
-            Accept
-          </button>
-          <button
-            onClick={() => handleAction(r._id, 'rejected')}
-            disabled={actionId === r._id || r.status === 'rejected'}
-          >
-            Reject
-          </button>
-        </>
-      ),
-    },
-  ];
+  const statusClassMap = useMemo(
+    () => ({
+      approved: styles.statusApproved,
+      pending: styles.statusPending,
+      rejected: styles.statusRejected,
+    }),
+    [],
+  );
+
+  const columns: Column<RequestRow>[] = useMemo(
+    () => [
+      { key: 'name', label: 'Name' },
+      { key: 'phone', label: 'Phone' },
+      { key: 'profession', label: 'Profession' },
+      { key: 'bio', label: 'Bio' },
+      {
+        key: 'createdAt',
+        label: 'Requested At',
+        render: (r) => new Date(r.createdAt).toLocaleDateString(),
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        render: (r) => {
+          const normalized = (r.status || '').toLowerCase();
+          const className = statusClassMap[normalized] ?? styles.statusPending;
+          const label = normalized
+            ? normalized.charAt(0).toUpperCase() + normalized.slice(1)
+            : 'Unknown';
+          return (
+            <span className={`${styles.statusChip} ${className}`}>
+              {label}
+            </span>
+          );
+        },
+      },
+      {
+        key: 'actions',
+        label: 'Actions',
+        render: (r) => (
+          <>
+            <button
+              onClick={() => handleAction(r._id, 'approved')}
+              disabled={actionId === r._id || r.status === 'approved'}
+            >
+              Accept
+            </button>
+            <button
+              onClick={() => handleAction(r._id, 'rejected')}
+              disabled={actionId === r._id || r.status === 'rejected'}
+            >
+              Reject
+            </button>
+          </>
+        ),
+      },
+    ],
+    [actionId, handleAction, statusClassMap],
+  );
 
   return (
-    <div className="verification-requests">
-      <h1>Verification Requests</h1>
-      <div className="filters">
-        <select
-          value={status}
-          onChange={(e) => updateParam('status', e.target.value)}
-        >
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Profession"
-          value={professionInput}
-          onChange={(e) => setProfessionInput(e.target.value)}
-          onBlur={() => updateParam('profession', professionInput)}
-        />
+    <div className={`${styles.page} space-y-6 px-4`}>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold text-gray-900">Verification Requests</h1>
+        <p className="text-sm text-gray-600">
+          Approve trusted professionals quickly by reviewing their submissions here.
+        </p>
       </div>
+
+      <div className={styles.toolbar}>
+        <div className={styles.filtersGroup}>
+          <select
+            value={status}
+            onChange={(e) => updateParam('status', e.target.value)}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+          >
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <input
+            type="text"
+            placeholder="Profession"
+            value={professionInput}
+            onChange={(e) => setProfessionInput(e.target.value)}
+            onBlur={() => updateParam('profession', professionInput)}
+            className="w-48 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
+          />
+        </div>
+        <span className="text-sm text-gray-500">Page {page}</span>
+      </div>
+
       <DataTable<RequestRow>
         columns={columns}
         rows={rows}
         page={page}
-        pageSize={rows.length || 1}
+        pageSize={Math.max(rows.length, 1)}
         total={total}
         onPageChange={changePage}
         loading={loading}
+        classNames={{
+          tableWrap: styles.tableWrap,
+          table: styles.table,
+          th: styles.th,
+          td: styles.td,
+          row: styles.row,
+          actions: styles.actions,
+          empty: styles.td,
+        }}
       />
+
+      {rows.length ? (
+        <div className={styles.tableFooter}>
+          <span>
+            Showing {rows.length} of {total}
+          </span>
+          <span>Navigate with the controls below</span>
+        </div>
+      ) : null}
     </div>
   );
 };
 
 export default VerificationRequests;
-

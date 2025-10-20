@@ -2,6 +2,10 @@ import { useState, type ReactNode } from 'react';
 import Shimmer from '../Shimmer';
 import styles from './DataTable.module.scss';
 
+const joinClasses = (
+  ...values: Array<string | false | null | undefined>
+) => values.filter(Boolean).join(' ');
+
 export type ColumnKey<T> = keyof T & string;
 
 export interface Column<T> {
@@ -31,6 +35,15 @@ export interface DataTableProps<T extends Record<string, any>> {
   selected?: string[];
   onSelectionChange?: (ids: string[]) => void;
   rowKey?: (row: T, index: number) => string;
+  classNames?: {
+    tableWrap?: string;
+    table?: string;
+    th?: string;
+    td?: string;
+    row?: string;
+    actions?: string;
+    empty?: string;
+  };
 }
 
 function DataTable<T extends Record<string, any>>({
@@ -47,6 +60,7 @@ function DataTable<T extends Record<string, any>>({
   selected = [],
   onSelectionChange,
   rowKey,
+  classNames,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<ColumnKey<T> | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -91,8 +105,14 @@ function DataTable<T extends Record<string, any>>({
   const renderBody = () => {
     if (loading) {
       return Array.from({ length: Math.max(pageSize, 3) }, (_, i) => (
-        <tr key={i} className={styles.row}>
-          <td colSpan={columns.length + (selectable ? 1 : 0)}>
+        <tr
+          key={i}
+          className={joinClasses(styles.row, classNames?.row)}
+        >
+          <td
+            colSpan={columns.length + (selectable ? 1 : 0)}
+            className={joinClasses(styles.cell, classNames?.td)}
+          >
             <Shimmer height="20px" />
           </td>
         </tr>
@@ -101,10 +121,10 @@ function DataTable<T extends Record<string, any>>({
 
     if (!rows.length) {
       return (
-        <tr className={styles.row}>
+        <tr className={joinClasses(styles.row, classNames?.row)}>
           <td
             colSpan={columns.length + (selectable ? 1 : 0)}
-            className={styles.empty}
+            className={joinClasses(styles.empty, classNames?.empty, classNames?.td)}
           >
             No records
           </td>
@@ -115,9 +135,12 @@ function DataTable<T extends Record<string, any>>({
     return rows.map((row, rowIndex) => {
       const id = getRowId(row, rowIndex);
       return (
-        <tr key={id} className={styles.row}>
+        <tr key={id} className={joinClasses(styles.row, classNames?.row)}>
           {selectable && (
-            <td className={styles.cell} data-label="Select">
+            <td
+              className={joinClasses(styles.cell, classNames?.td)}
+              data-label="Select"
+            >
               <input
                 type="checkbox"
                 aria-label="Select row"
@@ -129,10 +152,18 @@ function DataTable<T extends Record<string, any>>({
           {columns.map((col) => (
             <td
               key={col.key}
-              className={styles.cell}
+              className={joinClasses(styles.cell, classNames?.td)}
               data-label={col.label}
             >
-              {col.render ? col.render(row) : (row as any)[col.key]}
+              {col.key === 'actions' && classNames?.actions ? (
+                <div className={classNames.actions}>
+                  {col.render ? col.render(row) : (row as any)[col.key]}
+                </div>
+              ) : col.render ? (
+                col.render(row)
+              ) : (
+                (row as any)[col.key]
+              )}
             </td>
           ))}
         </tr>
@@ -141,12 +172,13 @@ function DataTable<T extends Record<string, any>>({
   };
 
   return (
-    <div className={styles.wrapper}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
+    <div className={joinClasses(styles.container, classNames?.tableWrap)}>
+      <div className={styles.scroller}>
+        <table className={joinClasses(styles.table, classNames?.table)}>
+          <thead>
+          <tr className={joinClasses(styles.headerRow, classNames?.row)}>
             {selectable && (
-              <th>
+              <th className={joinClasses(styles.headerCell, classNames?.th)}>
                 <input
                   type="checkbox"
                   aria-label="Select all"
@@ -156,7 +188,11 @@ function DataTable<T extends Record<string, any>>({
               </th>
             )}
             {columns.map((col) => (
-              <th key={col.key} scope="col">
+              <th
+                key={col.key}
+                scope="col"
+                className={joinClasses(styles.headerCell, classNames?.th)}
+              >
                 {col.sortable ? (
                   <button
                     type="button"
@@ -175,10 +211,15 @@ function DataTable<T extends Record<string, any>>({
             ))}
           </tr>
           {filters && (
-            <tr className={styles.filtersRow}>
-              {selectable && <th />}
+            <tr className={joinClasses(styles.filtersRow, classNames?.row)}>
+              {selectable && (
+                <th className={joinClasses(styles.headerCell, classNames?.th)} />
+              )}
               {columns.map((col) => (
-                <th key={col.key}>
+                <th
+                  key={col.key}
+                  className={joinClasses(styles.headerCell, classNames?.th)}
+                >
                   {filters[col.key] ? (
                     <input
                       type="text"
@@ -192,8 +233,9 @@ function DataTable<T extends Record<string, any>>({
             </tr>
           )}
         </thead>
-        <tbody>{renderBody()}</tbody>
-      </table>
+          <tbody>{renderBody()}</tbody>
+        </table>
+      </div>
       <nav className={styles.pagination} aria-label="Pagination">
         <button
           type="button"

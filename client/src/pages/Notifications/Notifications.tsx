@@ -138,13 +138,17 @@ const Notifications = () => {
                   </div>
                   <div className={cn(styles.meta, styles.actions)}>
                     {!notif.read && (
-                      <button type="button" onClick={() => handleMarkRead(notif._id)}>
+                      <button
+                        type="button"
+                        className={cn(styles.actionButton, styles.markReadButton)}
+                        onClick={() => handleMarkRead(notif._id)}
+                      >
                         Mark read
                       </button>
                     )}
                     <button
                       type="button"
-                      className="hover:text-red-600"
+                      className={cn(styles.actionButton, styles.deleteButton)}
                       onClick={() => handleDelete(notif._id)}
                     >
                       Delete

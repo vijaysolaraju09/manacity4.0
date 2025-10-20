@@ -40,6 +40,7 @@
   display: flex;
   gap: 0.5rem;
   margin-top: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .chips span {
@@ -51,4 +52,33 @@
   padding-bottom: 0.25rem;
   border-radius: 0.375rem;
   background-color: #f3f4f6;
+}
+
+@media (max-width: 640px) {
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    margin-bottom: -0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.6) transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chips span {
+    flex: 0 0 auto;
+  }
+
+  .chips::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .chips::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.6);
+    border-radius: 9999px;
+  }
+
+  .chips::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }

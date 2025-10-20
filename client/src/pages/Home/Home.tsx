@@ -25,6 +25,7 @@ import VerifiedCard from '@/components/ui/VerifiedCard/VerifiedCard';
 import { paths } from '@/routes/paths';
 import ShopCard from '@/components/ui/ShopCard/ShopCard';
 import Button from '@/components/ui/button';
+import HorizontalCarousel from '@/components/ui/HorizontalCarousel';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -298,7 +299,7 @@ const Section = ({
         linkLabel={linkLabel}
         className={styles.sectionHeader}
       />
-      <div className={styles.grid}>
+      <HorizontalCarousel>
         {items.map((item: any) => {
           if (type === 'product') {
             return (
@@ -368,7 +369,7 @@ const Section = ({
             </motion.div>
           );
         })}
-      </div>
+      </HorizontalCarousel>
     </section>
   );
 };

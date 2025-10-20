@@ -1,3 +1,5 @@
+@reference '../../styles/main.css';
+
 .landing {
   @apply min-h-screen flex flex-col items-center justify-center text-center px-4;
   background: linear-gradient(180deg, #f1f5f9 0%, #ffffff 60%);

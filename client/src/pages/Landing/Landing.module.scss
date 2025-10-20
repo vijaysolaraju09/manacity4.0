@@ -1,0 +1,24 @@
+.landing {
+  @apply min-h-screen flex flex-col items-center justify-center text-center px-4;
+  background: linear-gradient(180deg, #f1f5f9 0%, #ffffff 60%);
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-lg;
+  border: 1px solid #e5e7eb;
+  padding: 2.5rem 2rem;
+  max-width: 28rem;
+  width: 100%;
+}
+
+.ctaBand {
+  @apply mt-8 rounded-2xl shadow-lg bg-white;
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  max-width: 24rem;
+  width: 100%;
+}
+
+.ctaBandContent {
+  @apply flex flex-col gap-3 items-center;
+}

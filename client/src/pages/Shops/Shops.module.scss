@@ -1,64 +1,39 @@
-@reference "../../styles/main.css";
-@import "../../styles/mixins";
-@import "../../styles/variables";
+.page {
+  padding-block: 1.5rem;
+}
 
-.shops {
+.filters {
+  @apply flex gap-2 mb-4;
+}
+
+.shopCard {
+  @apply bg-white rounded-2xl shadow-md;
+  border: 1px solid #e5e7eb;
   padding: 1rem;
-  @include respond(md) { padding: 2rem; }
+  display: flex;
+  gap: 1rem;
+  transition: transform 0.15s;
+}
 
-  .list {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(1, 1fr);
+.shopCard:hover {
+  transform: translateY(-2px);
+}
 
-    @include respond(md) {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
+.thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: 0.75rem;
+  object-fit: cover;
+}
 
-  .card {
-    background: var(--color-card);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    cursor: pointer;
-    transition: transform 0.2s ease;
+.meta {
+  @apply text-sm text-gray-600;
+}
 
-    &:hover {
-      transform: translateY(-3px);
-    }
+.chips {
+  @apply flex gap-2 mt-2;
 
-    img {
-      width: 100%;
-      height: 160px;
-      object-fit: cover;
-    }
-
-    .info {
-      padding: 0.75rem;
-      h3 {
-        margin: 0 0 0.25rem;
-        font-size: 1.1rem;
-      }
-      p {
-        margin: 0;
-        color: var(--color-muted);
-      }
-      .badge {
-        display: inline-block;
-        margin-top: 0.25rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        &.open {
-          background: var(--color-success);
-          color: var(--color-on-primary);
-        }
-        &.closed {
-          background: var(--color-danger);
-          color: var(--color-on-primary);
-        }
-      }
-    }
+  span {
+    @apply text-xs px-2 py-1 rounded-md bg-gray-100;
   }
 }

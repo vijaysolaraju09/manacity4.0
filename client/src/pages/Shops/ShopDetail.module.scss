@@ -1,0 +1,28 @@
+.header {
+  @apply bg-white rounded-2xl shadow-lg;
+  border: 1px solid #e5e7eb;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.gallery {
+  @apply grid gap-2;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.about {
+  @apply bg-white rounded-2xl shadow-md;
+  border: 1px solid #e5e7eb;
+  padding: 1rem;
+}
+
+.products {
+  @apply grid gap-4 mt-4;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 1024px) {
+  .products {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

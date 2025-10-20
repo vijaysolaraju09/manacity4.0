@@ -31,11 +31,6 @@ vi.mock('./layouts/AdminLayout', async () => {
   return { __esModule: true, default: AdminLayoutMock };
 });
 
-vi.mock('./components/ui/FloatingCart', () => ({
-  __esModule: true,
-  default: () => null,
-}));
-
 vi.mock('./pages/Shops/Shops', async () => {
   const React = await import('react');
   const ShopsMock = () =>

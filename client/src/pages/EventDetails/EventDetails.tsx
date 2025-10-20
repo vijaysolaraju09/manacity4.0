@@ -41,6 +41,8 @@ const TAB_LABELS: Record<TabKey, string> = {
   bracket: 'Bracket',
 };
 
+const toLabel = (value: string) => value.replace(/_/g, ' ');
+
 const EventDetails = () => {
   const { id } = useParams();
   const dispatch = useDispatch<AppDispatch>();
@@ -168,57 +170,57 @@ const EventDetails = () => {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.banner}>
+      <div className={styles.hero}>
         <img src={event.coverUrl || event.bannerUrl || fallbackImage} alt={event.title} />
-      </div>
-      <div className={styles.header}>
-        <div className={styles.badges}>
-          <span className={`${styles.badge} ${styles[event.type]}`}>{event.type}</span>
-          <span className={styles.badge}>{event.category}</span>
-          <span className={`${styles.badge} ${styles.status}`}>{event.status}</span>
-        </div>
-        <h1>{event.title}</h1>
-        <p className={styles.schedule}>
-          Starts {formatDateTime(event.startAt)} · Ends {event.endAt ? formatDateTime(event.endAt) : 'TBD'}
-        </p>
-        <div className={styles.stats}>
-          <div>
-            <strong>{event.registeredCount}</strong>
-            <span>Registered</span>
+        <div className={styles.header}>
+          <div className={styles.badges}>
+            <span>{toLabel(event.type)}</span>
+            <span>{toLabel(event.category)}</span>
+            <span>{toLabel(event.status)}</span>
           </div>
-          <div>
-            <strong>{event.maxParticipants || '—'}</strong>
-            <span>Capacity</span>
+          <h1 className={styles.title}>{event.title}</h1>
+          <p className={styles.schedule}>
+            Starts {formatDateTime(event.startAt)} · Ends {event.endAt ? formatDateTime(event.endAt) : 'TBD'}
+          </p>
+          <div className={styles.stats}>
+            <div>
+              <strong>{event.registeredCount}</strong>
+              <span>Registered</span>
+            </div>
+            <div>
+              <strong>{event.maxParticipants || '—'}</strong>
+              <span>Capacity</span>
+            </div>
+            <div>
+              <strong>{event.teamSize}</strong>
+              <span>Team size</span>
+            </div>
+            <div>
+              <strong>{countdownLabel}</strong>
+              <span>Until start</span>
+            </div>
+            <div>
+              <strong>{registrationClosesIn}</strong>
+              <span>Registration closes</span>
+            </div>
           </div>
-          <div>
-            <strong>{event.teamSize}</strong>
-            <span>Team size</span>
+          <div className={styles.register}>
+            {showRegisterButton && (
+              <button onClick={handleRegister} disabled={registrationBusy}>
+                {registrationBusy ? 'Processing…' : 'Register'}
+              </button>
+            )}
+            {waitlisted && <span className={styles.notice}>You are on the waitlist</span>}
+            {canUnregister && (
+              <button className={styles.secondary} onClick={handleUnregister} disabled={registrationBusy}>
+                {registrationBusy ? 'Processing…' : 'Cancel Registration'}
+              </button>
+            )}
           </div>
-          <div>
-            <strong>{countdownLabel}</strong>
-            <span>Until start</span>
-          </div>
-          <div>
-            <strong>{registrationClosesIn}</strong>
-            <span>Registration closes</span>
-          </div>
-        </div>
-        <div className={styles.actions}>
-          {showRegisterButton && (
-            <button onClick={handleRegister} disabled={registrationBusy}>
-              {registrationBusy ? 'Processing…' : 'Register'}
-            </button>
+          {event.mode === 'venue' && event.venue && (
+            <p className={styles.venue}>Venue: {event.venue}</p>
           )}
-          {waitlisted && <span className={styles.notice}>You are on the waitlist</span>}
-          {canUnregister && (
-            <button className={styles.secondary} onClick={handleUnregister} disabled={registrationBusy}>
-              {registrationBusy ? 'Processing…' : 'Cancel Registration'}
-            </button>
-          )}
         </div>
-        {event.mode === 'venue' && event.venue && (
-          <p className={styles.venue}>Venue: {event.venue}</p>
-        )}
       </div>
 
       <nav className={styles.tabs}>
@@ -236,41 +238,50 @@ const EventDetails = () => {
 
       <div className={styles.tabContent}>
         {activeTab === 'about' && (
-          <section>
-            <h2>Overview</h2>
-            <p className={styles.description}>{event.description || 'No description provided.'}</p>
-            <dl className={styles.metaGrid}>
+          <div className={styles.infoGrid}>
+            <section className={styles.about}>
+            <h2 className="text-lg font-semibold text-gray-900">Overview</h2>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {event.description || 'No description provided.'}
+            </p>
+            <dl className="grid gap-3 sm:grid-cols-2 text-sm text-gray-700 mt-3">
               <div>
-                <dt>Registration window</dt>
+                <dt className="font-medium text-gray-800">Registration window</dt>
                 <dd>
                   {formatDate(event.registrationOpenAt)} → {formatDate(event.registrationCloseAt)}
                 </dd>
               </div>
               <div>
-                <dt>Timezone</dt>
+                <dt className="font-medium text-gray-800">Timezone</dt>
                 <dd>{event.timezone}</dd>
               </div>
               {event.prizePool && (
                 <div>
-                  <dt>Prize Pool</dt>
+                  <dt className="font-medium text-gray-800">Prize Pool</dt>
                   <dd>{event.prizePool}</dd>
                 </div>
               )}
             </dl>
-          </section>
+            </section>
+          </div>
         )}
 
         {activeTab === 'rules' && (
-          <section>
-            <h2>Rules</h2>
-            <p className={styles.description}>{event.rules || 'Rules will be shared soon.'}</p>
-          </section>
+          <div className={styles.infoGrid}>
+            <section className={styles.rules}>
+            <h2 className="text-lg font-semibold text-gray-900">Rules</h2>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {event.rules || 'Rules will be shared soon.'}
+            </p>
+            </section>
+          </div>
         )}
 
         {activeTab === 'updates' && (
-          <section>
-            <h2>Updates</h2>
-            {updates.status === 'loading' && <p>Loading updates…</p>}
+          <div className={styles.infoGrid}>
+            <section className={styles.updates}>
+            <h2 className="text-lg font-semibold text-gray-900">Updates</h2>
+            {updates.status === 'loading' && <p className="text-sm text-gray-500">Loading updates…</p>}
             {updates.status === 'failed' && (
               <ErrorCard
                 msg={updates.error || 'Failed to load updates'}
@@ -283,21 +294,22 @@ const EventDetails = () => {
             <ul className={styles.updateList}>
               {updates.items.map((update) => (
                 <li key={update._id}>
-                  <header>
-                    <span className={styles.badge}>{update.type}</span>
+                  <header className="flex items-center justify-between gap-2 text-xs text-gray-600">
+                    <span className={styles.badge}>{toLabel(update.type)}</span>
                     <time>{formatDateTime(update.createdAt)}</time>
                   </header>
-                  <p>{update.message}</p>
+                  <p className="text-sm text-gray-700 leading-relaxed">{update.message}</p>
                 </li>
               ))}
             </ul>
-          </section>
+            </section>
+          </div>
         )}
 
         {activeTab === 'participants' && (
-          <section>
-            <h2>Participants</h2>
-            {registrations.status === 'loading' && <p>Loading participants…</p>}
+          <section className={styles.leaderboard}>
+            <h2 className="text-lg font-semibold text-gray-900">Participants</h2>
+            {registrations.status === 'loading' && <p className="text-sm text-gray-500">Loading participants…</p>}
             {registrations.status === 'failed' && (
               <ErrorCard
                 msg={registrations.error || 'Failed to load participants'}
@@ -311,7 +323,7 @@ const EventDetails = () => {
               {registrations.items.map((item) => (
                 <li key={item._id}>
                   <span>{item.teamName || item.user?.name || 'Participant'}</span>
-                  <small>{item.status}</small>
+                  <small className="text-xs text-gray-500 uppercase">{item.status}</small>
                 </li>
               ))}
             </ul>
@@ -322,9 +334,9 @@ const EventDetails = () => {
         )}
 
         {activeTab === 'leaderboard' && (
-          <section>
-            <h2>Leaderboard</h2>
-            {leaderboard.status === 'loading' && <p>Loading leaderboard…</p>}
+          <section className={styles.leaderboard}>
+            <h2 className="text-lg font-semibold text-gray-900">Leaderboard</h2>
+            {leaderboard.status === 'loading' && <p className="text-sm text-gray-500">Loading leaderboard…</p>}
             {leaderboard.status === 'failed' && (
               <ErrorCard
                 msg={leaderboard.error || 'Failed to load leaderboard'}
@@ -362,9 +374,9 @@ const EventDetails = () => {
         )}
 
         {activeTab === 'bracket' && (
-          <section>
-            <h2>Bracket</h2>
-            {bracket.status === 'loading' && <p>Loading bracket…</p>}
+          <section className={styles.leaderboard}>
+            <h2 className="text-lg font-semibold text-gray-900">Bracket</h2>
+            {bracket.status === 'loading' && <p className="text-sm text-gray-500">Loading bracket…</p>}
             {bracket.status === 'failed' && (
               <ErrorCard
                 msg={bracket.error || 'Failed to load bracket'}
@@ -377,19 +389,19 @@ const EventDetails = () => {
             <div className={styles.bracket}>
               {bracket.rounds.map((round) => (
                 <div key={round.round} className={styles.round}>
-                  <h3>Round {round.round}</h3>
+                  <h3 className="text-sm font-semibold text-gray-800">Round {round.round}</h3>
                   <ul>
                     {round.matches.map((match) => (
                       <li key={match.id}>
-                        <div>
+                        <div className="flex items-center justify-between">
                           <span>{match.participantA?.displayName || 'TBD'}</span>
                           <strong>{match.scoreA ?? '-'}</strong>
                         </div>
-                        <div>
+                        <div className="flex items-center justify-between">
                           <span>{match.participantB?.displayName || 'TBD'}</span>
                           <strong>{match.scoreB ?? '-'}</strong>
                         </div>
-                        <small>Status: {match.status}</small>
+                        <small className="text-xs text-gray-500">Status: {toLabel(match.status)}</small>
                       </li>
                     ))}
                   </ul>

@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ProductCard, { type Product as ProductCardProduct } from '@/components/ui/ProductCard.tsx';
 import SkeletonProductCard from '@/components/ui/Skeletons/SkeletonProductCard';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorCard from '@/components/ui/ErrorCard';
 import { http } from '@/lib/http';
 import { toErrorMessage, toItems } from '@/lib/response';
 import { paths } from '@/routes/paths';
+import fallbackImage from '@/assets/no-image.svg';
+import { formatINR } from '@/utils/currency';
 import { normalizeProduct } from '@/store/products';
 import styles from './ProductsList.module.scss';
+import cardStyles from './Products.module.scss';
+
+import type { Product as ProductCardProduct } from '@/components/ui/ProductCard.tsx';
 
 interface Product extends ProductCardProduct {
   category?: string;
@@ -313,7 +317,7 @@ const ProductsList = () => {
           />
         </div>
       ) : isLoading ? (
-        <div className={styles.grid}>
+        <div className={cardStyles.grid}>
           {Array.from({ length: 8 }).map((_, index) => (
             <SkeletonProductCard key={index} />
           ))}
@@ -328,34 +332,61 @@ const ProductsList = () => {
           />
         </div>
       ) : (
-        <div className={styles.grid}>
+        <div className={cardStyles.grid}>
           {visibleItems.map((product) => {
             const id = product._id || (product as any).id;
             const shopId = normalizeShopId(product);
+            const primaryImage = Array.isArray(product.images)
+              ? product.images.find((src) => typeof src === 'string' && src.trim())
+              : product.image;
+            const imageSrc = primaryImage || fallbackImage;
+            const priceLabel = formatINR(product.pricePaise);
+            const mrpValue = typeof product.mrpPaise === 'number' ? product.mrpPaise : undefined;
+            const mrpLabel = typeof mrpValue === 'number' ? formatINR(mrpValue) : null;
+            const discount = getDiscount(product);
+
             return (
-              <div key={id ?? product.name} className={styles.cardWrapper} data-testid="product-card">
-                <ProductCard
-                  product={product}
-                  onClick={() => {
-                    if (id) {
-                      navigate(paths.products.detail(String(id)));
-                    }
+              <button
+                key={id ?? product.name}
+                type="button"
+                className={cardStyles.card}
+                data-testid="product-card"
+                onClick={() => {
+                  if (id) {
+                    navigate(paths.products.detail(String(id)));
+                  }
+                }}
+              >
+                <img
+                  className={cardStyles.img}
+                  src={imageSrc}
+                  alt={product.name}
+                  loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.src = fallbackImage;
                   }}
                 />
-                <div className={styles.meta}>
-                  <span className={styles.shop} title={getShopName(product)}>
-                    {getShopName(product)}
-                  </span>
-                  {product.category && (
-                    <span className={styles.category}>
-                      {product.category}
-                    </span>
+                <h3 className={cardStyles.title}>{product.name}</h3>
+                <div className={cardStyles.priceRow}>
+                  <span>{priceLabel}</span>
+                  {mrpLabel && mrpValue !== undefined && mrpValue > product.pricePaise && (
+                    <span className={cardStyles.mrp}>{mrpLabel}</span>
                   )}
-                  {!product.category && shopId && (
-                    <span className={styles.category}>Shop #{shopId.slice(-4)}</span>
+                  {discount > 0 && (
+                    <span className={cardStyles.save}>Save {discount}%</span>
                   )}
                 </div>
-              </div>
+                <div className={cardStyles.meta}>
+                  <span className={cardStyles.shop} title={getShopName(product)}>
+                    {getShopName(product)}
+                  </span>
+                  {product.category ? (
+                    <span className={cardStyles.category}>{product.category}</span>
+                  ) : shopId ? (
+                    <span className={cardStyles.category}>Shop #{shopId.slice(-4)}</span>
+                  ) : null}
+                </div>
+              </button>
             );
           })}
         </div>

@@ -1,121 +1,85 @@
-@import "../../../styles/variables";
-@import "../../../styles/mixins";
+@reference "../../../styles/main.css";
 
 .signup-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  min-height: 100vh;
-  background: linear-gradient(to bottom right, #f0f6fb, #ffffff);
+  @apply min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12;
+}
 
-  .form-card {
-    width: 100%;
-    max-width: 420px;
-    background: #fff;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    text-align: center;
+.panel {
+  @apply bg-white rounded-2xl shadow-lg;
+  border: 1px solid #e5e7eb;
+  padding: 1.25rem;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 auto;
+}
 
-    .logo {
-      width: 100px;
-      margin: 0 auto 1.5rem;
-    }
+.logo {
+  width: 80px;
+  margin: 0 auto 1rem;
+  display: block;
+}
 
-    h2 {
-      font-size: 1.6rem;
-      color: #222;
-      margin-bottom: 1.5rem;
-    }
+.title {
+  @apply text-2xl font-semibold tracking-tight mb-2 text-gray-900;
+}
 
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+.hint {
+  @apply text-sm text-gray-600 mb-4;
+}
 
-      label {
-        text-align: left;
-        font-size: 0.95rem;
-        font-weight: 600;
+form {
+  @apply mt-4;
+}
 
-        input,
-        select {
-          width: 100%;
-          padding: 0.75rem;
-          margin-top: 0.4rem;
-          border: 1px solid #ccc;
-          border-radius: 8px;
-          font-size: 1rem;
-          outline: none;
+.control {
+  @apply mb-3;
+}
 
-          &:focus {
-            border-color: $primary-color;
-          }
-        }
+.control label {
+  @apply text-sm text-gray-700 mb-1 block;
+}
 
-        .password-field {
-          position: relative;
-          display: flex;
-          align-items: center;
+.control input,
+.control select {
+  @apply w-full rounded-lg border border-gray-300 px-3 py-2;
+}
 
-          input {
-            padding-right: 3rem;
-          }
+.error {
+  @apply text-sm text-red-600 mt-1;
+}
 
-          .toggle {
-            position: absolute;
-            right: 0.75rem;
-            background: none;
-            border: none;
-            color: $primary-color;
-            cursor: pointer;
-            font-size: 0.85rem;
-          }
-        }
-      }
+.error.general {
+  @apply text-center;
+}
 
-      .error {
-        color: red;
-        font-size: 0.85rem;
-        margin-top: 0.25rem;
-        display: block;
-      }
+.actions {
+  @apply mt-4;
+}
 
-      .error.general {
-        text-align: center;
-      }
+.actions button {
+  @apply w-full rounded-lg bg-blue-600 text-white px-4 py-2 hover:bg-blue-700;
+}
 
-      .signup-btn {
-        @include button-style($primary-color, #fff);
-        width: 100%;
-        margin-top: 0.5rem;
-      }
-    }
+.links {
+  @apply mt-4 text-center text-sm text-blue-600;
+}
 
-    .links {
-      margin-top: 1rem;
-      font-size: 0.9rem;
+.back {
+  @apply mt-4 text-sm text-gray-600 text-center cursor-pointer;
+}
 
-      span {
-        color: $primary-color;
-        cursor: pointer;
+.back:hover {
+  color: #1d4ed8;
+}
 
-        &:hover {
-          text-decoration: underline;
-        }
-      }
-    }
+.password-field {
+  @apply flex items-center gap-2;
+}
 
-    .back {
-      margin-top: 1.5rem;
-      font-size: 0.9rem;
-      color: #666;
-      cursor: pointer;
+.password-field input {
+  @apply flex-1;
+}
 
-      &:hover {
-        color: $primary-color;
-      }
-    }
-  }
+.password-field .toggle {
+  @apply text-sm text-blue-600;
 }

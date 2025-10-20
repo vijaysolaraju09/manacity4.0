@@ -85,37 +85,39 @@ const Signup = () => {
   return (
     <div className="signup-page">
       <motion.div
-        className="form-card"
+        className="panel"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
       >
         <img src={logo} alt="Manacity Logo" className="logo" onError={(e) => (e.currentTarget.src = fallbackImage)} />
-        <h2>Create Your Account</h2>
+        <h2 className="title">Create Your Account</h2>
+        <p className="hint">Sign up to discover shops, events, and verified services nearby.</p>
 
         <form onSubmit={handleSubmit} noValidate>
-          <label>
-            Name
-            <input type="text" name="name" required value={form.name} onChange={handleChange} />
-            {errors.name && <span className="error">{errors.name}</span>}
-          </label>
+          <div className="control">
+            <label htmlFor="signup-name">Name</label>
+            <input type="text" id="signup-name" name="name" required value={form.name} onChange={handleChange} />
+            {errors.name && <div className="error">{errors.name}</div>}
+          </div>
 
-          <label>
-            Phone Number
-            <input type="tel" name="phone" value={form.phone} onChange={handleChange} />
-            {errors.phone && <span className="error">{errors.phone}</span>}
-          </label>
+          <div className="control">
+            <label htmlFor="signup-phone">Phone Number</label>
+            <input type="tel" id="signup-phone" name="phone" value={form.phone} onChange={handleChange} />
+            {errors.phone && <div className="error">{errors.phone}</div>}
+          </div>
 
-          <label>
-            Email (optional)
-            <input type="email" name="email" value={form.email || ''} onChange={handleChange} />
-            {errors.email && <span className="error">{errors.email}</span>}
-          </label>
+          <div className="control">
+            <label htmlFor="signup-email">Email (optional)</label>
+            <input type="email" id="signup-email" name="email" value={form.email || ''} onChange={handleChange} />
+            {errors.email && <div className="error">{errors.email}</div>}
+          </div>
 
-          <label>
-            Password
+          <div className="control">
+            <label htmlFor="signup-password">Password</label>
             <div className="password-field">
               <input
+                id="signup-password"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 required
@@ -126,32 +128,33 @@ const Signup = () => {
                 {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
-            {errors.password && <span className="error">{errors.password}</span>}
-          </label>
+            {errors.password && <div className="error">{errors.password}</div>}
+          </div>
 
-          <label>
-            Location
-            <select name="location" required value={form.location} onChange={handleChange}>
+          <div className="control">
+            <label htmlFor="signup-location">Location</label>
+            <select id="signup-location" name="location" required value={form.location} onChange={handleChange}>
               <option value="">Select Area</option>
               <option value="Town Center">Town Center</option>
               <option value="Main Road">Main Road</option>
               <option value="North Market">North Market</option>
               <option value="Old Street">Old Street</option>
             </select>
-            {errors.location && <span className="error">{errors.location}</span>}
-          </label>
+            {errors.location && <div className="error">{errors.location}</div>}
+          </div>
 
           {errors.general && <div className="error general">{errors.general}</div>}
 
-          <motion.button
-            type="submit"
-            className="signup-btn"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            disabled={loading}
-          >
-            {loading ? <Loader /> : 'Continue'}
-          </motion.button>
+          <div className="actions">
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              disabled={loading}
+            >
+              {loading ? <Loader /> : 'Continue'}
+            </motion.button>
+          </div>
         </form>
 
         <div className="links">

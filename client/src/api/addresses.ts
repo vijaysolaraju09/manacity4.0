@@ -19,6 +19,7 @@ export interface AddressPayload {
 
 export interface Address extends AddressPayload {
   id: string;
+  lastUsedAt: string | null;
 }
 
 const toIdString = (value: unknown): string | undefined => {
@@ -50,6 +51,8 @@ const normalizeAddress = (input: unknown): Address => {
   const state = typeof value.state === 'string' ? value.state : '';
   const pincode = typeof value.pincode === 'string' ? value.pincode : '';
   const isDefault = value.isDefault === true;
+  const lastUsedAt =
+    typeof value.lastUsedAt === 'string' && value.lastUsedAt ? value.lastUsedAt : null;
 
   const coords = value.coords && typeof value.coords === 'object'
     ? {
@@ -72,6 +75,7 @@ const normalizeAddress = (input: unknown): Address => {
     pincode,
     isDefault,
     coords: coords ?? null,
+    lastUsedAt,
   } satisfies Address;
 };
 

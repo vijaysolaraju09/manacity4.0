@@ -105,6 +105,17 @@ const listMotion = {
   exit: { opacity: 0, y: -12 },
 };
 
+const formatLastUsed = (isoTimestamp: string | null): string | null => {
+  if (!isoTimestamp) return null;
+  const date = new Date(isoTimestamp);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date.toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+};
+
 const Checkout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -523,11 +534,16 @@ const Checkout = () => {
                 <div className="space-y-4">
                   {addresses.length > 0 && (
                     <div className="grid gap-3">
-                      {addresses.map((address) => (
-                        <label
-                          key={address.id}
-                          className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-4 text-sm shadow-sm transition hover:border-blue-200 hover:shadow-md focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 dark:border-slate-800/70 dark:bg-slate-950/60 dark:hover:border-blue-400/40"
-                        >
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        Previously used addresses
+                      </p>
+                      {addresses.map((address) => {
+                        const lastUsedLabel = formatLastUsed(address.lastUsedAt);
+                        return (
+                          <label
+                            key={address.id}
+                            className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-4 text-sm shadow-sm transition hover:border-blue-200 hover:shadow-md focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 dark:border-slate-800/70 dark:bg-slate-950/60 dark:hover:border-blue-400/40"
+                          >
                           <input
                             type="radio"
                             name="checkout-address"
@@ -540,6 +556,11 @@ const Checkout = () => {
                             <span className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
                               <Home className="h-4 w-4" aria-hidden="true" />
                               {address.label}
+                              {address.isDefault ? (
+                                <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
+                                  Default
+                                </span>
+                              ) : null}
                             </span>
                             <span className="block text-sm text-slate-600 dark:text-slate-300">{address.line1}</span>
                             {address.line2 && (
@@ -548,9 +569,15 @@ const Checkout = () => {
                             <span className="block text-sm text-slate-600 dark:text-slate-300">
                               {address.city}, {address.state} {address.pincode}
                             </span>
+                            {lastUsedLabel ? (
+                              <span className="block text-xs text-slate-400 dark:text-slate-500">
+                                Last used {lastUsedLabel}
+                              </span>
+                            ) : null}
                           </div>
                         </label>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 

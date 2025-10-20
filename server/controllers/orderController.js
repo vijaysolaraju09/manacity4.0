@@ -3,6 +3,10 @@ const Product = require('../models/Product');
 const Shop = require('../models/Shop');
 const AppError = require('../utils/AppError');
 const { notifyUser } = require('../services/notificationService');
+const {
+  findAddressesForUser,
+  upsertAddressFromShipping,
+} = require('../services/addressBookService');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -72,6 +76,7 @@ const createShopOrder = async ({
   paymentMethod,
   payment,
   idempotencyKey,
+  userAddresses,
 }) => {
   if (!shopId || !Array.isArray(items) || items.length === 0) {
     throw AppError.badRequest('INVALID_ORDER', 'Invalid order payload');
@@ -138,11 +143,13 @@ const createShopOrder = async ({
   const shippingFee = 0;
   const grandTotal = itemsTotal - discountTotal + taxTotal + shippingFee;
 
-  const userAddresses = Array.isArray(user?.addresses) ? user.addresses : [];
+  const addressBook = Array.isArray(userAddresses)
+    ? userAddresses
+    : await findAddressesForUser(user._id);
   const shippingAddressInput = resolveShippingAddress({
     shippingAddress,
     addressId,
-    userAddresses,
+    userAddresses: addressBook,
   });
 
   const resolvedFulfillmentType =
@@ -226,6 +233,10 @@ const createShopOrder = async ({
     message: `Your order ${code || ''} with ${shop.name} is awaiting shop acceptance.`,
   });
 
+  if (shippingAddressInput) {
+    await upsertAddressFromShipping(user._id, shippingAddressInput);
+  }
+
   return { order, shop, isNew: true };
 };
 
@@ -287,6 +298,8 @@ exports.createOrder = async (req, res, next) => {
 
     const idempotencyKey = req.get('Idempotency-Key');
 
+    const userAddresses = await findAddressesForUser(req.user._id);
+
     const { order, isNew } = await createShopOrder({
       shopId,
       items,
@@ -299,6 +312,7 @@ exports.createOrder = async (req, res, next) => {
       paymentMethod,
       payment,
       idempotencyKey,
+      userAddresses,
     });
 
     const statusCode = isNew ? 201 : 200;
@@ -369,6 +383,8 @@ exports.checkoutOrders = async (req, res, next) => {
     const orders = [];
     let anyNew = false;
 
+    const userAddresses = await findAddressesForUser(req.user._id);
+
     for (const group of groups.values()) {
       const { order, isNew } = await createShopOrder({
         shopId: group.shopId,
@@ -382,6 +398,7 @@ exports.checkoutOrders = async (req, res, next) => {
         paymentMethod,
         payment,
         idempotencyKey: idempotencyKey ? `${idempotencyKey}:${group.shopId}` : undefined,
+        userAddresses,
       });
       anyNew = anyNew || isNew;
       orders.push({ _id: order._id, shopId: order.shop });

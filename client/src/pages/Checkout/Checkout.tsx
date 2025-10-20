@@ -437,6 +437,18 @@ const Checkout = () => {
     navigate(paths.cart());
   }, [navigate]);
 
+  const handleContinueShopping = useCallback(() => {
+    if (typeof paths.shops === 'function') {
+      navigate(paths.shops());
+      return;
+    }
+    if (typeof paths.home === 'function') {
+      navigate(paths.home());
+      return;
+    }
+    navigate('/shops');
+  }, [navigate]);
+
   if (checkoutResult) {
     const orderCount = checkoutResult.orders.length;
     return (
@@ -475,7 +487,7 @@ const Checkout = () => {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Button onClick={() => navigate(paths.orders.mine())}>Go to my orders</Button>
-            <Button variant="outline" onClick={handleGoToCart}>
+            <Button variant="outline" onClick={handleContinueShopping}>
               Continue shopping
             </Button>
           </div>

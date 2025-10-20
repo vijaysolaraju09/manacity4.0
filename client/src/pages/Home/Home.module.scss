@@ -8,7 +8,9 @@
 }
 
 .card {
-  @apply bg-white rounded-2xl shadow-lg;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
   border: 1px solid #e5e7eb;
   transition: transform 0.15s ease;
 }
@@ -18,19 +20,40 @@
 }
 
 .sectionHeader {
-  @apply flex items-center justify-between mb-3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
 
-  h2 {
-    @apply text-xl md:text-2xl font-semibold tracking-tight;
-  }
+.sectionHeader h2 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
 
-  a {
-    @apply text-sm text-gray-600 hover:text-gray-800;
+@media (min-width: 768px) {
+  .sectionHeader h2 {
+    font-size: 1.5rem;
+    line-height: 2rem;
   }
 }
 
+.sectionHeader a {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
+  transition: color 0.2s ease;
+}
+
+.sectionHeader a:hover {
+  color: #1f2937;
+}
+
 .grid {
-  @apply grid gap-4;
+  display: grid;
+  gap: 1rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 

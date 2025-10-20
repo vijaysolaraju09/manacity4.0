@@ -1,27 +1,42 @@
 @reference "../../styles/main.css";
 
 .page {
-  @apply space-y-6;
+  display: flex;
+  flex-direction: column;
+}
+
+.page > * + * {
+  margin-top: 1.5rem;
 }
 
 .header {
-  @apply flex flex-col gap-1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .header h2 {
-  @apply text-2xl font-semibold text-gray-900;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  color: #111827;
 }
 
 .header p {
-  @apply text-sm text-gray-600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
 }
 
 .filters {
-  @apply flex gap-2 mb-4;
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .grid {
-  @apply grid gap-4;
+  display: grid;
+  gap: 1rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -32,7 +47,9 @@
 }
 
 .card {
-  @apply bg-white rounded-2xl shadow-md;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -2px rgba(0,0,0,0.10);
   border: 1px solid #e5e7eb;
   padding: 1rem;
   display: flex;
@@ -55,22 +72,46 @@
 }
 
 .meta {
-  @apply text-sm text-gray-600 space-y-1;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
+}
+
+.meta > * + * {
+  margin-top: 0.25rem;
 }
 
 .badges {
-  @apply flex flex-wrap gap-2 text-xs;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
 }
 
 .badges span {
-  @apply bg-gray-100 px-2 py-1 rounded;
+  background-color: #f3f4f6;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-radius: 0.25rem;
 }
 
 .actions {
-  @apply mt-2 flex items-center gap-2 text-sm text-gray-600;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
   flex-wrap: wrap;
 }
 
 .cardTitle {
-  @apply text-lg font-semibold text-gray-900;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  color: #111827;
 }

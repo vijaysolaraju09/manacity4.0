@@ -1,24 +1,43 @@
 .shop {
-  @apply max-w-7xl mx-auto px-4 py-6 space-y-6;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.shop > * + * {
+  margin-top: 1.5rem;
 }
 
 .header {
-  @apply bg-white rounded-2xl shadow-lg;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
   border: 1px solid #e5e7eb;
   padding: 1rem;
   margin-bottom: 1rem;
 }
 
 .toolbar {
-  @apply flex flex-col gap-3;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .applied {
-  @apply flex flex-wrap gap-2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .grid {
-  @apply grid gap-4;
+  display: grid;
+  gap: 1rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 

@@ -1,33 +1,84 @@
 .tab-layout {
-  @apply flex min-h-screen flex-col bg-gray-50;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background-color: #f9fafb;
 }
 
 .top-header {
-  @apply sticky top-0 z-40 flex items-center justify-between gap-4 border-b bg-white/90 px-4 py-3 backdrop-blur;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #e5e7eb;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  backdrop-filter: blur(8px);
   border-color: #e5e7eb;
 }
 
 .logo {
-  @apply text-lg font-semibold text-gray-900;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  color: #111827;
   cursor: pointer;
 }
 
 .actions {
-  @apply flex items-center gap-3;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .tab-content {
-  @apply flex-1 overflow-y-auto pb-28;
+  flex: 1 1 0%;
+  overflow-y: auto;
+  padding-bottom: 7rem;
 }
 
 .special-shop-btn {
-  @apply fixed bottom-24 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg;
+  position: fixed;
+  bottom: 6rem;
+  right: 1.5rem;
+  display: flex;
+  height: 3rem;
+  width: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
 }
 
 .tab-bar {
-  @apply fixed bottom-0 left-0 right-0 flex items-center justify-around bg-white/95 px-4 py-3 backdrop-blur border-t;
-  border-color: #e5e7eb;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background-color: rgba(255, 255, 255, 0.95);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  backdrop-filter: blur(8px);
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: #e5e7eb;
   gap: 0.5rem;
+  border-color: #e5e7eb;
 }
 
 .tab-bar.tabs {
@@ -39,37 +90,56 @@
 }
 
 .tabs {
-  @apply flex gap-4 border-b;
+  display: flex;
+  gap: 1rem;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #e5e7eb;
   border-color: #e5e7eb;
 }
 
 .tab {
-  @apply py-2 px-3 text-gray-700;
-  @apply flex flex-col items-center gap-1 text-xs font-medium transition-colors;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  color: #374151;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
 }
 
 .tab span {
-  @apply text-xs font-medium;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
 }
 
 .tab svg {
-  @apply h-5 w-5;
+  height: 1.25rem;
+  width: 1.25rem;
 }
 
 .tab.active,
 .active {
-  @apply border-b-2;
-  border-color: #3b82f6;
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+  border-bottom-color: #3b82f6;
   color: #111827;
 }
 
 .tab:hover {
-  @apply text-gray-900;
+  color: #111827;
 }
 
 @media (min-width: 1024px) {
   .tab-layout {
-    @apply flex-row;
+    flex-direction: row;
   }
 
   .top-header {
@@ -77,27 +147,51 @@
   }
 
   .tab-content {
-    @apply pb-0;
+    padding-bottom: 0;
   }
 
   .special-shop-btn {
-    @apply bottom-8;
+    bottom: 2rem;
   }
 
   .tab-bar {
-    @apply static flex h-auto w-64 flex-col items-stretch gap-2 border-r border-t-0 bg-white px-5 py-8;
+    position: static;
+    display: flex;
+    height: auto;
+    width: 16rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    border-right-width: 1px;
+    border-right-style: solid;
+    border-right-color: #e5e7eb;
+    border-top-width: 0;
+    background-color: #ffffff;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
     border-color: #e5e7eb;
   }
 
   .desktop-extras {
-    @apply flex flex-col gap-6;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 
   .tab {
-    @apply flex-row items-center justify-start gap-3 rounded-xl text-sm;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 
   .tab span {
-    @apply text-sm;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 }

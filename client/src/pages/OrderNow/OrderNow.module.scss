@@ -1,19 +1,49 @@
 .orderNow {
-  @apply max-w-3xl mx-auto px-4 py-6 space-y-6 text-center;
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.orderNow > * + * {
+  margin-top: 1.5rem;
 }
 
 .orderNow h2 {
-  @apply text-2xl font-semibold text-gray-900;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  color: #111827;
 }
 
 .orderNow p {
-  @apply text-sm text-gray-600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
 }
 
 .micWrapper {
   width: 120px;
   height: 120px;
-  @apply mx-auto flex items-center justify-center rounded-full bg-blue-500 text-white text-4xl shadow-lg transition-transform;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: #3b82f6;
+  color: #ffffff;
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
+  transition: transform 0.2s ease;
 }
 
 .listening {
@@ -22,35 +52,67 @@
 
 .transcript {
   min-height: 1.5rem;
-  @apply text-base text-gray-700;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  color: #374151;
 }
 
 .textInput {
-  @apply flex items-center justify-center gap-2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .textInput input {
-  @apply flex-1 px-3 py-2 border border-gray-200 rounded-lg;
+  flex: 1 1 0%;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #e5e7eb;
+  border-radius: 0.5rem;
 }
 
 .textInput button {
-  @apply px-4 py-2 bg-blue-500 text-white rounded-lg shadow-sm;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-radius: 0.5rem;
+  border: none;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+  transition: background-color 0.2s ease;
+}
+
+.textInput button:hover {
+  background-color: #2563eb;
 }
 
 .resultsGrid {
-  @apply grid gap-4;
+  display: grid;
+  gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 
 .panel {
-  @apply bg-white rounded-2xl shadow-lg;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
   border: 1px solid #e5e7eb;
   padding: 1rem;
 }
 
 .line {
-  @apply flex justify-between py-2 border-b;
-  border-color: #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .line:last-child {
@@ -58,24 +120,48 @@
 }
 
 .reviewButton {
-  @apply inline-flex items-center justify-center px-5 py-2.5 bg-blue-500 text-white rounded-full shadow-md transition;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-radius: 9999px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -2px rgba(0,0,0,0.10);
+  border: none;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.reviewButton:hover {
+  background-color: #2563eb;
 }
 
 .reviewButton:disabled {
-  @apply opacity-70 cursor-not-allowed;
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .sheetContent {
-  @apply space-y-4;
+  display: flex;
+  flex-direction: column;
+}
+
+.sheetContent > * + * {
+  margin-top: 1rem;
 }
 
 @keyframes pulse {
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.1);
   }
+
   100% {
     transform: scale(1);
   }

@@ -1,12 +1,21 @@
 @reference '../../styles/main.css';
 
 .landing {
-  @apply min-h-screen flex flex-col items-center justify-center text-center px-4;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-left: 1rem;
+  padding-right: 1rem;
   background: linear-gradient(180deg, #f1f5f9 0%, #ffffff 60%);
 }
 
 .card {
-  @apply bg-white rounded-2xl shadow-lg;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
   border: 1px solid #e5e7eb;
   padding: 2.5rem 2rem;
   max-width: 28rem;
@@ -14,7 +23,10 @@
 }
 
 .ctaBand {
-  @apply mt-8 rounded-2xl shadow-lg bg-white;
+  margin-top: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
+  background-color: #ffffff;
   border: 1px solid #e5e7eb;
   padding: 1.5rem;
   max-width: 24rem;
@@ -22,5 +34,8 @@
 }
 
 .ctaBandContent {
-  @apply flex flex-col gap-3 items-center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
 }

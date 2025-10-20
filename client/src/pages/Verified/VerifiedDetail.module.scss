@@ -1,7 +1,9 @@
 @reference "../../styles/main.css";
 
 .hero {
-  @apply bg-white rounded-2xl shadow-lg;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
   border: 1px solid #e5e7eb;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -18,15 +20,26 @@
 }
 
 .heroInfo {
-  @apply flex-1 space-y-1;
+  flex: 1 1 0%;
+}
+
+.heroInfo > * + * {
+  margin-top: 0.25rem;
 }
 
 .heroActions {
-  @apply flex items-center gap-2 text-sm text-gray-600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
 }
 
 .portfolio {
-  @apply grid gap-3 mt-3;
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -38,21 +51,37 @@
 }
 
 .bio {
-  @apply bg-white rounded-2xl shadow-md;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -2px rgba(0,0,0,0.10);
   border: 1px solid #e5e7eb;
   padding: 1rem;
 }
 
 .contactButtons {
-  @apply flex gap-3;
+  display: flex;
+  gap: 0.75rem;
 }
 
 .contactButtons button {
-  @apply px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: #2563eb;
+  color: #ffffff;
+  transition: background-color 0.2s ease;
+}
+
+.contactButtons button:hover {
+  background-color: #1d4ed8;
 }
 
 .meta {
-  @apply text-sm text-gray-600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
 }
 
 .badge {

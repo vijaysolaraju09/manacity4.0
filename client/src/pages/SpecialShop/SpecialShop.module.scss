@@ -1,69 +1,29 @@
-@reference "../../styles/main.css";
-@import "../../styles/mixins";
-@import "../../styles/variables";
-
 .shop {
-  padding: 1rem;
-  @include respond(md) {
-    padding: 2rem;
-  }
-
-  .toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: #fff;
-    padding-bottom: 0.75rem;
-    margin-bottom: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    border-bottom: 1px solid #eee;
-
-    input {
-      width: 100%;
-    }
-  }
-
-  .applied {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(2, 1fr);
-
-    @include respond(md) {
-      grid-template-columns: repeat(3, 1fr);
-    }
-    @include respond(lg) {
-      grid-template-columns: repeat(4, 1fr);
-    }
-    @include respond(xl) {
-      grid-template-columns: repeat(5, 1fr);
-    }
-  }
-
-  .card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    padding: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
+  @apply max-w-7xl mx-auto px-4 py-6 space-y-6;
 }
 
+.header {
+  @apply bg-white rounded-2xl shadow-lg;
+  border: 1px solid #e5e7eb;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.toolbar {
+  @apply flex flex-col gap-3;
+}
+
+.applied {
+  @apply flex flex-wrap gap-2;
+}
+
+.grid {
+  @apply grid gap-4;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

@@ -74,48 +74,50 @@ const SpecialShop = () => {
 
   return (
     <div className={styles.shop}>
-      <div className={styles.toolbar}>
-        <input
-          type="text"
-          className="input"
-          placeholder="Search products"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-        />
-        <FacetFilterBar
-          categories={categories}
-          activeCategory={category}
-          onCategoryChange={(c) => {
-            setCategory(c);
-            setPage(1);
-          }}
-          price={price}
-          minPrice={minPrice}
-          maxPrice={maxPrice}
-          onPriceChange={(p) => {
-            setPrice(p);
-            setPage(1);
-          }}
-          rating={rating}
-          onRatingChange={(r) => {
-            setRating(r);
-            setPage(1);
-          }}
-          available={available}
-          onAvailabilityChange={(v) => {
-            setAvailable(v);
-            setPage(1);
-          }}
-          sort={sort}
-          sortOptions={SORT_OPTIONS}
-          onSortChange={(v) => {
-            setSort(v);
-            setPage(1);
-          }}
-        />
+      <div className={styles.header}>
+        <div className={styles.toolbar}>
+          <input
+            type="text"
+            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm"
+            placeholder="Search products"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
+          <FacetFilterBar
+            categories={categories}
+            activeCategory={category}
+            onCategoryChange={(c) => {
+              setCategory(c);
+              setPage(1);
+            }}
+            price={price}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            onPriceChange={(p) => {
+              setPrice(p);
+              setPage(1);
+            }}
+            rating={rating}
+            onRatingChange={(r) => {
+              setRating(r);
+              setPage(1);
+            }}
+            available={available}
+            onAvailabilityChange={(v) => {
+              setAvailable(v);
+              setPage(1);
+            }}
+            sort={sort}
+            sortOptions={SORT_OPTIONS}
+            onSortChange={(v) => {
+              setSort(v);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
 
       <div className={styles.grid}>

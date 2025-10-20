@@ -1,0 +1,72 @@
+.page {
+  @apply space-y-6 px-4 py-6 md:px-6 lg:px-8;
+}
+
+.filters {
+  @apply flex flex-wrap gap-2 border-b pb-4;
+  border-color: #e5e7eb;
+}
+
+.filterButton {
+  @apply px-3 py-1.5 text-sm text-gray-600 rounded-full border border-gray-200 transition-colors;
+}
+
+.active {
+  @apply bg-blue-500 text-white shadow-sm;
+  border-color: transparent;
+}
+
+.group {
+  @apply space-y-4;
+}
+
+.title {
+  @apply font-medium;
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-md;
+  border: 1px solid #e5e7eb;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.content {
+  @apply flex flex-col gap-2;
+}
+
+.meta {
+  @apply text-sm text-gray-600;
+}
+
+.actions {
+  @apply flex flex-wrap gap-2;
+}
+
+.actions button {
+  @apply px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-full transition-colors;
+}
+
+.actions button:hover {
+  @apply text-gray-800;
+  background-color: rgba(59, 130, 246, 0.08);
+  border-color: #3b82f6;
+}
+
+@media (min-width: 768px) {
+  .card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .content {
+    @apply flex-1;
+  }
+
+  .actions {
+    @apply justify-end;
+  }
+}

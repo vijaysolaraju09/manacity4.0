@@ -28,9 +28,9 @@ const TabLayout = () => {
     { name: "Home", icon: Home, path: paths.home() },
     { name: "Shops", icon: Store, path: paths.shops() },
     {
-      name: "Verified",
+      name: "Services",
       icon: Users,
-      path: paths.verifiedUsers.list(),
+      path: paths.services.catalog(),
     },
     { name: "Events", icon: CalendarDays, path: paths.events.list() },
   ];

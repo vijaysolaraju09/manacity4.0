@@ -11,6 +11,11 @@ export const paths = {
   shop: (id: string = ':id') => `/shops/${id}`,
   specialShop: () => '/special-shop',
   voiceOrder: () => '/voice-order',
+  services: {
+    catalog: () => '/services',
+    detail: (id: string = ':id') => `/services/${id}`,
+    request: () => '/services/request',
+  },
   verified: () => '/verified',
   verifiedUsers: {
     list: () => '/verified-users',
@@ -44,6 +49,8 @@ export const paths = {
     events: () => '/admin/events',
     users: () => '/admin/users',
     analytics: () => '/admin/analytics',
+    services: () => '/admin/services',
+    serviceRequests: () => '/admin/service-requests',
   },
   events: {
     list: () => '/events',

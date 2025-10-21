@@ -54,6 +54,12 @@ const AdminLayout = () => {
             <li>
               <NavLink to={paths.admin.analytics()}>Analytics</NavLink>
             </li>
+            <li>
+              <NavLink to={paths.admin.services()}>Services</NavLink>
+            </li>
+            <li>
+              <NavLink to={paths.admin.serviceRequests()}>Service Requests</NavLink>
+            </li>
           </ul>
         </nav>
       </aside>

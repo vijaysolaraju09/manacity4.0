@@ -12,6 +12,8 @@ import eventLeaderboardReducer from './eventLeaderboard';
 import eventBracketReducer from './eventBracket';
 import catalogReducer from './products';
 import verifiedReducer from './verified';
+import servicesReducer from './services';
+import serviceRequestsReducer from './serviceRequests';
 import notifsReducer from './notifs';
 import ordersReducer from './orders';
 import userProfileReducer from './user';
@@ -32,6 +34,8 @@ export const store = configureStore({
     eventBracket: eventBracketReducer,
     catalog: catalogReducer,
     verified: verifiedReducer,
+    services: servicesReducer,
+    serviceRequests: serviceRequestsReducer,
     notifs: notifsReducer,
     orders: ordersReducer,
     userProfile: userProfileReducer,

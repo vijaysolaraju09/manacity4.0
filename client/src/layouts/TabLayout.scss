@@ -155,9 +155,12 @@
   }
 
   .tab-bar {
-    position: static;
+    position: sticky;
+    top: 0;
+    bottom: auto;
+    left: auto;
+    right: auto;
     display: flex;
-    height: auto;
     width: 16rem;
     flex-direction: column;
     align-items: stretch;
@@ -172,12 +175,22 @@
     padding-top: 2rem;
     padding-bottom: 2rem;
     border-color: #e5e7eb;
+    min-height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    order: -1;
   }
 
   .desktop-extras {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+  }
+
+  .tabs {
+    flex-direction: column;
+    gap: 0.25rem;
+    border-bottom-width: 0;
   }
 
   .tab {
@@ -188,6 +201,7 @@
     border-radius: 0.75rem;
     font-size: 0.875rem;
     line-height: 1.25rem;
+    width: 100%;
   }
 
   .tab span {

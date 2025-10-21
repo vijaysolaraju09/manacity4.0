@@ -29,10 +29,16 @@ const AdminServices = () => {
   }, [dispatch, servicesState.status]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type, checked } = event.target;
+    const target = event.target as HTMLInputElement | HTMLTextAreaElement;
+    const { name } = target;
+    const value =
+      target instanceof HTMLInputElement && target.type === 'checkbox'
+        ? target.checked
+        : target.value;
+
     setForm((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     }));
   };
 
@@ -69,7 +75,12 @@ const AdminServices = () => {
     dispatch(
       updateService({
         id: service._id,
-        payload: { isActive: service.isActive === false },
+        payload: {
+          name: service.name,
+          description: service.description ?? '',
+          icon: service.icon ?? '',
+          isActive: service.isActive === false,
+        },
       })
     );
   };

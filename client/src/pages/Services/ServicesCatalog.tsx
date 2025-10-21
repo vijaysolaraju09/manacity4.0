@@ -33,16 +33,6 @@ const ServicesCatalog = () => {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Services</h1>
-        <p className={styles.subtitle}>
-          Browse the service catalog curated by the Manacity admin team or raise a request for something custom.
-        </p>
-        <div className={styles.actions}>
-          <Button onClick={handleRequestService}>Request a Service</Button>
-        </div>
-      </div>
-
       {servicesState.status === 'loading' ? (
         <SkeletonList count={6} />
       ) : servicesState.status === 'failed' ? (

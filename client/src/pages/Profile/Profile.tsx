@@ -594,12 +594,6 @@ const Profile = () => {
                   ) : null}
                 </div>
                 <div className={styles.divider} />
-                <div>
-                  <h2 className={styles.sectionTitle}>Account dashboard</h2>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">
-                    Review and manage your personal information, contact details and addresses in the dashboard below.
-                  </p>
-                </div>
                 {quickActions.length > 0 ? (
                   <>
                     <div className={styles.divider} />

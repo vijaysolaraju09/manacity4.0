@@ -34,6 +34,25 @@ export interface ServiceProvider {
   source?: string;
 }
 
+export type ServiceRequestStatus = 'open' | 'offered' | 'assigned' | 'completed' | 'closed';
+
+export interface ServiceRequestOffer {
+  _id: string;
+  providerId: string;
+  provider?: ServiceProviderUser | null;
+  note: string;
+  contact?: string;
+  createdAt?: string;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+
+export interface ServiceRequestHistoryEntry {
+  at: string | null;
+  by: string | null;
+  type: 'created' | 'offer' | 'assigned' | 'completed' | 'closed' | 'reopened' | 'admin_note';
+  message?: string | null;
+}
+
 export interface ServiceRequest {
   _id: string;
   id: string;
@@ -46,12 +65,34 @@ export interface ServiceRequest {
   phone?: string;
   preferredDate?: string;
   preferredTime?: string;
-  status: 'open' | 'assigned' | 'closed' | 'rejected';
+  visibility: 'public' | 'private';
+  status: ServiceRequestStatus;
   adminNotes?: string;
+  reopenedCount: number;
+  assignedProviderId: string | null;
+  assignedProvider?: ServiceProviderUser | null;
   assignedProviders?: ServiceProviderUser[];
   assignedProviderIds?: string[];
+  offers: ServiceRequestOffer[];
+  offersCount: number;
+  history: ServiceRequestHistoryEntry[];
+  isAnonymizedPublic?: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface PublicServiceRequest {
+  _id: string;
+  id: string;
+  serviceId: string | null;
+  title: string;
+  description: string;
+  location: string;
+  createdAt: string | null;
+  status: ServiceRequestStatus;
+  offersCount: number;
+  visibility: 'public' | 'private';
+  requester: string;
 }
 
 export interface CreateServiceRequestPayload {
@@ -62,12 +103,23 @@ export interface CreateServiceRequestPayload {
   phone?: string;
   preferredDate?: string;
   preferredTime?: string;
+  visibility?: 'public' | 'private';
 }
 
 export interface UpdateServiceRequestPayload {
-  status?: ServiceRequest['status'];
+  status?: ServiceRequestStatus;
   adminNotes?: string;
   assignedProviderIds?: string[];
+  assignedProviderId?: string | null;
+}
+
+export interface SubmitServiceOfferPayload {
+  note?: string;
+  contact: string;
+}
+
+export interface ActOnServiceOfferPayload {
+  action: 'accept' | 'reject';
 }
 
 export interface UpsertServicePayload {

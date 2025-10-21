@@ -15,14 +15,25 @@ const TabLayout = () => {
   const navigate = useNavigate();
   const unread = useSelector((state: RootState) => state.notifs.unread);
   const notifStatus = useSelector((state: RootState) => state.notifs.status);
+  const isAuthenticated = useSelector((state: RootState) => Boolean(state.auth.token));
   const cartItemCount = useSelector(selectItemCount);
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    if (notifStatus === 'idle') {
+    if (isAuthenticated && notifStatus === 'idle') {
       dispatch(fetchNotifs({ page: 1 }));
     }
-  }, [notifStatus, dispatch]);
+  }, [notifStatus, dispatch, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+    const interval = window.setInterval(() => {
+      dispatch(fetchNotifs({ page: 1 }));
+    }, 45000);
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [dispatch, isAuthenticated]);
 
   const tabs = [
     { name: "Home", icon: Home, path: paths.home() },

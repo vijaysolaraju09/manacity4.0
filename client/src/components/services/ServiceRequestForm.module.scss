@@ -40,6 +40,24 @@
   color: #6b7280;
 }
 
+.choiceRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.choice input {
+  margin-top: 0.25rem;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

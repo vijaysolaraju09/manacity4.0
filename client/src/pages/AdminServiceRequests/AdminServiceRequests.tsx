@@ -7,12 +7,13 @@ import {
 } from '@/store/serviceRequests';
 import type { AppDispatch, RootState } from '@/store';
 
-const statusOptions: Array<'all' | 'open' | 'assigned' | 'closed' | 'rejected'> = [
+const statusOptions: Array<'all' | 'open' | 'offered' | 'assigned' | 'completed' | 'closed'> = [
   'all',
   'open',
+  'offered',
   'assigned',
+  'completed',
   'closed',
-  'rejected',
 ];
 
 type EditableState = {
@@ -24,7 +25,7 @@ type EditableState = {
 const AdminServiceRequests = () => {
   const dispatch = useDispatch<AppDispatch>();
   const adminState = useSelector((state: RootState) => state.serviceRequests.admin);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'assigned' | 'closed' | 'rejected'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'offered' | 'assigned' | 'completed' | 'closed'>('all');
   const [drafts, setDrafts] = useState<Record<string, EditableState>>({});
 
   useEffect(() => {

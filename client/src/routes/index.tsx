@@ -16,6 +16,10 @@ const Shops = lazy(() => import('@/pages/Shops/Shops'));
 const ShopDetails = lazy(() => import('@/pages/ShopDetails/ShopDetails'));
 const ProductDetails = lazy(() => import('@/pages/ProductDetails/ProductDetails'));
 const EventDetails = lazy(() => import('@/pages/EventDetails/EventDetails'));
+const ServicesCatalog = lazy(() => import('@/pages/Services/ServicesCatalog'));
+const ServiceProviders = lazy(() => import('@/pages/Services/ServiceProviders'));
+const ServiceRequest = lazy(() => import('@/pages/Services/ServiceRequest'));
+const LegacyVerified = lazy(() => import('@/pages/Services/LegacyVerified'));
 const VerifiedDetails = lazy(() => import('@/pages/Verified/Details'));
 const VerifiedList = lazy(() => import('@/pages/Verified/List'));
 const SpecialShop = lazy(() => import('@/pages/SpecialShop/SpecialShop'));
@@ -37,6 +41,8 @@ const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
 const AdminShops = lazy(() => import('@/pages/AdminShops'));
 const AdminProducts = lazy(() => import('@/pages/AdminProducts'));
 const AdminEvents = lazy(() => import('@/pages/AdminEvents'));
+const AdminServicesPage = lazy(() => import('@/pages/AdminServices'));
+const AdminServiceRequestsPage = lazy(() => import('@/pages/AdminServiceRequests'));
 const VerificationRequests = lazy(() => import('@/pages/VerificationRequests'));
 const BusinessRequests = lazy(() => import('@/pages/BusinessRequests'));
 const AdminUsers = lazy(() => import('@/pages/AdminUsers'));
@@ -72,6 +78,8 @@ const AppRoutes = () => (
           <Route key="admin-events" path="events" element={<AdminEvents />} />
           <Route key="admin-users" path="users" element={<AdminUsers />} />
           <Route key="admin-analytics" path="analytics" element={<AdminAnalytics />} />
+          <Route key="admin-services" path="services" element={<AdminServicesPage />} />
+          <Route key="admin-service-requests" path="service-requests" element={<AdminServiceRequestsPage />} />
           <Route key="admin-requests" path="requests" element={<SuspendedOutlet />}>
             <Route
               key="admin-requests-business"
@@ -92,7 +100,10 @@ const AppRoutes = () => (
           <Route key="home" path="home" element={<Home />} />
           <Route key="shops" path="shops" element={<Shops />} />
           <Route key="products" path="products" element={<ProductsList />} />
+          <Route key="services" path="services" element={<ServicesCatalog />} />
+          <Route key="service-request" path="services/request" element={<ServiceRequest />} />
           <Route key="verified-list" path="verified-users" element={<VerifiedList />} />
+          <Route key="legacy-verified" path="verified" element={<LegacyVerified />} />
           <Route key="events" path="events" element={<Events />} />
           <Route key="special-shop" path="special-shop" element={<SpecialShop />} />
           <Route key="voice-order" path="voice-order" element={<VoiceOrder />} />
@@ -108,6 +119,7 @@ const AppRoutes = () => (
         <Route key="shop-details" path="shops/:id" element={<ShopDetails />} />
         <Route key="product-details" path="product/:id" element={<ProductDetails />} />
         <Route key="event-details" path="events/:id" element={<EventDetails />} />
+        <Route key="service-providers" path="services/:id" element={<ServiceProviders />} />
         <Route
           key="verified-details"
           path="verified-users/:id"

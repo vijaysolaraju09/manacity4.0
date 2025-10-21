@@ -8,7 +8,7 @@ import ProductCard from '../../components/ui/ProductCard.tsx';
 import SectionHeader from '../../components/ui/SectionHeader';
 import EmptyState from '../../components/ui/EmptyState';
 import { fetchShops } from '@/store/shops';
-import { fetchVerified } from '@/store/verified';
+import { fetchServices } from '@/store/services';
 import { createEventsQueryKey, fetchEvents } from '@/store/events';
 import { fetchSpecialProducts } from '@/store/products';
 import { http } from '@/lib/http';
@@ -21,7 +21,7 @@ import ErrorCard from '@/components/ui/ErrorCard';
 import SkeletonList from '@/components/ui/SkeletonList';
 import fallbackImage from '../../assets/no-image.svg';
 import { formatDateTime } from '@/utils/date';
-import VerifiedCard from '@/components/ui/VerifiedCard/VerifiedCard';
+import ServiceCard from '@/components/services/ServiceCard';
 import { paths } from '@/routes/paths';
 import ShopCard from '@/components/ui/ShopCard/ShopCard';
 import Button from '@/components/ui/button';
@@ -36,7 +36,7 @@ const Home = () => {
   const [bannerError, setBannerError] = useState<string | null>(null);
 
   const shops = useSelector((s: RootState) => s.shops);
-  const verified = useSelector((s: RootState) => s.verified);
+  const services = useSelector((s: RootState) => s.services);
   const events = useSelector((s: RootState) => s.events.list);
   const products = useSelector((s: RootState) => s.catalog);
 
@@ -73,9 +73,9 @@ const Home = () => {
 
   useEffect(() => {
     if (shops.status === 'idle') d(fetchShops({ sort: '-createdAt', pageSize: 10 }));
-    if (verified.status === 'idle') d(fetchVerified({ pageSize: 10 }));
+    if (services.status === 'idle') d(fetchServices(undefined));
     if (products.status === 'idle') d(fetchSpecialProducts({ pageSize: 10 }));
-  }, [shops.status, verified.status, products.status, d]);
+  }, [shops.status, services.status, products.status, d]);
 
   useEffect(() => {
     if (events.status === 'loading') return;
@@ -190,14 +190,15 @@ const Home = () => {
         linkLabel="See all shops"
       />
       <Section
-        title="Verified Users"
-        path={paths.verifiedUsers.list()}
-        data={verified.items}
-        status={verified.status}
-        error={verified.error}
-        type="user"
-        onRetry={() => d(fetchVerified({ pageSize: 10 }))}
+        title="Services"
+        path={paths.services.catalog()}
+        data={services.items}
+        status={services.status}
+        error={services.error}
+        type="service"
+        onRetry={() => d(fetchServices(undefined))}
         navigate={navigate}
+        linkLabel="See all services"
       />
       <Section
         title="Events"
@@ -230,7 +231,7 @@ interface SectionProps {
   data: any[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
-  type: 'product' | 'user' | 'event' | 'shop';
+  type: 'product' | 'event' | 'shop' | 'service';
   onRetry: () => void;
   navigate: ReturnType<typeof useNavigate>;
   linkLabel?: string;
@@ -262,6 +263,8 @@ const Section = ({
           <ProductsSkeleton />
         ) : type === 'event' ? (
           <EventsSkeleton />
+        ) : type === 'service' ? (
+          <SkeletonList count={4} />
         ) : (
           <ShopsSkeleton />
         )}
@@ -311,12 +314,12 @@ const Section = ({
             );
           }
 
-          if (type === 'user') {
+          if (type === 'service') {
             return (
-              <VerifiedCard
+              <ServiceCard
                 key={item._id}
-                card={item}
-                onClick={() => navigate(paths.verifiedUsers.detail(item._id))}
+                service={item}
+                onClick={() => navigate(paths.services.detail(item._id))}
               />
             );
           }

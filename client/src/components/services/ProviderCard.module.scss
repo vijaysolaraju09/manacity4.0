@@ -1,0 +1,72 @@
+@reference "../../styles/main.css";
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 9999px;
+  object-fit: cover;
+  background-color: #f3f4f6;
+  flex-shrink: 0;
+}
+
+.info {
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.meta {
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.actions {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #2563eb;
+  background-color: rgba(37, 99, 235, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.75rem;
+}
+
+.note {
+  font-size: 0.85rem;
+  color: #6b7280;
+}

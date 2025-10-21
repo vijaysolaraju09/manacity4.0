@@ -27,6 +27,10 @@ const productRoutes = require("./routes/productRoutes");
 const adminUserRoutes = require("./routes/adminUserRoutes");
 const adminEventRoutes = require("./routes/adminEventRoutes");
 const proRoutes = require("./routes/proRoutes");
+const serviceRoutes = require("./routes/serviceRoutes");
+const serviceRequestRoutes = require("./routes/serviceRequestRoutes");
+const adminServiceRoutes = require("./routes/adminServiceRoutes");
+const adminServiceRequestRoutes = require("./routes/adminServiceRequestRoutes");
 const AppError = require("./utils/AppError");
 const logger = require("./utils/logger");
 
@@ -90,6 +94,10 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/pros", proRoutes);
+app.use("/api/services", serviceRoutes);
+app.use("/api/service-requests", serviceRequestRoutes);
+app.use("/api/admin/services", adminServiceRoutes);
+app.use("/api/admin/service-requests", adminServiceRequestRoutes);
 
 if (process.env.NODE_ENV === "production") {
   const clientPath = path.join(__dirname, "..", "client", "dist");

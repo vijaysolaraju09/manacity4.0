@@ -1,0 +1,78 @@
+.admin-services {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.admin-services__form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 480px;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+}
+
+.admin-services__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.admin-services__form input,
+.admin-services__form textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.admin-services__form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.admin-services__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-services__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+}
+
+.admin-services__item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.admin-services__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-services__status {
+  font-size: 0.85rem;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.admin-services__error {
+  color: #dc2626;
+}
+
+.admin-services__success {
+  color: #047857;
+}

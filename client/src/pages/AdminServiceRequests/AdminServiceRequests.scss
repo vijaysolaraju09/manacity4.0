@@ -1,0 +1,70 @@
+.admin-service-requests {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.admin-service-requests__filters {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-service-requests__filters select {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.admin-service-requests__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-service-requests__item {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-service-requests__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-service-requests__item label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.admin-service-requests__item select,
+.admin-service-requests__item textarea,
+.admin-service-requests__item input {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.admin-service-requests__item textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.admin-service-requests__status {
+  font-size: 0.85rem;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.admin-service-requests__error {
+  color: #dc2626;
+}

@@ -3,6 +3,11 @@
 .page {
   display: flex;
   flex-direction: column;
+  padding: 1.5rem 1rem 4rem;
+
+  @media (min-width: 768px) {
+    padding: 2rem 2.5rem 4rem;
+  }
 }
 
 .page > * + * {

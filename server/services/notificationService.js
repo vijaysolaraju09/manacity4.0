@@ -20,6 +20,7 @@ const sanitizeEntries = (entries = []) =>
       return {
         userId,
         type: entry.type || 'system',
+        subType: entry.subType ? String(entry.subType).trim() : undefined,
         message,
         read: entry.read ?? false,
       };

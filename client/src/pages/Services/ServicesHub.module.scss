@@ -1,0 +1,105 @@
+.page {
+  min-height: 100dvh;
+  background: #f9fafb;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.subtitle {
+  color: #4b5563;
+  max-width: 48rem;
+  line-height: 1.5;
+}
+
+.navRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.25rem;
+}
+
+.tab {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tabActive {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.requestButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subTabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.subTab {
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.subTabActive {
+  background: #dbeafe;
+  border-color: #60a5fa;
+  color: #1d4ed8;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 640px) {
+  .navRow {
+    align-items: stretch;
+  }
+
+  .tabs {
+    width: 100%;
+  }
+
+  .requestButton {
+    width: 100%;
+    justify-content: center;
+  }
+}

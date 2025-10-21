@@ -13,6 +13,8 @@ export const paths = {
   voiceOrder: () => '/voice-order',
   services: {
     catalog: () => '/services',
+    requests: () => '/services/requests',
+    requestsMine: () => '/services/requests/mine',
     detail: (id: string = ':id') => `/services/${id}`,
     request: () => '/services/request',
   },

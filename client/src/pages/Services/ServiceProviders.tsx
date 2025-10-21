@@ -65,6 +65,9 @@ const ServiceProviders = () => {
         <p className={styles.subtitle}>
           {service?.description || 'Discover professionals who can help. If no one is available, raise a request and we will follow up.'}
         </p>
+        <button type="button" className={styles.inlineLink} onClick={handleRequestService}>
+          Can’t find a provider? Create a request
+        </button>
         <div className={styles.actions}>
           <Button onClick={handleRequestService}>Raise Service Request</Button>
         </div>

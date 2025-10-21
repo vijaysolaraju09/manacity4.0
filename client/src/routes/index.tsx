@@ -16,9 +16,12 @@ const Shops = lazy(() => import('@/pages/Shops/Shops'));
 const ShopDetails = lazy(() => import('@/pages/ShopDetails/ShopDetails'));
 const ProductDetails = lazy(() => import('@/pages/ProductDetails/ProductDetails'));
 const EventDetails = lazy(() => import('@/pages/EventDetails/EventDetails'));
+const ServicesHub = lazy(() => import('@/pages/Services/ServicesHub'));
 const ServicesCatalog = lazy(() => import('@/pages/Services/ServicesCatalog'));
+const PublicRequests = lazy(() => import('@/pages/Services/PublicRequests'));
+const MyRequests = lazy(() => import('@/pages/Services/MyRequests'));
 const ServiceProviders = lazy(() => import('@/pages/Services/ServiceProviders'));
-const ServiceRequest = lazy(() => import('@/pages/Services/ServiceRequest'));
+const ServiceRequestFormPage = lazy(() => import('@/pages/Services/ServiceRequestForm'));
 const LegacyVerified = lazy(() => import('@/pages/Services/LegacyVerified'));
 const VerifiedDetails = lazy(() => import('@/pages/Verified/Details'));
 const VerifiedList = lazy(() => import('@/pages/Verified/List'));
@@ -100,8 +103,12 @@ const AppRoutes = () => (
           <Route key="home" path="home" element={<Home />} />
           <Route key="shops" path="shops" element={<Shops />} />
           <Route key="products" path="products" element={<ProductsList />} />
-          <Route key="services" path="services" element={<ServicesCatalog />} />
-          <Route key="service-request" path="services/request" element={<ServiceRequest />} />
+          <Route key="services" path="services" element={<ServicesHub />}>
+            <Route index element={<ServicesCatalog />} />
+            <Route path="requests" element={<PublicRequests />} />
+            <Route path="requests/mine" element={<MyRequests />} />
+          </Route>
+          <Route key="service-request" path="services/request" element={<ServiceRequestFormPage />} />
           <Route key="verified-list" path="verified-users" element={<VerifiedList />} />
           <Route key="legacy-verified" path="verified" element={<LegacyVerified />} />
           <Route key="events" path="events" element={<Events />} />

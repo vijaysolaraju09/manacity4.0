@@ -12,6 +12,7 @@ interface ServiceRequestFormProps {
   initialServiceId?: string;
   initialPhone?: string;
   initialCustomName?: string;
+  initialVisibility?: 'public' | 'private';
 }
 
 const OTHER_OPTION = 'other';
@@ -25,6 +26,7 @@ const ServiceRequestForm = ({
   initialServiceId,
   initialPhone,
   initialCustomName,
+  initialVisibility = 'public',
 }: ServiceRequestFormProps) => {
   const serviceOptions = useMemo(() => services ?? [], [services]);
   const initialSelection = useMemo(() => {
@@ -40,6 +42,7 @@ const ServiceRequestForm = ({
   const [phone, setPhone] = useState(initialPhone ?? '');
   const [preferredDate, setPreferredDate] = useState('');
   const [preferredTime, setPreferredTime] = useState('');
+  const [visibility, setVisibility] = useState<'public' | 'private'>(initialVisibility);
   const [localError, setLocalError] = useState<string | null>(null);
   const [hasAppliedInitialService, setHasAppliedInitialService] = useState(false);
   const [hasAppliedInitialCustomName, setHasAppliedInitialCustomName] = useState(false);
@@ -53,9 +56,10 @@ const ServiceRequestForm = ({
       setPhone(initialPhone ?? '');
       setPreferredDate('');
       setPreferredTime('');
+      setVisibility(initialVisibility);
       setLocalError(null);
     }
-  }, [successMessage, initialSelection, initialPhone]);
+  }, [successMessage, initialSelection, initialPhone, initialVisibility]);
 
   useEffect(() => {
     if (initialSelection && !hasAppliedInitialService) {
@@ -98,6 +102,7 @@ const ServiceRequestForm = ({
 
     if (!showCustomField && serviceId) payload.serviceId = serviceId;
     if (showCustomField && trimmedCustom) payload.customName = trimmedCustom;
+    payload.visibility = visibility;
 
     onSubmit(payload);
   };
@@ -191,6 +196,37 @@ const ServiceRequestForm = ({
           onChange={(event) => setPhone(event.target.value)}
           disabled={submitting}
         />
+      </div>
+
+      <div className={styles.field}>
+        <span className={styles.label}>Visibility</span>
+        <div className={styles.choiceRow}>
+          <label className={styles.choice}>
+            <input
+              type="radio"
+              name="visibility"
+              value="public"
+              checked={visibility === 'public'}
+              onChange={() => setVisibility('public')}
+              disabled={submitting}
+            />
+            <span>
+              Public – providers can discover this request. Your contact details stay hidden until you
+              accept an offer.
+            </span>
+          </label>
+          <label className={styles.choice}>
+            <input
+              type="radio"
+              name="visibility"
+              value="private"
+              checked={visibility === 'private'}
+              onChange={() => setVisibility('private')}
+              disabled={submitting}
+            />
+            <span>Private – only admins can view and assign providers.</span>
+          </label>
+        </div>
       </div>
 
       <div className={styles.field}>

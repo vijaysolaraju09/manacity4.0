@@ -30,6 +30,16 @@
   color: #4b5563;
 }
 
+.inlineLink {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #2563eb;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
 .list {
   display: flex;
   flex-direction: column;

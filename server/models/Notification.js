@@ -5,9 +5,10 @@ const notificationSchema = new Schema(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     type: {
       type: String,
-      enum: ['order', 'system', 'offer', 'event'],
+      enum: ['order', 'system', 'offer', 'event', 'service_request'],
       required: true,
     },
+    subType: { type: String, trim: true },
     message: { type: String, required: true },
     read: { type: Boolean, default: false },
   },

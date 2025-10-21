@@ -636,9 +636,6 @@ const Profile = () => {
                     {verificationButtonLabel}
                   </Button>
                 </div>
-                <div className="rounded-xl border border-dashed border-slate-200/80 bg-white/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-white/40 dark:text-slate-300">
-                  Keep your profile complete to get personalised recommendations and quicker approvals for business features.
-                </div>
               </div>
             </motion.section>
             <motion.section

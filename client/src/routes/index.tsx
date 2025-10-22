@@ -43,7 +43,12 @@ const AdminLogin = lazy(() => import('@/pages/AdminLogin/AdminLogin'));
 const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
 const AdminShops = lazy(() => import('@/pages/AdminShops'));
 const AdminProducts = lazy(() => import('@/pages/AdminProducts'));
-const AdminEvents = lazy(() => import('@/pages/AdminEvents'));
+const AdminEventsRoot = lazy(() => import('@/pages/AdminEvents'));
+const AdminEventsListPage = lazy(() => import('@/pages/AdminEvents/AdminEventsListPage'));
+const AdminEventManageLayout = lazy(() => import('@/pages/AdminEvents/AdminEventManageLayout'));
+const AdminEventEditorPage = lazy(() => import('@/pages/AdminEvents/AdminEventEditorPage'));
+const AdminEventRegistrationsPage = lazy(() => import('@/pages/AdminEvents/AdminEventRegistrationsPage'));
+const AdminEventLeaderboardPage = lazy(() => import('@/pages/AdminEvents/AdminEventLeaderboardPage'));
 const AdminServicesPage = lazy(() => import('@/pages/AdminServices'));
 const AdminServiceRequestsPage = lazy(() => import('@/pages/AdminServiceRequests'));
 const VerificationRequests = lazy(() => import('@/pages/VerificationRequests'));
@@ -78,7 +83,15 @@ const AppRoutes = () => (
           <Route key="admin-dashboard" index element={<AdminDashboard />} />
           <Route key="admin-shops" path="shops" element={<AdminShops />} />
           <Route key="admin-products" path="products" element={<AdminProducts />} />
-          <Route key="admin-events" path="events" element={<AdminEvents />} />
+          <Route key="admin-events" path="events" element={<AdminEventsRoot />}>
+            <Route index element={<AdminEventsListPage />} />
+            <Route path="new" element={<AdminEventEditorPage mode="create" />} />
+            <Route path=":eventId" element={<AdminEventManageLayout />}>
+              <Route index element={<AdminEventEditorPage />} />
+              <Route path="registrations" element={<AdminEventRegistrationsPage />} />
+              <Route path="leaderboard" element={<AdminEventLeaderboardPage />} />
+            </Route>
+          </Route>
           <Route key="admin-users" path="users" element={<AdminUsers />} />
           <Route key="admin-analytics" path="analytics" element={<AdminAnalytics />} />
           <Route key="admin-services" path="services" element={<AdminServicesPage />} />

@@ -46,7 +46,7 @@ const AdminLayout = () => {
               <NavLink to={paths.admin.products()}>Products</NavLink>
             </li>
             <li>
-              <NavLink to={paths.admin.events()}>Events</NavLink>
+              <NavLink to={paths.admin.events.list()}>Events</NavLink>
             </li>
             <li>
               <NavLink to={paths.admin.users()}>Users</NavLink>

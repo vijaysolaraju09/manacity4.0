@@ -1,1 +1,1 @@
-export { default } from './AdminEvents';
+export { default } from './AdminEventsRoot';

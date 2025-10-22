@@ -27,6 +27,14 @@ export interface EventSummary {
   visibility: 'public' | 'private';
   bannerUrl?: string | null;
   lifecycleStatus?: 'upcoming' | 'ongoing' | 'past';
+  entryFee?: number;
+  entryFeePaise?: number;
+  prizePool?: string | null;
+  featured?: boolean;
+  highlightLabel?: string | null;
+  shortDescription?: string | null;
+  accentColor?: string | null;
+  iconUrl?: string | null;
 }
 
 export interface EventDetail extends EventSummary {
@@ -39,6 +47,44 @@ export interface EventDetail extends EventSummary {
   leaderboardVersion?: number;
   isRegistrationOpen?: boolean;
   registration?: EventRegistration | null;
+  rewards?: string[];
+  structure?: 'solo' | 'team' | string;
+  registrationChecklist?: string[];
+  contact?: { name?: string; phone?: string; email?: string } | null;
+  livestreamUrl?: string | null;
+  venueMapUrl?: string | null;
+}
+
+export interface EventRegistrationSummary {
+  _id: string;
+  status: EventRegistration['status'];
+  teamName?: string | null;
+  user?: { _id: string; name?: string | null } | null;
+  members?: Array<{ name: string; contact?: string | null }>;
+  createdAt?: string;
+}
+
+export interface EventUpdate {
+  _id: string;
+  type: 'pre' | 'live' | 'post' | 'alert';
+  message: string;
+  postedBy?: string | null;
+  isPinned?: boolean;
+  createdAt: string;
+  linkUrl?: string | null;
+}
+
+export interface EventLeaderboardEntry {
+  _id?: string;
+  participantId?: string;
+  teamName?: string;
+  user?: string;
+  points?: number;
+  rank?: number;
+  wins?: number;
+  losses?: number;
+  kills?: number;
+  time?: number;
 }
 
 export interface EventRegistration {
@@ -100,7 +146,28 @@ export const adaptEventSummary = (raw: any): EventSummary | null => {
     venue: raw.venue || null,
     visibility: raw.visibility === 'private' ? 'private' : 'public',
     bannerUrl: raw.bannerUrl || raw.cover || null,
+    prizePool: raw.prizePool ?? raw.prize_pool ?? raw.rewards ?? null,
+    shortDescription: raw.shortDescription ?? raw.subtitle ?? null,
+    featured: Boolean(raw.featured ?? raw.isFeatured ?? raw.highlighted),
+    highlightLabel: raw.highlightLabel ?? raw.tagline ?? null,
+    accentColor: raw.accentColor ?? raw.themeColor ?? null,
+    iconUrl: raw.iconUrl ?? raw.gameIcon ?? null,
   };
+
+  const entryFeePaiseCandidate = Number(
+    raw.entryFeePaise ?? raw.entry_fee_paise ?? raw.entry_fee_paise ?? raw.entryFeePaise
+  );
+  const entryFeeCandidate = Number(raw.entryFee ?? raw.entry_fee ?? raw.price ?? raw.fee);
+  if (Number.isFinite(entryFeePaiseCandidate) && entryFeePaiseCandidate >= 0) {
+    summary.entryFeePaise = entryFeePaiseCandidate;
+    summary.entryFee = Math.round(entryFeePaiseCandidate / 100);
+  } else if (Number.isFinite(entryFeeCandidate) && entryFeeCandidate >= 0) {
+    summary.entryFee = entryFeeCandidate;
+    summary.entryFeePaise = entryFeeCandidate * 100;
+  } else {
+    summary.entryFee = 0;
+    summary.entryFeePaise = 0;
+  }
 
   const normalizedLifecycle = lifecycleRaw.toLowerCase();
   if (['upcoming', 'ongoing', 'past'].includes(normalizedLifecycle)) {
@@ -126,5 +193,80 @@ export const adaptEventDetail = (raw: any): EventDetail | null => {
     leaderboardVersion: raw.leaderboardVersion ?? 0,
     isRegistrationOpen: !!raw.isRegistrationOpen,
     registration: raw.registration || null,
+    rewards: Array.isArray(raw.rewards)
+      ? raw.rewards
+          .map((item: any) => (typeof item === 'string' ? item : item?.label))
+          .filter((item: unknown): item is string => typeof item === 'string' && item.trim().length > 0)
+      : undefined,
+    structure: raw.structure ?? (summary.teamSize > 1 ? 'team' : 'solo'),
+    registrationChecklist: Array.isArray(raw.registrationChecklist)
+      ? raw.registrationChecklist.filter((item: any): item is string => typeof item === 'string')
+      : undefined,
+    contact: raw.contact
+      ? {
+          name: raw.contact.name ?? raw.contact.person ?? undefined,
+          phone: raw.contact.phone ?? raw.contact.mobile ?? undefined,
+          email: raw.contact.email ?? undefined,
+        }
+      : null,
+    livestreamUrl: raw.livestreamUrl ?? raw.streamUrl ?? null,
+    venueMapUrl: raw.venueMapUrl ?? raw.mapUrl ?? null,
+  };
+};
+
+export const adaptEventRegistrationSummary = (raw: any): EventRegistrationSummary | null => {
+  if (!raw) return null;
+  const status = (raw.status || 'registered') as EventRegistration['status'];
+  const teamName = raw.teamName ?? raw.team_name ?? raw.name ?? null;
+  const members = Array.isArray(raw.members)
+    ? raw.members
+        .map((member: any) => ({
+          name: member?.name ?? member?.displayName ?? null,
+          contact: member?.contact ?? member?.phone ?? member?.mobile ?? null,
+        }))
+        .filter((member) => typeof member.name === 'string' && member.name.trim().length > 0)
+    : undefined;
+  const fallbackId = `reg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    _id: String(raw._id ?? raw.id ?? fallbackId),
+    status,
+    teamName: typeof teamName === 'string' ? teamName : undefined,
+    user: raw.user
+      ? { _id: String(raw.user._id ?? raw.user.id ?? ''), name: raw.user.name ?? raw.user.username ?? null }
+      : null,
+    members,
+    createdAt: raw.createdAt ?? raw.created_at ?? undefined,
+  };
+};
+
+export const adaptEventUpdate = (raw: any): EventUpdate | null => {
+  if (!raw) return null;
+  const message = raw.message ?? raw.text ?? '';
+  if (!message) return null;
+  const fallbackId = `update-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    _id: String(raw._id ?? raw.id ?? fallbackId),
+    type: (raw.type || 'pre') as EventUpdate['type'],
+    message,
+    postedBy: raw.postedBy?.name ?? raw.postedBy?.username ?? raw.author ?? null,
+    isPinned: Boolean(raw.isPinned ?? raw.pinned),
+    createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
+    linkUrl: raw.linkUrl ?? raw.link ?? null,
+  };
+};
+
+export const adaptEventLeaderboardEntry = (raw: any): EventLeaderboardEntry | null => {
+  if (!raw) return null;
+  return {
+    _id: raw._id ?? raw.id ?? undefined,
+    participantId: raw.participantId ?? raw.participant_id ?? raw.registrationId ?? undefined,
+    teamName: raw.teamName ?? raw.team ?? raw.player ?? undefined,
+    user: raw.user ?? raw.username ?? raw.playerName ?? undefined,
+    points: Number(raw.points ?? raw.score ?? raw.total) || 0,
+    rank: Number(raw.rank ?? raw.position) || undefined,
+    wins: Number(raw.wins ?? raw.win) || undefined,
+    losses: Number(raw.losses ?? raw.loss) || undefined,
+    kills: Number(raw.kills ?? raw.frags) || undefined,
+    time: Number(raw.time ?? raw.duration) || undefined,
   };
 };

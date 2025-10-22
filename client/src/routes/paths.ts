@@ -48,7 +48,13 @@ export const paths = {
     },
     shops: () => '/admin/shops',
     products: () => '/admin/products',
-    events: () => '/admin/events',
+    events: {
+      list: () => '/admin/events',
+      create: () => '/admin/events/new',
+      detail: (id: string = ':id') => `/admin/events/${id}`,
+      registrations: (id: string = ':id') => `/admin/events/${id}/registrations`,
+      leaderboard: (id: string = ':id') => `/admin/events/${id}/leaderboard`,
+    },
     users: () => '/admin/users',
     analytics: () => '/admin/analytics',
     services: () => '/admin/services',
@@ -57,6 +63,7 @@ export const paths = {
   events: {
     list: () => '/events',
     detail: (eventId: string = ':id') => `/events/${eventId}`,
+    register: (eventId: string = ':id') => `/events/${eventId}/register`,
   },
   verification: {
     requests: () => '/verification-requests',

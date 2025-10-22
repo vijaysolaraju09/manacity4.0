@@ -1,0 +1,342 @@
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useOutletContext, useParams } from 'react-router-dom';
+import { Loader2, Plus, RefreshCw, Save, Trash2, Undo2 } from 'lucide-react';
+import type { AppDispatch, RootState } from '@/store';
+import {
+  fetchLeaderboard,
+  postLeaderboard,
+  type EventLeaderboardEntry,
+} from '@/store/events.slice';
+import { formatDateTime } from '@/utils/date';
+import showToast from '@/components/ui/Toast';
+import { toErrorMessage } from '@/lib/response';
+import type { AdminEventContext } from './AdminEventManageLayout';
+import styles from './AdminEvents.module.scss';
+
+type EditableEntry = EventLeaderboardEntry & { _localId?: string };
+
+const createEmptyEntry = (index: number): EditableEntry => ({
+  _localId: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  rank: index + 1,
+  teamName: '',
+  points: 0,
+});
+
+const normalizeEntries = (entries: EditableEntry[]): EventLeaderboardEntry[] =>
+  entries.map((entry, index) => ({
+    _id: entry._id,
+    participantId: entry.participantId,
+    teamName: entry.teamName?.trim() || undefined,
+    user: entry.user?.trim() || undefined,
+    points:
+      typeof entry.points === 'number' && Number.isFinite(entry.points)
+        ? entry.points
+        : Number.isFinite(Number(entry.points))
+        ? Number(entry.points)
+        : 0,
+    rank:
+      typeof entry.rank === 'number' && Number.isFinite(entry.rank)
+        ? entry.rank
+        : Number.isFinite(Number(entry.rank))
+        ? Number(entry.rank)
+        : index + 1,
+    wins:
+      entry.wins === undefined || entry.wins === null || Number.isNaN(Number(entry.wins))
+        ? undefined
+        : Number(entry.wins),
+    losses:
+      entry.losses === undefined || entry.losses === null || Number.isNaN(Number(entry.losses))
+        ? undefined
+        : Number(entry.losses),
+    kills:
+      entry.kills === undefined || entry.kills === null || Number.isNaN(Number(entry.kills))
+        ? undefined
+        : Number(entry.kills),
+    time:
+      entry.time === undefined || entry.time === null || Number.isNaN(Number(entry.time))
+        ? undefined
+        : Number(entry.time),
+  }));
+
+const AdminEventLeaderboardPage = () => {
+  const { eventId } = useParams<{ eventId: string }>();
+  const context = useOutletContext<AdminEventContext>();
+  const dispatch = useDispatch<AppDispatch>();
+  const { leaderboard, postStatus } = useSelector((state: RootState) => ({
+    leaderboard: state.events.leaderboard,
+    postStatus: state.events.actions.postLeaderboard,
+  }));
+  const [entries, setEntries] = useState<EditableEntry[]>([]);
+  const [dirty, setDirty] = useState(false);
+  const [lastSynced, setLastSynced] = useState<string | null>(null);
+  const event = context?.event;
+
+  const loadLeaderboard = useCallback(async () => {
+    if (!eventId) return;
+    const action = await dispatch(fetchLeaderboard(eventId));
+    if (fetchLeaderboard.fulfilled.match(action)) {
+      setLastSynced(new Date().toISOString());
+    }
+  }, [dispatch, eventId]);
+
+  useEffect(() => {
+    void loadLeaderboard();
+  }, [loadLeaderboard]);
+
+  useEffect(() => {
+    if (!eventId) return undefined;
+    const interval = window.setInterval(() => {
+      void loadLeaderboard();
+    }, 30000);
+    return () => window.clearInterval(interval);
+  }, [eventId, loadLeaderboard]);
+
+  useEffect(() => {
+    const nextEntries = (leaderboard.items ?? []).map((entry, index) => ({
+      ...entry,
+      _localId: entry._id ?? `remote-${index}`,
+    }));
+    setEntries(nextEntries);
+    setDirty(false);
+  }, [leaderboard.items, leaderboard.version]);
+
+  const isSaving = postStatus === 'loading';
+  const isLoading = leaderboard.loading;
+  const leaderboardError = leaderboard.error;
+  const versionLabel = leaderboard.version ? `v${leaderboard.version}` : 'Draft';
+  const lastSyncedLabel = lastSynced ? formatDateTime(lastSynced) : null;
+
+  const updateEntry = useCallback((index: number, patch: Partial<EditableEntry>) => {
+    setEntries((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], ...patch };
+      return next;
+    });
+    setDirty(true);
+  }, []);
+
+  const handleNumberChange = useCallback(
+    (index: number, key: keyof Pick<EditableEntry, 'rank' | 'points' | 'wins' | 'losses' | 'kills' | 'time'>) =>
+      (event: ChangeEvent<HTMLInputElement>) => {
+        const raw = event.target.value;
+        const value = raw.trim().length === 0 ? undefined : Number(raw);
+        updateEntry(index, { [key]: value } as Partial<EditableEntry>);
+      },
+    [updateEntry],
+  );
+
+  const handleTextChange = useCallback(
+    (index: number, key: keyof Pick<EditableEntry, 'teamName' | 'user' | 'participantId'>) =>
+      (event: ChangeEvent<HTMLInputElement>) => {
+        updateEntry(index, { [key]: event.target.value } as Partial<EditableEntry>);
+      },
+    [updateEntry],
+  );
+
+  const handleAddEntry = () => {
+    setEntries((prev) => [...prev, createEmptyEntry(prev.length)]);
+    setDirty(true);
+  };
+
+  const handleRemoveEntry = (index: number) => {
+    setEntries((prev) => prev.filter((_, idx) => idx !== index));
+    setDirty(true);
+  };
+
+  const handleReset = () => {
+    const nextEntries = (leaderboard.items ?? []).map((entry, index) => ({
+      ...entry,
+      _localId: entry._id ?? `remote-${index}`,
+    }));
+    setEntries(nextEntries);
+    setDirty(false);
+  };
+
+  const handleSave = async () => {
+    if (!eventId) return;
+    const sanitized = normalizeEntries(entries);
+    const action = await dispatch(postLeaderboard({ eventId, payload: { entries: sanitized } }));
+    if (postLeaderboard.fulfilled.match(action)) {
+      showToast('Leaderboard updated', 'success');
+      setDirty(false);
+      void loadLeaderboard();
+    } else {
+      const message = toErrorMessage(action.payload ?? action.error);
+      showToast(message, 'error');
+    }
+  };
+
+  const leaderboardEmpty = entries.length === 0;
+  const disableSave = isSaving || !dirty;
+
+  const podium = useMemo(() => entries.slice(0, 3).map((entry) => entry.teamName ?? entry.user ?? '—'), [entries]);
+
+  return (
+    <div className={styles.leaderboardView}>
+      <header className={styles.leaderboardToolbar}>
+        <div>
+          <h2>Leaderboard</h2>
+          <div className={styles.sectionMeta}>
+            {isLoading ? (
+              <>
+                <Loader2 size={16} className={styles.spin} /> Syncing…
+              </>
+            ) : (
+              <>
+                Version <span className={styles.versionTag}>{versionLabel}</span>
+                {dirty && <span className={styles.dirtyTag}>Unsaved changes</span>}
+              </>
+            )}
+          </div>
+          {lastSyncedLabel && <div className={styles.smallText}>Last sync {lastSyncedLabel}</div>}
+          {podium.length > 0 && !podium.every((item) => !item || item === '—') && (
+            <div className={styles.smallText}>Top seeds: {podium.join(', ')}</div>
+          )}
+        </div>
+        <div className={styles.leaderboardButtons}>
+          <button type="button" className={styles.secondaryBtn} onClick={() => void loadLeaderboard()} disabled={isLoading}>
+            <RefreshCw size={16} /> Refresh
+          </button>
+          <button type="button" className={styles.secondaryBtn} onClick={handleAddEntry}>
+            <Plus size={16} /> Add entry
+          </button>
+          <button
+            type="button"
+            className={styles.ghostBtn}
+            onClick={handleReset}
+            disabled={!dirty}
+          >
+            <Undo2 size={16} /> Reset
+          </button>
+          <button type="button" className={styles.primaryBtn} onClick={() => void handleSave()} disabled={disableSave}>
+            {isSaving ? <Loader2 size={16} className={styles.spin} /> : <Save size={16} />} Save leaderboard
+          </button>
+        </div>
+      </header>
+
+      {leaderboardError && leaderboardEmpty && (
+        <div className={styles.errorCard}>
+          <p>{leaderboardError}</p>
+          <button type="button" className={styles.primaryBtn} onClick={() => void loadLeaderboard()}>
+            <RefreshCw size={16} /> Retry
+          </button>
+        </div>
+      )}
+
+      {isLoading && leaderboardEmpty && !leaderboardError ? (
+        <div className={styles.errorCard}>
+          <Loader2 size={18} className={styles.spin} /> Loading leaderboard…
+        </div>
+      ) : entries.length === 0 ? (
+        <div className={styles.emptyState}>No leaderboard data yet. Seed the first results to get started.</div>
+      ) : (
+        <div className={styles.tableWrapper}>
+          <table className={`${styles.table} ${styles.leaderboardTable}`}>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Team / Player</th>
+                <th>User handle</th>
+                <th>Participant ID</th>
+                <th>Points</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>Kills</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry, index) => (
+                <tr key={entry._localId ?? entry._id ?? `entry-${index}`}>
+                  <td>
+                    <input
+                      type="number"
+                      value={entry.rank ?? ''}
+                      onChange={handleNumberChange(index, 'rank')}
+                      min={1}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      value={entry.teamName ?? ''}
+                      placeholder="Team or participant name"
+                      onChange={handleTextChange(index, 'teamName')}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      value={entry.user ?? ''}
+                      placeholder="Username"
+                      onChange={handleTextChange(index, 'user')}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      value={entry.participantId ?? ''}
+                      placeholder="Registration ID"
+                      onChange={handleTextChange(index, 'participantId')}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={entry.points ?? ''}
+                      onChange={handleNumberChange(index, 'points')}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={entry.wins ?? ''}
+                      onChange={handleNumberChange(index, 'wins')}
+                      min={0}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={entry.losses ?? ''}
+                      onChange={handleNumberChange(index, 'losses')}
+                      min={0}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={entry.kills ?? ''}
+                      onChange={handleNumberChange(index, 'kills')}
+                      min={0}
+                    />
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className={styles.secondaryBtn}
+                      onClick={() => handleRemoveEntry(index)}
+                    >
+                      <Trash2 size={16} /> Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <footer className={styles.leaderboardFooter}>
+        <span>
+          {event?.title ? `Managing ${event.title}` : 'Select an event'} •{' '}
+          {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
+        </span>
+        <span>Auto-refresh every 30s</span>
+      </footer>
+    </div>
+  );
+};
+
+export default AdminEventLeaderboardPage;

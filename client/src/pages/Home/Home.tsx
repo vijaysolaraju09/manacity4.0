@@ -9,7 +9,7 @@ import SectionHeader from '../../components/ui/SectionHeader';
 import EmptyState from '../../components/ui/EmptyState';
 import { fetchShops } from '@/store/shops';
 import { fetchServices } from '@/store/services';
-import { createEventsQueryKey, fetchEvents } from '@/store/events';
+import { createEventsQueryKey, fetchEvents } from '@/store/events.slice';
 import { fetchSpecialProducts } from '@/store/products';
 import { http } from '@/lib/http';
 import { toItems, toErrorMessage } from '@/lib/response';
@@ -37,11 +37,11 @@ const Home = () => {
 
   const shops = useSelector((s: RootState) => s.shops);
   const services = useSelector((s: RootState) => s.services);
-  const events = useSelector((s: RootState) => s.events.list);
+  const eventsList = useSelector((s: RootState) => s.events.list);
   const products = useSelector((s: RootState) => s.catalog);
 
   const featuredEventsParams = useMemo(
-    () => ({ limit: 4 }),
+    () => ({ pageSize: 4 }),
     [],
   );
   const featuredEventsKey = useMemo(
@@ -88,12 +88,13 @@ const Home = () => {
   }, [d, featuredEventsParams]);
 
   useEffect(() => {
-    if (events.status === 'loading') return;
+    const itemCount = eventsList.items?.length ?? 0;
+    if (eventsList.loading && eventsList.queryKey === featuredEventsKey) return;
 
-    if (events.status === 'idle' || events.lastQueryKey !== featuredEventsKey) {
+    if (eventsList.queryKey !== featuredEventsKey || itemCount === 0) {
       reloadFeaturedEvents();
     }
-  }, [events.status, events.lastQueryKey, featuredEventsKey, reloadFeaturedEvents]);
+  }, [eventsList.loading, eventsList.queryKey, eventsList.items?.length, featuredEventsKey, reloadFeaturedEvents]);
 
   useEffect(
     () => () => {
@@ -216,9 +217,17 @@ const Home = () => {
       <Section
         title="Events"
         path={paths.events.list()}
-        data={events.items}
-        status={events.status}
-        error={events.error}
+        data={eventsList.items ?? []}
+        status={
+          eventsList.loading
+            ? 'loading'
+            : eventsList.error
+            ? 'failed'
+            : (eventsList.items?.length ?? 0) > 0
+            ? 'succeeded'
+            : 'idle'
+        }
+        error={eventsList.error}
         type="event"
         onRetry={reloadFeaturedEvents}
         navigate={navigate}

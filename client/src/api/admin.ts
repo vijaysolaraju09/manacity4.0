@@ -377,6 +377,29 @@ export interface EventQueryParams {
   pageSize?: number;
   sort?: string;
   query?: string;
+  category?: string;
+  type?: string;
+}
+
+export interface AdminEventPayload {
+  title: string;
+  category: string;
+  type: string;
+  format: string;
+  startAt: string;
+  endAt: string;
+  registrationOpenAt: string;
+  registrationCloseAt: string;
+  teamSize: number;
+  maxParticipants: number;
+  entryFeePaise?: number;
+  prizePool?: string;
+  mode?: 'online' | 'venue';
+  venue?: string | null;
+  description?: string;
+  rules?: string;
+  bannerUrl?: string | null;
+  coverUrl?: string | null;
 }
 
 export const fetchEvents = async (params: EventQueryParams = {}) => {
@@ -384,20 +407,17 @@ export const fetchEvents = async (params: EventQueryParams = {}) => {
   return extractPaginatedResult<any>(res.data);
 };
 
-export const createEvent = async (data: {
-  title: string;
-  startAt: string;
-  endAt: string;
-  capacity: number;
-}) => {
+export const fetchEventByIdAdmin = async (id: string) => {
+  const res = await adminApi.get(withAdminPrefix(`events/${id}`));
+  return extractEntity<any>(res.data);
+};
+
+export const createEvent = async (data: AdminEventPayload) => {
   const res = await adminApi.post(withAdminPrefix('events'), data);
   return extractEntity<any>(res.data);
 };
 
-export const updateEvent = async (
-  id: string,
-  data: Partial<{ title: string; startAt: string; endAt: string; capacity: number }>,
-) => {
+export const updateEvent = async (id: string, data: Partial<AdminEventPayload>) => {
   const res = await adminApi.put(withAdminPrefix(`events/${id}`), data);
   return extractEntity<any>(res.data);
 };

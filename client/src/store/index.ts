@@ -5,11 +5,7 @@ import productReducer from './slices/productSlice';
 import settingsReducer from './slices/settingsSlice';
 import adminReducer from './slices/adminSlice';
 import shopsReducer from './shops';
-import eventsReducer from './events';
-import eventRegistrationsReducer from './eventRegistrations';
-import eventUpdatesReducer from './eventUpdates';
-import eventLeaderboardReducer from './eventLeaderboard';
-import eventBracketReducer from './eventBracket';
+import eventsReducer from './events.slice';
 import catalogReducer from './products';
 import verifiedReducer from './verified';
 import servicesReducer from './services';
@@ -28,10 +24,6 @@ export const store = configureStore({
     admin: adminReducer,
     shops: shopsReducer,
     events: eventsReducer,
-    eventRegistrations: eventRegistrationsReducer,
-    eventUpdates: eventUpdatesReducer,
-    eventLeaderboard: eventLeaderboardReducer,
-    eventBracket: eventBracketReducer,
     catalog: catalogReducer,
     verified: verifiedReducer,
     services: servicesReducer,

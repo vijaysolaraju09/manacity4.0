@@ -15,11 +15,7 @@ import productReducer from '@/store/slices/productSlice';
 import settingsReducer from '@/store/slices/settingsSlice';
 import adminReducer from '@/store/slices/adminSlice';
 import shopsReducer from '@/store/shops';
-import eventsReducer from '@/store/events';
-import eventRegistrationsReducer from '@/store/eventRegistrations';
-import eventUpdatesReducer from '@/store/eventUpdates';
-import eventLeaderboardReducer from '@/store/eventLeaderboard';
-import eventBracketReducer from '@/store/eventBracket';
+import eventsReducer from '@/store/events.slice';
 import catalogReducer from '@/store/products';
 import verifiedReducer from '@/store/verified';
 import notifsReducer from '@/store/notifs';
@@ -216,10 +212,6 @@ const createTestStore = (): Store => {
       admin: adminReducer,
       shops: shopsReducer,
       events: eventsReducer,
-      eventRegistrations: eventRegistrationsReducer,
-      eventUpdates: eventUpdatesReducer,
-      eventLeaderboard: eventLeaderboardReducer,
-      eventBracket: eventBracketReducer,
       catalog: catalogReducer,
       verified: verifiedReducer,
       notifs: notifsReducer,

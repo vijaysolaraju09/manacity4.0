@@ -1,0 +1,16 @@
+{
+  "name": "manacity-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "ci:client": "npm --prefix client ci --no-audit --ignore-scripts",
+    "ci:server": "npm --prefix server ci --no-audit --ignore-scripts",
+    "build:client": "npm --prefix client run build",
+    "build:server": "npm --prefix server run build || echo \"(no server build script)\"",
+    "build": "echo \"[BUILD] installing client deps\" && npm run ci:client && echo \"[BUILD] building client\" && npm run build:client && (test -d server && echo \"[BUILD] installing server deps\" && npm run ci:server && echo \"[BUILD] building server\" && npm run build:server || echo \"[BUILD] no server dir; skipping\")"
+  },
+  "engines": {
+    "node": "20.x",
+    "npm": ">=9"
+  }
+}

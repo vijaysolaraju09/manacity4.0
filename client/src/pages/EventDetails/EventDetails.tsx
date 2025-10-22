@@ -130,6 +130,25 @@ const EventDetails = () => {
     }
   }, [activeTab, availableTabs]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const applyHash = () => {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      if (!hash) return;
+      if (hash === 'register') {
+        setShowRegistration(true);
+        return;
+      }
+      const matchedTab = availableTabs.find((tab) => tab.key === hash);
+      if (matchedTab) {
+        setActiveTab(matchedTab.key);
+      }
+    };
+    applyHash();
+    window.addEventListener('hashchange', applyHash);
+    return () => window.removeEventListener('hashchange', applyHash);
+  }, [availableTabs]);
+
   const stage = event ? determineStage(event, now) : 'upcoming';
   const countdown = useMemo(() => {
     if (!event) return '';
@@ -325,7 +344,7 @@ const EventDetails = () => {
               <span className={styles.statValue}>{event.format.replace(/_/g, ' ')}</span>
             </div>
           </div>
-          <div className={styles.ctaGroup}>
+          <div id="register" className={styles.ctaGroup}>
             {canRegister && (
               <button
                 type="button"

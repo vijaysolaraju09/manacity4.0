@@ -140,6 +140,14 @@ const EventsHub = () => {
     return () => promise.abort?.();
   }, [dispatch, queryKey]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || page > 1) return undefined;
+    const interval = window.setInterval(() => {
+      dispatch(fetchEvents({ ...queryParams }));
+    }, 45000);
+    return () => window.clearInterval(interval);
+  }, [dispatch, page, queryParams, queryKey]);
+
   const loading = eventsState.loading && (eventsState.items?.length ?? 0) === 0;
   const busy = eventsState.loading;
   const error = eventsState.error;

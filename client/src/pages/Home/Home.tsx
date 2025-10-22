@@ -1,7 +1,7 @@
 import styles from './Home.module.scss';
 import { motion } from 'framer-motion';
 import { Mic } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import ProductCard from '../../components/ui/ProductCard.tsx';
@@ -49,6 +49,8 @@ const Home = () => {
     [featuredEventsParams],
   );
 
+  const pendingFeaturedEventsAbort = useRef<(() => void) | null>(null);
+
   const loadBanners = useCallback(async () => {
     setBannerStatus('loading');
     setBannerError(null);
@@ -77,17 +79,28 @@ const Home = () => {
     if (products.status === 'idle') d(fetchSpecialProducts({ pageSize: 10 }));
   }, [shops.status, services.status, products.status, d]);
 
+  const reloadFeaturedEvents = useCallback(() => {
+    pendingFeaturedEventsAbort.current?.();
+    const promise = d(fetchEvents(featuredEventsParams));
+    pendingFeaturedEventsAbort.current = () => {
+      promise.abort?.();
+    };
+  }, [d, featuredEventsParams]);
+
   useEffect(() => {
     if (events.status === 'loading') return;
 
     if (events.status === 'idle' || events.lastQueryKey !== featuredEventsKey) {
-      const promise = d(fetchEvents(featuredEventsParams));
-      return () => {
-        promise.abort?.();
-      };
+      reloadFeaturedEvents();
     }
-    return undefined;
-  }, [d, events.status, events.lastQueryKey, featuredEventsKey, featuredEventsParams]);
+  }, [events.status, events.lastQueryKey, featuredEventsKey, reloadFeaturedEvents]);
+
+  useEffect(
+    () => () => {
+      pendingFeaturedEventsAbort.current?.();
+    },
+    [],
+  );
 
   return (
     <div className="space-y-12">
@@ -207,7 +220,7 @@ const Home = () => {
         status={events.status}
         error={events.error}
         type="event"
-        onRetry={() => d(fetchEvents(featuredEventsParams))}
+        onRetry={reloadFeaturedEvents}
         navigate={navigate}
         linkLabel="See all events"
       />

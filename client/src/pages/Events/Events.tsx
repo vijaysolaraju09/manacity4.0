@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import EventsSkeleton from '@/components/common/EventsSkeleton';
@@ -16,22 +16,35 @@ const Events = () => {
   const navigate = useNavigate();
   const defaultQueryKey = useMemo(() => createEventsQueryKey(), []);
 
+  const pendingAbort = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     if (list.status === 'loading') return;
 
     if (list.status === 'idle' || list.lastQueryKey !== defaultQueryKey) {
+      pendingAbort.current?.();
       const promise = dispatch(fetchEvents());
-      return () => {
+      pendingAbort.current = () => {
         promise.abort?.();
       };
     }
-    return undefined;
   }, [dispatch, list.status, list.lastQueryKey, defaultQueryKey]);
+
+  useEffect(
+    () => () => {
+      pendingAbort.current?.();
+    },
+    []
+  );
 
   const items = Array.isArray(list.items) ? list.items : [];
 
   const reload = () => {
-    dispatch(fetchEvents());
+    pendingAbort.current?.();
+    const promise = dispatch(fetchEvents());
+    pendingAbort.current = () => {
+      promise.abort?.();
+    };
   };
 
   if (list.status === 'loading' || list.status === 'idle') return <EventsSkeleton />;

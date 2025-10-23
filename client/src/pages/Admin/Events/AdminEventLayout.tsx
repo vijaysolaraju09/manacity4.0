@@ -118,6 +118,7 @@ const AdminEventLayout = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<LifecycleAction | null>(null);
+  const [tick, setTick] = useState(Date.now());
 
   const loadEvent = async () => {
     if (!eventId) return;
@@ -136,6 +137,11 @@ const AdminEventLayout = () => {
   useEffect(() => {
     void loadEvent();
   }, [eventId]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setTick(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const statusBadgeClass = (value?: string) => {
     switch ((value ?? '').toLowerCase()) {
@@ -156,6 +162,77 @@ const AdminEventLayout = () => {
     if (!event?.entryFeePaise) return 'FREE';
     return formatINR(event.entryFeePaise);
   };
+
+  const safeFormat = (value?: string) => {
+    if (!value) return '—';
+    return formatDateTime(value);
+  };
+
+  const countdownLabel = useMemo(() => {
+    if (!event) return 'Loading';
+    const now = tick;
+    const parseDate = (value?: string) => {
+      if (!value) return Number.NaN;
+      const parsed = Date.parse(value);
+      return Number.isFinite(parsed) ? parsed : Number.NaN;
+    };
+    const start = parseDate(event.startAt);
+    const end = parseDate(event.endAt ?? event.registrationCloseAt ?? event.startAt);
+    const regClose = parseDate(event.registrationCloseAt);
+    const statusValue = (event.status ?? '').toLowerCase();
+    if (statusValue === 'completed') return 'Event completed';
+    if (statusValue === 'canceled') return 'Event canceled';
+    if (statusValue === 'ongoing') {
+      if (Number.isFinite(end) && end > now) {
+        return `Live · ${formatDuration(end - now)} left`;
+      }
+      return 'Live now';
+    }
+    if (statusValue === 'published' && Number.isFinite(regClose) && regClose > now) {
+      return `Registration closes in ${formatDuration(regClose - now)}`;
+    }
+    if (Number.isFinite(start) && start > now) {
+      return `Starts in ${formatDuration(start - now)}`;
+    }
+    return 'Awaiting kickoff';
+  }, [event, tick]);
+
+  const formatDuration = (diff: number) => {
+    const totalSeconds = Math.floor(Math.max(0, diff) / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${Math.max(minutes, 0)}m`;
+  };
+
+  const registrationWindow = useMemo(
+    () => ({
+      open: safeFormat(event?.registrationOpenAt),
+      close: safeFormat(event?.registrationCloseAt),
+    }),
+    [event?.registrationCloseAt, event?.registrationOpenAt],
+  );
+
+  const occupancy = useMemo(() => {
+    const capacity = event?.maxParticipants ?? 0;
+    const registered = event?.registeredCount ?? 0;
+    if (!capacity || capacity <= 0) return { percent: null, registered };
+    return {
+      percent: Math.min(100, Math.round((registered / capacity) * 100)),
+      registered,
+      slots: Math.max(0, capacity - registered),
+      capacity,
+    };
+  }, [event?.maxParticipants, event?.registeredCount]);
+
+  const heroStyle = useMemo(() => {
+    if (!event?.coverUrl) return undefined;
+    return {
+      backgroundImage: `linear-gradient(135deg, rgba(5, 7, 15, 0.92), rgba(5, 7, 15, 0.4)), url(${event.coverUrl})`,
+    } as const;
+  }, [event?.coverUrl]);
 
   const tabs = useMemo(() => {
     if (!eventId) return [];
@@ -207,16 +284,53 @@ const AdminEventLayout = () => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerMeta}>
-          <h1>{event?.title ?? 'Event'}</h1>
-          <div className={styles.metaRow}>
-            <span className={statusBadgeClass(event?.status)}>{event?.status ?? 'draft'}</span>
-            <span>{formatDateTime(event?.startAt)}</span>
-            <span>{entryFeeLabel()}</span>
+      <header className={styles.hero} style={heroStyle}>
+        <div className={styles.heroOverlay} />
+        <div className={styles.heroBody}>
+          <div className={styles.heroInfo}>
+            <span className={styles.eyebrow}>{event?.category ?? 'tournament'}</span>
+            <h1>{event?.title ?? 'Event'}</h1>
+            <div className={styles.badgeRow}>
+              <span className={statusBadgeClass(event?.status)}>{event?.status ?? 'draft'}</span>
+              <span className={styles.countdown}>{countdownLabel}</span>
+              <span className={styles.modeChip}>{event?.mode === 'venue' ? 'On-ground' : 'Online'}</span>
+            </div>
+            <div className={styles.heroMeta}>
+              <div>
+                <span className={styles.label}>Kick-off</span>
+                <strong>{safeFormat(event?.startAt)}</strong>
+              </div>
+              <div>
+                <span className={styles.label}>Entry</span>
+                <strong>{entryFeeLabel()}</strong>
+              </div>
+              <div>
+                <span className={styles.label}>Prize pool</span>
+                <strong>{event?.prizePool ?? 'TBA'}</strong>
+              </div>
+            </div>
+          </div>
+          <div className={styles.heroStats}>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Registrations</span>
+              <span className={styles.statValue}>
+                {event?.registeredCount ?? 0}
+                <span className={styles.statSub}>
+                  {event?.maxParticipants ? `of ${event.maxParticipants}` : 'No cap'}
+                </span>
+              </span>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Team size</span>
+              <span className={styles.statValue}>{event?.teamSize ?? 1}</span>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Venue</span>
+              <span className={styles.statValue}>{event?.mode === 'venue' ? event?.venue ?? 'TBD' : 'Virtual'}</span>
+            </div>
           </div>
         </div>
-        <div className={styles.actions}>
+        <div className={styles.heroActions}>
           {getLifecycleActions(event?.status).map((action) => (
             <button
               key={action}
@@ -234,6 +348,26 @@ const AdminEventLayout = () => {
         </div>
       </header>
 
+      <div className={styles.progressCard}>
+        <div className={styles.progressHeader}>
+          <span className={styles.label}>Registration pulse</span>
+          {occupancy.percent !== null ? (
+            <span className={styles.progressValue}>{occupancy.percent}% full</span>
+          ) : (
+            <span className={styles.progressValue}>Unlimited slots</span>
+          )}
+        </div>
+        <div className={styles.progressTrack}>
+          <span className={styles.progressBar} style={{ width: `${occupancy.percent ?? 100}%` }} />
+        </div>
+        <div className={styles.progressMeta}>
+          <span>{occupancy.registered ?? 0} registered</span>
+          {occupancy.slots !== undefined && occupancy.slots !== null && (
+            <span>{occupancy.slots} slots remaining</span>
+          )}
+        </div>
+      </div>
+
       <nav className={styles.tabs}>
         {tabs.map((tab) => (
           <NavLink
@@ -247,24 +381,38 @@ const AdminEventLayout = () => {
         ))}
       </nav>
 
-      <section className={styles.summary}>
-        <div>
-          <span className={styles.label}>Registrations</span>
-          <strong>
-            {event?.registeredCount}/{event?.maxParticipants || '∞'}
-          </strong>
+      <section className={styles.overview}>
+        <div className={styles.timeline}>
+          <div>
+            <span className={styles.label}>Registration opens</span>
+            <strong>{registrationWindow.open}</strong>
+          </div>
+          <div>
+            <span className={styles.label}>Registration closes</span>
+            <strong>{registrationWindow.close}</strong>
+          </div>
+          <div>
+            <span className={styles.label}>Event ends</span>
+            <strong>{safeFormat(event?.endAt)}</strong>
+          </div>
         </div>
-        <div>
-          <span className={styles.label}>Team size</span>
-          <strong>{event?.teamSize ?? 1}</strong>
-        </div>
-        <div>
-          <span className={styles.label}>Mode</span>
-          <strong>{event?.mode === 'venue' ? 'On-ground' : 'Online'}</strong>
-        </div>
-        <div>
-          <span className={styles.label}>Venue</span>
-          <strong>{event?.venue ?? 'N/A'}</strong>
+        <div className={styles.quickGrid}>
+          <div className={styles.quickCard}>
+            <span className={styles.label}>Mode</span>
+            <strong>{event?.mode === 'venue' ? 'On-ground' : 'Online'}</strong>
+          </div>
+          <div className={styles.quickCard}>
+            <span className={styles.label}>Venue</span>
+            <strong>{event?.mode === 'venue' ? event?.venue ?? 'TBD' : 'Remote'}</strong>
+          </div>
+          <div className={styles.quickCard}>
+            <span className={styles.label}>Format</span>
+            <strong>{event?.format ?? 'Single match'}</strong>
+          </div>
+          <div className={styles.quickCard}>
+            <span className={styles.label}>Type</span>
+            <strong>{event?.type ?? 'Tournament'}</strong>
+          </div>
         </div>
       </section>
 

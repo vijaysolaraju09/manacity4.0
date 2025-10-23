@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  Gauge,
   Loader2,
   MapPin,
   Share2,
@@ -259,6 +260,12 @@ const EventDetailPage = () => {
   const capacityFull = Boolean(
     event?.maxParticipants && event.maxParticipants > 0 && event.registeredCount >= event.maxParticipants,
   );
+
+  const occupancyPercent = useMemo(() => {
+    if (!event?.maxParticipants || event.maxParticipants <= 0) return null;
+    const ratio = event.registeredCount / event.maxParticipants;
+    return Math.min(100, Math.round(ratio * 100));
+  }, [event?.maxParticipants, event?.registeredCount]);
 
   const participantList = useMemo(() => (registrations.items ?? []) as EventRegistrationSummary[], [registrations.items]);
 
@@ -574,44 +581,60 @@ const EventDetailPage = () => {
   return (
     <div className={styles.page}>
       <section className={styles.hero}>
-        <div className={styles.banner} style={{ backgroundImage: `url(${heroBanner})` }} aria-hidden="true">
+        <div className={styles.heroMedia} style={{ backgroundImage: `url(${heroBanner})` }} aria-hidden="true">
+          <div className={styles.heroMediaOverlay} />
           {stage === 'live' && (
             <span className={styles.liveBadge}>
               <Sparkles size={14} /> Live now
             </span>
           )}
         </div>
-        <div className={styles.heroContent}>
-          <div className={styles.categoryRow}>
-            <span className={styles.categoryChip}>{event.category}</span>
-            <span
-              className={`${styles.statusChip} ${
-                stage === 'live' ? styles.statusLive : stage === 'completed' ? styles.statusCompleted : styles.statusUpcoming
-              }`}
-            >
-              {stage === 'live' ? 'LIVE' : stage === 'completed' ? 'COMPLETED' : 'UPCOMING'}
-            </span>
-            <span className={styles.entryChip}>{entryLabel}</span>
+        <div className={styles.heroMain}>
+          <div className={styles.heroHeader}>
+            <div className={styles.heroTags}>
+              <span className={styles.categoryChip}>{event.category}</span>
+              <span
+                className={`${styles.stageChip} ${
+                  stage === 'live'
+                    ? styles.stageLive
+                    : stage === 'completed'
+                    ? styles.stageCompleted
+                    : styles.stageUpcoming
+                }`}
+              >
+                {stage === 'live' ? 'Live' : stage === 'completed' ? 'Completed' : 'Upcoming'}
+              </span>
+              <span className={styles.entryChip}>{entryLabel}</span>
+            </div>
             <button type="button" className={styles.iconButton} onClick={() => shareEvent(event)}>
               <Share2 size={16} />
             </button>
           </div>
           <h1 className={styles.title}>{event.title}</h1>
           {event.shortDescription && <p className={styles.subtitle}>{event.shortDescription}</p>}
-          <div className={styles.heroStats}>
-            <div className={styles.statItem}>
+          <div className={styles.heroSummary}>
+            <div className={styles.heroStat}>
               <CalendarClock size={18} />
-              <span>{formatDateTime(event.startAt)}</span>
+              <div>
+                <span className={styles.heroStatLabel}>Schedule</span>
+                <span className={styles.heroStatValue}>{formatDateTime(event.startAt)}</span>
+              </div>
             </div>
-            <div className={styles.statItem}>
+            <div className={styles.heroStat}>
               <Users size={18} />
-              <span>
-                {event.registeredCount}/{event.maxParticipants || '∞'} joined
-              </span>
+              <div>
+                <span className={styles.heroStatLabel}>Participants</span>
+                <span className={styles.heroStatValue}>
+                  {event.registeredCount}/{event.maxParticipants || '∞'} joined
+                </span>
+              </div>
             </div>
-            <div className={styles.statItem}>
+            <div className={styles.heroStat}>
               <Trophy size={18} />
-              <span>{event.prizePool || 'Prize reveal soon'}</span>
+              <div>
+                <span className={styles.heroStatLabel}>Prize pool</span>
+                <span className={styles.heroStatValue}>{event.prizePool || 'Prize reveal soon'}</span>
+              </div>
             </div>
           </div>
           {countdown.label && (
@@ -623,6 +646,76 @@ const EventDetailPage = () => {
               <Clock size={16} /> {countdown.label}
             </div>
           )}
+          <div className={styles.heroInsights}>
+            <div className={styles.insightCard}>
+              <div className={styles.insightHeader}>
+                <CalendarClock size={16} />
+                <span>Registration window</span>
+              </div>
+              <div className={styles.insightBody}>
+                <div className={styles.insightLine}>
+                  <span>Opens</span>
+                  <strong>{registrationWindow.opensAt || 'TBA'}</strong>
+                </div>
+                <div className={styles.insightLine}>
+                  <span>Closes</span>
+                  <strong>{registrationWindow.closesAt || 'TBA'}</strong>
+                </div>
+                <span className={styles.insightPill}>
+                  {registrationWindow.isOpen ? registrationWindow.closesIn : 'Registrations closed'}
+                </span>
+              </div>
+            </div>
+            <div className={styles.insightCard}>
+              <div className={styles.insightHeader}>
+                <Gauge size={16} />
+                <span>Capacity</span>
+              </div>
+              <div className={styles.insightBody}>
+                <div className={styles.insightLine}>
+                  <span>Joined</span>
+                  <strong>{event.registeredCount}</strong>
+                </div>
+                <div className={styles.insightLine}>
+                  <span>Slots</span>
+                  <strong>{event.maxParticipants || 'Unlimited'}</strong>
+                </div>
+                <div className={styles.insightProgress}>
+                  <div className={styles.progressBar}>
+                    <div
+                      className={styles.progressFill}
+                      style={{
+                        width:
+                          occupancyPercent !== null
+                            ? `${occupancyPercent}%`
+                            : `${Math.min(100, Math.round(event.registeredCount || 0))}%`,
+                      }}
+                    />
+                  </div>
+                  <span>
+                    {occupancyPercent !== null ? `${occupancyPercent}% full` : 'Open slots available'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className={styles.insightCard}>
+              <div className={styles.insightHeader}>
+                <MapPin size={16} />
+                <span>{event.mode === 'venue' ? 'On-ground venue' : 'Online experience'}</span>
+              </div>
+              <div className={styles.insightBody}>
+                <div className={styles.insightLine}>
+                  <span>Mode</span>
+                  <strong>{event.mode === 'venue' ? 'On-ground' : 'Online'}</strong>
+                </div>
+                <div className={styles.insightLine}>
+                  <span>Format</span>
+                  <strong>{event.format}</strong>
+                </div>
+                {event.venue && <p className={styles.insightNote}>{event.venue}</p>}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -645,43 +738,62 @@ const EventDetailPage = () => {
 
       <div className={styles.spacer} />
 
-      <aside className={styles.stickyActions}>
-        <div className={styles.actionRow}>
-          {canRegister && (
-            <button
-              type="button"
-              className={styles.primaryBtn}
-              onClick={() => navigate(`/events/${id}/register`)}
-              disabled={actions.register === 'loading'}
-            >
-              {actions.register === 'loading' ? <Loader2 className={styles.spin} /> : 'Register now'}
-            </button>
-          )}
-          {waitlisted && <span className={styles.waitlistedChip}>Waitlisted</span>}
-          {canUnregister && (
-            <button
-              type="button"
-              className={styles.secondaryBtn}
-              onClick={handleUnregister}
-              disabled={actions.unregister === 'loading'}
-            >
-              {actions.unregister === 'loading' ? <Loader2 className={styles.spin} /> : 'Unregister'}
-            </button>
-          )}
-          {stage !== 'upcoming' && (
-            <button type="button" className={styles.secondaryBtn} onClick={() => goToTab('leaderboard')}>
-              View leaderboard
-            </button>
-          )}
-          {stage !== 'completed' && (
-            <button type="button" className={styles.ghostBtn} onClick={() => goToTab('structure')}>
-              View bracket
-            </button>
-          )}
+      <aside className={styles.actionRail}>
+        <div className={styles.actionCard}>
+          <div className={styles.actionContext}>
+            <div>
+              <span className={styles.actionEyebrow}>
+                {capacityFull ? 'Waitlist in effect' : registrationWindow.isOpen ? 'Spots available' : 'Registrations closed'}
+              </span>
+              <p>
+                Team size {event.teamSize}{' '}
+                {waitlisted ? '· You are currently waitlisted' : ''}
+              </p>
+            </div>
+            {waitlisted && <span className={styles.waitlistedChip}>Waitlisted</span>}
+          </div>
+          <div className={styles.actionButtons}>
+            {canRegister && (
+              <button
+                type="button"
+                className={styles.primaryBtn}
+                onClick={() => navigate(`/events/${id}/register`)}
+                disabled={actions.register === 'loading'}
+              >
+                {actions.register === 'loading' ? <Loader2 className={styles.spin} /> : 'Register now'}
+              </button>
+            )}
+            {canUnregister && (
+              <button
+                type="button"
+                className={styles.secondaryBtn}
+                onClick={handleUnregister}
+                disabled={actions.unregister === 'loading'}
+              >
+                {actions.unregister === 'loading' ? <Loader2 className={styles.spin} /> : 'Unregister'}
+              </button>
+            )}
+            {stage !== 'upcoming' && (
+              <button type="button" className={styles.secondaryBtn} onClick={() => goToTab('leaderboard')}>
+                View leaderboard
+              </button>
+            )}
+            {stage !== 'completed' && (
+              <button type="button" className={styles.ghostBtn} onClick={() => goToTab('structure')}>
+                View bracket
+              </button>
+            )}
+          </div>
         </div>
       </aside>
 
       <div className={styles.mobileActions}>
+        <div className={styles.mobileContext}>
+          <span className={styles.actionEyebrow}>
+            {capacityFull ? 'Waitlist active' : registrationWindow.isOpen ? 'Open for registrations' : 'Registrations closed'}
+          </span>
+          <span className={styles.mobileHint}>Team size {event.teamSize}</span>
+        </div>
         {canRegister ? (
           <button
             type="button"

@@ -14,7 +14,7 @@
   gap: 1.5rem;
   padding: clamp(1.5rem, 3vw, 2.25rem);
   border-radius: 1.6rem;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(42, 117, 232, 0.18));
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(236, 72, 153, 0.18));
   border: 1px solid rgba(59, 130, 246, 0.32);
   box-shadow: 0 28px 52px rgba(8, 11, 26, 0.45);
 }
@@ -84,7 +84,7 @@
 }
 
 .primaryBtn {
-  background: linear-gradient(135deg, #1b63d9, #2a75e8);
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
   color: #fff;
   box-shadow: 0 18px 32px rgba(37, 99, 235, 0.4);
 }
@@ -184,7 +184,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(90, 149, 240, 0.95));
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(56, 189, 248, 0.95));
   transition: width 0.3s ease;
 }
 

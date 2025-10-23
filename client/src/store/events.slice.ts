@@ -96,10 +96,10 @@ export const fetchEvents = createAsyncThunk<PaginatedResult<EventSummary>, Event
     try {
       const res = await http.get('/events', { params });
       const payload = res?.data?.data ?? res?.data ?? {};
-      const items = Array.isArray(payload.items) ? payload.items : toItems(res);
-      const summaries = (items ?? [])
-        .map((item: unknown) => adaptEventSummary(item))
-        .filter((item): item is EventSummary => Boolean(item));
+      const items: unknown[] = Array.isArray(payload.items) ? payload.items : toItems(res);
+      const summaries = items
+        .map((item) => adaptEventSummary(item))
+        .filter((item): item is EventSummary => item !== null);
       return {
         items: summaries,
         total: typeof payload.total === 'number' ? payload.total : summaries.length,

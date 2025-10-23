@@ -140,7 +140,13 @@ export const fetchRegistrations = createAsyncThunk<
     const res = await http.get(`/events/${eventId}/registrations`);
     const payload = res?.data?.data ?? res?.data ?? {};
     const items = Array.isArray(payload.items)
-      ? payload.items.map((item: any) => adaptEventRegistrationSummary(item)).filter(Boolean)
+      ? payload.items
+          .map((item: unknown) => adaptEventRegistrationSummary(item))
+          .filter(
+            (
+              summary: EventRegistrationSummary | null,
+            ): summary is EventRegistrationSummary => summary !== null,
+          )
       : [];
     return {
       items,
@@ -214,7 +220,7 @@ export const fetchEventUpdates = createAsyncThunk<
     const items = Array.isArray(payload.items) ? payload.items : Array.isArray(payload) ? payload : toItems(res);
     return (items ?? [])
       .map((item: unknown) => adaptEventUpdate(item))
-      .filter((update): update is EventUpdate => Boolean(update));
+      .filter((update: EventUpdate | null): update is EventUpdate => update !== null);
   } catch (err) {
     return rejectWithValue(toErrorMessage(err));
   }
@@ -266,7 +272,7 @@ export const postLeaderboard = createAsyncThunk<
     const itemsSource = Array.isArray(data.entries) ? data.entries : payload.entries;
     const items = (itemsSource ?? [])
       .map((entry: unknown) => adaptEventLeaderboardEntry(entry))
-      .filter((entry): entry is EventLeaderboardEntry => Boolean(entry));
+      .filter((entry: EventLeaderboardEntry | null): entry is EventLeaderboardEntry => entry !== null);
     return {
       items,
       version: typeof data.version === 'number' ? data.version : Date.now(),

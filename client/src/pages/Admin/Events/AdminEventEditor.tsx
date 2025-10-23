@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { createEvent, updateEvent } from '@/api/admin';
@@ -109,6 +109,30 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const completion = useMemo(() => {
+    const keys: Array<keyof FormState> = [
+      'title',
+      'category',
+      'startAt',
+      'registrationOpenAt',
+      'registrationCloseAt',
+      'teamSize',
+      'capacity',
+      'entryFee',
+      'prizePool',
+      'description',
+    ];
+    const total = keys.length;
+    const filled = keys.reduce((acc, key) => {
+      const value = form[key];
+      if (typeof value === 'string' && value.trim().length > 0 && value !== '0') {
+        return acc + 1;
+      }
+      return acc;
+    }, 0);
+    return Math.min(100, Math.round((filled / total) * 100));
+  }, [form]);
+
   useEffect(() => {
     if (mode === 'create') {
       setForm(defaultFormState());
@@ -200,12 +224,20 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <h1>{mode === 'create' ? 'Create event' : 'Edit event'}</h1>
-          <p>Configure tournament details, schedule, and visibility.</p>
+      <header className={styles.hero}>
+        <div className={styles.heroText}>
+          <span className={styles.eyebrow}>{mode === 'create' ? 'New tournament' : 'Editing tournament'}</span>
+          <h1>{mode === 'create' ? 'Create event' : form.title || 'Edit event'}</h1>
+          <p>Design the marquee, configure prizes, and script the experience before it goes live.</p>
+          <div className={styles.progressTrack}>
+            <span className={styles.progressBar} style={{ width: `${completion}%` }} />
+          </div>
+          <div className={styles.progressMeta}>
+            <span>Setup {completion}% complete</span>
+            <span>{form.mode === 'venue' ? 'On-ground experience' : 'Online experience'}</span>
+          </div>
         </div>
-        <div className={styles.inlineActions}>
+        <div className={styles.heroActions}>
           {mode === 'edit' && eventId && (
             <button
               type="button"
@@ -215,12 +247,20 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
               Back to event
             </button>
           )}
+          {mode === 'edit' && (
+            <button type="button" className={styles.secondaryBtn} onClick={() => context?.refresh()}>
+              Refresh data
+            </button>
+          )}
         </div>
       </header>
 
       <form className={styles.form} onSubmit={handleSubmit}>
-        <section className={styles.section}>
-          <h2>Basics</h2>
+        <section className={styles.sectionCard}>
+          <div className={styles.sectionHeader}>
+            <h2>Basics</h2>
+            <p>Give your tournament an identity and define the bracket style.</p>
+          </div>
           <div className={styles.grid}>
             <label className={styles.field}>
               <span>Title</span>
@@ -260,8 +300,11 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
           </div>
         </section>
 
-        <section className={styles.section}>
-          <h2>Schedule</h2>
+        <section className={styles.sectionCard}>
+          <div className={styles.sectionHeader}>
+            <h2>Schedule</h2>
+            <p>Open the lobby, close registrations, and mark when the spotlight turns on.</p>
+          </div>
           <div className={styles.grid}>
             <label className={styles.field}>
               <span>Registration opens</span>
@@ -298,8 +341,11 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
           </div>
         </section>
 
-        <section className={styles.section}>
-          <h2>Structure</h2>
+        <section className={styles.sectionCard}>
+          <div className={styles.sectionHeader}>
+            <h2>Structure</h2>
+            <p>Decide the squad size, total slots, and what players are competing for.</p>
+          </div>
           <div className={styles.grid}>
             <label className={styles.field}>
               <span>Team size</span>
@@ -339,8 +385,11 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
           </div>
         </section>
 
-        <section className={styles.section}>
-          <h2>Experience</h2>
+        <section className={styles.sectionCard}>
+          <div className={styles.sectionHeader}>
+            <h2>Experience</h2>
+            <p>Set the arena, visuals, and how participants will join in.</p>
+          </div>
           <div className={styles.grid}>
             <label className={styles.field}>
               <span>Mode</span>
@@ -378,25 +427,30 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
           </div>
         </section>
 
-        <section className={styles.section}>
-          <h2>Content</h2>
-          <label className={styles.field}>
-            <span>Description</span>
-            <textarea
-              rows={4}
-              value={form.description}
-              onChange={(eventObj) => handleChange('description', eventObj.target.value)}
-            />
-          </label>
-          <label className={styles.field}>
-            <span>Rules</span>
-            <textarea rows={4} value={form.rules} onChange={(eventObj) => handleChange('rules', eventObj.target.value)} />
-          </label>
+        <section className={styles.sectionCard}>
+          <div className={styles.sectionHeader}>
+            <h2>Content</h2>
+            <p>Describe the narrative and codify rules players must follow.</p>
+          </div>
+          <div className={styles.stacked}> 
+            <label className={styles.field}>
+              <span>Description</span>
+              <textarea
+                rows={4}
+                value={form.description}
+                onChange={(eventObj) => handleChange('description', eventObj.target.value)}
+              />
+            </label>
+            <label className={styles.field}>
+              <span>Rules</span>
+              <textarea rows={4} value={form.rules} onChange={(eventObj) => handleChange('rules', eventObj.target.value)} />
+            </label>
+          </div>
         </section>
 
         {error && <p className={styles.error}>{error}</p>}
 
-        <div className={styles.actions}>
+        <div className={styles.formFooter}>
           {mode === 'create' ? (
             <button type="button" className={styles.secondaryBtn} onClick={() => navigate(paths.admin.events.list())}>
               Cancel

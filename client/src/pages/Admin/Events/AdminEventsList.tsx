@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Plus, RefreshCw, Search } from 'lucide-react';
 import {
@@ -96,10 +96,16 @@ const AdminEventsList = () => {
   const [error, setError] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const pageSize = 10;
+  const [tick, setTick] = useState(Date.now());
 
   useEffect(() => {
     setPage(1);
   }, [status, debouncedSearch]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setTick(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -130,6 +136,65 @@ const AdminEventsList = () => {
   const entryFeeLabel = (event: AdminEventRow) => {
     if (!event.entryFeePaise) return 'FREE';
     return formatINR(event.entryFeePaise);
+  };
+
+  const metrics = useMemo(
+    () => ({
+      total,
+      live: items.filter((eventRow) => eventRow.status === 'ongoing').length,
+      drafts: items.filter((eventRow) => eventRow.status === 'draft').length,
+      completed: items.filter((eventRow) => eventRow.status === 'completed').length,
+      registrations: items.reduce((acc, eventRow) => acc + (eventRow.registeredCount ?? 0), 0),
+    }),
+    [items, total],
+  );
+
+  const determinePhase = (event: AdminEventRow) => {
+    const statusValue = (event.status ?? 'draft').toLowerCase();
+    if (statusValue === 'ongoing') return 'Live';
+    if (statusValue === 'published') return 'Registrations open';
+    if (statusValue === 'completed') return 'Completed';
+    if (statusValue === 'canceled') return 'Canceled';
+    return 'Draft';
+  };
+
+  const formatCountdown = (event: AdminEventRow) => {
+    const now = tick;
+    const parseDate = (value?: string) => {
+      if (!value) return Number.NaN;
+      const date = Date.parse(value);
+      return Number.isFinite(date) ? date : Number.NaN;
+    };
+
+    const statusValue = (event.status ?? '').toLowerCase();
+    const registrationClose = parseDate(event.registrationCloseAt);
+    const startAt = parseDate(event.startAt);
+    if (statusValue === 'completed') return 'Event completed';
+    if (statusValue === 'canceled') return 'Event canceled';
+    if (statusValue === 'ongoing') {
+      const endAt = parseDate(event?.registrationCloseAt ?? event.startAt);
+      if (Number.isFinite(endAt) && endAt > now) {
+        return `Live · ${formatDuration(endAt - now)} left`;
+      }
+      return 'Live now';
+    }
+    if (statusValue === 'published' && Number.isFinite(registrationClose) && registrationClose > now) {
+      return `Reg closes in ${formatDuration(registrationClose - now)}`;
+    }
+    if (Number.isFinite(startAt) && startAt > now) {
+      return `Starts in ${formatDuration(startAt - now)}`;
+    }
+    return determinePhase(event);
+  };
+
+  const formatDuration = (diff: number) => {
+    const totalSeconds = Math.floor(Math.max(0, diff) / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${Math.max(minutes, 0)}m`;
   };
 
   const handleLifecycle = async (eventId: string, action: LifecycleAction) => {
@@ -179,12 +244,33 @@ const AdminEventsList = () => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.titleBlock}>
-          <h1>Events console</h1>
-          <p>Manage tournaments, publish announcements, and oversee live leaderboards.</p>
+      <header className={styles.hero}>
+        <div className={styles.heroContent}>
+          <div className={styles.heroHeadline}>
+            <span className={styles.eyebrow}>Tournament control</span>
+            <h1>Events operations hub</h1>
+            <p>Track registrations, flip lifecycle switches, and launch new brackets in seconds.</p>
+          </div>
+          <div className={styles.heroMetrics}>
+            <div className={styles.metricCard}>
+              <span className={styles.metricLabel}>Total events</span>
+              <span className={styles.metricValue}>{metrics.total}</span>
+            </div>
+            <div className={styles.metricCard}>
+              <span className={styles.metricLabel}>Live now</span>
+              <span className={styles.metricValue}>{metrics.live}</span>
+            </div>
+            <div className={styles.metricCard}>
+              <span className={styles.metricLabel}>Drafts</span>
+              <span className={styles.metricValue}>{metrics.drafts}</span>
+            </div>
+            <div className={styles.metricCard}>
+              <span className={styles.metricLabel}>Total registrations</span>
+              <span className={styles.metricValue}>{metrics.registrations}</span>
+            </div>
+          </div>
         </div>
-        <div className={styles.inlineActions}>
+        <div className={styles.heroActions}>
           <button
             type="button"
             className={styles.secondaryBtn}
@@ -204,13 +290,13 @@ const AdminEventsList = () => {
       </header>
 
       <div className={styles.toolbar}>
-        <div className={styles.search}>
+        <div className={styles.searchPanel}>
           <Search size={16} />
           <input
             type="search"
             value={search}
             onChange={(eventObj) => setSearch(eventObj.target.value)}
-            placeholder="Search events"
+            placeholder="Search tournaments by name, status, or reward"
           />
         </div>
         <div className={styles.filters}>
@@ -228,92 +314,120 @@ const AdminEventsList = () => {
       </div>
 
       {loading && items.length === 0 ? (
-        <div className={styles.skeleton}>
-          <Loader2 className={styles.spin} /> Loading events
+        <div className={styles.skeletonGrid}>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={`skeleton-${index}`} className={styles.skeletonCard}>
+              <Loader2 className={styles.spin} />
+              <span>Loading tournament</span>
+            </div>
+          ))}
         </div>
       ) : error ? (
         <div className={styles.errorCard}>
           <h3>Unable to load events</h3>
           <p>{error}</p>
-          <button type="button" className={styles.secondaryBtn} onClick={() => setPage((prev) => prev)}>
+          <button type="button" className={styles.primaryBtn} onClick={() => setPage((prev) => prev)}>
             Retry
           </button>
         </div>
       ) : items.length === 0 ? (
         <div className={styles.emptyState}>
-          <h3>No events found</h3>
-          <p>Create your first tournament or adjust the filters to view events.</p>
+          <h3>No tournaments yet</h3>
+          <p>Spin up your first bracket or adjust filters to uncover archived runs.</p>
+          <button type="button" className={styles.primaryBtn} onClick={() => navigate(paths.admin.events.create())}>
+            <Plus size={16} /> Launch event
+          </button>
         </div>
       ) : (
-        <div className={styles.tableWrapper}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Status</th>
-                <th>Registration</th>
-                <th>Start date</th>
-                <th>Entries</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((eventRow) => (
-                <tr key={eventRow._id}>
-                  <td>
-                    <button
-                      type="button"
-                      className={styles.linkBtn}
-                      onClick={() => navigate(paths.admin.events.detail(eventRow._id))}
-                    >
-                      {eventRow.title}
-                    </button>
-                    <div className={styles.tableMeta}>{eventRow.category}</div>
-                  </td>
-                  <td>
+        <div className={styles.cardGrid}>
+          {items.map((eventRow) => {
+            const capacity = eventRow.maxParticipants ?? 0;
+            const registered = eventRow.registeredCount ?? 0;
+            const progress = capacity > 0 ? Math.min(100, Math.round((registered / capacity) * 100)) : 0;
+            const slotsRemaining = capacity > 0 ? Math.max(0, capacity - registered) : null;
+            return (
+              <article key={eventRow._id} className={styles.eventCard}>
+                <div className={styles.cardHeader}>
+                  <div className={styles.cardTags}>
+                    <span className={styles.category}>{eventRow.category ?? 'other'}</span>
                     <span className={statusBadgeClass(eventRow.status)}>{eventRow.status}</span>
-                  </td>
-                  <td>
-                    <div className={styles.tableMeta}>{formatDateTime(eventRow.registrationOpenAt)}</div>
-                    <div className={styles.tableMeta}>{formatDateTime(eventRow.registrationCloseAt)}</div>
-                  </td>
-                  <td>{formatDateTime(eventRow.startAt)}</td>
-                  <td>
-                    <div className={styles.tableMeta}>{entryFeeLabel(eventRow)}</div>
-                    <div className={styles.tableMeta}>
-                      {eventRow.registeredCount}/{eventRow.maxParticipants || '∞'}
-                    </div>
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <button
-                        type="button"
-                        className={styles.secondaryBtn}
-                        onClick={() => navigate(paths.admin.events.detail(eventRow._id))}
-                      >
-                        Manage
-                      </button>
-                      {getLifecycleActions(eventRow.status).map((action) => (
-                        <button
-                          key={`${eventRow._id}-${action}`}
-                          type="button"
-                          className={styles.ghostBtn}
-                          onClick={() => handleLifecycle(eventRow._id, action)}
-                          disabled={lifecycleBusy(eventRow._id, action)}
-                        >
-                          {lifecycleBusy(eventRow._id, action) ? (
-                            <Loader2 size={16} className={styles.spin} />
-                          ) : (
-                            lifecycleLabels[action]
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                  <span className={styles.phase}>{determinePhase(eventRow)}</span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.cardTitle}
+                  onClick={() => navigate(paths.admin.events.detail(eventRow._id))}
+                >
+                  {eventRow.title}
+                </button>
+                <div className={styles.cardMetrics}>
+                  <div>
+                    <span className={styles.metricLabel}>Prize pool</span>
+                    <strong>{eventRow.prizePool ?? 'TBA'}</strong>
+                  </div>
+                  <div>
+                    <span className={styles.metricLabel}>Entry</span>
+                    <strong>{entryFeeLabel(eventRow)}</strong>
+                  </div>
+                  <div>
+                    <span className={styles.metricLabel}>Spots</span>
+                    <strong>
+                      {capacity > 0 ? `${registered}/${capacity}` : `${registered} / ∞`}
+                    </strong>
+                    {slotsRemaining !== null && (
+                      <span className={styles.metricHint}>{slotsRemaining} remaining</span>
+                    )}
+                  </div>
+                </div>
+                <div className={styles.progressTrack}>
+                  <span className={styles.progressValue} style={{ width: `${progress}%` }} />
+                </div>
+                <div className={styles.progressMeta}>
+                  <span>{registered} registered</span>
+                  <span>{formatCountdown(eventRow)}</span>
+                </div>
+                <div className={styles.timeline}>
+                  <div>
+                    <span className={styles.label}>Reg opens</span>
+                    <strong>{formatDateTime(eventRow.registrationOpenAt)}</strong>
+                  </div>
+                  <div>
+                    <span className={styles.label}>Reg closes</span>
+                    <strong>{formatDateTime(eventRow.registrationCloseAt)}</strong>
+                  </div>
+                  <div>
+                    <span className={styles.label}>Kick-off</span>
+                    <strong>{formatDateTime(eventRow.startAt)}</strong>
+                  </div>
+                </div>
+                <div className={styles.cardActions}>
+                  <button
+                    type="button"
+                    className={styles.primaryBtn}
+                    onClick={() => navigate(paths.admin.events.detail(eventRow._id))}
+                  >
+                    Manage event
+                  </button>
+                  {getLifecycleActions(eventRow.status).map((action) => (
+                    <button
+                      key={`${eventRow._id}-${action}`}
+                      type="button"
+                      className={styles.secondaryBtn}
+                      onClick={() => handleLifecycle(eventRow._id, action)}
+                      disabled={lifecycleBusy(eventRow._id, action)}
+                    >
+                      {lifecycleBusy(eventRow._id, action) ? (
+                        <Loader2 size={16} className={styles.spin} />
+                      ) : (
+                        lifecycleLabels[action]
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
 

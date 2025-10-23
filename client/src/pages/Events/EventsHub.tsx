@@ -266,10 +266,6 @@ const EventsHub = () => {
         <div className={styles.headingRow}>
           <div className={styles.titleBlock}>
             <h1>Events &amp; Tournaments</h1>
-            <p>
-              Compete, connect, and celebrate. Discover live tournaments, weekend fests, and skill-based
-              challenges curated for the Manacity community.
-            </p>
           </div>
           <button type="button" className={styles.refreshBtn} onClick={handleRefresh} disabled={busy}>
             {busy ? <Loader2 size={16} className={styles.spin} /> : <RefreshCw size={16} />}
@@ -332,12 +328,6 @@ const EventsHub = () => {
 
       {featuredEvents.length > 0 && (
         <section className={styles.featureSection}>
-          <div className={styles.headingRow}>
-            <div className={styles.titleBlock}>
-              <h1 style={{ fontSize: '1.35rem' }}>Featured arenas</h1>
-              <p>Jump into marquee tournaments and premium experiences with boosted prize pools.</p>
-            </div>
-          </div>
           <div className={styles.carousel}>
             {featuredEvents.map((event) => {
               const stage = determineStage(event, tick);

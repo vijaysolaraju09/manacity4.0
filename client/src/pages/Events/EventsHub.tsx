@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Loader2, RefreshCw, Users, Trophy, Sparkles, Clock, ArrowRight } from 'lucide-react';
+import {
+  Activity,
+  ArrowRight,
+  CalendarClock,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+  Target,
+  Trophy,
+  Users,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { RootState, AppDispatch } from '@/store';
 import {
@@ -161,6 +171,69 @@ const EventsHub = () => {
     return liveOrUpcoming.slice(0, 6);
   }, [items, tick]);
 
+  const stageSummary = useMemo(
+    () =>
+      items.reduce(
+        (acc, event) => {
+          const stage = determineStage(event, tick);
+          acc[stage] += 1;
+          acc.totalRegistrations += event.registeredCount ?? 0;
+          const cap = Number.isFinite(event.maxParticipants ?? Number.NaN)
+            ? Math.max(0, Number(event.maxParticipants))
+            : 0;
+          if (cap > 0) {
+            acc.totalCapacity += cap;
+          }
+          return acc;
+        },
+        {
+          live: 0,
+          upcoming: 0,
+          completed: 0,
+          totalRegistrations: 0,
+          totalCapacity: 0,
+        },
+      ),
+    [items, tick],
+  );
+
+  const occupancyPercent = useMemo(() => {
+    if (stageSummary.totalCapacity === 0) return 0;
+    const ratio = stageSummary.totalRegistrations / stageSummary.totalCapacity;
+    return Math.min(100, Math.round(ratio * 100));
+  }, [stageSummary.totalCapacity, stageSummary.totalRegistrations]);
+
+  const spotlightEvent = useMemo(() => {
+    if (featuredEvents.length > 0) {
+      const live = featuredEvents.find((event) => determineStage(event, tick) === 'live');
+      if (live) return live;
+      const upcomingMatch = featuredEvents.find((event) => determineStage(event, tick) === 'upcoming');
+      if (upcomingMatch) return upcomingMatch;
+      return featuredEvents[0];
+    }
+    const sorted = [...items].sort((a, b) => {
+      const aTime = Date.parse(a.startAt);
+      const bTime = Date.parse(b.startAt);
+      if (Number.isNaN(aTime) && Number.isNaN(bTime)) return 0;
+      if (Number.isNaN(aTime)) return 1;
+      if (Number.isNaN(bTime)) return -1;
+      return aTime - bTime;
+    });
+    return (
+      sorted.find((event) => determineStage(event, tick) !== 'completed') ?? sorted[0] ?? null
+    );
+  }, [featuredEvents, items, tick]);
+
+  const highlightEvents = useMemo(() => {
+    if (!spotlightEvent) return featuredEvents;
+    return featuredEvents.filter((event) => event._id !== spotlightEvent._id).slice(0, 3);
+  }, [featuredEvents, spotlightEvent]);
+
+  const gridEvents = useMemo(() => {
+    if (!spotlightEvent || items.length <= 1) return items;
+    return items.filter((event) => event._id !== spotlightEvent._id);
+  }, [items, spotlightEvent]);
+
   const formatEntryFee = (event: EventSummary) => {
     const paise =
       typeof event.entryFeePaise === 'number' && Number.isFinite(event.entryFeePaise)
@@ -189,19 +262,14 @@ const EventsHub = () => {
 
   const renderStatusBadge = (event: EventSummary) => {
     const stage = determineStage(event, tick);
-    const classList = [styles.badge];
-    let label = 'Upcoming';
-    if (stage === 'live') {
-      classList.push(styles.badgeLive);
-      label = 'Live';
-    } else if (stage === 'completed') {
-      classList.push(styles.badgeClosed);
-      label = event.status === 'completed' ? 'Results' : 'Closed';
-    } else {
-      classList.push(styles.badgeUpcoming);
-      label = 'Upcoming';
-    }
-    return <span className={classList.join(' ')}>{label}</span>;
+    const stageClass =
+      stage === 'live'
+        ? styles.stageLive
+        : stage === 'completed'
+        ? styles.stageCompleted
+        : styles.stageUpcoming;
+    const label = stage === 'live' ? 'Live' : stage === 'completed' ? 'Completed' : 'Upcoming';
+    return <span className={`${styles.stageBadge} ${stageClass}`}>{label}</span>;
   };
 
   const renderCountdown = (event: EventSummary) => {
@@ -223,7 +291,7 @@ const EventsHub = () => {
 
   const renderPrimaryCta = (event: EventSummary) => {
     const stage = determineStage(event, tick);
-    const baseClass = styles.primaryBtn;
+    const baseClass = styles.primaryAction;
     if (stage === 'live') {
       return (
         <button
@@ -239,7 +307,7 @@ const EventsHub = () => {
       return (
         <button
           type="button"
-          className={styles.secondaryBtn}
+          className={styles.secondaryAction}
           onClick={() => navigate(`/events/${event._id}`)}
         >
           View Results
@@ -257,128 +325,211 @@ const EventsHub = () => {
     );
   };
 
-  // Temporarily disable filter controls until refined filter options are ready.
-  const showFilters = false;
-
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headingRow}>
-          <div className={styles.titleBlock}>
-            <h1>Events &amp; Tournaments</h1>
+      <section className={styles.hero}>
+        <div className={styles.heroBody}>
+          <span className={styles.heroEyebrow}>Community spotlight</span>
+          <h1 className={styles.heroTitle}>Discover tournaments and on-ground events built for you</h1>
+          <p className={styles.heroSubtitle}>
+            Browse competitive brackets, casual meetups, and cultural gatherings powered by the same
+            Manacity community you play with every day.
+          </p>
+          <div className={styles.heroActions}>
+            <button
+              type="button"
+              className={styles.primaryAction}
+              onClick={handleRefresh}
+              disabled={busy}
+            >
+              {busy ? <Loader2 size={16} className={styles.spin} /> : <RefreshCw size={16} />}
+              Refresh feed
+            </button>
+            <button
+              type="button"
+              className={`${styles.ghostAction} ${mine ? styles.ghostActionActive : ''}`}
+              onClick={() => setMine((prev) => !prev)}
+            >
+              {mine ? 'Showing events I joined' : 'Show only my registrations'}
+            </button>
           </div>
-          <button type="button" className={styles.refreshBtn} onClick={handleRefresh} disabled={busy}>
-            {busy ? <Loader2 size={16} className={styles.spin} /> : <RefreshCw size={16} />}
-            Refresh
-          </button>
         </div>
-        <div className={styles.tabs}>
+        <div className={styles.metricGrid}>
+          <div className={styles.metricCard}>
+            <span className={styles.metricIcon}>
+              <Sparkles size={16} />
+            </span>
+            <span className={styles.metricLabel}>Live now</span>
+            <strong className={styles.metricValue}>{stageSummary.live}</strong>
+            <span className={styles.metricHint}>Catch the action in progress</span>
+          </div>
+          <div className={styles.metricCard}>
+            <span className={styles.metricIcon}>
+              <CalendarClock size={16} />
+            </span>
+            <span className={styles.metricLabel}>Upcoming</span>
+            <strong className={styles.metricValue}>{stageSummary.upcoming}</strong>
+            <span className={styles.metricHint}>Reserve your slot early</span>
+          </div>
+          <div className={styles.metricCard}>
+            <span className={styles.metricIcon}>
+              <Activity size={16} />
+            </span>
+            <span className={styles.metricLabel}>Overall occupancy</span>
+            <strong className={styles.metricValue}>
+              {occupancyPercent}%
+            </strong>
+            <span className={styles.metricHint}>
+              {stageSummary.totalRegistrations.toLocaleString()} players registered
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.controlBar}>
+        <div className={styles.tabList}>
           {categories.map((tab) => (
             <button
               key={tab}
               type="button"
-              className={`${styles.tab} ${category === tab ? styles.tabActive : ''}`}
+              className={`${styles.tabButton} ${category === tab ? styles.tabButtonActive : ''}`}
               onClick={() => setCategory(tab)}
             >
               {tab}
             </button>
           ))}
         </div>
-        {showFilters && (
-          <div className={styles.filters}>
-            <div className={styles.filterGroup}>
-              <span className={styles.filterLabel}>Status</span>
+        <div className={styles.filterRow}>
+          <div className={styles.filterSegment}>
+            <span className={styles.segmentLabel}>Status</span>
+            <div className={styles.segmentButtons}>
               {statusFilters.map((option) => (
                 <button
                   key={option}
                   type="button"
-                  className={`${styles.filterButton} ${status === option ? styles.filterButtonActive : ''}`}
+                  className={`${styles.segmentButton} ${status === option ? styles.segmentButtonActive : ''}`}
                   onClick={() => setStatus(option)}
                 >
                   {option}
                 </button>
               ))}
             </div>
-            <div className={styles.filterGroup}>
-              <span className={styles.filterLabel}>Entry</span>
+          </div>
+          <div className={styles.filterSegment}>
+            <span className={styles.segmentLabel}>Entry</span>
+            <div className={styles.segmentButtons}>
               {entryFilters.map((option) => (
                 <button
                   key={option}
                   type="button"
-                  className={`${styles.filterButton} ${entry === option ? styles.filterButtonActive : ''}`}
+                  className={`${styles.segmentButton} ${entry === option ? styles.segmentButtonActive : ''}`}
                   onClick={() => setEntry(option)}
                 >
                   {option}
                 </button>
               ))}
             </div>
-            <div className={styles.filterGroup}>
-              <span className={styles.filterLabel}>My Events</span>
-              <button
-                type="button"
-                className={`${styles.filterButton} ${mine ? styles.filterButtonActive : ''}`}
-                onClick={() => setMine((prev) => !prev)}
-              >
-                {mine ? 'Showing mine' : 'All events'}
-              </button>
-            </div>
           </div>
-        )}
-      </header>
+        </div>
+      </section>
 
-      {featuredEvents.length > 0 && (
-        <section className={styles.featureSection}>
-          <div className={styles.carousel}>
-            {featuredEvents.map((event) => {
-              const stage = determineStage(event, tick);
-              const cover = safeImage(event.bannerUrl);
-              return (
-                <article key={event._id} className={styles.featureCard}>
+      {spotlightEvent && (
+        <section className={styles.spotlight}>
+          <article className={styles.spotlightCard}>
+            <div
+              className={styles.spotlightMedia}
+              style={{ backgroundImage: `url(${safeImage(spotlightEvent.bannerUrl)})` }}
+              aria-hidden="true"
+            />
+            <div className={styles.spotlightContent}>
+              <header className={styles.spotlightHeader}>
+                <div className={styles.spotlightChips}>
+                  <span className={styles.categoryChip}>{spotlightEvent.category}</span>
+                  {renderStatusBadge(spotlightEvent)}
+                  <span className={styles.entryChip}>{formatEntryFee(spotlightEvent)}</span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.iconButton}
+                  onClick={() => navigate(`/events/${spotlightEvent._id}`)}
+                >
+                  <ArrowRight size={18} />
+                </button>
+              </header>
+              <h2 className={styles.spotlightTitle}>{spotlightEvent.title}</h2>
+              <p className={styles.spotlightSubtitle}>{renderCountdown(spotlightEvent)}</p>
+              <div className={styles.spotlightStats}>
+                <span className={styles.statChip}>
+                  <Trophy size={14} /> {spotlightEvent.prizePool || 'Prize reveal soon'}
+                </span>
+                <span className={styles.statChip}>
+                  <Users size={14} />
+                  {spotlightEvent.registeredCount}/{spotlightEvent.maxParticipants || '∞'} players
+                </span>
+              </div>
+              <div className={styles.progressWrap}>
+                <div className={styles.progressBar}>
                   <div
-                    className={styles.featureBanner}
-                    style={{ backgroundImage: `url(${cover})` }}
-                    aria-hidden="true"
+                    className={styles.progressFill}
+                    style={{
+                      width: spotlightEvent.maxParticipants
+                        ? `${Math.min(
+                            100,
+                            Math.round(
+                              (spotlightEvent.registeredCount / spotlightEvent.maxParticipants) * 100,
+                            ),
+                          )}%`
+                        : '100%',
+                    }}
+                  />
+                </div>
+                <span className={styles.progressLabel}>
+                  {spotlightEvent.maxParticipants
+                    ? `${spotlightEvent.registeredCount}/${spotlightEvent.maxParticipants} seats taken`
+                    : `${spotlightEvent.registeredCount} teams already in`}
+                </span>
+              </div>
+              <div className={styles.spotlightActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryAction}
+                  onClick={() => navigate(`/events/${spotlightEvent._id}`)}
+                >
+                  Event details
+                </button>
+                {renderPrimaryCta(spotlightEvent)}
+              </div>
+            </div>
+          </article>
+          {highlightEvents.length > 0 && (
+            <div className={styles.highlightList}>
+              {highlightEvents.map((event) => (
+                <article key={event._id} className={styles.highlightCard}>
+                  <div className={styles.highlightHeader}>
+                    <span className={styles.categoryChip}>{event.category}</span>
+                    {renderStatusBadge(event)}
+                  </div>
+                  <h3>{event.title}</h3>
+                  <p>{renderCountdown(event)}</p>
+                  <div className={styles.highlightStats}>
+                    <span>
+                      <Trophy size={14} /> {event.prizePool || 'Prize TBD'}
+                    </span>
+                    <span>
+                      <Users size={14} /> {event.registeredCount}/{event.maxParticipants || '∞'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.ghostAction}
+                    onClick={() => navigate(`/events/${event._id}`)}
                   >
-                    {event.highlightLabel && <span className={styles.featureBadge}>{event.highlightLabel}</span>}
-                  </div>
-                  <div className={styles.featureContent}>
-                    <div className={styles.featureMeta}>
-                      <span className={styles.badge}>{event.category}</span>
-                      {renderStatusBadge(event)}
-                      <span className={styles.badge}>{formatEntryFee(event)}</span>
-                    </div>
-                    <h3 className={styles.featureTitle}>{event.title}</h3>
-                    <p className={styles.tileSubtitle}>{renderCountdown(event)}</p>
-                    <div className={styles.statRow}>
-                      <span className={styles.statChip}>
-                        <Trophy size={14} />
-                        {event.prizePool ? event.prizePool : 'Prize on reveal'}
-                      </span>
-                      <span className={styles.statChip}>
-                        <Users size={14} />
-                        {event.registeredCount}/{event.maxParticipants || '∞'}
-                      </span>
-                    </div>
-                    <div className={styles.ctaRow}>
-                      <button
-                        type="button"
-                        className={styles.secondaryBtn}
-                        onClick={() => navigate(`/events/${event._id}`)}
-                      >
-                        View Details
-                      </button>
-                      {renderPrimaryCta(event)}
-                    </div>
-                    {stage === 'live' && (
-                      <span className={styles.badgeLive} style={{ alignSelf: 'flex-start' }}>
-                        <Sparkles size={12} /> Live action
-                      </span>
-                    )}
-                  </div>
+                    View event
+                  </button>
                 </article>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -389,62 +540,77 @@ const EventsHub = () => {
           ))}
         </div>
       ) : error ? (
-        <div className={styles.errorCard}>
+        <div className={styles.feedbackCard}>
           <h3>Unable to load events</h3>
           <p>{error}</p>
         </div>
       ) : items.length === 0 ? (
-        <div className={styles.emptyState}>
-          <h3>No events yet</h3>
-          <p>We are crafting the next wave of tournaments. Check back soon or explore other categories.</p>
+        <div className={styles.feedbackCard}>
+          <h3>No events available yet</h3>
+          <p>
+            We are lining up the next wave of community experiences. Check back soon or explore a
+            different category above.
+          </p>
         </div>
       ) : (
         <>
+          <div className={styles.gridHeader}>
+            <div>
+              <h3>Browse all events</h3>
+              <p>
+                {gridEvents.length} experiences match your filters. Pick one to view the details and
+                register.
+              </p>
+            </div>
+            <div className={styles.gridHints}>
+              <span>
+                <Target size={14} /> Filters active: {status !== 'All' || entry !== 'All' ? 'Yes' : 'No'}
+              </span>
+              <span>
+                <Users size={14} /> {stageSummary.totalRegistrations.toLocaleString()} total registrants
+              </span>
+            </div>
+          </div>
           <div className={styles.cardsGrid}>
-            {items.map((event) => {
+            {gridEvents.map((event) => {
               const cover = safeImage(event.bannerUrl);
               const participantsLabel = event.maxParticipants
                 ? `${Math.min(event.registeredCount, event.maxParticipants)}/${event.maxParticipants}`
                 : `${event.registeredCount}`;
               return (
-                <article key={event._id} className={styles.tile}>
-                  <div
-                    className={styles.tileBanner}
-                    style={{ backgroundImage: `url(${cover})` }}
-                    aria-hidden="true"
-                  />
-                  <div className={styles.tileContent}>
-                    <div className={styles.featureMeta}>
-                      <span className={styles.badge}>{event.category}</span>
+                <article key={event._id} className={styles.card}>
+                  <div className={styles.cardMedia} style={{ backgroundImage: `url(${cover})` }} aria-hidden="true">
+                    {event.highlightLabel && <span className={styles.highlightBadge}>{event.highlightLabel}</span>}
+                  </div>
+                  <div className={styles.cardBody}>
+                    <div className={styles.cardChips}>
+                      <span className={styles.categoryChip}>{event.category}</span>
                       {renderStatusBadge(event)}
-                      <span className={styles.badge}>{formatEntryFee(event)}</span>
+                      <span className={styles.entryChip}>{formatEntryFee(event)}</span>
                     </div>
-                    <h3 className={styles.tileTitle}>{event.title}</h3>
+                    <h3 className={styles.cardTitle}>{event.title}</h3>
                     {event.shortDescription && (
-                      <p className={styles.tileSubtitle}>{event.shortDescription}</p>
+                      <p className={styles.cardSubtitle}>{event.shortDescription}</p>
                     )}
-                    <div className={styles.statRow}>
-                      <span className={styles.statChip}>
-                        <Clock size={14} />
-                        {renderCountdown(event)}
+                    <div className={styles.cardStats}>
+                      <span>
+                        <Clock size={14} /> {renderCountdown(event)}
                       </span>
-                      <span className={styles.statChip}>
-                        <Users size={14} />
-                        {participantsLabel}
+                      <span>
+                        <Users size={14} /> {participantsLabel}
                       </span>
-                      <span className={styles.statChip}>
-                        <Trophy size={14} />
-                        {event.prizePool ? event.prizePool : 'TBD'}
+                      <span>
+                        <Trophy size={14} /> {event.prizePool || 'Prize TBD'}
                       </span>
                     </div>
                   </div>
-                  <div className={styles.ctaRow}>
+                  <div className={styles.cardFooter}>
                     <button
                       type="button"
-                      className={styles.secondaryBtn}
+                      className={styles.ghostAction}
                       onClick={() => navigate(`/events/${event._id}`)}
                     >
-                      View <ArrowRight size={16} />
+                      View details
                     </button>
                     {renderPrimaryCta(event)}
                   </div>
@@ -454,7 +620,7 @@ const EventsHub = () => {
           </div>
           {eventsState.hasMore && (
             <button type="button" className={styles.loadMore} onClick={handleLoadMore} disabled={busy}>
-              {busy ? <Loader2 size={16} className={styles.spin} /> : 'Load more'}
+              {busy ? <Loader2 size={16} className={styles.spin} /> : 'Load more events'}
             </button>
           )}
         </>

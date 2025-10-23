@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Loader2, Trash2, Users } from 'lucide-react';
+import { CalendarClock, Clock, Gauge, Loader2, Trash2, Trophy, Users } from 'lucide-react';
 import type { AppDispatch, RootState } from '@/store';
 import {
   fetchEventById,
@@ -93,6 +93,11 @@ const RegisterPage = () => {
     return 'Free';
   }, [event]);
 
+  const occupancyPercent = useMemo(() => {
+    if (!event?.maxParticipants || event.maxParticipants <= 0) return null;
+    return Math.min(100, Math.round((event.registeredCount / event.maxParticipants) * 100));
+  }, [event?.maxParticipants, event?.registeredCount]);
+
   const isRegistered = Boolean(myRegistration.data && myRegistration.data.status !== 'withdrawn');
 
   const handleSubmit = async (evt: FormEvent<HTMLFormElement>) => {
@@ -179,122 +184,229 @@ const RegisterPage = () => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
+      <section className={styles.hero}>
+        <div className={styles.heroTop}>
           <button type="button" className={styles.backLink} onClick={() => navigate(-1)}>
-            ← Back
+            ← Back to event
           </button>
-          <h1>Register for {event.title}</h1>
-          <p>
-            Registration window: {registrationWindow.opensAt} – {registrationWindow.closesAt}
-          </p>
+          <span className={`${styles.heroBadge} ${registrationWindow.isOpen ? styles.heroBadgeOpen : ''}`}>
+            {registrationWindow.isOpen ? 'Registrations open' : 'Registrations closed'}
+          </span>
         </div>
-        <div className={styles.metaCard}>
+        <h1>Join {event.title}</h1>
+        <p className={styles.heroSubtitle}>
+          Secure your spot in this experience. Complete your details and submit before the window
+          closes.
+        </p>
+        <div className={styles.heroSummary}>
           <div>
-            <span className={styles.metaLabel}>Entry</span>
+            <span className={styles.summaryLabel}>Entry</span>
             <strong>{entryLabel}</strong>
           </div>
           <div>
-            <span className={styles.metaLabel}>Prize pool</span>
+            <span className={styles.summaryLabel}>Prize pool</span>
             <strong>{event.prizePool || 'Announcing soon'}</strong>
           </div>
           <div>
-            <span className={styles.metaLabel}>Slots</span>
-            <strong>
-              {event.registeredCount}/{event.maxParticipants || '∞'}
-            </strong>
+            <span className={styles.summaryLabel}>Team size</span>
+            <strong>{event.teamSize}</strong>
           </div>
         </div>
-      </header>
-
-      {isRegistered ? (
-        <div className={styles.registeredCard}>
-          <Users size={18} />
+        <div className={styles.heroDetails}>
           <div>
-            <h2>You are already registered</h2>
-            <p>You can unregister before the event begins if you can no longer participate.</p>
+            <span className={styles.detailLabel}>Opens</span>
+            <strong>{registrationWindow.opensAt || 'TBA'}</strong>
           </div>
-          <button
-            type="button"
-            className={styles.secondaryBtn}
-            onClick={handleUnregister}
-            disabled={actions.unregister === 'loading'}
-          >
-            {actions.unregister === 'loading' ? <Loader2 className={styles.spin} /> : 'Unregister'}
-          </button>
-        </div>
-      ) : (
-        <form className={styles.form} onSubmit={handleSubmit}>
-          {event.teamSize > 1 && (
-            <div className={styles.field}>
-              <label htmlFor="team-name">Team name</label>
-              <input
-                id="team-name"
-                type="text"
-                value={teamName}
-                onChange={(evt) => setTeamName(evt.target.value)}
-                placeholder="Enter your squad name"
-                required
+          <div>
+            <span className={styles.detailLabel}>Closes</span>
+            <strong>{registrationWindow.closesAt || 'TBA'}</strong>
+          </div>
+          <div className={styles.heroProgress}>
+            <span className={styles.detailLabel}>
+              <Gauge size={16} /> Occupancy
+            </span>
+            <div className={styles.progressBar}>
+              <div
+                className={styles.progressFill}
+                style={{
+                  width:
+                    occupancyPercent !== null
+                      ? `${occupancyPercent}%`
+                      : `${Math.min(100, Math.round(event.registeredCount || 0))}%`,
+                }}
               />
             </div>
-          )}
+            <span className={styles.progressHint}>
+              {event.maxParticipants
+                ? `${event.registeredCount}/${event.maxParticipants} seats taken`
+                : `${event.registeredCount} participants so far`}
+            </span>
+          </div>
+        </div>
+      </section>
 
-          {members.map((member, index) => (
-            <div key={`member-${index}`} className={styles.fieldRow}>
-              <div className={styles.field}>
-                <label htmlFor={`member-${index}`}>Member {index + 2}</label>
-                <input
-                  id={`member-${index}`}
-                  type="text"
-                  value={member}
-                  onChange={(evt) => {
-                    const next = [...members];
-                    next[index] = evt.target.value;
-                    setMembers(next);
-                  }}
-                  placeholder="Name"
-                  required
-                />
+      <section className={styles.layout}>
+        <div className={styles.mainColumn}>
+          {isRegistered ? (
+            <div className={styles.registeredCard}>
+              <div className={styles.registeredIcon}>
+                <Users size={20} />
+              </div>
+              <div>
+                <h2>You are confirmed</h2>
+                <p>
+                  You can still withdraw before the event begins if plans change. We will notify you
+                  about bracket details soon.
+                </p>
               </div>
               <button
                 type="button"
-                className={styles.removeBtn}
-                onClick={() => {
-                  const next = [...members];
-                  next[index] = '';
-                  setMembers(next);
-                }}
+                className={styles.secondaryBtn}
+                onClick={handleUnregister}
+                disabled={actions.unregister === 'loading'}
               >
-                <Trash2 size={16} />
+                {actions.unregister === 'loading' ? <Loader2 className={styles.spin} /> : 'Unregister'}
               </button>
             </div>
-          ))}
+          ) : (
+            <form className={styles.form} onSubmit={handleSubmit}>
+              <header className={styles.formHeader}>
+                <h2>Team details</h2>
+                <p>
+                  Fill in the information exactly as you want it to appear on leaderboards and event
+                  updates.
+                </p>
+              </header>
 
-          {event.teamSize <= 1 && (
-            <p className={styles.note}>Solo registration – confirm your participation below.</p>
+              {event.teamSize > 1 && (
+                <div className={styles.field}>
+                  <label htmlFor="team-name">Team name</label>
+                  <input
+                    id="team-name"
+                    type="text"
+                    value={teamName}
+                    onChange={(evt) => setTeamName(evt.target.value)}
+                    placeholder="Enter your squad name"
+                    required
+                  />
+                </div>
+              )}
+
+              {members.map((member, index) => (
+                <div key={`member-${index}`} className={styles.fieldRow}>
+                  <div className={styles.field}>
+                    <label htmlFor={`member-${index}`}>Member {index + 2}</label>
+                    <input
+                      id={`member-${index}`}
+                      type="text"
+                      value={member}
+                      onChange={(evt) => {
+                        const next = [...members];
+                        next[index] = evt.target.value;
+                        setMembers(next);
+                      }}
+                      placeholder="Name"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.removeBtn}
+                    onClick={() => {
+                      const next = [...members];
+                      next[index] = '';
+                      setMembers(next);
+                    }}
+                    aria-label={`Clear member ${index + 2}`}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+
+              {event.teamSize <= 1 && (
+                <p className={styles.note}>Solo registration – confirm your participation below.</p>
+              )}
+
+              {error && <p className={styles.error}>{error}</p>}
+
+              <div className={styles.actions}>
+                <button type="button" className={styles.secondaryBtn} onClick={() => navigate(-1)}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={styles.primaryBtn}
+                  disabled={actions.register === 'loading' || !registrationWindow.isOpen || capacityFull}
+                >
+                  {actions.register === 'loading' ? <Loader2 className={styles.spin} /> : 'Confirm registration'}
+                </button>
+              </div>
+
+              {!registrationWindow.isOpen && (
+                <p className={styles.note}>Registrations are closed for this event right now.</p>
+              )}
+              {capacityFull && <p className={styles.note}>Capacity full – you can join the waitlist from the event page.</p>}
+            </form>
           )}
-
-          {error && <p className={styles.error}>{error}</p>}
-
-          <div className={styles.actions}>
-            <button type="button" className={styles.secondaryBtn} onClick={() => navigate(-1)}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className={styles.primaryBtn}
-              disabled={actions.register === 'loading' || !registrationWindow.isOpen || capacityFull}
-            >
-              {actions.register === 'loading' ? <Loader2 className={styles.spin} /> : 'Confirm registration'}
-            </button>
+        </div>
+        <aside className={styles.sideColumn}>
+          <div className={styles.sideCard}>
+            <h3>Event snapshot</h3>
+            <ul>
+              <li>
+                <CalendarClock size={16} /> {formatDateTime(event.startAt)}
+              </li>
+              {event.endAt && (
+                <li>
+                  <Clock size={16} /> Ends {formatDateTime(event.endAt)}
+                </li>
+              )}
+              <li>
+                <Users size={16} /> {event.registeredCount} registered
+              </li>
+              <li>
+                <Trophy size={16} /> {event.prizePool || 'Rewards reveal soon'}
+              </li>
+            </ul>
+            <div className={styles.sideProgress}>
+              <div className={styles.progressBar}>
+                <div
+                  className={styles.progressFill}
+                  style={{
+                    width:
+                      occupancyPercent !== null
+                        ? `${occupancyPercent}%`
+                        : `${Math.min(100, Math.round(event.registeredCount || 0))}%`,
+                  }}
+                />
+              </div>
+              <span>
+                {event.maxParticipants
+                  ? `${event.registeredCount}/${event.maxParticipants} spots`
+                  : 'Unlimited spots'}
+              </span>
+            </div>
           </div>
-
-          {!registrationWindow.isOpen && (
-            <p className={styles.note}>Registrations are closed for this event right now.</p>
+          {event.registrationChecklist && event.registrationChecklist.length > 0 && (
+            <div className={styles.sideCard}>
+              <h3>Registration checklist</h3>
+              <ul className={styles.checklist}>
+                {event.registrationChecklist.map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            </div>
           )}
-          {capacityFull && <p className={styles.note}>Capacity full – you can join the waitlist from the event page.</p>}
-        </form>
-      )}
+          <div className={styles.sideCard}>
+            <h3>Need help?</h3>
+            <p>
+              Reach out to the event organisers via the event page updates if you have any questions
+              about participation.
+            </p>
+          </div>
+        </aside>
+      </section>
     </div>
   );
 };

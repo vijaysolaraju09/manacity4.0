@@ -436,7 +436,7 @@ const EventDetailPage = () => {
           return (
             <ErrorCard
               title="Unable to load participants"
-              description={registrations.error}
+              message={registrations.error}
               onRetry={() => id && dispatch(fetchRegistrations(id))}
             />
           );
@@ -472,7 +472,7 @@ const EventDetailPage = () => {
           return (
             <ErrorCard
               title="Updates unavailable"
-              description={updates.error}
+              message={updates.error}
               onRetry={() => id && dispatch(fetchEventUpdates(id))}
             />
           );
@@ -518,7 +518,7 @@ const EventDetailPage = () => {
           return (
             <ErrorCard
               title="Leaderboard unavailable"
-              description={leaderboard.error}
+              message={leaderboard.error}
               onRetry={() => id && dispatch(fetchLeaderboard(id))}
             />
           );
@@ -556,7 +556,7 @@ const EventDetailPage = () => {
       <div className={styles.page}>
         <ErrorCard
           title="Unable to load event"
-          description={detail.error}
+          message={detail.error}
           onRetry={() => id && dispatch(fetchEventById(id))}
         />
       </div>
@@ -566,7 +566,7 @@ const EventDetailPage = () => {
   if (!event) {
     return (
       <div className={styles.page}>
-        <ErrorCard title="Event unavailable" description="This event could not be found." />
+        <ErrorCard title="Event unavailable" message="This event could not be found." />
       </div>
     );
   }

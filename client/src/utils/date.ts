@@ -27,7 +27,11 @@ export const getCountdown = (target: string | Date) => {
   return { diff, days, hours, minutes, seconds };
 };
 
-export const formatDateTime = (value: string | Date, options?: Intl.DateTimeFormatOptions) => {
+export const formatDateTime = (
+  value?: string | Date | null,
+  options?: Intl.DateTimeFormatOptions,
+) => {
+  if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleString('en-IN', {
@@ -40,7 +44,8 @@ export const formatDateTime = (value: string | Date, options?: Intl.DateTimeForm
   });
 };
 
-export const formatDate = (value: string | Date, options?: Intl.DateTimeFormatOptions) => {
+export const formatDate = (value?: string | Date | null, options?: Intl.DateTimeFormatOptions) => {
+  if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleDateString('en-IN', {

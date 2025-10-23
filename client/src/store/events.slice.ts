@@ -98,7 +98,7 @@ export const fetchEvents = createAsyncThunk<PaginatedResult<EventSummary>, Event
       const payload = res?.data?.data ?? res?.data ?? {};
       const items = Array.isArray(payload.items) ? payload.items : toItems(res);
       const summaries = (items ?? [])
-        .map((item) => adaptEventSummary(item))
+        .map((item: unknown) => adaptEventSummary(item))
         .filter((item): item is EventSummary => Boolean(item));
       return {
         items: summaries,
@@ -213,7 +213,7 @@ export const fetchEventUpdates = createAsyncThunk<
     const payload = res?.data?.data ?? res?.data ?? {};
     const items = Array.isArray(payload.items) ? payload.items : Array.isArray(payload) ? payload : toItems(res);
     return (items ?? [])
-      .map((item) => adaptEventUpdate(item))
+      .map((item: unknown) => adaptEventUpdate(item))
       .filter((update): update is EventUpdate => Boolean(update));
   } catch (err) {
     return rejectWithValue(toErrorMessage(err));
@@ -244,7 +244,7 @@ export const fetchLeaderboard = createAsyncThunk<
     const res = await http.get(`/events/${eventId}/leaderboard`);
     const payload = res?.data?.data ?? res?.data ?? {};
     const items = Array.isArray(payload.entries)
-      ? payload.entries.map((entry: any) => adaptEventLeaderboardEntry(entry)).filter(Boolean)
+      ? payload.entries.map((entry: unknown) => adaptEventLeaderboardEntry(entry)).filter(Boolean)
       : [];
     return {
       items: items as EventLeaderboardEntry[],
@@ -265,7 +265,7 @@ export const postLeaderboard = createAsyncThunk<
     const data = res?.data?.data ?? res?.data ?? {};
     const itemsSource = Array.isArray(data.entries) ? data.entries : payload.entries;
     const items = (itemsSource ?? [])
-      .map((entry) => adaptEventLeaderboardEntry(entry))
+      .map((entry: unknown) => adaptEventLeaderboardEntry(entry))
       .filter((entry): entry is EventLeaderboardEntry => Boolean(entry));
     return {
       items,

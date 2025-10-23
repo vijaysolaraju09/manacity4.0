@@ -248,18 +248,22 @@ const EventDetails = () => {
   };
 
   const handleShare = () => {
-    if (!event) return;
-    const shareData = {
+    if (!event || typeof navigator === 'undefined') return;
+    const nav = navigator as Navigator & {
+      share?: (data: ShareData) => Promise<void>;
+      clipboard?: Clipboard;
+    };
+    const shareData: ShareData = {
       title: event.title,
       text: `Join me at ${event.title} on Manacity!`,
       url: window.location.href,
     };
-    if (typeof navigator !== 'undefined' && 'share' in navigator) {
-      void (navigator as any).share(shareData).catch(() => {
+    if (typeof nav.share === 'function') {
+      void nav.share(shareData).catch(() => {
         showToast('Unable to share right now', 'error');
       });
-    } else if (navigator.clipboard) {
-      navigator.clipboard
+    } else if (nav.clipboard && typeof nav.clipboard.writeText === 'function') {
+      nav.clipboard
         .writeText(window.location.href)
         .then(() => showToast('Link copied to clipboard', 'success'))
         .catch(() => showToast('Unable to copy link', 'error'));
@@ -280,10 +284,14 @@ const EventDetails = () => {
   }
 
   const entryFeeLabel = (() => {
-    const paise = Number.isFinite(event.entryFeePaise) ? event.entryFeePaise : undefined;
-    if (paise && paise > 0) return formatINR(paise);
-    const rupees = Number.isFinite(event.entryFee) ? event.entryFee : 0;
-    return rupees > 0 ? `₹${Math.round(rupees)}` : 'FREE';
+    const paise =
+      typeof event.entryFeePaise === 'number' && Number.isFinite(event.entryFeePaise)
+        ? event.entryFeePaise
+        : undefined;
+    if (typeof paise === 'number' && paise > 0) return formatINR(paise);
+    const rupees =
+      typeof event.entryFee === 'number' && Number.isFinite(event.entryFee) ? event.entryFee : undefined;
+    return typeof rupees === 'number' && rupees > 0 ? `₹${Math.round(rupees)}` : 'FREE';
   })();
 
   const prizeLabel = event.prizePool && event.prizePool.trim().length > 0 ? event.prizePool : 'Announced soon';

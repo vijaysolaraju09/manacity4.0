@@ -162,13 +162,19 @@ const EventsHub = () => {
   }, [items, tick]);
 
   const formatEntryFee = (event: EventSummary) => {
-    const paise = Number.isFinite(event.entryFeePaise) ? event.entryFeePaise : undefined;
-    const fallback = Number.isFinite(event.entryFee) ? event.entryFee : 0;
-    if (!paise && !fallback) return 'FREE';
-    if (paise && paise > 0) {
+    const paise =
+      typeof event.entryFeePaise === 'number' && Number.isFinite(event.entryFeePaise)
+        ? event.entryFeePaise
+        : undefined;
+    if (typeof paise === 'number' && paise > 0) {
       return formatINR(paise);
     }
-    return `₹${Math.round(fallback)}`;
+    const rupees =
+      typeof event.entryFee === 'number' && Number.isFinite(event.entryFee) ? event.entryFee : undefined;
+    if (typeof rupees === 'number' && rupees > 0) {
+      return `₹${Math.round(rupees)}`;
+    }
+    return 'FREE';
   };
 
   const handleRefresh = () => {
@@ -401,7 +407,6 @@ const EventsHub = () => {
         <>
           <div className={styles.cardsGrid}>
             {items.map((event) => {
-              const stage = determineStage(event, tick);
               const cover = safeImage(event.bannerUrl);
               const participantsLabel = event.maxParticipants
                 ? `${Math.min(event.registeredCount, event.maxParticipants)}/${event.maxParticipants}`

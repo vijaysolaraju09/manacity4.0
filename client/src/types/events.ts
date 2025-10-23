@@ -220,11 +220,33 @@ export const adaptEventRegistrationSummary = (raw: any): EventRegistrationSummar
   const teamName = raw.teamName ?? raw.team_name ?? raw.name ?? null;
   const members = Array.isArray(raw.members)
     ? raw.members
-        .map((member: any) => ({
-          name: member?.name ?? member?.displayName ?? null,
-          contact: member?.contact ?? member?.phone ?? member?.mobile ?? null,
-        }))
-        .filter((member) => typeof member.name === 'string' && member.name.trim().length > 0)
+        .map((member: unknown) => {
+          if (!member || typeof member !== 'object') {
+            return { name: null, contact: null };
+          }
+          const record = member as Record<string, unknown>;
+          const name =
+            typeof record.name === 'string'
+              ? record.name
+              : typeof record.displayName === 'string'
+              ? record.displayName
+              : null;
+          const contact =
+            typeof record.contact === 'string'
+              ? record.contact
+              : typeof record.phone === 'string'
+              ? record.phone
+              : typeof record.mobile === 'string'
+              ? record.mobile
+              : null;
+          return { name, contact };
+        })
+        .filter(
+          (
+            member: { name: string | null; contact: string | null },
+          ): member is { name: string; contact: string | null } =>
+            typeof member.name === 'string' && member.name.trim().length > 0,
+        )
     : undefined;
   const fallbackId = `reg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   return {

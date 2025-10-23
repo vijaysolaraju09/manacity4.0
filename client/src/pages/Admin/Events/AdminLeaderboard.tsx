@@ -171,27 +171,30 @@ const AdminLeaderboard = () => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
+      <header className={styles.hero}>
+        <div className={styles.heroText}>
+          <span className={styles.eyebrow}>Leaderboard control</span>
           <h2>Leaderboard</h2>
-          <div className={styles.meta}>
-            {isLoading ? (
-              <>
-                <Loader2 size={16} className={styles.spin} /> Syncing…
-              </>
-            ) : (
-              <>
-                Version <span className={styles.version}>{versionLabel}</span>
-                {dirty && <span className={styles.dirty}>Unsaved changes</span>}
-              </>
-            )}
+          <p>Keep placements updated, spotlight podium finishes, and broadcast scoring in real time.</p>
+          <div className={styles.heroMeta}>
+            <span className={styles.metaChip}>Version {versionLabel}</span>
+            {dirty && <span className={styles.metaChip}>Unsaved changes</span>}
+            <span className={styles.metaChip}>
+              {isLoading ? <Loader2 size={14} className={styles.spin} /> : null}
+              {isLoading ? 'Syncing…' : lastSyncedLabel ? `Synced ${lastSyncedLabel}` : 'Ready'}
+            </span>
           </div>
-          {lastSyncedLabel && <div className={styles.small}>Last sync {lastSyncedLabel}</div>}
           {podium.length > 0 && !podium.every((item) => !item || item === '—') && (
-            <div className={styles.small}>Top seeds: {podium.join(', ')}</div>
+            <div className={styles.podium}>
+              {podium.map((seed, idx) => (
+                <span key={`seed-${idx}`} className={styles.podiumChip}>
+                  #{idx + 1} {seed || '—'}
+                </span>
+              ))}
+            </div>
           )}
         </div>
-        <div className={styles.actions}>
+        <div className={styles.heroActions}>
           <button type="button" className={styles.secondaryBtn} onClick={() => void loadLeaderboard()} disabled={isLoading}>
             <RefreshCw size={16} /> Refresh
           </button>
@@ -213,102 +216,107 @@ const AdminLeaderboard = () => {
         </div>
       )}
 
+      {event?.prizePool && (
+        <div className={styles.summaryStrip}>
+          <span>Prize pool</span>
+          <strong>{event.prizePool}</strong>
+        </div>
+      )}
+
       {leaderboardEmpty ? (
         <div className={styles.emptyState}>No leaderboard entries yet.</div>
       ) : (
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Team / Player</th>
-              <th>Points</th>
-              <th>Wins</th>
-              <th>Losses</th>
-              <th>Kills</th>
-              <th>Time</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry, index) => (
-              <tr key={entry._localId ?? entry._id ?? index}>
-                <td>
-                  <input
-                    type="number"
-                    value={entry.rank ?? ''}
-                    onChange={handleNumberChange(index, 'rank')}
-                    className={styles.input}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    value={entry.teamName ?? ''}
-                    placeholder="Team name"
-                    onChange={handleTextChange(index, 'teamName')}
-                    className={styles.input}
-                  />
-                  <input
-                    type="text"
-                    value={entry.user ?? ''}
-                    placeholder="Player"
-                    onChange={handleTextChange(index, 'user')}
-                    className={styles.input}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    value={entry.points ?? ''}
-                    onChange={handleNumberChange(index, 'points')}
-                    className={styles.input}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    value={entry.wins ?? ''}
-                    onChange={handleNumberChange(index, 'wins')}
-                    className={styles.input}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    value={entry.losses ?? ''}
-                    onChange={handleNumberChange(index, 'losses')}
-                    className={styles.input}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    value={entry.kills ?? ''}
-                    onChange={handleNumberChange(index, 'kills')}
-                    className={styles.input}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    value={entry.time ?? ''}
-                    onChange={handleNumberChange(index, 'time')}
-                    className={styles.input}
-                  />
-                </td>
-                <td>
-                  <button type="button" className={styles.removeBtn} onClick={() => handleRemoveEntry(index)}>
-                    <Trash2 size={16} />
-                  </button>
-                </td>
+        <div className={styles.tableCard}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Team / Player</th>
+                <th>Points</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>Kills</th>
+                <th>Time</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {event?.prizePool && (
-        <div className={styles.small}>Prize pool: {event.prizePool}</div>
+            </thead>
+            <tbody>
+              {entries.map((entry, index) => (
+                <tr key={entry._localId ?? entry._id ?? index}>
+                  <td>
+                    <input
+                      type="number"
+                      value={entry.rank ?? ''}
+                      onChange={handleNumberChange(index, 'rank')}
+                      className={styles.input}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      value={entry.teamName ?? ''}
+                      placeholder="Team name"
+                      onChange={handleTextChange(index, 'teamName')}
+                      className={styles.input}
+                    />
+                    <input
+                      type="text"
+                      value={entry.user ?? ''}
+                      placeholder="Player"
+                      onChange={handleTextChange(index, 'user')}
+                      className={styles.input}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={entry.points ?? ''}
+                      onChange={handleNumberChange(index, 'points')}
+                      className={styles.input}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={entry.wins ?? ''}
+                      onChange={handleNumberChange(index, 'wins')}
+                      className={styles.input}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={entry.losses ?? ''}
+                      onChange={handleNumberChange(index, 'losses')}
+                      className={styles.input}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={entry.kills ?? ''}
+                      onChange={handleNumberChange(index, 'kills')}
+                      className={styles.input}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={entry.time ?? ''}
+                      onChange={handleNumberChange(index, 'time')}
+                      className={styles.input}
+                    />
+                  </td>
+                  <td>
+                    <button type="button" className={styles.removeBtn} onClick={() => handleRemoveEntry(index)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

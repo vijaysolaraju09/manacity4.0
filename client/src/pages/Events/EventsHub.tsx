@@ -257,6 +257,9 @@ const EventsHub = () => {
     );
   };
 
+  // Temporarily disable filter controls until refined filter options are ready.
+  const showFilters = false;
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -285,44 +288,46 @@ const EventsHub = () => {
             </button>
           ))}
         </div>
-        <div className={styles.filters}>
-          <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>Status</span>
-            {statusFilters.map((option) => (
+        {showFilters && (
+          <div className={styles.filters}>
+            <div className={styles.filterGroup}>
+              <span className={styles.filterLabel}>Status</span>
+              {statusFilters.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`${styles.filterButton} ${status === option ? styles.filterButtonActive : ''}`}
+                  onClick={() => setStatus(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+            <div className={styles.filterGroup}>
+              <span className={styles.filterLabel}>Entry</span>
+              {entryFilters.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`${styles.filterButton} ${entry === option ? styles.filterButtonActive : ''}`}
+                  onClick={() => setEntry(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+            <div className={styles.filterGroup}>
+              <span className={styles.filterLabel}>My Events</span>
               <button
-                key={option}
                 type="button"
-                className={`${styles.filterButton} ${status === option ? styles.filterButtonActive : ''}`}
-                onClick={() => setStatus(option)}
+                className={`${styles.filterButton} ${mine ? styles.filterButtonActive : ''}`}
+                onClick={() => setMine((prev) => !prev)}
               >
-                {option}
+                {mine ? 'Showing mine' : 'All events'}
               </button>
-            ))}
+            </div>
           </div>
-          <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>Entry</span>
-            {entryFilters.map((option) => (
-              <button
-                key={option}
-                type="button"
-                className={`${styles.filterButton} ${entry === option ? styles.filterButtonActive : ''}`}
-                onClick={() => setEntry(option)}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-          <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>My Events</span>
-            <button
-              type="button"
-              className={`${styles.filterButton} ${mine ? styles.filterButtonActive : ''}`}
-              onClick={() => setMine((prev) => !prev)}
-            >
-              {mine ? 'Showing mine' : 'All events'}
-            </button>
-          </div>
-        </div>
+        )}
       </header>
 
       {featuredEvents.length > 0 && (

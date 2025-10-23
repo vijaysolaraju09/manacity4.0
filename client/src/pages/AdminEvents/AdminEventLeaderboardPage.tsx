@@ -3,11 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useOutletContext, useParams } from 'react-router-dom';
 import { Loader2, Plus, RefreshCw, Save, Trash2, Undo2 } from 'lucide-react';
 import type { AppDispatch, RootState } from '@/store';
-import {
-  fetchLeaderboard,
-  postLeaderboard,
-  type EventLeaderboardEntry,
-} from '@/store/events.slice';
+import { fetchLeaderboard, postLeaderboard } from '@/store/events.slice';
+import type { EventLeaderboardEntry } from '@/types/events';
 import { formatDateTime } from '@/utils/date';
 import showToast from '@/components/ui/Toast';
 import { toErrorMessage } from '@/lib/response';

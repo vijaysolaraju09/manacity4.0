@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2, Trash2, Users } from 'lucide-react';
@@ -163,7 +164,7 @@ const RegisterPage = () => {
   if (detail.error && !event) {
     return (
       <div className={styles.page}>
-        <ErrorCard title="Unable to load event" description={detail.error} />
+        <ErrorCard title="Unable to load event" message={detail.error} />
       </div>
     );
   }
@@ -171,7 +172,7 @@ const RegisterPage = () => {
   if (!event) {
     return (
       <div className={styles.page}>
-        <ErrorCard title="Event unavailable" description="This event could not be found." />
+        <ErrorCard title="Event unavailable" message="This event could not be found." />
       </div>
     );
   }

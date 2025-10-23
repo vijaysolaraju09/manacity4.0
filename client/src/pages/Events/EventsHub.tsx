@@ -4,6 +4,7 @@ import {
   Activity,
   ArrowRight,
   CalendarClock,
+  Clock,
   Loader2,
   RefreshCw,
   Sparkles,

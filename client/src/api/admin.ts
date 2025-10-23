@@ -391,7 +391,8 @@ export interface AdminEventPayload {
   registrationOpenAt: string;
   registrationCloseAt: string;
   teamSize: number;
-  maxParticipants: number;
+  capacity: number;
+  maxParticipants?: number;
   entryFeePaise?: number;
   prizePool?: string;
   mode?: 'online' | 'venue';

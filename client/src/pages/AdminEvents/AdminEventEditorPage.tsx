@@ -20,7 +20,7 @@ type FormState = {
   registrationOpenAt: string;
   registrationCloseAt: string;
   teamSize: string;
-  maxParticipants: string;
+  capacity: string;
   entryFee: string;
   prizePool: string;
   mode: 'online' | 'venue';
@@ -49,7 +49,7 @@ const defaultFormState = (): FormState => {
     registrationOpenAt: toInput(now),
     registrationCloseAt: toInput(plusOneHour),
     teamSize: '1',
-    maxParticipants: '32',
+    capacity: '32',
     entryFee: '0',
     prizePool: '',
     mode: 'online',
@@ -126,7 +126,7 @@ const AdminEventEditorPage = ({ mode = 'edit' }: AdminEventEditorPageProps) => {
       registrationOpenAt: toLocalInput(event.registrationOpenAt),
       registrationCloseAt: toLocalInput(event.registrationCloseAt),
       teamSize: String(event.teamSize ?? 1),
-      maxParticipants: String(event.maxParticipants ?? 0),
+      capacity: String(event.maxParticipants ?? 0),
       entryFee:
         typeof event.entryFeePaise === 'number'
           ? String(Math.max(0, Math.round(event.entryFeePaise / 100)))
@@ -161,7 +161,7 @@ const AdminEventEditorPage = ({ mode = 'edit' }: AdminEventEditorPageProps) => {
         registrationOpenAt: toISO(form.registrationOpenAt),
         registrationCloseAt: toISO(form.registrationCloseAt),
         teamSize: Number(form.teamSize) || 1,
-        maxParticipants: Number(form.maxParticipants) || 0,
+        capacity: Math.max(0, Math.round(Number(form.capacity) || 0)),
         entryFeePaise: Math.max(0, Math.round(Number(form.entryFee || 0) * 100)),
         prizePool: form.prizePool.trim() || undefined,
         mode: form.mode,
@@ -314,8 +314,8 @@ const AdminEventEditorPage = ({ mode = 'edit' }: AdminEventEditorPageProps) => {
               id="max-participants"
               type="number"
               min={0}
-              value={form.maxParticipants}
-              onChange={(e) => handleChange('maxParticipants', e.target.value)}
+              value={form.capacity}
+              onChange={(e) => handleChange('capacity', e.target.value)}
             />
           </div>
           <div className={styles.field}>

@@ -13,7 +13,7 @@ import { formatINR } from '@/utils/currency';
 import showToast from '@/components/ui/Toast';
 import { toErrorMessage } from '@/lib/response';
 import { paths } from '@/routes/paths';
-import styles from './AdminEvents.module.scss';
+import styles from './AdminEventLayout.module.scss';
 
 type LifecycleAction = 'publish' | 'start' | 'complete' | 'cancel';
 
@@ -112,7 +112,7 @@ const normalizeAdminEvent = (raw: any): AdminEvent => ({
   coverUrl: raw?.coverUrl ?? raw?.cover ?? null,
 });
 
-const AdminEventManageLayout = () => {
+const AdminEventLayout = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<AdminEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -188,7 +188,7 @@ const AdminEventManageLayout = () => {
 
   if (loading && !event) {
     return (
-      <div className={styles.errorCard}>
+      <div className={styles.stateCard}>
         <Loader2 size={18} className={styles.spin} /> Loading event…
       </div>
     );
@@ -196,111 +196,82 @@ const AdminEventManageLayout = () => {
 
   if (error) {
     return (
-      <div className={styles.errorCard}>
+      <div className={styles.stateCard}>
         <p>{error}</p>
-        <button type="button" className={styles.primaryBtn} onClick={() => void loadEvent()}>
+        <button type="button" className={styles.secondaryBtn} onClick={() => loadEvent()}>
           <RefreshCw size={16} /> Retry
         </button>
       </div>
     );
   }
 
-  if (!event) {
-    return <div className={styles.errorCard}>Event not found.</div>;
-  }
-
-  const availableActions = getLifecycleActions(event.status);
-
   return (
     <div className={styles.page}>
-      <div className={styles.manageHeader}>
-        <div className={styles.titleBlock}>
-          <h1>{event.title}</h1>
-          <p>
-            {event.category} • {formatDateTime(event.startAt)}
-          </p>
-        </div>
-        <div className={styles.manageMeta}>
-          <span className={statusBadgeClass(event.status)}>
-            {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-          </span>
-          <span className={styles.chipMuted}>Registrations: {event.registeredCount ?? 0}</span>
-          <span className={styles.chipMuted}>Capacity: {event.maxParticipants || '∞'}</span>
-          <span className={styles.chipMuted}>Entry: {entryFeeLabel()}</span>
-          {event.isRegistrationOpen !== undefined && (
-            <span className={styles.chipMuted}>
-              {event.isRegistrationOpen ? 'Registrations open' : 'Registrations closed'}
-            </span>
-          )}
-        </div>
-        <div className={styles.detailGrid}>
-          <div className={styles.detailItem}>
-            <span className={styles.detailLabel}>Registration window</span>
-            <span className={styles.detailValue}>
-              {event.registrationOpenAt ? formatDateTime(event.registrationOpenAt) : '—'}
-            </span>
-            <span className={styles.detailMeta}>
-              closes {event.registrationCloseAt ? formatDateTime(event.registrationCloseAt) : '—'}
-            </span>
-          </div>
-          <div className={styles.detailItem}>
-            <span className={styles.detailLabel}>Format</span>
-            <span className={styles.detailValue}>
-              {event.structure ? event.structure : `${event.teamSize ?? 1} player`}
-            </span>
-            <span className={styles.detailMeta}>Team size {event.teamSize ?? 1}</span>
-          </div>
-          <div className={styles.detailItem}>
-            <span className={styles.detailLabel}>Mode</span>
-            <span className={styles.detailValue}>{event.mode === 'venue' ? 'Venue' : 'Online'}</span>
-            {event.mode === 'venue' && event.venue && (
-              <span className={styles.detailMeta}>{event.venue}</span>
-            )}
-          </div>
-          <div className={styles.detailItem}>
-            <span className={styles.detailLabel}>Prize pool</span>
-            <span className={styles.detailValue}>{event.prizePool ?? 'TBD'}</span>
+      <header className={styles.header}>
+        <div className={styles.headerMeta}>
+          <h1>{event?.title ?? 'Event'}</h1>
+          <div className={styles.metaRow}>
+            <span className={statusBadgeClass(event?.status)}>{event?.status ?? 'draft'}</span>
+            <span>{formatDateTime(event?.startAt)}</span>
+            <span>{entryFeeLabel()}</span>
           </div>
         </div>
-        <div className={styles.inlineActions}>
-          {availableActions.map((action) => (
+        <div className={styles.actions}>
+          {getLifecycleActions(event?.status).map((action) => (
             <button
               key={action}
               type="button"
-              className={styles.secondaryBtn}
+              className={styles.ghostBtn}
               onClick={() => handleLifecycle(action)}
               disabled={busyAction === action}
             >
-              {busyAction === action ? 'Working…' : lifecycleLabels[action]}
+              {busyAction === action ? <Loader2 size={16} className={styles.spin} /> : lifecycleLabels[action]}
             </button>
           ))}
-          <button
-            type="button"
-            className={styles.ghostBtn}
-            onClick={() => void loadEvent()}
-          >
+          <button type="button" className={styles.secondaryBtn} onClick={() => loadEvent()}>
             <RefreshCw size={16} /> Refresh
           </button>
         </div>
-      </div>
+      </header>
 
-      <nav className={styles.subnav}>
+      <nav className={styles.tabs}>
         {tabs.map((tab) => (
           <NavLink
             key={tab.path}
             to={tab.path}
-            className={({ isActive }) => `${styles.subnavLink} ${isActive ? styles.subnavActive : ''}`}
+            end
+            className={({ isActive }) => `${styles.tab} ${isActive ? styles.tabActive : ''}`}
           >
             {tab.label}
           </NavLink>
         ))}
       </nav>
 
-      <div className={styles.panel}>
-        <Outlet context={{ event, refresh: loadEvent, loading } as AdminEventContext} />
-      </div>
+      <section className={styles.summary}>
+        <div>
+          <span className={styles.label}>Registrations</span>
+          <strong>
+            {event?.registeredCount}/{event?.maxParticipants || '∞'}
+          </strong>
+        </div>
+        <div>
+          <span className={styles.label}>Team size</span>
+          <strong>{event?.teamSize ?? 1}</strong>
+        </div>
+        <div>
+          <span className={styles.label}>Mode</span>
+          <strong>{event?.mode === 'venue' ? 'On-ground' : 'Online'}</strong>
+        </div>
+        <div>
+          <span className={styles.label}>Venue</span>
+          <strong>{event?.venue ?? 'N/A'}</strong>
+        </div>
+      </section>
+
+      <Outlet context={{ event, refresh: loadEvent, loading }} />
     </div>
   );
 };
 
-export default AdminEventManageLayout;
+export type { AdminEvent };
+export default AdminEventLayout;

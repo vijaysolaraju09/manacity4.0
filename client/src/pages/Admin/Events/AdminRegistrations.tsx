@@ -6,8 +6,8 @@ import type { AppDispatch, RootState } from '@/store';
 import { fetchRegistrations } from '@/store/events.slice';
 import { formatDateTime } from '@/utils/date';
 import type { EventRegistration } from '@/types/events';
-import type { AdminEventContext } from './AdminEventManageLayout';
-import styles from './AdminEvents.module.scss';
+import type { AdminEventContext } from './AdminEventLayout';
+import styles from './AdminRegistrations.module.scss';
 
 type RegistrationStatus = EventRegistration['status'];
 
@@ -19,30 +19,30 @@ const statusLabels: Record<RegistrationStatus, string> = {
   disqualified: 'Disqualified',
 };
 
-const statusBadgeClass = (status: RegistrationStatus) => {
-  switch (status) {
-    case 'registered':
-      return `${styles.statusBadge} ${styles.badgeRegistered}`;
-    case 'waitlisted':
-      return `${styles.statusBadge} ${styles.badgeWaitlisted}`;
-    case 'checked_in':
-      return `${styles.statusBadge} ${styles.badgeCheckedIn}`;
-    case 'withdrawn':
-      return `${styles.statusBadge} ${styles.badgeWithdrawn}`;
-    case 'disqualified':
-      return `${styles.statusBadge} ${styles.badgeDisqualified}`;
-    default:
-      return styles.statusBadge;
-  }
-};
-
-const AdminEventRegistrationsPage = () => {
+const AdminRegistrations = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const dispatch = useDispatch<AppDispatch>();
   const context = useOutletContext<AdminEventContext>();
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
   const registrationsState = useSelector((state: RootState) => state.events.registrations);
   const event = context?.event;
+
+  const statusBadgeClass = (status: RegistrationStatus) => {
+    switch (status) {
+      case 'registered':
+        return `${styles.statusBadge} ${styles.badgeRegistered}`;
+      case 'waitlisted':
+        return `${styles.statusBadge} ${styles.badgeWaitlisted}`;
+      case 'checked_in':
+        return `${styles.statusBadge} ${styles.badgeCheckedIn}`;
+      case 'withdrawn':
+        return `${styles.statusBadge} ${styles.badgeWithdrawn}`;
+      case 'disqualified':
+        return `${styles.statusBadge} ${styles.badgeDisqualified}`;
+      default:
+        return styles.statusBadge;
+    }
+  };
 
   const loadRegistrations = useCallback(async () => {
     if (!eventId) return;
@@ -75,9 +75,7 @@ const AdminEventRegistrationsPage = () => {
     [registrations],
   );
   const hasCapacityLimit = Boolean(event?.maxParticipants && event.maxParticipants > 0);
-  const slotsRemaining = hasCapacityLimit
-    ? Math.max(0, (event?.maxParticipants ?? 0) - totalRegistered)
-    : null;
+  const slotsRemaining = hasCapacityLimit ? Math.max(0, (event?.maxParticipants ?? 0) - totalRegistered) : null;
   const checklist = useMemo(
     () =>
       (event?.registrationChecklist ?? [])
@@ -93,22 +91,14 @@ const AdminEventRegistrationsPage = () => {
   const hasError = Boolean(registrationsState.error);
 
   return (
-    <div className={styles.registrationsView}>
-      <header className={styles.sectionHeader}>
+    <div className={styles.page}>
+      <header className={styles.header}>
         <div>
           <h2>Registrations</h2>
           <p>Monitor sign-ups, waitlists, and squad rosters in real time.</p>
         </div>
-        <div className={styles.leaderboardButtons}>
-          <div className={styles.sectionMeta}>
-            {isLoading ? (
-              <>
-                <Loader2 size={16} className={styles.spin} /> Syncing…
-              </>
-            ) : (
-              <>{lastUpdatedLabel ? `Last sync ${lastUpdatedLabel}` : 'Awaiting sync'}</>
-            )}
-          </div>
+        <div className={styles.headerActions}>
+          <div className={styles.meta}>{isLoading ? <Loader2 size={16} className={styles.spin} /> : lastUpdatedLabel ? `Last sync ${lastUpdatedLabel}` : 'Awaiting sync'}</div>
           <button
             type="button"
             className={styles.secondaryBtn}
@@ -130,9 +120,7 @@ const AdminEventRegistrationsPage = () => {
         <div className={styles.metricCard}>
           <span className={styles.metricLabel}>Total registered</span>
           <span className={styles.metricValue}>{totalRegistered}</span>
-          {hasCapacityLimit && (
-            <span className={styles.metricSub}>Capacity {event?.maxParticipants}</span>
-          )}
+          {hasCapacityLimit && <span className={styles.metricSub}>Capacity {event?.maxParticipants}</span>}
         </div>
         <div className={styles.metricCard}>
           <span className={styles.metricLabel}>Checked in</span>
@@ -144,34 +132,48 @@ const AdminEventRegistrationsPage = () => {
         </div>
         <div className={styles.metricCard}>
           <span className={styles.metricLabel}>Slots remaining</span>
-          <span className={styles.metricValue}>
-            {slotsRemaining !== null ? slotsRemaining : '∞'}
-          </span>
-          <span className={styles.metricSub}>
-            Team size {event?.teamSize ?? 1}
-          </span>
+          <span className={styles.metricValue}>{slotsRemaining !== null ? slotsRemaining : '∞'}</span>
+          <span className={styles.metricSub}>Team size {event?.teamSize ?? 1}</span>
         </div>
       </div>
 
+      {checklist.length > 0 && (
+        <section className={styles.sidePanel}>
+          <h3>Registration checklist</h3>
+          <ul>
+            {checklist.map((item, index) => (
+              <li key={`check-${index}`}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {rewards.length > 0 && (
+        <section className={styles.sidePanel}>
+          <h3>Rewards</h3>
+          <ul>
+            {rewards.map((item, index) => (
+              <li key={`reward-${index}`}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {hasError ? (
-        <div className={styles.errorCard}>
+        <div className={styles.stateCard}>
           <p>{registrationsState.error}</p>
-          <button
-            type="button"
-            className={styles.primaryBtn}
-            onClick={() => void loadRegistrations()}
-          >
+          <button type="button" className={styles.primaryBtn} onClick={() => void loadRegistrations()}>
             <RefreshCw size={16} /> Retry
           </button>
         </div>
       ) : isLoading && registrations.length === 0 ? (
-        <div className={styles.errorCard}>
+        <div className={styles.stateCard}>
           <Loader2 size={18} className={styles.spin} /> Loading registrations…
         </div>
       ) : registrations.length === 0 ? (
         <div className={styles.emptyState}>No participants have registered yet.</div>
       ) : (
-        <div className={styles.registrationsList}>
+        <div className={styles.list}>
           {registrations.map((registration) => (
             <div key={registration._id} className={styles.card}>
               <div>
@@ -180,13 +182,9 @@ const AdminEventRegistrationsPage = () => {
                   <span className={statusBadgeClass(registration.status)}>
                     {statusLabels[registration.status] ?? registration.status}
                   </span>
-                  {registration.user?.name && (
-                    <span className={styles.chipMuted}>Captain: {registration.user.name}</span>
-                  )}
+                  {registration.user?.name && <span className={styles.chipMuted}>Captain: {registration.user.name}</span>}
                   {registration.createdAt && (
-                    <span className={styles.chipMuted}>
-                      Registered {formatDateTime(registration.createdAt)}
-                    </span>
+                    <span className={styles.chipMuted}>Registered {formatDateTime(registration.createdAt)}</span>
                   )}
                 </div>
                 {Array.isArray(registration.members) && registration.members.length > 0 && (
@@ -196,46 +194,19 @@ const AdminEventRegistrationsPage = () => {
                       return (
                         <span key={`${registration._id}-member-${index}`} className={styles.memberBadge}>
                           {displayName}
-                          {member?.contact && (
-                            <span className={styles.memberContact}>{member.contact}</span>
-                          )}
+                          {member?.contact && <span className={styles.memberContact}>{member.contact}</span>}
                         </span>
                       );
                     })}
                   </div>
                 )}
               </div>
-              <div className={styles.inlineActions}>
-                <span className={styles.chipMuted}>ID: {registration._id}</span>
-              </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {checklist.length > 0 && (
-        <div className={styles.card}>
-          <strong>Check-in checklist</strong>
-          <ul className={styles.checklist}>
-            {checklist.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {rewards.length > 0 && (
-        <div className={styles.card}>
-          <strong>Reward breakdown</strong>
-          <ul className={styles.checklist}>
-            {rewards.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
         </div>
       )}
     </div>
   );
 };
 
-export default AdminEventRegistrationsPage;
+export default AdminRegistrations;

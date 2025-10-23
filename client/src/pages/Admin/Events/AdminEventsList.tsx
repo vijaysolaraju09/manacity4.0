@@ -14,7 +14,7 @@ import { formatINR } from '@/utils/currency';
 import useDebounce from '@/hooks/useDebounce';
 import showToast from '@/components/ui/Toast';
 import { paths } from '@/routes/paths';
-import styles from './AdminEvents.module.scss';
+import styles from './AdminEventsList.module.scss';
 
 type AdminEventRow = {
   _id: string;
@@ -84,7 +84,7 @@ const normalizeEvent = (raw: any): AdminEventRow => ({
   category: raw?.category ?? 'other',
 });
 
-const AdminEventsListPage = () => {
+const AdminEventsList = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<(typeof statusFilters)[number]>('all');
   const [search, setSearch] = useState('');
@@ -198,7 +198,7 @@ const AdminEventsListPage = () => {
             className={styles.primaryBtn}
             onClick={() => navigate(paths.admin.events.create())}
           >
-            <Plus size={16} /> New event
+            <Plus size={16} /> Create event
           </button>
         </div>
       </header>
@@ -208,88 +208,104 @@ const AdminEventsListPage = () => {
           <Search size={16} />
           <input
             type="search"
-            placeholder="Search events"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(eventObj) => setSearch(eventObj.target.value)}
+            placeholder="Search events"
           />
         </div>
         <div className={styles.filters}>
-          {statusFilters.map((item) => (
+          {statusFilters.map((option) => (
             <button
-              key={item}
+              key={option}
               type="button"
-              className={`${styles.chip} ${status === item ? styles.chipActive : ''}`}
-              onClick={() => setStatus(item)}
+              className={`${styles.chip} ${status === option ? styles.chipActive : ''}`}
+              onClick={() => setStatus(option)}
             >
-              {item === 'all' ? 'All statuses' : item.charAt(0).toUpperCase() + item.slice(1)}
+              {option}
             </button>
           ))}
         </div>
       </div>
 
-      {error ? (
-        <div className={styles.errorCard}>{error}</div>
-      ) : loading && items.length === 0 ? (
+      {loading && items.length === 0 ? (
+        <div className={styles.skeleton}>
+          <Loader2 className={styles.spin} /> Loading events
+        </div>
+      ) : error ? (
         <div className={styles.errorCard}>
-          <Loader2 size={18} className={styles.spin} /> Loading events…
+          <h3>Unable to load events</h3>
+          <p>{error}</p>
+          <button type="button" className={styles.secondaryBtn} onClick={() => setPage((prev) => prev)}>
+            Retry
+          </button>
         </div>
       ) : items.length === 0 ? (
-        <div className={styles.emptyState}>No events yet. Create your first tournament to get started.</div>
+        <div className={styles.emptyState}>
+          <h3>No events found</h3>
+          <p>Create your first tournament or adjust the filters to view events.</p>
+        </div>
       ) : (
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Event</th>
-                <th>Schedule</th>
-                <th>Registrations</th>
-                <th>Entry</th>
+                <th>Title</th>
                 <th>Status</th>
+                <th>Registration</th>
+                <th>Start date</th>
+                <th>Entries</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {items.map((event) => (
-                <tr key={event._id}>
+              {items.map((eventRow) => (
+                <tr key={eventRow._id}>
                   <td>
-                    <div className={styles.titleBlock}>
-                      <strong>{event.title}</strong>
-                      <span className={styles.chipMuted}>{event.category}</span>
-                    </div>
+                    <button
+                      type="button"
+                      className={styles.linkBtn}
+                      onClick={() => navigate(paths.admin.events.detail(eventRow._id))}
+                    >
+                      {eventRow.title}
+                    </button>
+                    <div className={styles.tableMeta}>{eventRow.category}</div>
                   </td>
                   <td>
-                    <div className={styles.list}>
-                      <span>Start: {formatDateTime(event.startAt)}</span>
-                      {event.registrationOpenAt && (
-                        <span>Reg: {formatDateTime(event.registrationOpenAt)}</span>
-                      )}
-                    </div>
+                    <span className={statusBadgeClass(eventRow.status)}>{eventRow.status}</span>
                   </td>
-                  <td>{`${event.registeredCount}/${event.maxParticipants || '∞'}`}</td>
-                  <td>{entryFeeLabel(event)}</td>
                   <td>
-                    <span className={statusBadgeClass(event.status)}>
-                      {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                    </span>
+                    <div className={styles.tableMeta}>{formatDateTime(eventRow.registrationOpenAt)}</div>
+                    <div className={styles.tableMeta}>{formatDateTime(eventRow.registrationCloseAt)}</div>
+                  </td>
+                  <td>{formatDateTime(eventRow.startAt)}</td>
+                  <td>
+                    <div className={styles.tableMeta}>{entryFeeLabel(eventRow)}</div>
+                    <div className={styles.tableMeta}>
+                      {eventRow.registeredCount}/{eventRow.maxParticipants || '∞'}
+                    </div>
                   </td>
                   <td>
                     <div className={styles.actions}>
                       <button
                         type="button"
-                        className={styles.ghostBtn}
-                        onClick={() => navigate(paths.admin.events.detail(event._id))}
+                        className={styles.secondaryBtn}
+                        onClick={() => navigate(paths.admin.events.detail(eventRow._id))}
                       >
                         Manage
                       </button>
-                      {getLifecycleActions(event.status).map((action) => (
+                      {getLifecycleActions(eventRow.status).map((action) => (
                         <button
-                          key={action}
+                          key={`${eventRow._id}-${action}`}
                           type="button"
-                          className={styles.secondaryBtn}
-                          onClick={() => handleLifecycle(event._id, action)}
-                          disabled={lifecycleBusy(event._id, action)}
+                          className={styles.ghostBtn}
+                          onClick={() => handleLifecycle(eventRow._id, action)}
+                          disabled={lifecycleBusy(eventRow._id, action)}
                         >
-                          {lifecycleBusy(event._id, action) ? 'Working…' : lifecycleLabels[action]}
+                          {lifecycleBusy(eventRow._id, action) ? (
+                            <Loader2 size={16} className={styles.spin} />
+                          ) : (
+                            lifecycleLabels[action]
+                          )}
                         </button>
                       ))}
                     </div>
@@ -301,11 +317,8 @@ const AdminEventsListPage = () => {
         </div>
       )}
 
-      <div className={styles.pagination}>
-        <span>
-          Page {page} of {totalPages}
-        </span>
-        <div className={styles.inlineActions}>
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
           <button
             type="button"
             className={styles.secondaryBtn}
@@ -314,18 +327,21 @@ const AdminEventsListPage = () => {
           >
             Previous
           </button>
+          <span className={styles.pageIndicator}>
+            Page {page} of {totalPages}
+          </span>
           <button
             type="button"
             className={styles.secondaryBtn}
             onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-            disabled={page >= totalPages}
+            disabled={page === totalPages}
           >
             Next
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
-export default AdminEventsListPage;
+export default AdminEventsList;

@@ -292,3 +292,93 @@ export const adaptEventLeaderboardEntry = (raw: any): EventLeaderboardEntry | nu
     time: Number(raw.time ?? raw.duration) || undefined,
   };
 };
+
+export interface EventTileView {
+  id: string;
+  title: string;
+  banner: string | null;
+  status: EventStatus;
+  entryType: 'free' | 'paid';
+  entryFee?: number;
+  category: string;
+  participants: number;
+  maxParticipants?: number;
+  prizePool?: string | null;
+  startAt: string;
+  endAt?: string | null;
+}
+
+export interface EventDetailView extends EventDetail {
+  isLive: boolean;
+  isUpcoming: boolean;
+  isCompleted: boolean;
+  entryType: 'free' | 'paid';
+  entryFeeAmount?: number;
+}
+
+export const toEventTile = (raw: any): EventTileView | null => {
+  const summary = adaptEventSummary(raw);
+  if (!summary) return null;
+  const entryPaise =
+    typeof summary.entryFeePaise === 'number' && Number.isFinite(summary.entryFeePaise)
+      ? summary.entryFeePaise
+      : undefined;
+  const entryFee =
+    typeof summary.entryFee === 'number' && Number.isFinite(summary.entryFee) ? summary.entryFee : undefined;
+  const entryType: 'free' | 'paid' = entryPaise && entryPaise > 0 ? 'paid' : entryFee && entryFee > 0 ? 'paid' : 'free';
+  const normalizedBanner =
+    typeof summary.bannerUrl === 'string' && summary.bannerUrl.trim().length > 0
+      ? summary.bannerUrl
+      : typeof raw?.coverUrl === 'string'
+      ? raw.coverUrl
+      : typeof raw?.banner === 'string'
+      ? raw.banner
+      : null;
+  return {
+    id: summary._id,
+    title: summary.title,
+    banner: typeof normalizedBanner === 'string' ? normalizedBanner : null,
+    status: summary.status,
+    entryType,
+    entryFee: entryType === 'paid' ? entryPaise ?? entryFee ?? undefined : undefined,
+    category: summary.category,
+    participants: summary.registeredCount,
+    maxParticipants: summary.maxParticipants || undefined,
+    prizePool: summary.prizePool ?? undefined,
+    startAt: summary.startAt,
+    endAt: summary.endAt ?? undefined,
+  };
+};
+
+export const toEventDetail = (raw: any): EventDetailView | null => {
+  const detail = adaptEventDetail(raw);
+  if (!detail) return null;
+  const now = Date.now();
+  const startTime = Date.parse(detail.startAt);
+  const endTime = detail.endAt ? Date.parse(detail.endAt) : Number.NaN;
+  const isLive =
+    detail.status === 'ongoing' ||
+    (Number.isFinite(startTime) && startTime <= now && (!Number.isFinite(endTime) || endTime >= now));
+  const isCompleted =
+    detail.status === 'completed' || detail.status === 'canceled' || (Number.isFinite(endTime) && endTime < now);
+  const entryPaise =
+    typeof detail.entryFeePaise === 'number' && Number.isFinite(detail.entryFeePaise)
+      ? detail.entryFeePaise
+      : undefined;
+  const entryFee =
+    typeof detail.entryFee === 'number' && Number.isFinite(detail.entryFee) ? detail.entryFee : undefined;
+  return {
+    ...detail,
+    isLive,
+    isUpcoming: !isLive && !isCompleted,
+    isCompleted,
+    entryType: entryPaise && entryPaise > 0 ? 'paid' : entryFee && entryFee > 0 ? 'paid' : 'free',
+    entryFeeAmount: entryPaise ?? entryFee ?? undefined,
+  };
+};
+
+export const toRegistration = (raw: any) => adaptEventRegistrationSummary(raw);
+
+export const toUpdate = (raw: any) => adaptEventUpdate(raw);
+
+export const toLeaderboardRow = (raw: any) => adaptEventLeaderboardEntry(raw);

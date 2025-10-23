@@ -168,6 +168,16 @@ const AdminEventLayout = () => {
     return formatDateTime(value);
   };
 
+  const formatDuration = (diff: number) => {
+    const totalSeconds = Math.floor(Math.max(0, diff) / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${Math.max(minutes, 0)}m`;
+  };
+
   const countdownLabel = useMemo(() => {
     if (!event) return 'Loading';
     const now = tick;
@@ -196,16 +206,6 @@ const AdminEventLayout = () => {
     }
     return 'Awaiting kickoff';
   }, [event, tick]);
-
-  const formatDuration = (diff: number) => {
-    const totalSeconds = Math.floor(Math.max(0, diff) / 1000);
-    const days = Math.floor(totalSeconds / 86400);
-    const hours = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    if (days > 0) return `${days}d ${hours}h`;
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${Math.max(minutes, 0)}m`;
-  };
 
   const registrationWindow = useMemo(
     () => ({

@@ -59,8 +59,36 @@ const mapEvent = (event) => ({
   lifecycleStatus: deriveLifecycleStatus(event),
   capacity: event.maxParticipants ?? 0,
   registered: event.registeredCount ?? 0,
+  registeredCount: event.registeredCount ?? 0,
+  maxParticipants: event.maxParticipants ?? undefined,
   visibility: event.visibility,
   teamSize: event.teamSize,
+});
+
+const computeIsRegistrationOpen = (event) => {
+  if (!event) return false;
+  if (event.status !== 'published') return false;
+  const openAt = toDate(event.registrationOpenAt);
+  const closeAt = toDate(event.registrationCloseAt);
+  if (!openAt || !closeAt) return false;
+  const now = Date.now();
+  return openAt.getTime() <= now && now <= closeAt.getTime();
+};
+
+const mapEventDetail = (event) => ({
+  ...mapEvent(event),
+  description: event.description ?? '',
+  rules: event.rules ?? '',
+  prizePool: event.prizePool ?? null,
+  mode: event.mode ?? 'online',
+  venue: event.venue ?? null,
+  timezone: event.timezone ?? 'Asia/Kolkata',
+  bannerUrl: event.bannerUrl ?? null,
+  coverUrl: event.coverUrl ?? null,
+  geo: event.geo ?? null,
+  updatesCount: event.updatesCount ?? 0,
+  leaderboardVersion: event.leaderboardVersion ?? 0,
+  isRegistrationOpen: computeIsRegistrationOpen(event),
 });
 
 const parseCapacity = (value) => {
@@ -131,6 +159,23 @@ exports.listEvents = async (req, res, next) => {
         page: pageNumber,
         pageSize: size,
       },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      throw AppError.notFound('EVENT_NOT_FOUND', 'Event not found');
+    }
+
+    res.json({
+      ok: true,
+      data: mapEventDetail(event),
       traceId: req.traceId,
     });
   } catch (err) {

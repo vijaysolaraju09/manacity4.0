@@ -1,6 +1,7 @@
 const express = require('express');
 const {
   listEvents,
+  getEvent,
   createEvent,
   updateEvent,
   deleteEvent,
@@ -19,6 +20,7 @@ const router = express.Router();
 router.use(protect, isAdmin);
 
 router.get('/', listEvents);
+router.get('/:id', getEvent);
 router.post('/', validate(createEventSchema), createEvent);
 router.put('/:id', validate(updateEventSchema), updateEvent);
 router.delete('/:id', deleteEvent);

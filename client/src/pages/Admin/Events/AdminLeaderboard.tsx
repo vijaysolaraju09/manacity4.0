@@ -8,8 +8,8 @@ import type { EventLeaderboardEntry } from '@/types/events';
 import { formatDateTime } from '@/utils/date';
 import showToast from '@/components/ui/Toast';
 import { toErrorMessage } from '@/lib/response';
-import type { AdminEventContext } from './AdminEventManageLayout';
-import styles from './AdminEvents.module.scss';
+import type { AdminEventContext } from './AdminEventLayout';
+import styles from './AdminLeaderboard.module.scss';
 
 type EditableEntry = EventLeaderboardEntry & { _localId?: string };
 
@@ -56,7 +56,7 @@ const normalizeEntries = (entries: EditableEntry[]): EventLeaderboardEntry[] =>
         : Number(entry.time),
   }));
 
-const AdminEventLeaderboardPage = () => {
+const AdminLeaderboard = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const context = useOutletContext<AdminEventContext>();
   const dispatch = useDispatch<AppDispatch>();
@@ -170,170 +170,148 @@ const AdminEventLeaderboardPage = () => {
   const podium = useMemo(() => entries.slice(0, 3).map((entry) => entry.teamName ?? entry.user ?? '—'), [entries]);
 
   return (
-    <div className={styles.leaderboardView}>
-      <header className={styles.leaderboardToolbar}>
+    <div className={styles.page}>
+      <header className={styles.header}>
         <div>
           <h2>Leaderboard</h2>
-          <div className={styles.sectionMeta}>
+          <div className={styles.meta}>
             {isLoading ? (
               <>
                 <Loader2 size={16} className={styles.spin} /> Syncing…
               </>
             ) : (
               <>
-                Version <span className={styles.versionTag}>{versionLabel}</span>
-                {dirty && <span className={styles.dirtyTag}>Unsaved changes</span>}
+                Version <span className={styles.version}>{versionLabel}</span>
+                {dirty && <span className={styles.dirty}>Unsaved changes</span>}
               </>
             )}
           </div>
-          {lastSyncedLabel && <div className={styles.smallText}>Last sync {lastSyncedLabel}</div>}
+          {lastSyncedLabel && <div className={styles.small}>Last sync {lastSyncedLabel}</div>}
           {podium.length > 0 && !podium.every((item) => !item || item === '—') && (
-            <div className={styles.smallText}>Top seeds: {podium.join(', ')}</div>
+            <div className={styles.small}>Top seeds: {podium.join(', ')}</div>
           )}
         </div>
-        <div className={styles.leaderboardButtons}>
+        <div className={styles.actions}>
           <button type="button" className={styles.secondaryBtn} onClick={() => void loadLeaderboard()} disabled={isLoading}>
             <RefreshCw size={16} /> Refresh
           </button>
           <button type="button" className={styles.secondaryBtn} onClick={handleAddEntry}>
             <Plus size={16} /> Add entry
           </button>
-          <button
-            type="button"
-            className={styles.ghostBtn}
-            onClick={handleReset}
-            disabled={!dirty}
-          >
+          <button type="button" className={styles.secondaryBtn} onClick={handleReset} disabled={!dirty}>
             <Undo2 size={16} /> Reset
           </button>
-          <button type="button" className={styles.primaryBtn} onClick={() => void handleSave()} disabled={disableSave}>
-            {isSaving ? <Loader2 size={16} className={styles.spin} /> : <Save size={16} />} Save leaderboard
+          <button type="button" className={styles.primaryBtn} onClick={handleSave} disabled={disableSave}>
+            {isSaving ? <Loader2 size={16} className={styles.spin} /> : <Save size={16} />} Save
           </button>
         </div>
       </header>
 
-      {leaderboardError && leaderboardEmpty && (
-        <div className={styles.errorCard}>
+      {leaderboardError && (
+        <div className={styles.stateCard}>
           <p>{leaderboardError}</p>
-          <button type="button" className={styles.primaryBtn} onClick={() => void loadLeaderboard()}>
-            <RefreshCw size={16} /> Retry
-          </button>
         </div>
       )}
 
-      {isLoading && leaderboardEmpty && !leaderboardError ? (
-        <div className={styles.errorCard}>
-          <Loader2 size={18} className={styles.spin} /> Loading leaderboard…
-        </div>
-      ) : entries.length === 0 ? (
-        <div className={styles.emptyState}>No leaderboard data yet. Seed the first results to get started.</div>
+      {leaderboardEmpty ? (
+        <div className={styles.emptyState}>No leaderboard entries yet.</div>
       ) : (
-        <div className={styles.tableWrapper}>
-          <table className={`${styles.table} ${styles.leaderboardTable}`}>
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Team / Player</th>
-                <th>User handle</th>
-                <th>Participant ID</th>
-                <th>Points</th>
-                <th>Wins</th>
-                <th>Losses</th>
-                <th>Kills</th>
-                <th>Actions</th>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Team / Player</th>
+              <th>Points</th>
+              <th>Wins</th>
+              <th>Losses</th>
+              <th>Kills</th>
+              <th>Time</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((entry, index) => (
+              <tr key={entry._localId ?? entry._id ?? index}>
+                <td>
+                  <input
+                    type="number"
+                    value={entry.rank ?? ''}
+                    onChange={handleNumberChange(index, 'rank')}
+                    className={styles.input}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    value={entry.teamName ?? ''}
+                    placeholder="Team name"
+                    onChange={handleTextChange(index, 'teamName')}
+                    className={styles.input}
+                  />
+                  <input
+                    type="text"
+                    value={entry.user ?? ''}
+                    placeholder="Player"
+                    onChange={handleTextChange(index, 'user')}
+                    className={styles.input}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    value={entry.points ?? ''}
+                    onChange={handleNumberChange(index, 'points')}
+                    className={styles.input}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    value={entry.wins ?? ''}
+                    onChange={handleNumberChange(index, 'wins')}
+                    className={styles.input}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    value={entry.losses ?? ''}
+                    onChange={handleNumberChange(index, 'losses')}
+                    className={styles.input}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    value={entry.kills ?? ''}
+                    onChange={handleNumberChange(index, 'kills')}
+                    className={styles.input}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    value={entry.time ?? ''}
+                    onChange={handleNumberChange(index, 'time')}
+                    className={styles.input}
+                  />
+                </td>
+                <td>
+                  <button type="button" className={styles.removeBtn} onClick={() => handleRemoveEntry(index)}>
+                    <Trash2 size={16} />
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry, index) => (
-                <tr key={entry._localId ?? entry._id ?? `entry-${index}`}>
-                  <td>
-                    <input
-                      type="number"
-                      value={entry.rank ?? ''}
-                      onChange={handleNumberChange(index, 'rank')}
-                      min={1}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="text"
-                      value={entry.teamName ?? ''}
-                      placeholder="Team or participant name"
-                      onChange={handleTextChange(index, 'teamName')}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="text"
-                      value={entry.user ?? ''}
-                      placeholder="Username"
-                      onChange={handleTextChange(index, 'user')}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="text"
-                      value={entry.participantId ?? ''}
-                      placeholder="Registration ID"
-                      onChange={handleTextChange(index, 'participantId')}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={entry.points ?? ''}
-                      onChange={handleNumberChange(index, 'points')}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={entry.wins ?? ''}
-                      onChange={handleNumberChange(index, 'wins')}
-                      min={0}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={entry.losses ?? ''}
-                      onChange={handleNumberChange(index, 'losses')}
-                      min={0}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={entry.kills ?? ''}
-                      onChange={handleNumberChange(index, 'kills')}
-                      min={0}
-                    />
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className={styles.secondaryBtn}
-                      onClick={() => handleRemoveEntry(index)}
-                    >
-                      <Trash2 size={16} /> Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       )}
 
-      <footer className={styles.leaderboardFooter}>
-        <span>
-          {event?.title ? `Managing ${event.title}` : 'Select an event'} •{' '}
-          {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
-        </span>
-        <span>Auto-refresh every 30s</span>
-      </footer>
+      {event?.prizePool && (
+        <div className={styles.small}>Prize pool: {event.prizePool}</div>
+      )}
     </div>
   );
 };
 
-export default AdminEventLeaderboardPage;
+export default AdminLeaderboard;

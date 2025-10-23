@@ -15,7 +15,8 @@ const Home = lazy(() => import('@/pages/Home/Home'));
 const Shops = lazy(() => import('@/pages/Shops/Shops'));
 const ShopDetails = lazy(() => import('@/pages/ShopDetails/ShopDetails'));
 const ProductDetails = lazy(() => import('@/pages/ProductDetails/ProductDetails'));
-const EventDetails = lazy(() => import('@/pages/EventDetails/EventDetails'));
+const EventDetailPage = lazy(() => import('@/pages/Events/EventDetail'));
+const EventRegisterPage = lazy(() => import('@/pages/Events/Register'));
 const ServicesHub = lazy(() => import('@/pages/Services/ServicesHub'));
 const ServicesCatalog = lazy(() => import('@/pages/Services/ServicesCatalog'));
 const PublicRequests = lazy(() => import('@/pages/Services/PublicRequests'));
@@ -43,12 +44,12 @@ const AdminLogin = lazy(() => import('@/pages/AdminLogin/AdminLogin'));
 const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
 const AdminShops = lazy(() => import('@/pages/AdminShops'));
 const AdminProducts = lazy(() => import('@/pages/AdminProducts'));
-const AdminEventsRoot = lazy(() => import('@/pages/AdminEvents'));
-const AdminEventsListPage = lazy(() => import('@/pages/AdminEvents/AdminEventsListPage'));
-const AdminEventManageLayout = lazy(() => import('@/pages/AdminEvents/AdminEventManageLayout'));
-const AdminEventEditorPage = lazy(() => import('@/pages/AdminEvents/AdminEventEditorPage'));
-const AdminEventRegistrationsPage = lazy(() => import('@/pages/AdminEvents/AdminEventRegistrationsPage'));
-const AdminEventLeaderboardPage = lazy(() => import('@/pages/AdminEvents/AdminEventLeaderboardPage'));
+const AdminEventsRoot = lazy(() => import('@/pages/Admin/Events/AdminEventsRoot'));
+const AdminEventsListPage = lazy(() => import('@/pages/Admin/Events/AdminEventsList'));
+const AdminEventManageLayout = lazy(() => import('@/pages/Admin/Events/AdminEventLayout'));
+const AdminEventEditorPage = lazy(() => import('@/pages/Admin/Events/AdminEventEditor'));
+const AdminEventRegistrationsPage = lazy(() => import('@/pages/Admin/Events/AdminRegistrations'));
+const AdminEventLeaderboardPage = lazy(() => import('@/pages/Admin/Events/AdminLeaderboard'));
 const AdminServicesPage = lazy(() => import('@/pages/AdminServices'));
 const AdminServiceRequestsPage = lazy(() => import('@/pages/AdminServiceRequests'));
 const VerificationRequests = lazy(() => import('@/pages/VerificationRequests'));
@@ -138,7 +139,8 @@ const AppRoutes = () => (
         </Route>
         <Route key="shop-details" path="shops/:id" element={<ShopDetails />} />
         <Route key="product-details" path="product/:id" element={<ProductDetails />} />
-        <Route key="event-details" path="events/:id" element={<EventDetails />} />
+        <Route key="event-details" path="events/:id" element={<EventDetailPage />} />
+        <Route key="event-register" path="events/:id/register" element={<EventRegisterPage />} />
         <Route key="service-providers" path="services/:id" element={<ServiceProviders />} />
         <Route
           key="verified-details"

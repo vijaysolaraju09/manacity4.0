@@ -16,6 +16,6 @@ describe('error handler', () => {
     expect(res.body.ok).toBe(false);
     expect(res.body.error.code).toBe('INTERNAL_ERROR');
     expect(res.body.error.message).toBe('Test failure');
-    expect(res.body.error.stack).toBeDefined();
+    expect(res.body.error.stack).toBeUndefined();
   });
 });

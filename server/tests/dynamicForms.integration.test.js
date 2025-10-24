@@ -249,6 +249,27 @@ describe('Form templates admin guard', () => {
       });
     expect(res.statusCode).toBe(403);
     expect(res.body.error.code).toBe('ADMIN_ONLY');
+    expect(res.body.error.message).toBe('Admin access required');
+  });
+
+  it('prevents non-admins from mutating event forms', async () => {
+    currentUser = { _id: 'user-1', role: 'customer' };
+    templatesStore.set('tpl_1', {
+      _id: 'tpl_1',
+      name: 'Test Template',
+      category: 'other',
+      fields: [{ id: 'field1', label: 'Field', type: 'short_text' }],
+    });
+    eventsStore.set('evt_2', {
+      _id: 'evt_2',
+      dynamicForm: { mode: 'embedded', fields: [], isActive: true },
+    });
+    const res = await request(app)
+      .put('/api/events/evt_2/form/attach')
+      .send({ templateId: 'tpl_1' });
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error.code).toBe('ADMIN_ONLY');
   });
 
   it('filters templates by category when requested', async () => {
@@ -305,8 +326,23 @@ describe('Event registration validations', () => {
           extra: 'oops',
         },
       });
-    expect(res.statusCode).toBe(422);
-    expect(res.body.error.code).toBe('INVALID_FORM_DATA');
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error.code).toBe('UNKNOWN_FORM_FIELD');
+    expect(res.body.error.details.fields).toContain('extra');
+  });
+
+  it('rejects submissions with undefined field id', async () => {
+    const res = await request(app)
+      .post('/api/events/evt_1/register')
+      .send({
+        data: {
+          undefined: 'Alpha',
+        },
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error.code).toBe('UNKNOWN_FORM_FIELD');
+    expect(res.body.error.details.fields).toContain('undefined');
   });
 
   it('prevents duplicate solo registrations', async () => {

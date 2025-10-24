@@ -211,10 +211,11 @@ const validateSubmission = (fields, payload) => {
   const errors = {};
   const fieldMap = new Map(fields.map((field) => [field.id, field]));
 
-  for (const key of Object.keys(payload)) {
-    if (!fieldMap.has(key)) {
-      errors[key] = 'Unknown field';
-    }
+  const unknownFields = Object.keys(payload || {}).filter((key) => !fieldMap.has(key));
+  if (unknownFields.length) {
+    throw AppError.badRequest('UNKNOWN_FORM_FIELD', 'Unknown form field submitted', {
+      fields: unknownFields,
+    });
   }
 
   fields.forEach((field) => {
@@ -244,7 +245,7 @@ const validateSubmission = (fields, payload) => {
       }
       case 'phone': {
         const normalized = normalizePhone(String(raw));
-        if (!/^\+?\d{10,13}$/.test(normalized)) {
+        if (!/^\+?\d{10,14}$/.test(normalized)) {
           errors[field.id] = 'Enter a valid phone number';
         } else {
           result[field.id] = normalized;

@@ -14,27 +14,7 @@ import type { Field, FieldType } from '@/types/forms';
 import FieldList from '../FormBuilder/FieldList';
 import FieldEditor from '../FormBuilder/FieldEditor';
 import styles from './EventFormAttach.module.scss';
-
-const OPTION_TYPES: FieldType[] = ['dropdown', 'radio', 'checkbox'];
-
-const slugify = (input: string) =>
-  input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'field';
-
-const generateFieldId = (label: string, index: number) => `${slugify(label)}-${index}-${Math.random().toString(36).slice(2, 6)}`;
-
-const createField = (type: FieldType, index: number): Field => ({
-  id: generateFieldId('New field', index),
-  label: `Field ${index + 1}`,
-  type,
-  required: false,
-  placeholder: '',
-  help: '',
-  options: OPTION_TYPES.includes(type) ? ['Option 1', 'Option 2'] : undefined,
-});
+import { createField, generateFieldId, sanitizeFields } from '../FormBuilder/fieldUtils';
 
 type TabKey = 'template' | 'embedded';
 
@@ -74,16 +54,7 @@ const EventFormAttach = () => {
     }
   }, [eventFormState.data]);
 
-  const sanitizedFields = useMemo(
-    () =>
-      fields.map((field) => ({
-        ...field,
-        options: OPTION_TYPES.includes(field.type)
-          ? (field.options || []).map((option) => option.trim()).filter((option) => option.length > 0)
-          : undefined,
-      })),
-    [fields]
-  );
+  const sanitizedFields = useMemo(() => sanitizeFields(fields), [fields]);
 
   const handleAttachTemplate = async () => {
     if (!eventId || !selectedTemplateId) {
@@ -143,7 +114,7 @@ const EventFormAttach = () => {
     const original = fields[index];
     const copy: Field = {
       ...original,
-      id: generateFieldId(original.label, fields.length),
+      id: generateFieldId(original.label),
       label: `${original.label} copy`,
     };
     const next = [...fields];

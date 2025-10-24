@@ -14,27 +14,7 @@ import type { Field, FieldType, FormTemplate, FormTemplateCategory } from '@/typ
 import FieldList from './FieldList';
 import FieldEditor from './FieldEditor';
 import styles from './FormBuilder.module.scss';
-
-const OPTION_TYPES: FieldType[] = ['dropdown', 'radio', 'checkbox'];
-
-const slugify = (input: string) =>
-  input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'field';
-
-const generateFieldId = (label: string, index: number) => `${slugify(label)}-${index}-${Math.random().toString(36).slice(2, 6)}`;
-
-const createField = (type: FieldType, index: number): Field => ({
-  id: generateFieldId('New field', index),
-  label: `Field ${index + 1}`,
-  type,
-  required: false,
-  placeholder: '',
-  help: '',
-  options: OPTION_TYPES.includes(type) ? ['Option 1', 'Option 2'] : undefined,
-});
+import { createField, generateFieldId, sanitizeFields } from './fieldUtils';
 
 const FormBuilder = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -81,7 +61,7 @@ const FormBuilder = () => {
     const original = fields[index];
     const copy: Field = {
       ...original,
-      id: generateFieldId(original.label, fields.length),
+      id: generateFieldId(original.label),
       label: `${original.label} copy`,
     };
     const next = [...fields];
@@ -117,14 +97,7 @@ const FormBuilder = () => {
     setMeta((prev) => ({ ...prev, ...patch }));
   };
 
-  const sanitizedFields = useMemo(() =>
-    fields.map((field) => ({
-      ...field,
-      options: OPTION_TYPES.includes(field.type)
-        ? (field.options || []).map((option) => option.trim()).filter((option) => option.length > 0)
-        : undefined,
-    })),
-  [fields]);
+  const sanitizedFields = useMemo(() => sanitizeFields(fields), [fields]);
 
   const validate = () => {
     if (!meta.name.trim()) {

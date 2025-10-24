@@ -11,6 +11,11 @@ const createEventSchema = {
       startAt: isoDate,
       endAt: isoDate,
       capacity: z.number().int().nonnegative(),
+      templateId: z
+        .string()
+        .trim()
+        .regex(/^[a-fA-F0-9]{24}$/u, 'Invalid template id')
+        .optional(),
     })
     .refine((data) => new Date(data.startAt) < new Date(data.endAt), {
       message: 'startAt must be before endAt',

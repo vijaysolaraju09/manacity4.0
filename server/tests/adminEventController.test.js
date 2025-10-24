@@ -13,9 +13,14 @@ jest.mock('../models/EventUpdate', () => ({
   deleteMany: jest.fn(),
 }));
 
+jest.mock('../models/FormTemplate', () => ({
+  findById: jest.fn(),
+}));
+
 const Event = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
 const EventUpdate = require('../models/EventUpdate');
+const FormTemplate = require('../models/FormTemplate');
 const controller = require('../controllers/adminEventController');
 
 describe('adminEventController', () => {
@@ -106,6 +111,7 @@ describe('adminEventController', () => {
       await controller.createEvent(req, res, next);
 
       expect(Event.create).toHaveBeenCalled();
+      expect(FormTemplate.findById).not.toHaveBeenCalled();
       const payload = Event.create.mock.calls[0][0];
       expect(payload).toMatchObject({
         title: 'Gala',
@@ -159,6 +165,85 @@ describe('adminEventController', () => {
       expect(next).toHaveBeenCalledWith(expect.any(Error));
       const error = next.mock.calls[0][0];
       expect(error.code).toBe('END_BEFORE_START');
+    });
+
+    it('attaches template metadata when templateId is provided', async () => {
+      const start = new Date(Date.now() + 3600000);
+      const end = new Date(Date.now() + 7200000);
+      const templateId = '507f1f77bcf86cd799439011';
+      const created = {
+        _id: 'evt2',
+        title: 'Lan Party',
+        startAt: start,
+        endAt: end,
+        maxParticipants: 16,
+        registeredCount: 0,
+        status: 'draft',
+      };
+
+      FormTemplate.findById.mockResolvedValue({ _id: templateId });
+      Event.create.mockResolvedValue(created);
+
+      const req = {
+        body: {
+          title: 'Lan Party',
+          startAt: start.toISOString(),
+          endAt: end.toISOString(),
+          capacity: 16,
+          templateId,
+        },
+        user: { _id: 'admin-user' },
+        traceId: 'trace',
+      };
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      };
+
+      await controller.createEvent(req, res, jest.fn());
+
+      expect(FormTemplate.findById).toHaveBeenCalledWith(templateId);
+      expect(Event.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dynamicForm: {
+            mode: 'template',
+            templateId,
+            fields: [],
+            isActive: true,
+          },
+        })
+      );
+    });
+
+    it('rejects creation when template id is invalid', async () => {
+      const start = new Date(Date.now() + 3600000);
+      const end = new Date(Date.now() + 7200000);
+      const templateId = '507f1f77bcf86cd799439012';
+
+      FormTemplate.findById.mockResolvedValue(null);
+
+      const req = {
+        body: {
+          title: 'With template',
+          startAt: start.toISOString(),
+          endAt: end.toISOString(),
+          capacity: 8,
+          templateId,
+        },
+        user: { _id: 'admin-user' },
+        traceId: 'trace',
+      };
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+
+      await controller.createEvent(req, res, next);
+
+      expect(FormTemplate.findById).toHaveBeenCalledWith(templateId);
+      expect(Event.create).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: 'TEMPLATE_NOT_FOUND' }));
     });
   });
 

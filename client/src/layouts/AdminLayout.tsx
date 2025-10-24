@@ -45,8 +45,16 @@ const AdminLayout = () => {
             <li>
               <NavLink to={paths.admin.products()}>Products</NavLink>
             </li>
-            <li>
-              <NavLink to={paths.admin.events.list()}>Events</NavLink>
+            <li className="nav-group">
+              <span className="nav-group__label">Events</span>
+              <ul className="nav-group__links">
+                <li>
+                  <NavLink to={paths.admin.events.list()}>All Events</NavLink>
+                </li>
+                <li>
+                  <NavLink to={paths.admin.formTemplates()}>Form Templates</NavLink>
+                </li>
+              </ul>
             </li>
             <li>
               <NavLink to={paths.admin.users()}>Users</NavLink>

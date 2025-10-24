@@ -86,7 +86,7 @@ const AppRoutes = () => (
           <Route key="admin-dashboard" index element={<AdminDashboard />} />
           <Route key="admin-shops" path="shops" element={<AdminShops />} />
           <Route key="admin-products" path="products" element={<AdminProducts />} />
-          <Route key="admin-form-builder" path="forms" element={<AdminFormBuilderPage />} />
+          <Route key="admin-form-templates" path="form-templates" element={<AdminFormBuilderPage />} />
           <Route key="admin-events" path="events" element={<AdminEventsRoot />}>
             <Route index element={<AdminEventsListPage />} />
             <Route path="new" element={<AdminEventEditorPage mode="create" />} />

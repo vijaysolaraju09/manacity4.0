@@ -170,7 +170,7 @@ const EventDetailPage = () => {
   useEffect(() => {
     if (!id) return;
     if (activeTab === 'participants' && !lastLoadedTab.participants) {
-      dispatch(fetchRegistrations(id));
+      dispatch(fetchRegistrations({ eventId: id }));
       setLastLoadedTab((prev) => ({ ...prev, participants: true }));
     }
     if (activeTab === 'updates' && !lastLoadedTab.updates) {
@@ -190,7 +190,7 @@ const EventDetailPage = () => {
     const interval = window.setInterval(() => {
       dispatch(fetchEventById(id));
       if (activeTab === 'participants') {
-        dispatch(fetchRegistrations(id));
+        dispatch(fetchRegistrations({ eventId: id }));
       }
       if (activeTab === 'updates') {
         dispatch(fetchEventUpdates(id));
@@ -298,7 +298,7 @@ const EventDetailPage = () => {
       showToast('You have been unregistered', 'success');
       await dispatch(fetchEventById(id));
       await dispatch(fetchMyRegistration(id));
-      await dispatch(fetchRegistrations(id));
+      await dispatch(fetchRegistrations({ eventId: id }));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to unregister';
       showToast(message, 'error');
@@ -444,7 +444,7 @@ const EventDetailPage = () => {
             <ErrorCard
               title="Unable to load participants"
               message={registrations.error}
-              onRetry={() => id && dispatch(fetchRegistrations(id))}
+              onRetry={() => id && dispatch(fetchRegistrations({ eventId: id }))}
             />
           );
         }

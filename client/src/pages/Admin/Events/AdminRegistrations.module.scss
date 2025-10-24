@@ -114,6 +114,102 @@
   color: #bfdbfe;
 }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filterLabel {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(191, 219, 254, 0.7);
+}
+
+.filterChips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filterChip {
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.45);
+  color: rgba(226, 232, 240, 0.8);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border 0.2s ease;
+}
+
+.filterChip:hover {
+  transform: translateY(-1px);
+}
+
+.filterChipActive {
+  background: rgba(37, 99, 235, 0.35);
+  border-color: rgba(96, 165, 250, 0.6);
+  color: #bfdbfe;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+}
+
+.searchGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: clamp(200px, 30vw, 280px);
+}
+
+.searchLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(191, 219, 254, 0.7);
+}
+
+.searchInput {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 0.8rem;
+  padding: 0.55rem 0.85rem;
+  color: rgba(226, 232, 240, 0.95);
+  font-size: 0.9rem;
+}
+
+.searchInput::placeholder {
+  color: rgba(148, 163, 184, 0.6);
+}
+
+.clearFilters {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  background: transparent;
+  color: rgba(191, 219, 254, 0.85);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease, border 0.2s ease;
+}
+
+.clearFilters:hover {
+  border-color: rgba(191, 219, 254, 0.7);
+  color: #bfdbfe;
+}
+
 .metricsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -354,6 +450,59 @@
   animation: spin 1s linear infinite;
 }
 
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 0.9rem 1.2rem;
+  border-radius: 1.2rem;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.paginationInfo {
+  color: rgba(203, 213, 225, 0.78);
+  font-size: 0.85rem;
+}
+
+.paginationControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.paginationButton {
+  border: 1px solid rgba(96, 165, 250, 0.45);
+  border-radius: 0.75rem;
+  background: rgba(37, 99, 235, 0.22);
+  color: #bfdbfe;
+  padding: 0.45rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.paginationButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.25);
+}
+
+.paginationButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.paginationPage {
+  font-size: 0.85rem;
+  color: rgba(191, 219, 254, 0.85);
+  font-weight: 600;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -370,5 +519,19 @@
   .secondaryBtn {
     width: 100%;
     justify-content: center;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .clearFilters {
+    align-self: flex-start;
+  }
+
+  .pagination {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

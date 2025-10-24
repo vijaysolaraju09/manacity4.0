@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
+import type { ChangeEvent, FormEvent, ReactElement } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { AppDispatch, RootState } from '@/store';
@@ -578,7 +578,7 @@ const RegisterEventPage = () => {
       );
     }
 
-    let control: JSX.Element | null = null;
+    let control: ReactElement | null = null;
     const currentValue = answers[field.id];
 
     switch (field.type) {

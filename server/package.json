@@ -11,7 +11,8 @@
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint . --max-warnings=0",
     "format": "prettier --write . --ignore-path .gitignore",
     "format:check": "prettier --check . --ignore-path .gitignore",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:forms": "node scripts/seedFormTemplates.js"
   },
   "keywords": [],
   "author": "",

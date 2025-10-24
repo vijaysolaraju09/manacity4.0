@@ -13,6 +13,8 @@ import serviceRequestsReducer from './serviceRequests';
 import notifsReducer from './notifs';
 import ordersReducer from './orders';
 import userProfileReducer from './user';
+import formsReducer from './formsSlice';
+import registrationsReducer from './registrationsSlice';
 import { injectStore } from '@/lib/http';
 
 export const store = configureStore({
@@ -31,6 +33,8 @@ export const store = configureStore({
     notifs: notifsReducer,
     orders: ordersReducer,
     userProfile: userProfileReducer,
+    forms: formsReducer,
+    registrations: registrationsReducer,
   },
 });
 

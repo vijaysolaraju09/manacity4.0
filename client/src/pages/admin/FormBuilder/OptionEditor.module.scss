@@ -1,0 +1,36 @@
+.wrapper {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.optionRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.optionInput {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.removeButton {
+  border: none;
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+}
+
+.addButton {
+  border: 1px dashed #d1d5db;
+  background: transparent;
+  color: #374151;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}

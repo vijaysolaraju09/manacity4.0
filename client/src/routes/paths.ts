@@ -54,11 +54,15 @@ export const paths = {
       detail: (id: string = ':id') => `/admin/events/${id}`,
       registrations: (id: string = ':id') => `/admin/events/${id}/registrations`,
       leaderboard: (id: string = ':id') => `/admin/events/${id}/leaderboard`,
+      form: (id: string = ':id') => `/admin/events/${id}/form`,
     },
     users: () => '/admin/users',
     analytics: () => '/admin/analytics',
     services: () => '/admin/services',
     serviceRequests: () => '/admin/service-requests',
+    forms: {
+      builder: () => '/admin/forms',
+    },
   },
   events: {
     list: () => '/events',

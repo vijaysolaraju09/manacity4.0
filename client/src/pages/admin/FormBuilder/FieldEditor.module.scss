@@ -1,0 +1,68 @@
+.panel {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+  background: #ffffff;
+}
+
+.row {
+  display: grid;
+  gap: 1rem;
+}
+
+.inlineRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.input,
+.textarea,
+.select {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.optionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.sectionTitle {
+  font-weight: 600;
+  color: #111827;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: #6b7280;
+}

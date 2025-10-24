@@ -1,4 +1,5 @@
 const { Schema, model } = require('mongoose');
+const { FIELD_TYPES, sanitizeHtml, sanitizeId } = require('../utils/dynamicForm');
 
 const EVENT_TYPES = ['tournament', 'activity'];
 const EVENT_CATEGORIES = [
@@ -28,6 +29,68 @@ const geoSchema = new Schema(
   {
     lat: Number,
     lng: Number,
+  },
+  { _id: false }
+);
+
+const formFieldSchema = new Schema(
+  {
+    id: {
+      type: String,
+      required: true,
+      trim: true,
+      set: (value) => sanitizeId(value),
+    },
+    label: {
+      type: String,
+      required: true,
+      trim: true,
+      set: (value) => sanitizeHtml(value),
+    },
+    type: {
+      type: String,
+      enum: FIELD_TYPES,
+      required: true,
+    },
+    required: { type: Boolean, default: false },
+    placeholder: {
+      type: String,
+      default: '',
+      set: (value) => sanitizeHtml(value),
+    },
+    help: {
+      type: String,
+      default: '',
+      set: (value) => sanitizeHtml(value),
+    },
+    options: {
+      type: [String],
+      default: [],
+      set: (values) =>
+        Array.isArray(values)
+          ? values
+              .map((value) => sanitizeHtml(value))
+              .filter((value) => value.length > 0)
+          : [],
+    },
+    min: { type: Number },
+    max: { type: Number },
+    pattern: { type: String },
+    defaultValue: { type: Schema.Types.Mixed },
+  },
+  { _id: false }
+);
+
+const dynamicFormSchema = new Schema(
+  {
+    mode: {
+      type: String,
+      enum: ['embedded', 'template'],
+      default: 'embedded',
+    },
+    templateId: { type: Schema.Types.ObjectId, ref: 'FormTemplate', default: null },
+    fields: { type: [formFieldSchema], default: [] },
+    isActive: { type: Boolean, default: false },
   },
   { _id: false }
 );
@@ -85,6 +148,15 @@ const eventSchema = new Schema(
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     updatesCount: { type: Number, default: 0 },
     leaderboardVersion: { type: Number, default: 0 },
+    dynamicForm: {
+      type: dynamicFormSchema,
+      default: () => ({
+        mode: 'embedded',
+        templateId: null,
+        fields: [],
+        isActive: false,
+      }),
+    },
   },
   { timestamps: true }
 );
@@ -93,6 +165,7 @@ eventSchema.index({ status: 1, category: 1, startAt: -1 });
 eventSchema.index({ type: 1, startAt: -1 });
 eventSchema.index({ createdBy: 1, startAt: -1 });
 eventSchema.index({ registrationCloseAt: 1 });
+eventSchema.index({ 'dynamicForm.templateId': 1 });
 try {
   eventSchema.index({
     title: 'text',

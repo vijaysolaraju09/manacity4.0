@@ -16,7 +16,7 @@ const Shops = lazy(() => import('@/pages/Shops/Shops'));
 const ShopDetails = lazy(() => import('@/pages/ShopDetails/ShopDetails'));
 const ProductDetails = lazy(() => import('@/pages/ProductDetails/ProductDetails'));
 const EventDetailPage = lazy(() => import('@/pages/Events/EventDetail'));
-const EventRegisterPage = lazy(() => import('@/pages/Events/Register'));
+const EventRegisterPage = lazy(() => import('@/pages/Events/RegisterEvent'));
 const ServicesHub = lazy(() => import('@/pages/Services/ServicesHub'));
 const ServicesCatalog = lazy(() => import('@/pages/Services/ServicesCatalog'));
 const PublicRequests = lazy(() => import('@/pages/Services/PublicRequests'));
@@ -56,6 +56,8 @@ const VerificationRequests = lazy(() => import('@/pages/VerificationRequests'));
 const BusinessRequests = lazy(() => import('@/pages/BusinessRequests'));
 const AdminUsers = lazy(() => import('@/pages/AdminUsers'));
 const AdminAnalytics = lazy(() => import('@/pages/AdminAnalytics'));
+const AdminFormBuilderPage = lazy(() => import('@/pages/admin/FormBuilder/FormBuilder'));
+const AdminEventFormAttachPage = lazy(() => import('@/pages/admin/EventFormAttach/EventFormAttach'));
 const NotFound = lazy(() => import('@/pages/NotFound/NotFound'));
 
 const SuspendedOutlet = () => (
@@ -84,6 +86,7 @@ const AppRoutes = () => (
           <Route key="admin-dashboard" index element={<AdminDashboard />} />
           <Route key="admin-shops" path="shops" element={<AdminShops />} />
           <Route key="admin-products" path="products" element={<AdminProducts />} />
+          <Route key="admin-form-builder" path="forms" element={<AdminFormBuilderPage />} />
           <Route key="admin-events" path="events" element={<AdminEventsRoot />}>
             <Route index element={<AdminEventsListPage />} />
             <Route path="new" element={<AdminEventEditorPage mode="create" />} />
@@ -91,6 +94,7 @@ const AppRoutes = () => (
               <Route index element={<AdminEventEditorPage />} />
               <Route path="registrations" element={<AdminEventRegistrationsPage />} />
               <Route path="leaderboard" element={<AdminEventLeaderboardPage />} />
+              <Route path="form" element={<AdminEventFormAttachPage />} />
             </Route>
           </Route>
           <Route key="admin-users" path="users" element={<AdminUsers />} />

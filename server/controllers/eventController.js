@@ -5,7 +5,9 @@ const EventUpdate = require('../models/EventUpdate');
 const Match = require('../models/Match');
 const LeaderboardEntry = require('../models/LeaderboardEntry');
 const Notification = require('../models/Notification');
+const FormTemplate = require('../models/FormTemplate');
 const AppError = require('../utils/AppError');
+const { validateFieldDefinitions } = require('../utils/dynamicForm');
 
 const { Types } = mongoose;
 
@@ -434,6 +436,75 @@ exports.getEvent = async (req, res, next) => {
   }
 };
 
+exports.attachFormTemplate = async (req, res, next) => {
+  try {
+    const event = await loadEventOrThrow(req.params.id);
+    const template = await FormTemplate.findById(req.body.templateId).lean();
+    if (!template) {
+      throw AppError.notFound('TEMPLATE_NOT_FOUND', 'Form template not found');
+    }
+    event.dynamicForm.mode = 'template';
+    event.dynamicForm.templateId = template._id;
+    event.dynamicForm.fields = [];
+    if (typeof event.dynamicForm.isActive !== 'boolean') {
+      event.dynamicForm.isActive = true;
+    }
+    event.markModified('dynamicForm');
+    await event.save();
+    res.json({
+      ok: true,
+      data: { dynamicForm: event.dynamicForm },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.setEmbeddedForm = async (req, res, next) => {
+  try {
+    const event = await loadEventOrThrow(req.params.id);
+    const fields = validateFieldDefinitions(req.body.fields || []);
+    event.dynamicForm.mode = 'embedded';
+    event.dynamicForm.templateId = null;
+    event.dynamicForm.fields = fields;
+    if (typeof event.dynamicForm.isActive !== 'boolean') {
+      event.dynamicForm.isActive = true;
+    }
+    event.markModified('dynamicForm');
+    await event.save();
+    res.json({
+      ok: true,
+      data: { dynamicForm: event.dynamicForm },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.toggleEventForm = async (req, res, next) => {
+  try {
+    const event = await loadEventOrThrow(req.params.id);
+    if (typeof req.body.isActive !== 'boolean') {
+      throw AppError.badRequest('INVALID_STATUS', 'isActive must be a boolean');
+    }
+    if (!event.dynamicForm || (!event.dynamicForm.templateId && !event.dynamicForm.fields.length)) {
+      throw AppError.badRequest('FORM_NOT_CONFIGURED', 'Event form is not configured');
+    }
+    event.dynamicForm.isActive = req.body.isActive;
+    event.markModified('dynamicForm');
+    await event.save();
+    res.json({
+      ok: true,
+      data: { dynamicForm: event.dynamicForm },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.register = async (req, res, next) => {
   try {
     const event = await loadEventOrThrow(req.params.id);
@@ -617,6 +688,10 @@ exports.listUpdates = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.computeIsRegistrationOpen = computeIsRegistrationOpen;
+exports.isOrganizer = isOrganizer;
+exports.loadEventOrThrow = loadEventOrThrow;
 
 exports.getLeaderboard = async (req, res, next) => {
   try {

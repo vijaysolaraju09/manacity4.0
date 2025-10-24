@@ -2,14 +2,12 @@ import type { ChangeEvent, FC } from 'react';
 import type { Field, FieldType } from '@/types/forms';
 import OptionEditor from './OptionEditor';
 import styles from './FieldEditor.module.scss';
+import { OPTION_TYPES, STRING_TYPES, withUpdatedLabel } from './fieldUtils';
 
 interface FieldEditorProps {
   field: Field | null;
   onChange: (next: Field) => void;
 }
-
-const OPTION_TYPES: FieldType[] = ['dropdown', 'radio', 'checkbox'];
-const STRING_TYPES: FieldType[] = ['short_text', 'textarea', 'email', 'phone', 'url', 'file', 'datetime'];
 
 const FieldEditor: FC<FieldEditorProps> = ({ field, onChange }) => {
   if (!field) {
@@ -71,7 +69,7 @@ const FieldEditor: FC<FieldEditorProps> = ({ field, onChange }) => {
           <input
             className={styles.input}
             value={field.label}
-            onChange={(event) => updateField({ label: event.target.value })}
+            onChange={(event) => onChange(withUpdatedLabel(field, event.target.value))}
             placeholder="Player name"
           />
         </label>

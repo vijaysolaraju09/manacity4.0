@@ -89,6 +89,22 @@ const resolveForm = async (event) => {
   };
 };
 
+const toIsoStringOrNull = (value) => {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+};
+
+const formatRegistrationWindow = (event) => {
+  const openAt = toIsoStringOrNull(event?.registrationOpenAt);
+  const closeAt = toIsoStringOrNull(event?.registrationCloseAt);
+  return {
+    openAt,
+    closeAt,
+  };
+};
+
 const preparePayment = (input = {}) => {
   if (!input || typeof input !== 'object') {
     return { required: false };
@@ -125,10 +141,9 @@ exports.getEventForm = async (req, res, next) => {
     if (event.dynamicForm?.isActive === false) {
       throw AppError.forbidden('FORM_INACTIVE', 'Registration form is not active');
     }
-    if (!computeIsRegistrationOpen(event)) {
-      throw AppError.forbidden('REGISTRATION_CLOSED', 'Registration window is closed');
-    }
     const form = await resolveForm(event);
+    const registrationWindow = formatRegistrationWindow(event);
+    const isRegistrationOpen = computeIsRegistrationOpen(event);
     res.json({
       ok: true,
       data: {
@@ -136,6 +151,8 @@ exports.getEventForm = async (req, res, next) => {
         templateId: form.templateId,
         isActive: form.isActive,
         fields: form.fields,
+        registrationWindow,
+        isRegistrationOpen,
       },
       traceId: req.traceId,
     });
@@ -152,6 +169,8 @@ exports.getEventFormPreview = async (req, res, next) => {
     }
     const form = await resolveForm(event);
     const exampleSubmission = buildExampleSubmission(form.fields);
+    const registrationWindow = formatRegistrationWindow(event);
+    const isRegistrationOpen = computeIsRegistrationOpen(event);
     res.json({
       ok: true,
       data: {
@@ -160,6 +179,8 @@ exports.getEventFormPreview = async (req, res, next) => {
         isActive: form.isActive,
         fields: form.fields,
         exampleSubmission,
+        registrationWindow,
+        isRegistrationOpen,
       },
       traceId: req.traceId,
     });

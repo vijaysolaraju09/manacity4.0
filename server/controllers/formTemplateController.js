@@ -42,8 +42,10 @@ exports.createTemplate = async (req, res, next) => {
 exports.listTemplates = async (req, res, next) => {
   try {
     const filter = {};
-    if (req.query.category) {
-      filter.category = req.query.category;
+    const category =
+      typeof req.query.category === 'string' ? req.query.category.trim() : undefined;
+    if (category) {
+      filter.category = category;
     }
     const templates = await FormTemplate.find(filter).sort({ updatedAt: -1 }).lean();
     res.json({

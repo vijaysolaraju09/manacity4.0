@@ -34,7 +34,7 @@ const templates = [
       },
       {
         id: 'headset',
-        label: 'Headset? ',
+        label: 'Headset?',
         type: 'radio',
         options: ['Yes', 'No'],
       },
@@ -115,6 +115,7 @@ const templates = [
         id: 'payment_proof',
         label: 'Payment Proof',
         type: 'file',
+        help: 'Upload a receipt or share a payment URL',
       },
     ],
   },

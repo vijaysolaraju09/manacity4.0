@@ -19,13 +19,39 @@ const statusLabels: Record<RegistrationStatus, string> = {
   disqualified: 'Disqualified',
 };
 
+const STATUS_OPTIONS: RegistrationStatus[] = [
+  'registered',
+  'waitlisted',
+  'checked_in',
+  'withdrawn',
+  'disqualified',
+];
+
+const PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 350;
+
 const AdminRegistrations = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const dispatch = useDispatch<AppDispatch>();
   const context = useOutletContext<AdminEventContext>();
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<RegistrationStatus[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const registrationsState = useSelector((state: RootState) => state.events.registrations);
   const event = context?.event;
+
+  useEffect(() => {
+    const handler = window.setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim());
+    }, SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(handler);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   const statusBadgeClass = (status: RegistrationStatus) => {
     switch (status) {
@@ -44,13 +70,41 @@ const AdminRegistrations = () => {
     }
   };
 
+  const handleStatusToggle = (status: RegistrationStatus) => {
+    setStatusFilter((prev) => {
+      if (prev.includes(status)) {
+        return prev.filter((value) => value !== status);
+      }
+      return [...prev, status];
+    });
+    setPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setStatusFilter([]);
+    setSearchTerm('');
+    setPage(1);
+  };
+
+  const filtersActive = statusFilter.length > 0 || debouncedSearch.length > 0;
+  const statusSet = useMemo(() => new Set(statusFilter), [statusFilter]);
+
   const loadRegistrations = useCallback(async () => {
     if (!eventId) return;
-    const action = await dispatch(fetchRegistrations(eventId));
+    const action = await dispatch(
+      fetchRegistrations({
+        eventId,
+        page,
+        limit: PAGE_SIZE,
+        status: statusFilter,
+        search: debouncedSearch,
+        admin: true,
+      }),
+    );
     if (fetchRegistrations.fulfilled.match(action)) {
       setLastUpdatedAt(new Date().toISOString());
     }
-  }, [dispatch, eventId]);
+  }, [debouncedSearch, dispatch, eventId, page, statusFilter]);
 
   useEffect(() => {
     void loadRegistrations();
@@ -66,6 +120,11 @@ const AdminRegistrations = () => {
 
   const registrations = registrationsState.items ?? [];
   const totalRegistered = registrationsState.total ?? registrations.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalRegistered / PAGE_SIZE));
+  const canPrev = page > 1;
+  const canNext = page < totalPages;
+  const showingStart = totalRegistered === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const showingEnd = Math.min(totalRegistered, page * PAGE_SIZE);
   const waitlisted = useMemo(
     () => registrations.filter((item) => item?.status === 'waitlisted').length,
     [registrations],
@@ -111,6 +170,12 @@ const AdminRegistrations = () => {
     return map;
   }, [registrations]);
 
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   return (
     <div className={styles.page}>
       <header className={styles.hero}>
@@ -145,6 +210,41 @@ const AdminRegistrations = () => {
           Preview mode enabled — showing the first {registrations.length} registrations from the feed.
         </div>
       )}
+
+      <section className={styles.filters}>
+        <div className={styles.filterGroup}>
+          <span className={styles.filterLabel}>Status</span>
+          <div className={styles.filterChips}>
+            {STATUS_OPTIONS.map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={`${styles.filterChip} ${statusSet.has(option) ? styles.filterChipActive : ''}`}
+                onClick={() => handleStatusToggle(option)}
+              >
+                {statusLabels[option]}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={styles.searchGroup}>
+          <label className={styles.searchLabel}>
+            Search
+            <input
+              type="search"
+              className={styles.searchInput}
+              value={searchTerm}
+              placeholder="Name, email or phone"
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          </label>
+        </div>
+        {filtersActive && (
+          <button type="button" className={styles.clearFilters} onClick={handleClearFilters}>
+            Clear filters
+          </button>
+        )}
+      </section>
 
       <section className={styles.metricsGrid}>
         <div className={styles.metricCard}>
@@ -261,6 +361,35 @@ const AdminRegistrations = () => {
             </article>
           ))}
         </div>
+      )}
+
+      {totalRegistered > 0 && (
+        <footer className={styles.pagination}>
+          <span className={styles.paginationInfo}>
+            Showing {showingStart.toLocaleString()}–{showingEnd.toLocaleString()} of {totalRegistered.toLocaleString()}
+          </span>
+          <div className={styles.paginationControls}>
+            <button
+              type="button"
+              className={styles.paginationButton}
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={!canPrev || isLoading}
+            >
+              Previous
+            </button>
+            <span className={styles.paginationPage}>
+              Page {Math.min(page, totalPages)} of {totalPages.toLocaleString()}
+            </span>
+            <button
+              type="button"
+              className={styles.paginationButton}
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={!canNext || isLoading}
+            >
+              Next
+            </button>
+          </div>
+        </footer>
       )}
     </div>
   );

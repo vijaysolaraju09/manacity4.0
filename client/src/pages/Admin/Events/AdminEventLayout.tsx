@@ -238,6 +238,7 @@ const AdminEventLayout = () => {
     if (!eventId) return [];
     return [
       { label: 'Details', path: paths.admin.events.detail(eventId) },
+      { label: 'Registration Form', path: paths.admin.events.form(eventId) },
       { label: 'Registrations', path: paths.admin.events.registrations(eventId) },
       { label: 'Leaderboard', path: paths.admin.events.leaderboard(eventId) },
     ];

@@ -65,6 +65,20 @@
   margin-bottom: 0.25rem;
 }
 
+.nav-group__links {
+  display: grid;
+  gap: 0.35rem;
+  padding-left: 0.75rem;
+}
+
+.nav-group__links li {
+  margin-bottom: 0;
+}
+
+.nav-group__links a {
+  font-size: 0.95rem;
+}
+
 .admin-content {
   flex: 1;
   display: flex;

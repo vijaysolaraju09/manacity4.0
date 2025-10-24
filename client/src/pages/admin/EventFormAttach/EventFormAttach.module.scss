@@ -4,6 +4,47 @@
   gap: 1.5rem;
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.header p {
+  margin: 0.35rem 0 0;
+  color: #6b7280;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.statusPillActive {
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.statusPillInactive {
+  background: rgba(148, 163, 184, 0.16);
+  color: #4b5563;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
 .tabs {
   display: inline-flex;
   border-radius: 9999px;
@@ -36,6 +77,26 @@
   gap: 1.25rem;
 }
 
+.loadingRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #4b5563;
+}
+
+.errorCard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: rgba(254, 242, 242, 0.85);
+  border: 1px solid rgba(252, 165, 165, 0.6);
+  color: #b91c1c;
+}
+
 .sectionTitle {
   font-size: 1.1rem;
   font-weight: 600;
@@ -45,6 +106,14 @@
 .row {
   display: grid;
   gap: 1rem;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: #111827;
 }
 
 .inlineRow {
@@ -74,16 +143,36 @@
   padding: 0.6rem 1.25rem;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
 .primaryButton {
   background: linear-gradient(135deg, #6366f1, #4338ca);
   color: #f9fafb;
+  box-shadow: 0 12px 18px rgba(99, 102, 241, 0.25);
 }
 
 .secondaryButton {
   background: #e5e7eb;
   color: #111827;
+  border: 1px solid #cbd5f5;
+}
+
+.primaryButton:hover,
+.secondaryButton:hover {
+  transform: translateY(-1px);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .preview {
@@ -105,8 +194,70 @@
   color: #dc2626;
 }
 
-.toggleRow {
+.helperText {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.link {
+  color: #4338ca;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.summaryHeader {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.summaryMeta {
+  margin: 0.35rem 0 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.summaryActions {
+  display: inline-flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.summaryList {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.summaryLabel {
+  font-weight: 600;
+  color: #111827;
+}
+
+.summaryValue {
+  color: #1f2937;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

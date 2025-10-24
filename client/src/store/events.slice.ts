@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { http } from '@/lib/http';
+import { http, adminHttp } from '@/lib/http';
 import { toErrorMessage, toItem, toItems } from '@/lib/response';
 import {
   adaptEventDetail,
@@ -131,32 +131,68 @@ export const fetchEventById = createAsyncThunk<EventDetail, string, { rejectValu
   }
 );
 
+export interface FetchRegistrationsParams {
+  eventId: string;
+  page?: number;
+  limit?: number;
+  status?: EventRegistration['status'][];
+  search?: string;
+  admin?: boolean;
+}
+
 export const fetchRegistrations = createAsyncThunk<
-  { items: EventRegistrationSummary[]; total: number; preview: boolean },
-  string,
+  { items: EventRegistrationSummary[]; total: number; preview: boolean; page: number; pageSize: number },
+  FetchRegistrationsParams,
   { rejectValue: string }
->('events/fetchRegistrations', async (eventId, { rejectWithValue }) => {
-  try {
-    const res = await http.get(`/events/${eventId}/registrations`);
-    const payload = res?.data?.data ?? res?.data ?? {};
-    const items = Array.isArray(payload.items)
-      ? payload.items
-          .map((item: unknown) => adaptEventRegistrationSummary(item))
-          .filter(
-            (
-              summary: EventRegistrationSummary | null,
-            ): summary is EventRegistrationSummary => summary !== null,
-          )
-      : [];
-    return {
-      items,
-      total: typeof payload.count === 'number' ? payload.count : items.length,
-      preview: Boolean(payload.preview),
-    };
-  } catch (err) {
-    return rejectWithValue(toErrorMessage(err));
-  }
-});
+>(
+  'events/fetchRegistrations',
+  async ({ eventId, page, limit, status, search, admin = false }, { rejectWithValue }) => {
+    try {
+      const client = admin ? adminHttp : http;
+      const params: Record<string, unknown> = {};
+      if (page && page > 0) params.page = page;
+      if (limit && limit > 0) params.limit = limit;
+      if (status && status.length > 0) params.status = status.join(',');
+      if (search && search.trim().length > 0) params.q = search.trim();
+
+      const res = await client.get(`/events/${eventId}/registrations`, { params });
+      const payload = res?.data?.data ?? res?.data ?? {};
+      const items = Array.isArray(payload.items)
+        ? payload.items
+            .map((item: unknown) => adaptEventRegistrationSummary(item))
+            .filter(
+              (
+                summary: EventRegistrationSummary | null,
+              ): summary is EventRegistrationSummary => summary !== null,
+            )
+        : [];
+
+      const totalCandidate =
+        typeof payload.total === 'number'
+          ? payload.total
+          : typeof payload.count === 'number'
+          ? payload.count
+          : items.length;
+      const resolvedPage = typeof payload.page === 'number' ? payload.page : page ?? 1;
+      const resolvedPageSize =
+        typeof payload.limit === 'number'
+          ? payload.limit
+          : typeof payload.pageSize === 'number'
+          ? payload.pageSize
+          : limit ?? items.length;
+
+      return {
+        items,
+        total: totalCandidate,
+        preview: Boolean(payload.preview),
+        page: resolvedPage,
+        pageSize: resolvedPageSize || items.length || 1,
+      };
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
+  },
+);
 
 export const fetchMyRegistration = createAsyncThunk<EventRegistration | null, string, { rejectValue: string }>(
   'events/fetchMyRegistration',
@@ -362,10 +398,14 @@ const eventsSlice = createSlice({
         state.registrations.loading = false;
         state.registrations.items = action.payload.items ?? [];
         state.registrations.total = action.payload.total ?? action.payload.items.length;
-        state.registrations.page = 1;
-        state.registrations.pageSize = action.payload.items.length ?? state.registrations.pageSize;
+        state.registrations.page = action.payload.page ?? 1;
+        state.registrations.pageSize =
+          action.payload.pageSize ?? action.payload.items.length ?? state.registrations.pageSize;
         state.registrations.preview = action.payload.preview;
-        state.registrations.hasMore = false;
+        const page = state.registrations.page ?? 1;
+        const size = state.registrations.pageSize ?? action.payload.items.length ?? 0;
+        const total = state.registrations.total ?? state.registrations.items.length ?? 0;
+        state.registrations.hasMore = page * size < total;
       })
       .addCase(fetchRegistrations.rejected, (state, action) => {
         state.registrations.loading = false;

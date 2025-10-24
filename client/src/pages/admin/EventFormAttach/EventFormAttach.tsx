@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import type { AppDispatch, RootState } from '@/store';
 import showToast from '@/components/ui/Toast';
 import {
@@ -11,20 +12,29 @@ import {
   toggleFormActive,
 } from '@/store/formsSlice';
 import type { Field, FieldType } from '@/types/forms';
+import { paths } from '@/routes/paths';
+import type { AdminEventContext } from '@/pages/Admin/Events/AdminEventLayout';
 import FieldList from '../FormBuilder/FieldList';
 import FieldEditor from '../FormBuilder/FieldEditor';
-import styles from './EventFormAttach.module.scss';
 import { createField, generateFieldId, sanitizeFields } from '../FormBuilder/fieldUtils';
+import styles from './EventFormAttach.module.scss';
 
 type TabKey = 'template' | 'embedded';
 
 const EventFormAttach = () => {
   const { eventId } = useParams<{ eventId: string }>();
+  const context = useOutletContext<AdminEventContext | null>();
   const dispatch = useDispatch<AppDispatch>();
-  const templates = useSelector((state: RootState) => state.forms.templates.items);
-  const templatesLoading = useSelector((state: RootState) => state.forms.templates.loading);
+
+  const templatesState = useSelector((state: RootState) => state.forms.templates);
+  const templates = templatesState.items;
+  const templatesLoading = templatesState.loading;
+  const templatesError = templatesState.error;
   const eventFormState = useSelector((state: RootState) => state.forms.eventForm);
   const actions = useSelector((state: RootState) => state.forms.actions);
+
+  const event = context?.event ?? null;
+  const refreshEvent = context?.refresh;
 
   const [activeTab, setActiveTab] = useState<TabKey>('template');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
@@ -32,29 +42,60 @@ const EventFormAttach = () => {
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
 
+  const loadEventForm = useCallback(async () => {
+    if (!eventId) return;
+    await dispatch(getEventForm(eventId));
+  }, [dispatch, eventId]);
+
   useEffect(() => {
     dispatch(listTemplates());
   }, [dispatch]);
 
   useEffect(() => {
-    if (!eventId) return;
-    dispatch(getEventForm(eventId));
-  }, [dispatch, eventId]);
+    void loadEventForm();
+  }, [loadEventForm]);
 
   useEffect(() => {
     const form = eventFormState.data;
-    if (!form) return;
-    if (form.mode === 'template' && form.templateId) {
-      setSelectedTemplateId(form.templateId);
+    if (!form) {
+      setSelectedTemplateId(null);
+      setFields([]);
+      setSelectedFieldId(null);
+      return;
+    }
+
+    if (form.mode === 'template') {
+      setSelectedTemplateId(form.templateId ?? null);
       setActiveTab('template');
-    } else if (form.mode === 'embedded') {
-      setFields(form.fields);
-      setSelectedFieldId(form.fields[0]?.id ?? null);
+      setFields([]);
+      setSelectedFieldId(null);
+    } else {
+      const sanitized = sanitizeFields(form.fields);
+      setFields(sanitized);
+      setSelectedFieldId(sanitized[0]?.id ?? null);
       setActiveTab('embedded');
+      setSelectedTemplateId(null);
     }
   }, [eventFormState.data]);
 
   const sanitizedFields = useMemo(() => sanitizeFields(fields), [fields]);
+
+  const resolvedTemplateName = useMemo(() => {
+    if (!selectedTemplateId) return null;
+    const match = templates.find((template) => template.id === selectedTemplateId);
+    if (match) return match.name;
+    if (eventFormState.data?.title) return eventFormState.data.title;
+    return `Template ${selectedTemplateId.slice(-6)}`;
+  }, [eventFormState.data?.title, selectedTemplateId, templates]);
+
+  const isTemplateMode = eventFormState.data?.mode === 'template';
+  const isFormActive = eventFormState.data?.isActive ?? false;
+  const fieldCount = eventFormState.data?.fields?.length ?? sanitizedFields.length;
+  const isInitialLoading = eventFormState.loading && !eventFormState.data;
+  const attachDisabled =
+    !selectedTemplateId ||
+    (isTemplateMode && selectedTemplateId === eventFormState.data?.templateId) ||
+    actions.attach === 'loading';
 
   const handleAttachTemplate = async () => {
     if (!eventId || !selectedTemplateId) {
@@ -65,7 +106,10 @@ const EventFormAttach = () => {
     try {
       await dispatch(attachTemplateToEvent({ eventId, templateId: selectedTemplateId })).unwrap();
       showToast('Template attached to event', 'success');
-      dispatch(getEventForm(eventId));
+      await loadEventForm();
+      if (refreshEvent) {
+        await refreshEvent();
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to attach template';
       showToast(message, 'error');
@@ -83,7 +127,10 @@ const EventFormAttach = () => {
       await dispatch(setEmbeddedForm({ eventId, fields: sanitizedFields })).unwrap();
       showToast('Embedded form saved', 'success');
       setActiveTab('embedded');
-      dispatch(getEventForm(eventId));
+      await loadEventForm();
+      if (refreshEvent) {
+        await refreshEvent();
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to save embedded form';
       showToast(message, 'error');
@@ -95,12 +142,20 @@ const EventFormAttach = () => {
     try {
       await dispatch(toggleFormActive({ eventId, isActive })).unwrap();
       showToast(isActive ? 'Form enabled' : 'Form disabled', 'success');
-      dispatch(getEventForm(eventId));
+      await loadEventForm();
+      if (refreshEvent) {
+        await refreshEvent();
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to update form status';
       showToast(message, 'error');
     }
   };
+
+  const handleRetry = useCallback(() => {
+    dispatch(listTemplates());
+    void loadEventForm();
+  }, [dispatch, loadEventForm]);
 
   const handleAddField = (type: FieldType = 'short_text') => {
     const nextField = createField(type, fields.length);
@@ -152,12 +207,40 @@ const EventFormAttach = () => {
     return <div className={styles.page}>Event id missing.</div>;
   }
 
+  const eventName = event?.title ? `“${event.title}”` : 'this event';
+  const noTemplatesAvailable = !templatesLoading && templates.length === 0;
+
   return (
     <div className={styles.page}>
-      <header>
-        <h1>Event registration form</h1>
-        <p>Attach a reusable template or craft custom fields for this event.</p>
+      <header className={styles.header}>
+        <div>
+          <h1>Registration form</h1>
+          <p>Design the questions attendees answer when registering for {eventName}.</p>
+        </div>
+        {eventFormState.data && (
+          <span
+            className={`${styles.statusPill} ${
+              isFormActive ? styles.statusPillActive : styles.statusPillInactive
+            }`}
+          >
+            {isFormActive ? 'Active' : 'Inactive'}
+          </span>
+        )}
       </header>
+
+      {(eventFormState.error || templatesError) && (
+        <section className={styles.card}>
+          <div className={styles.errorCard}>
+            <div>
+              {eventFormState.error && <p>{eventFormState.error}</p>}
+              {templatesError && <p>{templatesError}</p>}
+            </div>
+            <button type="button" className={styles.secondaryButton} onClick={handleRetry}>
+              Retry
+            </button>
+          </div>
+        </section>
+      )}
 
       <div className={styles.tabs}>
         <button
@@ -181,31 +264,56 @@ const EventFormAttach = () => {
       {activeTab === 'template' && (
         <section className={styles.card}>
           <h2 className={styles.sectionTitle}>Attach template</h2>
-          <div className={styles.row}>
-            <label className={styles.label}>
-              Choose a template
-              <select
-                className={styles.select}
-                value={selectedTemplateId ?? ''}
-                onChange={(event) => setSelectedTemplateId(event.target.value || null)}
-              >
-                <option value="">Select a template</option>
-                {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          {templatesLoading ? (
+            <div className={styles.loadingRow}>
+              <Loader2 size={18} className={styles.spin} /> Loading templates…
+            </div>
+          ) : (
+            <div className={styles.row}>
+              <label className={styles.label}>
+                Choose a template
+                <select
+                  className={styles.select}
+                  value={selectedTemplateId ?? ''}
+                  onChange={(event) => setSelectedTemplateId(event.target.value || null)}
+                >
+                  <option value="">Select a template</option>
+                  {templates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
+          <p className={styles.helperText}>
+            {noTemplatesAvailable ? (
+              <>
+                No templates yet.{' '}
+                <Link to={paths.admin.formTemplates()} className={styles.link}>
+                  Create a form template
+                </Link>{' '}
+                to reuse questions across events.
+              </>
+            ) : (
+              <>
+                Want to tweak your library?{' '}
+                <Link to={paths.admin.formTemplates()} className={styles.link}>
+                  Open the template builder
+                </Link>
+                .
+              </>
+            )}
+          </p>
           <div className={styles.actions}>
             <button
               type="button"
               className={styles.primaryButton}
               onClick={handleAttachTemplate}
-              disabled={actions.attach === 'loading' || templatesLoading}
+              disabled={attachDisabled || templatesLoading}
             >
-              Attach template
+              {actions.attach === 'loading' ? <Loader2 size={16} className={styles.spin} /> : 'Attach template'}
             </button>
           </div>
         </section>
@@ -237,27 +345,71 @@ const EventFormAttach = () => {
             type="button"
             className={styles.primaryButton}
             onClick={handleSaveEmbedded}
-            disabled={actions.saveTemplate === 'loading'}
+            disabled={actions.saveTemplate === 'loading' || sanitizedFields.length === 0}
           >
-            Save embedded form
+            {actions.saveTemplate === 'loading' ? (
+              <Loader2 size={16} className={styles.spin} />
+            ) : (
+              'Save embedded form'
+            )}
           </button>
         </section>
       )}
 
-      {eventFormState.data && (
+      {isInitialLoading ? (
         <section className={styles.card}>
-          <h2 className={styles.sectionTitle}>Current form configuration</h2>
-          <div className={styles.toggleRow}>
-            <span>Status:</span>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={() => handleToggleActive(!(eventFormState.data?.isActive ?? false))}
-            >
-              {eventFormState.data.isActive ? 'Disable form' : 'Activate form'}
-            </button>
+          <div className={styles.loadingRow}>
+            <Loader2 size={18} className={styles.spin} /> Loading registration form…
           </div>
+        </section>
+      ) : eventFormState.data ? (
+        <section className={styles.card}>
+          <div className={styles.summaryHeader}>
+            <div>
+              <h2 className={styles.sectionTitle}>Current configuration</h2>
+              <p className={styles.summaryMeta}>
+                {isTemplateMode ? 'Template' : 'Embedded'} • {fieldCount} field{fieldCount === 1 ? '' : 's'}
+              </p>
+            </div>
+            <div className={styles.summaryActions}>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={() => handleToggleActive(!isFormActive)}
+                disabled={actions.toggle === 'loading'}
+              >
+                {actions.toggle === 'loading' ? (
+                  <Loader2 size={16} className={styles.spin} />
+                ) : isFormActive ? (
+                  'Disable form'
+                ) : (
+                  'Activate form'
+                )}
+              </button>
+            </div>
+          </div>
+          <dl className={styles.summaryList}>
+            <div className={styles.summaryItem}>
+              <dt className={styles.summaryLabel}>Mode</dt>
+              <dd className={styles.summaryValue}>{isTemplateMode ? 'Template' : 'Embedded fields'}</dd>
+            </div>
+            {isTemplateMode && selectedTemplateId && (
+              <div className={styles.summaryItem}>
+                <dt className={styles.summaryLabel}>Template</dt>
+                <dd className={styles.summaryValue}>{resolvedTemplateName}</dd>
+              </div>
+            )}
+            <div className={styles.summaryItem}>
+              <dt className={styles.summaryLabel}>Fields</dt>
+              <dd className={styles.summaryValue}>{fieldCount}</dd>
+            </div>
+          </dl>
           <pre className={styles.preview}>{previewJson}</pre>
+        </section>
+      ) : (
+        <section className={styles.card}>
+          <h2 className={styles.sectionTitle}>No registration form yet</h2>
+          <p className={styles.summaryMeta}>Attach a template or embed custom fields to start collecting registrations.</p>
         </section>
       )}
     </div>

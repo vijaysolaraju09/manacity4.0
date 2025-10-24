@@ -250,6 +250,27 @@ describe('Form templates admin guard', () => {
     expect(res.statusCode).toBe(403);
     expect(res.body.error.code).toBe('ADMIN_ONLY');
   });
+
+  it('filters templates by category when requested', async () => {
+    templatesStore.set('tpl_a', {
+      _id: 'tpl_a',
+      name: 'Solo Cup',
+      category: 'esports',
+      fields: [{ id: 'ign', label: 'IGN', type: 'short_text' }],
+    });
+    templatesStore.set('tpl_b', {
+      _id: 'tpl_b',
+      name: 'Trivia Night',
+      category: 'quiz',
+      fields: [{ id: 'team', label: 'Team', type: 'short_text' }],
+    });
+
+    const res = await request(app).get('/api/form-templates?category=esports');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].category).toBe('esports');
+  });
 });
 
 describe('Event registration validations', () => {
@@ -361,6 +382,7 @@ describe('Template attach and preview flow', () => {
     expect(preview.statusCode).toBe(200);
     expect(preview.body.data.isActive).toBe(true);
     expect(preview.body.data.fields).toHaveLength(1);
+    expect(preview.body.data.exampleSubmission).toBeDefined();
 
     currentUser = { _id: 'player-1', role: 'customer' };
     const formResponse = await request(app).get('/api/events/evt_2/form');
@@ -373,5 +395,15 @@ describe('Template attach and preview flow', () => {
 
     expect(res.statusCode).toBe(201);
     expect(res.body.data.status).toBe('submitted');
+
+    currentUser = { _id: 'admin', role: 'admin' };
+    await request(app)
+      .put('/api/events/evt_2/form/toggle')
+      .send({ isActive: false });
+
+    currentUser = { _id: 'player-2', role: 'customer' };
+    const inactive = await request(app).get('/api/events/evt_2/form');
+    expect(inactive.statusCode).toBe(403);
+    expect(inactive.body.error.code).toBe('FORM_INACTIVE');
   });
 });

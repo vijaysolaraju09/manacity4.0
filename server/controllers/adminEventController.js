@@ -1,6 +1,7 @@
 const Event = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
 const EventUpdate = require('../models/EventUpdate');
+const FormTemplate = require('../models/FormTemplate');
 const Match = require('../models/Match');
 const LeaderboardEntry = require('../models/LeaderboardEntry');
 const AppError = require('../utils/AppError');
@@ -213,6 +214,22 @@ exports.createEvent = async (req, res, next) => {
     const registrationOpenAt = toDate(req.body.registrationOpenAt) || new Date();
     const registrationCloseAt = toDate(req.body.registrationCloseAt) || startAt;
 
+    const templateId = typeof req.body.templateId === 'string' ? req.body.templateId.trim() : '';
+    let dynamicFormOverride;
+
+    if (templateId) {
+      const template = await FormTemplate.findById(templateId).lean();
+      if (!template) {
+        throw AppError.notFound('TEMPLATE_NOT_FOUND', 'Form template not found');
+      }
+      dynamicFormOverride = {
+        mode: 'template',
+        templateId: template._id,
+        fields: [],
+        isActive: true,
+      };
+    }
+
     const event = await Event.create({
       title: req.body.title,
       type,
@@ -235,6 +252,7 @@ exports.createEvent = async (req, res, next) => {
       bannerUrl: req.body.bannerUrl,
       coverUrl: req.body.coverUrl,
       createdBy,
+      ...(dynamicFormOverride ? { dynamicForm: dynamicFormOverride } : {}),
     });
 
     res.status(201).json({

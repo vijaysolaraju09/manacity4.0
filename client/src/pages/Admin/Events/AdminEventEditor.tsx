@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { createEvent, updateEvent } from '@/api/admin';
+import type { AdminEventPayload } from '@/api/admin';
 import showToast from '@/components/ui/Toast';
 import { toErrorMessage } from '@/lib/response';
 import { paths } from '@/routes/paths';
+import { listTemplates } from '@/store/formsSlice';
+import type { AppDispatch, RootState } from '@/store';
 import type { AdminEventContext } from './AdminEventLayout';
 import styles from './AdminEventEditor.module.scss';
 
@@ -105,9 +109,17 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const context = mode === 'edit' ? useOutletContext<AdminEventContext>() : undefined;
+  const dispatch = useDispatch<AppDispatch>();
   const [form, setForm] = useState<FormState>(defaultFormState);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+
+  const templatesState = useSelector((state: RootState) => state.forms.templates);
+  const templates = templatesState.items;
+  const templatesLoading = templatesState.loading;
+  const templatesError = templatesState.error;
+  const templatesCount = templates.length;
 
   const completion = useMemo(() => {
     const keys: Array<keyof FormState> = [
@@ -136,6 +148,7 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
   useEffect(() => {
     if (mode === 'create') {
       setForm(defaultFormState());
+      setSelectedTemplateId('');
       return;
     }
     if (!context?.event) return;
@@ -165,6 +178,13 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
     });
   }, [context?.event, mode]);
 
+  useEffect(() => {
+    if (mode !== 'create') return;
+    if (templatesLoading) return;
+    if (templatesCount > 0) return;
+    void dispatch(listTemplates());
+  }, [dispatch, mode, templatesCount, templatesLoading]);
+
   const handleChange = (key: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -175,7 +195,7 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
     setSaving(true);
     setError(null);
     try {
-      const payload = {
+      const payload: AdminEventPayload = {
         title: form.title.trim(),
         category: form.category.trim() || 'other',
         type: form.type,
@@ -195,6 +215,10 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
         bannerUrl: form.bannerUrl.trim() || undefined,
         coverUrl: form.coverUrl.trim() || undefined,
       };
+
+      if (mode === 'create' && selectedTemplateId) {
+        payload.templateId = selectedTemplateId;
+      }
 
       if (mode === 'create') {
         const created = await createEvent(payload);
@@ -426,6 +450,60 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
             </label>
           </div>
         </section>
+
+        {mode === 'create' && (
+          <section className={styles.sectionCard}>
+            <div className={styles.sectionHeader}>
+              <h2>Registration form</h2>
+              <p>Attach a saved form template so registrations are ready from day one.</p>
+            </div>
+            <div className={styles.stacked}>
+              <label className={styles.field}>
+                <span>Template</span>
+                <select
+                  value={selectedTemplateId}
+                  onChange={(eventObj) => setSelectedTemplateId(eventObj.target.value)}
+                  disabled={templatesLoading}
+                >
+                  <option value="">No template — configure later</option>
+                  {templates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {templatesLoading && (
+                <p className={styles.templateNotice}>
+                  <Loader2 size={16} className={styles.spin} /> Loading templates…
+                </p>
+              )}
+              {templatesError && <p className={styles.error}>{templatesError}</p>}
+              {!templatesLoading && !templatesError && templates.length === 0 && (
+                <p className={styles.templateNotice}>
+                  No templates yet. Build one to reuse common registration fields.
+                </p>
+              )}
+              <div className={styles.templateActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryBtn}
+                  onClick={() => navigate(paths.admin.formTemplates())}
+                >
+                  Manage templates
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryBtn}
+                  disabled={templatesLoading}
+                  onClick={() => void dispatch(listTemplates())}
+                >
+                  {templatesLoading ? <Loader2 size={16} className={styles.spin} /> : 'Refresh list'}
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         <section className={styles.sectionCard}>
           <div className={styles.sectionHeader}>

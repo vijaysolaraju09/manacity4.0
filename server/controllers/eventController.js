@@ -307,6 +307,20 @@ exports.listEvents = async (req, res, next) => {
 exports.createEvent = async (req, res, next) => {
   try {
     const payload = { ...req.body, createdBy: req.user?._id }; // organizer or admin
+    const templateId = typeof req.body.templateId === 'string' ? req.body.templateId.trim() : '';
+    if (templateId) {
+      const template = await FormTemplate.findById(templateId).lean();
+      if (!template) {
+        throw AppError.notFound('TEMPLATE_NOT_FOUND', 'Form template not found');
+      }
+      payload.dynamicForm = {
+        mode: 'template',
+        templateId: template._id,
+        fields: [],
+        isActive: true,
+      };
+    }
+    delete payload.templateId;
     if (!payload.createdBy)
       throw AppError.forbidden('NOT_ALLOWED', 'Only authenticated users can create events');
     const event = await Event.create(payload);

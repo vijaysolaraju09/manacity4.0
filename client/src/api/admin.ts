@@ -401,6 +401,7 @@ export interface AdminEventPayload {
   rules?: string;
   bannerUrl?: string | null;
   coverUrl?: string | null;
+  templateId?: string;
 }
 
 export const fetchEvents = async (params: EventQueryParams = {}) => {

@@ -1,46 +1,82 @@
 .page {
-  padding: 1.5rem;
-  max-width: 720px;
+  padding: 1.75rem 1.25rem 3rem;
+  max-width: 760px;
   margin: 0 auto;
   display: grid;
-  gap: 1.5rem;
+  gap: 1.75rem;
 }
 
 .header {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
-.card {
+.backLink {
+  background: none;
+  border: none;
+  color: #4f46e5;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  width: fit-content;
+}
+
+.card,
+.successCard {
   background: #ffffff;
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 16px;
+  padding: 1.75rem;
   display: grid;
-  gap: 1.25rem;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  gap: 1.5rem;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+}
+
+.cardTitle {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
 }
 
 .fieldGroup {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
-.label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+.field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.labelText,
+.legend {
   font-size: 0.95rem;
-  color: #374151;
+  font-weight: 600;
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legend {
+  margin-bottom: 0.25rem;
+}
+
+.requiredMarker {
+  color: #dc2626;
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .input,
 .textarea,
 .select {
   border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
   font-size: 1rem;
-  transition: border 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
 }
 
 .input:focus,
@@ -48,58 +84,175 @@
 .select:focus {
   outline: none;
   border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.optionGroup {
+  display: grid;
+  gap: 0.65rem;
 }
 
 .checkboxRow {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #374151;
 }
 
 .helper {
   font-size: 0.85rem;
   color: #6b7280;
+  line-height: 1.4;
 }
 
-.errorMessage {
-  color: #dc2626;
-  font-size: 0.9rem;
+.errorSummary {
+  border-left: 4px solid #dc2626;
+  background: #fef2f2;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  display: grid;
+  gap: 0.75rem;
 }
 
-.successMessage {
-  padding: 1rem;
-  border-radius: 10px;
-  background: #ecfdf5;
-  color: #047857;
+.errorSummary ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.35rem;
 }
 
-.submitButton {
+.summaryLink {
+  background: none;
   border: none;
-  border-radius: 9999px;
-  padding: 0.75rem 1.75rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, #6366f1, #4338ca);
-  color: #ffffff;
+  padding: 0;
+  color: #b91c1c;
+  text-align: left;
   cursor: pointer;
+  font-weight: 600;
+}
+
+.fieldError {
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+.invalid :is(.input, .textarea, .select) {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15);
 }
 
 .fileInput {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 0.5rem;
 }
 
 .filePreview {
   font-size: 0.85rem;
   color: #2563eb;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .paymentCard {
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 1rem;
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.paymentFields {
   display: grid;
   gap: 0.75rem;
+}
+
+.submitButton,
+.primaryButton,
+.secondaryButton {
+  border: none;
+  border-radius: 999px;
+  font-weight: 600;
+  padding: 0.85rem 1.85rem;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.submitButton,
+.primaryButton {
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  color: #ffffff;
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  background: #eef2ff;
+  color: #312e81;
+}
+
+.secondaryButton:hover,
+.submitButton:hover,
+.primaryButton:hover {
+  transform: translateY(-1px);
+}
+
+.successCard {
+  border-left: 5px solid #10b981;
+}
+
+.detailsList {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.detailsList div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.detailsList dt {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+
+.detailsList dd {
+  margin: 0;
+  font-weight: 600;
+  color: #111827;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ecfdf5;
+  color: #047857;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .card,
+  .successCard {
+    padding: 1.5rem;
+  }
+
+  .submitButton,
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+    justify-content: center;
+  }
 }

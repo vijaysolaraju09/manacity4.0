@@ -41,18 +41,40 @@ const initialState: FormsState = {
   },
 };
 
+const normalizeFieldType = (value: any): Field['type'] => {
+  const normalized = typeof value === 'string' ? value.toLowerCase() : '';
+  if (normalized === 'long_text') return 'textarea';
+  if (normalized === 'text') return 'short_text';
+  if (
+    normalized === 'phone' ||
+    normalized === 'email' ||
+    normalized === 'number' ||
+    normalized === 'dropdown' ||
+    normalized === 'radio' ||
+    normalized === 'checkbox' ||
+    normalized === 'url' ||
+    normalized === 'file' ||
+    normalized === 'datetime' ||
+    normalized === 'textarea' ||
+    normalized === 'short_text'
+  ) {
+    return normalized as Field['type'];
+  }
+  return 'short_text';
+};
+
 const normalizeField = (field: any): Field => ({
-  id: String(field?.id ?? ''),
-  label: String(field?.label ?? ''),
-  type: field?.type ?? 'short_text',
+  id: String(field?.id ?? field?.key ?? ''),
+  label: String(field?.label ?? field?.title ?? ''),
+  type: normalizeFieldType(field?.type),
   required: Boolean(field?.required),
   placeholder: field?.placeholder ?? '',
-  help: field?.help ?? '',
+  help: field?.help ?? field?.description ?? '',
   options: Array.isArray(field?.options) ? field.options.map(String) : undefined,
   min: typeof field?.min === 'number' ? field.min : undefined,
   max: typeof field?.max === 'number' ? field.max : undefined,
   pattern: typeof field?.pattern === 'string' ? field.pattern : undefined,
-  defaultValue: field?.defaultValue ?? undefined,
+  defaultValue: field?.defaultValue ?? field?.value ?? undefined,
 });
 
 const normalizeTemplate = (raw: any): FormTemplate => ({
@@ -64,12 +86,70 @@ const normalizeTemplate = (raw: any): FormTemplate => ({
   updatedAt: raw?.updatedAt,
 });
 
-const normalizeEventForm = (raw: any): EventFormResolved => ({
-  mode: raw?.mode === 'template' ? 'template' : 'embedded',
-  templateId: raw?.templateId ?? null,
-  isActive: raw?.isActive !== false,
-  fields: Array.isArray(raw?.fields) ? raw.fields.map(normalizeField) : [],
-});
+const normalizeRegistrationMeta = (raw: any): EventFormResolved['registration'] => {
+  if (!raw || typeof raw !== 'object') {
+    return { isOpen: true, message: null, closedReason: null };
+  }
+
+  const record = raw as Record<string, any>;
+  const reason =
+    record.closedReason ??
+    record.reason ??
+    record.message ??
+    record.note ??
+    record.details ??
+    null;
+
+  const isOpen =
+    record.isOpen !== false &&
+    record.open !== false &&
+    record.status !== 'closed' &&
+    record.closed !== true;
+
+  return {
+    isOpen,
+    message: record.message ?? record.statusMessage ?? reason ?? null,
+    closedReason: !isOpen ? reason ?? record.statusMessage ?? null : null,
+  };
+};
+
+const extractDynamicForm = (raw: any): any => {
+  if (!raw || typeof raw !== 'object') return raw;
+  if (raw.dynamicForm) return raw.dynamicForm;
+  if (raw.form) return raw.form;
+  if (raw.data?.dynamicForm) return raw.data.dynamicForm;
+  return raw;
+};
+
+const normalizeEventForm = (raw: any): EventFormResolved => {
+  const dynamicForm = extractDynamicForm(raw) ?? {};
+  const registrationMeta =
+    raw?.registration ??
+    raw?.registrationStatus ??
+    raw?.status ??
+    raw?.data?.registration ??
+    null;
+
+  const fieldsSource = Array.isArray(dynamicForm?.fields)
+    ? dynamicForm.fields
+    : Array.isArray(raw?.fields)
+    ? raw.fields
+    : [];
+
+  return {
+    mode: dynamicForm?.mode === 'template' ? 'template' : 'embedded',
+    templateId: dynamicForm?.templateId ?? raw?.templateId ?? null,
+    isActive: dynamicForm?.isActive !== false && raw?.isActive !== false,
+    dynamicForm:
+      dynamicForm && typeof dynamicForm === 'object'
+        ? { isActive: dynamicForm?.isActive !== false }
+        : null,
+    registration: normalizeRegistrationMeta(registrationMeta),
+    title: raw?.title ?? dynamicForm?.title ?? null,
+    description: raw?.description ?? dynamicForm?.description ?? null,
+    fields: fieldsSource.map(normalizeField),
+  };
+};
 
 export const listTemplates = createAsyncThunk<
   FormTemplate[],

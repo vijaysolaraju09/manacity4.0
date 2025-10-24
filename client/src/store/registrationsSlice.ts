@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { isAxiosError } from 'axios';
 import { http } from '@/lib/http';
 import { toErrorMessage } from '@/lib/response';
 import type { EventFormResolved, Field } from '@/types/forms';
@@ -42,26 +43,106 @@ const initialState: RegistrationState = {
   },
 };
 
+const normalizeFieldType = (value: any): Field['type'] => {
+  const normalized = typeof value === 'string' ? value.toLowerCase() : '';
+  if (normalized === 'long_text') return 'textarea';
+  if (normalized === 'text') return 'short_text';
+  if (
+    normalized === 'phone' ||
+    normalized === 'email' ||
+    normalized === 'number' ||
+    normalized === 'dropdown' ||
+    normalized === 'radio' ||
+    normalized === 'checkbox' ||
+    normalized === 'url' ||
+    normalized === 'file' ||
+    normalized === 'datetime' ||
+    normalized === 'textarea' ||
+    normalized === 'short_text'
+  ) {
+    return normalized as Field['type'];
+  }
+  return 'short_text';
+};
+
 const normalizeField = (field: any): Field => ({
-  id: String(field?.id ?? ''),
-  label: String(field?.label ?? ''),
-  type: field?.type ?? 'short_text',
+  id: String(field?.id ?? field?.key ?? ''),
+  label: String(field?.label ?? field?.title ?? ''),
+  type: normalizeFieldType(field?.type),
   required: Boolean(field?.required),
   placeholder: field?.placeholder ?? '',
-  help: field?.help ?? '',
+  help: field?.help ?? field?.description ?? '',
   options: Array.isArray(field?.options) ? field.options.map(String) : undefined,
   min: typeof field?.min === 'number' ? field.min : undefined,
   max: typeof field?.max === 'number' ? field.max : undefined,
   pattern: typeof field?.pattern === 'string' ? field.pattern : undefined,
-  defaultValue: field?.defaultValue ?? undefined,
+  defaultValue: field?.defaultValue ?? field?.value ?? undefined,
 });
 
-const normalizeEventForm = (raw: any): EventFormResolved => ({
-  mode: raw?.mode === 'template' ? 'template' : 'embedded',
-  templateId: raw?.templateId ?? null,
-  isActive: raw?.isActive !== false,
-  fields: Array.isArray(raw?.fields) ? raw.fields.map(normalizeField) : [],
-});
+const normalizeRegistrationMeta = (raw: any): EventFormResolved['registration'] => {
+  if (!raw || typeof raw !== 'object') {
+    return { isOpen: true, message: null, closedReason: null };
+  }
+
+  const record = raw as Record<string, any>;
+  const reason =
+    record.closedReason ??
+    record.reason ??
+    record.message ??
+    record.note ??
+    record.details ??
+    null;
+
+  const isOpen =
+    record.isOpen !== false &&
+    record.open !== false &&
+    record.status !== 'closed' &&
+    record.closed !== true;
+
+  return {
+    isOpen,
+    message: record.message ?? record.statusMessage ?? reason ?? null,
+    closedReason: !isOpen ? reason ?? record.statusMessage ?? null : null,
+  };
+};
+
+const extractDynamicForm = (raw: any): any => {
+  if (!raw || typeof raw !== 'object') return raw;
+  if (raw.dynamicForm) return raw.dynamicForm;
+  if (raw.form) return raw.form;
+  if (raw.data?.dynamicForm) return raw.data.dynamicForm;
+  return raw;
+};
+
+const normalizeEventForm = (raw: any): EventFormResolved => {
+  const dynamicForm = extractDynamicForm(raw) ?? {};
+  const registrationMeta =
+    raw?.registration ??
+    raw?.registrationStatus ??
+    raw?.status ??
+    raw?.data?.registration ??
+    null;
+
+  const fieldsSource = Array.isArray(dynamicForm?.fields)
+    ? dynamicForm.fields
+    : Array.isArray(raw?.fields)
+    ? raw.fields
+    : [];
+
+  return {
+    mode: dynamicForm?.mode === 'template' ? 'template' : 'embedded',
+    templateId: dynamicForm?.templateId ?? raw?.templateId ?? null,
+    isActive: dynamicForm?.isActive !== false && raw?.isActive !== false,
+    dynamicForm:
+      dynamicForm && typeof dynamicForm === 'object'
+        ? { isActive: dynamicForm?.isActive !== false }
+        : null,
+    registration: normalizeRegistrationMeta(registrationMeta),
+    title: raw?.title ?? dynamicForm?.title ?? null,
+    description: raw?.description ?? dynamicForm?.description ?? null,
+    fields: fieldsSource.map(normalizeField),
+  };
+};
 
 export const fetchEventForm = createAsyncThunk<
   EventFormResolved,
@@ -93,7 +174,12 @@ export const submitRegistration = createAsyncThunk<
   { rejectValue: string }
 >('registrations/submit', async ({ eventId, data, payment }, { rejectWithValue }) => {
   try {
-    const res = await http.post(`/events/${eventId}/register`, { data, payment });
+    const body: Record<string, unknown> = { data };
+    if (payment && Object.keys(payment).length > 0) {
+      body.payment = payment;
+    }
+
+    const res = await http.post(`/events/${eventId}/register`, body);
     const payload = res?.data?.data ?? res?.data;
     return {
       id: String(payload?.id ?? payload?._id ?? ''),
@@ -101,7 +187,42 @@ export const submitRegistration = createAsyncThunk<
       payment: payload?.payment,
     };
   } catch (err) {
-    return rejectWithValue(toErrorMessage(err));
+    const fallback = toErrorMessage(err);
+    if (isAxiosError(err)) {
+      const status = err.response?.status;
+      const errorCode =
+        err.response?.data?.code ||
+        err.response?.data?.error?.code ||
+        err.response?.data?.error?.name ||
+        err.response?.data?.error?.type;
+      const normalizedMessage = fallback.toLowerCase();
+
+      if (status === 409 || errorCode === 'already_registered') {
+        return rejectWithValue('It looks like you are already registered for this event.');
+      }
+
+      if (status === 410 || errorCode === 'registration_closed') {
+        return rejectWithValue('Registrations for this event are closed at the moment.');
+      }
+
+      if (status === 403 || status === 422 || errorCode === 'capacity_full') {
+        return rejectWithValue('This event has reached its registration capacity.');
+      }
+
+      if (status === 429 || errorCode === 'rate_limited' || normalizedMessage.includes('too many')) {
+        return rejectWithValue('You are submitting registrations too quickly. Please wait and try again.');
+      }
+
+      if (normalizedMessage.includes('duplicate')) {
+        return rejectWithValue('It looks like you are already registered for this event.');
+      }
+
+      if (normalizedMessage.includes('capacity') || normalizedMessage.includes('full')) {
+        return rejectWithValue('This event has reached its registration capacity.');
+      }
+    }
+
+    return rejectWithValue(fallback);
   }
 });
 

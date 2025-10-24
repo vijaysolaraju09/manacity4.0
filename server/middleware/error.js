@@ -22,14 +22,24 @@ module.exports = (err, req, res, _next) => {
   const error = {
     code,
     message: err.message || 'Error',
-    stack: err.stack,
   };
 
-  if (err.details) {
-    error.details = err.details;
+  let details;
+  if (err.details !== undefined) {
+    details = err.details;
   }
   if (err.fieldErrors) {
-    error.fieldErrors = err.fieldErrors;
+    if (details && typeof details === 'object' && !Array.isArray(details)) {
+      details.fieldErrors = err.fieldErrors;
+    } else if (details !== undefined) {
+      details = { value: details, fieldErrors: err.fieldErrors };
+    } else {
+      details = { fieldErrors: err.fieldErrors };
+    }
+  }
+
+  if (details !== undefined) {
+    error.details = details;
   }
 
   return res.status(status).json({

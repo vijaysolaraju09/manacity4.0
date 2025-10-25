@@ -355,6 +355,7 @@ exports.updateEvent = async (req, res, next) => {
       'description',
       'rules',
       'prizePool',
+      'entryFeePaise',
       'bannerUrl',
       'coverUrl',
     ];

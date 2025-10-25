@@ -64,6 +64,13 @@ const mapEvent = (event) => ({
   maxParticipants: event.maxParticipants ?? undefined,
   visibility: event.visibility,
   teamSize: event.teamSize,
+  prizePool: event.prizePool ?? null,
+  entryFeePaise:
+    typeof event.entryFeePaise === 'number' && Number.isFinite(event.entryFeePaise)
+      ? event.entryFeePaise
+      : 0,
+  bannerUrl: event.bannerUrl ?? null,
+  coverUrl: event.coverUrl ?? null,
 });
 
 const computeIsRegistrationOpen = (event) => {
@@ -81,6 +88,10 @@ const mapEventDetail = (event) => ({
   description: event.description ?? '',
   rules: event.rules ?? '',
   prizePool: event.prizePool ?? null,
+  entryFeePaise:
+    typeof event.entryFeePaise === 'number' && Number.isFinite(event.entryFeePaise)
+      ? event.entryFeePaise
+      : 0,
   mode: event.mode ?? 'online',
   venue: event.venue ?? null,
   timezone: event.timezone ?? 'Asia/Kolkata',
@@ -96,6 +107,20 @@ const parseCapacity = (value) => {
   if (value === undefined || value === null) return undefined;
   const num = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(num) && num > 0 ? Math.round(num) : undefined;
+};
+
+const parseMoneyPaise = (value) => {
+  if (value === undefined || value === null) return undefined;
+  const num = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(num) || num < 0) return undefined;
+  return Math.round(num);
+};
+
+const parseMoneyRupees = (value) => {
+  if (value === undefined || value === null) return undefined;
+  const num = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(num) || num < 0) return undefined;
+  return Math.round(num * 100);
 };
 
 exports.listEvents = async (req, res, next) => {
@@ -230,6 +255,10 @@ exports.createEvent = async (req, res, next) => {
       };
     }
 
+    const entryFeePaise =
+      parseMoneyPaise(req.body.entryFeePaise ?? req.body.entry_fee_paise) ??
+      parseMoneyRupees(req.body.entryFee ?? req.body.entry_fee);
+
     const event = await Event.create({
       title: req.body.title,
       type,
@@ -249,6 +278,7 @@ exports.createEvent = async (req, res, next) => {
       description: req.body.description || '',
       rules: req.body.rules || '',
       prizePool: req.body.prizePool,
+      entryFeePaise: entryFeePaise ?? 0,
       bannerUrl: req.body.bannerUrl,
       coverUrl: req.body.coverUrl,
       createdBy,
@@ -310,6 +340,13 @@ exports.updateEvent = async (req, res, next) => {
 
     if (req.body.prizePool !== undefined) {
       event.prizePool = req.body.prizePool;
+    }
+
+    if (req.body.entryFeePaise !== undefined) {
+      const entryFeePaise = parseMoneyPaise(req.body.entryFeePaise);
+      if (entryFeePaise !== undefined) {
+        event.entryFeePaise = entryFeePaise;
+      }
     }
 
     if (req.body.bannerUrl !== undefined) {

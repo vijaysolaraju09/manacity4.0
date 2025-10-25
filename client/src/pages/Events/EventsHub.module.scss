@@ -71,178 +71,34 @@
   flex: 1;
 }
 
-.cardsGrid {
-  display: grid;
-  gap: clamp(1rem, 2.5vw, 1.75rem);
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
-.card {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-surface, #ffffff);
-  border-radius: 1.25rem;
-  border: 1px solid rgba(148, 163, 184, 0.26);
-  overflow: hidden;
-  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
-}
-
-.cardMedia {
-  min-height: 180px;
-  background: #eff3ff center/cover no-repeat;
-  position: relative;
-}
-
-.highlightBadge {
-  position: absolute;
-  top: 0.85rem;
-  left: 0.85rem;
-  background: rgba(255, 255, 255, 0.85);
-  color: var(--color-primary);
-  border-radius: 999px;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.25);
-}
-
-.cardBody {
-  padding: 1.1rem 1.2rem 0.9rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.cardChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.categoryChip,
-.entryChip,
-.stageBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.85rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(148, 163, 184, 0.14);
-  color: rgba(15, 23, 42, 0.7);
-}
-
-.entryChip {
-  background: rgba(var(--color-primary-rgb), 0.12);
-  border-color: rgba(var(--color-primary-rgb), 0.35);
-  color: var(--color-primary);
-}
-
-.stageBadge {
-  border: none;
-  color: var(--color-on-primary, #fff);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 0.7rem;
-}
-
-.stageUpcoming {
-  background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.9), rgba(79, 70, 229, 0.85));
-}
-
-.stageLive {
-  background: linear-gradient(135deg, rgba(var(--color-danger-rgb), 0.95), rgba(248, 113, 113, 0.85));
-  box-shadow: 0 12px 22px rgba(var(--color-danger-rgb), 0.28);
-}
-
-.stageCompleted {
-  background: linear-gradient(135deg, #e2e8f0, #cbd5f5);
-  color: rgba(15, 23, 42, 0.8);
-}
-
-.cardTitle {
+.list {
   margin: 0;
-  font-size: 1.15rem;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(6px);
+}
+
+.listTitle {
+  font-weight: 600;
   color: var(--color-text);
 }
 
-.cardSubtitle {
-  margin: 0;
+.listMeta {
+  font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.6);
-  font-size: 0.9rem;
-}
-
-.cardStats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  color: rgba(15, 23, 42, 0.6);
-}
-
-.cardStats span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.85rem;
-  background: rgba(var(--color-primary-rgb), 0.08);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.2);
-}
-
-.cardFooter {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.9rem 1.2rem 1.2rem;
-}
-
-.primaryAction,
-.secondaryAction,
-.ghostAction {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  border-radius: 999px;
-  padding: 0.55rem 1.5rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
-}
-
-.primaryAction {
-  background: linear-gradient(135deg, var(--color-primary), #4f46e5);
-  color: var(--color-on-primary, #fff);
-  box-shadow: 0 16px 36px rgba(var(--color-primary-rgb), 0.35);
-}
-
-.primaryAction:disabled {
-  cursor: progress;
-  opacity: 0.85;
-  box-shadow: none;
-}
-
-.secondaryAction {
-  background: rgba(var(--color-primary-rgb), 0.12);
-  color: var(--color-primary);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.25);
-}
-
-.ghostAction {
-  background: rgba(255, 255, 255, 0.6);
-  color: rgba(15, 23, 42, 0.75);
-  border: 1px solid rgba(148, 163, 184, 0.45);
-}
-
-.primaryAction:hover:not(:disabled),
-.secondaryAction:hover,
-.ghostAction:hover {
-  transform: translateY(-1px);
 }
 
 .message {

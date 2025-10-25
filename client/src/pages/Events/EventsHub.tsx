@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Clock, Loader2, RefreshCw, Trophy, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import type { RootState, AppDispatch } from '@/store';
 import { createEventsQueryKey, fetchEvents } from '@/store/events.slice';
@@ -13,6 +15,36 @@ type ExtendedEventSummary = EventSummary & {
   registrationStatus?: string | null;
   registration?: { status?: string | null } | null;
 };
+
+type EventStage = 'live' | 'upcoming' | 'completed';
+
+const determineStage = (event: EventSummary, now: number): EventStage => {
+  const lifecycle = event.lifecycleStatus ?? 'upcoming';
+  if (lifecycle === 'ongoing' || event.status === 'ongoing') {
+    return 'live';
+  }
+  if (lifecycle === 'past' || event.status === 'completed' || event.status === 'canceled') {
+    return 'completed';
+  }
+  const startAt = Date.parse(event.startAt);
+  const endAt = event.endAt ? Date.parse(event.endAt) : Number.NaN;
+  if (Number.isFinite(startAt) && startAt <= now && (!Number.isFinite(endAt) || endAt >= now)) {
+    return 'live';
+  }
+  if (Number.isFinite(endAt) && endAt < now) {
+    return 'completed';
+  }
+  return 'upcoming';
+};
+
+type ExtendedEventSummary = EventSummary & {
+  myRegistrationStatus?: string | null;
+  registrationStatus?: string | null;
+  registration?: { status?: string | null } | null;
+};
+
+const safeImage = (url?: string | null) =>
+  typeof url === 'string' && url.trim().length > 0 ? url : fallbackImage;
 
 const TABS: Array<{ id: TabKey; label: string }> = [
   { id: 'all', label: 'All' },
@@ -31,6 +63,13 @@ const EventsHub = () => {
   const dispatch = useDispatch<AppDispatch>();
   const eventsState = useSelector((state: RootState) => state.events.list);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
+  const [now, setNow] = useState(() => Date.now());
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const queryParams = useMemo(() => ({ page: 1, pageSize: 50 }), []);
   const queryKey = useMemo(() => createEventsQueryKey(queryParams), [queryParams]);
@@ -43,6 +82,8 @@ const EventsHub = () => {
   const items = useMemo(() => {
     return Array.isArray(eventsState.items) ? (eventsState.items as ExtendedEventSummary[]) : [];
   }, [eventsState.items]);
+  const loading = eventsState.loading && items.length === 0;
+  const error = eventsState.error;
 
   const registeredItems = useMemo(() => items.filter((item) => isRegistered(item)), [items]);
   const registeredIds = useMemo(
@@ -114,6 +155,14 @@ const EventsHub = () => {
     }
     if (stage === 'upcoming' && Number.isFinite(startAt)) {
       return `Starts in ${formatCountdown(startAt, now)}`;
+    }
+    if (stage === 'completed' && Number.isFinite(endAt)) {
+      const date = new Date(endAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+      return `Ended ${date}`;
+    }
+    return stage === 'live' ? 'Happening now' : 'Schedule TBA';
+  };
+
 
   const handleRefresh = () => {
     dispatch(fetchEvents({ ...queryParams }));
@@ -171,6 +220,26 @@ const EventsHub = () => {
       { live: 0, upcoming: 0, completed: 0, totalRegistrations: 0 },
     );
 
+    return loading ? (
+      <div className={styles.skeletonGrid}>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className={styles.skeletonCard} />
+        ))}
+      </div>
+    ) : error && gridEvents.length === 0 ? (
+      <div className={styles.feedbackCard}>
+        <h3>Unable to load events</h3>
+        <p>{error}</p>
+      </div>
+    ) : gridEvents.length === 0 ? (
+      <div className={styles.feedbackCard}>
+        <h3>No events available yet</h3>
+        <p>
+          We are lining up the next wave of community experiences. Check back soon for new
+          tournaments and meetups.
+        </p>
+      </div>
+    ) : (
     if (eventsState.loading && gridEvents.length === 0) {
       return (
         <div className={styles.skeletonGrid}>
@@ -234,6 +303,9 @@ const EventsHub = () => {
                   style={{ backgroundImage: `url(${safeImage(event.bannerUrl)})` }}
                   aria-hidden="true"
                 >
+                  {event.highlightLabel && (
+                    <span className={styles.highlightBadge}>{event.highlightLabel}</span>
+                  )}
                   {event.highlightLabel && <span className={styles.highlightBadge}>{event.highlightLabel}</span>}
                 </div>
                 <div className={styles.cardBody}>
@@ -243,6 +315,9 @@ const EventsHub = () => {
                     <span className={styles.entryChip}>{formatEntryFee(event)}</span>
                   </div>
                   <h3 className={styles.cardTitle}>{event.title}</h3>
+                  {event.shortDescription && (
+                    <p className={styles.cardSubtitle}>{event.shortDescription}</p>
+                  )}
                   {event.shortDescription && <p className={styles.cardSubtitle}>{event.shortDescription}</p>}
                   <div className={styles.cardStats}>
                     <span>
@@ -308,6 +383,12 @@ const EventsHub = () => {
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Events</h1>
+        <button
+          type="button"
+          className={styles.refreshButton}
+          onClick={handleRefresh}
+          disabled={eventsState.loading}
+        >
         <button type="button" className={styles.refreshButton} onClick={handleRefresh} disabled={eventsState.loading}>
           <RefreshCw size={16} />
           <span>Refresh</span>

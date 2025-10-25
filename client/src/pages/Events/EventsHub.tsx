@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { ArrowRight, Clock, Loader2, RefreshCw, Target, Trophy, Users } from 'lucide-react';
+import { ArrowRight, Clock, Loader2, RefreshCw, Trophy, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { RootState, AppDispatch } from '@/store';
 import {
@@ -12,48 +12,7 @@ import fallbackImage from '@/assets/no-image.svg';
 import { formatINR } from '@/utils/currency';
 import styles from './EventsHub.module.scss';
 
-const categories = [
-  'all',
-  'Free Fire',
-  'PUBG',
-  'Cricket',
-  'Volleyball',
-  'Quiz',
-  'Campfire',
-  'Movie',
-  'Food Fest',
-  'Other',
-];
-
-const statusFilters = ['All', 'Live', 'Upcoming', 'Completed'] as const;
-const entryFilters = ['All', 'Free', 'Paid'] as const;
-
-type StatusFilter = (typeof statusFilters)[number];
-type EntryFilter = (typeof entryFilters)[number];
-
 type EventStage = 'live' | 'upcoming' | 'completed';
-
-const toParamValue = (value: string) => value.toLowerCase().replace(/\s+/g, '_');
-
-const normalizeCategory = (value: string) => {
-  if (!value) return 'other';
-  const key = value.toLowerCase();
-  const mapped: Record<string, string> = {
-    freefire: 'free_fire',
-    'free fire': 'free_fire',
-    pubg: 'pubg',
-    cricket: 'cricket',
-    volleyball: 'volleyball',
-    quiz: 'quiz',
-    campfire: 'campfire',
-    movie: 'movie',
-    film: 'movie',
-    food: 'food_fest',
-    fest: 'food_fest',
-    other: 'other',
-  };
-  return mapped[key] ?? key;
-};
 
 const determineStage = (event: EventSummary, now: number): EventStage => {
   const lifecycle = event.lifecycleStatus ?? 'upcoming';
@@ -95,10 +54,6 @@ const EventsHub = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const eventsState = useSelector((state: RootState) => state.events.list);
-  const [category, setCategory] = useState<string>('all');
-  const [status, setStatus] = useState<StatusFilter>('All');
-  const [entry, setEntry] = useState<EntryFilter>('All');
-  const [mine, setMine] = useState(false);
   const [page, setPage] = useState(1);
   const [tick, setTick] = useState(Date.now());
 
@@ -107,31 +62,13 @@ const EventsHub = () => {
     return () => window.clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    setPage(1);
-  }, [category, status, entry, mine]);
-
   const queryParams = useMemo(() => {
     const params: Record<string, unknown> = {
       page,
       pageSize: 12,
     };
-    if (category !== 'all') {
-      params.category = toParamValue(normalizeCategory(category));
-    }
-    if (status !== 'All') {
-      params.status = toParamValue(status);
-    }
-    if (entry === 'Free') {
-      params.entry = 'free';
-    } else if (entry === 'Paid') {
-      params.entry = 'paid';
-    }
-    if (mine) {
-      params.mine = true;
-    }
     return params;
-  }, [category, status, entry, mine, page]);
+  }, [page]);
 
   const queryKey = useMemo(() => createEventsQueryKey(queryParams), [queryParams]);
 
@@ -313,6 +250,10 @@ const EventsHub = () => {
     <div className={styles.page}>
       <section className={styles.hero}>
         <div className={styles.heroBody}>
+          <h1 className={styles.heroTitle}>Events &amp; Tournaments</h1>
+          <p className={styles.heroSubtitle}>
+            Discover the latest competitions and community experiences happening across Manacity.
+          </p>
           <div className={styles.heroActions}>
             <button
               type="button"
@@ -323,60 +264,6 @@ const EventsHub = () => {
               {busy ? <Loader2 size={16} className={styles.spin} /> : <RefreshCw size={16} />}
               Refresh feed
             </button>
-            <button
-              type="button"
-              className={`${styles.ghostAction} ${mine ? styles.ghostActionActive : ''}`}
-              onClick={() => setMine((prev) => !prev)}
-            >
-              {mine ? 'Showing events I joined' : 'Show only my registrations'}
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.controlBar}>
-        <div className={styles.tabList}>
-          {categories.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              className={`${styles.tabButton} ${category === tab ? styles.tabButtonActive : ''}`}
-              onClick={() => setCategory(tab)}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-        <div className={styles.filterRow}>
-          <div className={styles.filterSegment}>
-            <span className={styles.segmentLabel}>Status</span>
-            <div className={styles.segmentButtons}>
-              {statusFilters.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className={`${styles.segmentButton} ${status === option ? styles.segmentButtonActive : ''}`}
-                  onClick={() => setStatus(option)}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={styles.filterSegment}>
-            <span className={styles.segmentLabel}>Entry</span>
-            <div className={styles.segmentButtons}>
-              {entryFilters.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className={`${styles.segmentButton} ${entry === option ? styles.segmentButtonActive : ''}`}
-                  onClick={() => setEntry(option)}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -496,8 +383,8 @@ const EventsHub = () => {
         <div className={styles.feedbackCard}>
           <h3>No events available yet</h3>
           <p>
-            We are lining up the next wave of community experiences. Check back soon or explore a
-            different category above.
+            We are lining up the next wave of community experiences. Check back soon for new
+            tournaments and meetups.
           </p>
         </div>
       ) : (
@@ -506,16 +393,16 @@ const EventsHub = () => {
             <div>
               <h3>Browse all events</h3>
               <p>
-                {gridEvents.length} experiences match your filters. Pick one to view the details and
+                {gridEvents.length} experiences are currently open. Pick one to view the details and
                 register.
               </p>
             </div>
             <div className={styles.gridHints}>
               <span>
-                <Target size={14} /> Filters active: {status !== 'All' || entry !== 'All' ? 'Yes' : 'No'}
+                <Users size={14} /> {stageSummary.totalRegistrations.toLocaleString()} total registrants
               </span>
               <span>
-                <Users size={14} /> {stageSummary.totalRegistrations.toLocaleString()} total registrants
+                <Clock size={14} /> {stageSummary.live + stageSummary.upcoming} live or upcoming events
               </span>
             </div>
           </div>

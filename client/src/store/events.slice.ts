@@ -382,7 +382,7 @@ const eventsSlice = createSlice({
         state.detail.refreshing = false;
         state.detail.data = action.payload;
         state.detail.error = null;
-        state.myRegistration.data = action.payload.registration ?? state.myRegistration.data;
+        state.myRegistration.data = action.payload.registration ?? null;
       })
       .addCase(fetchEventById.rejected, (state, action) => {
         state.detail.loading = false;
@@ -421,6 +421,7 @@ const eventsSlice = createSlice({
       })
       .addCase(fetchMyRegistration.rejected, (state, action) => {
         state.myRegistration.loading = false;
+        state.myRegistration.data = null;
         state.myRegistration.error = action.payload || action.error.message || 'Failed to load registration';
       })
       .addCase(registerForEvent.pending, (state) => {

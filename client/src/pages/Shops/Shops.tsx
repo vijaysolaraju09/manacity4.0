@@ -24,7 +24,6 @@ const Shops = () => {
   const [search, setSearch] = useState(searchParams.get("q") || "");
   const debouncedSearch = useDebounce(search, 300);
   const [openOnly, setOpenOnly] = useState(searchParams.get("open") === "true");
-  const [sort, setSort] = useState(searchParams.get("sort") || "rating");
 
   const navigate = useNavigate();
 
@@ -34,9 +33,8 @@ const Shops = () => {
     if (category) params.category = category;
     if (location) params.location = location;
     if (openOnly) params.open = "true";
-    if (sort) params.sort = sort;
     setSearchParams(params, { replace: true });
-  }, [debouncedSearch, category, location, openOnly, sort, setSearchParams]);
+  }, [debouncedSearch, category, location, openOnly, setSearchParams]);
 
   useEffect(() => {
     const params = Object.fromEntries(searchParams.entries());
@@ -52,13 +50,9 @@ const Shops = () => {
     );
   });
 
-  const sortedShops = [...filteredShops].sort((a, b) => {
-    if (sort === "rating") return (b.ratingAvg || 0) - (a.ratingAvg || 0);
-    if (sort === "distance") return (a.distance || 0) - (b.distance || 0);
-    if (sort === "productCount")
-      return (b.products?.length || 0) - (a.products?.length || 0);
-    return 0;
-  });
+  const sortedShops = [...filteredShops].sort(
+    (a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0)
+  );
 
   const categories = ["Restaurant", "Mechanic", "Fashion", "Grocery"];
   const locations = ["Town Center", "West End", "East Side", "North Market"];
@@ -90,8 +84,6 @@ const Shops = () => {
           onCategoryChange={setCategory}
           openOnly={openOnly}
           onOpenChange={setOpenOnly}
-          sort={sort}
-          onSortChange={setSort}
         />
       </div>
 

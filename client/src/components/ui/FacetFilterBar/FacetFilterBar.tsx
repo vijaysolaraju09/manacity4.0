@@ -11,8 +11,6 @@ interface Props {
   onCategoryChange: (v: string) => void;
   openOnly: boolean;
   onOpenChange: (v: boolean) => void;
-  sort: string;
-  onSortChange: (v: string) => void;
 }
 
 const FacetFilterBar = ({
@@ -26,8 +24,6 @@ const FacetFilterBar = ({
   onCategoryChange,
   openOnly,
   onOpenChange,
-  sort,
-  onSortChange,
 }: Props) => {
   return (
     <div className={styles.bar}>
@@ -46,28 +42,14 @@ const FacetFilterBar = ({
             </option>
           ))}
         </select>
-        <select value={sort} onChange={(e) => onSortChange(e.target.value)}>
-          <option value="rating">Rating</option>
-          <option value="distance">Distance</option>
-          <option value="productCount">Product count</option>
+        <select value={category} onChange={(e) => onCategoryChange(e.target.value)}>
+          <option value="">All categories</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
-      </div>
-      <div className={styles.chips}>
-        <button
-          className={!category ? styles.active : ''}
-          onClick={() => onCategoryChange('')}
-        >
-          All
-        </button>
-        {categories.map((c) => (
-          <button
-            key={c}
-            className={category === c ? styles.active : ''}
-            onClick={() => onCategoryChange(c)}
-          >
-            {c}
-          </button>
-        ))}
         <label className={styles.openNow}>
           <input
             type="checkbox"

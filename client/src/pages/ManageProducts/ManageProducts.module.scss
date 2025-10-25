@@ -1,6 +1,165 @@
 @reference "../../styles/main.css";
 .manageProducts {
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.subtitle {
+  margin-top: 0.25rem;
+  max-width: 38rem;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.shopAvailability {
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  background: #f9fafb;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sectionStatus {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.mutedText {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.hint {
+  color: #4b5563;
+  font-size: 0.875rem;
+}
+
+.shopList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.shopItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border-radius: 0.9rem;
+  border: 1px solid #e5e7eb;
+}
+
+.shopInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.shopName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.shopMeta {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.shopToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.shopToggle[data-disabled='true'] .toggleStatus {
+  color: #9ca3af;
+}
+
+.toggleInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleTrack {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 3.25rem;
+  height: 1.75rem;
+  padding: 0.2rem;
+  border-radius: 9999px;
+  background: #d1d5db;
+  transition: background 0.2s ease;
+}
+
+.toggleThumb {
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.toggleInput:checked + .toggleTrack {
+  background: #22c55e;
+}
+
+.toggleInput:checked + .toggleTrack .toggleThumb {
+  transform: translateX(1.45rem);
+}
+
+.toggleInput:focus-visible + .toggleTrack {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.toggleInput:disabled + .toggleTrack {
+  background: #e5e7eb;
+}
+
+.toggleInput:disabled + .toggleTrack .toggleThumb {
+  box-shadow: none;
+}
+
+.toggleStatus {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
 }
 .grid {
   display: flex;

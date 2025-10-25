@@ -59,6 +59,7 @@ exports.getMyShops = async (req, res, next) => {
           address: s.address || '',
           description: s.description || '',
           image: s.image || null,
+          isOpen: typeof s.isOpen === 'boolean' ? s.isOpen : true,
         })),
         shops: shops.map((s) => ({
           id: s._id?.toString(),
@@ -70,6 +71,7 @@ exports.getMyShops = async (req, res, next) => {
           address: s.address || '',
           description: s.description || '',
           image: s.image || null,
+          isOpen: typeof s.isOpen === 'boolean' ? s.isOpen : true,
         })),
       },
       traceId: req.traceId,
@@ -156,7 +158,16 @@ exports.updateShop = async (req, res, next) => {
       return next(AppError.forbidden('NOT_AUTHORIZED', 'Not authorized'));
     }
 
-    const fields = ['name', 'category', 'location', 'address', 'image', 'banner', 'description'];
+    const fields = [
+      'name',
+      'category',
+      'location',
+      'address',
+      'image',
+      'banner',
+      'description',
+      'isOpen',
+    ];
     for (const f of fields) {
       if (req.body[f] !== undefined) shop[f] = req.body[f];
     }

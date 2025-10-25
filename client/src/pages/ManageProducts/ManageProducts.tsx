@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { http } from '@/lib/http';
-import { toItems, toErrorMessage } from '@/lib/response';
+import { toItems, toItem, toErrorMessage } from '@/lib/response';
 import type { RootState, AppDispatch } from '../../store';
 import {
   fetchMyProducts,
@@ -36,6 +36,8 @@ type ShopSummary = {
   _id?: string;
   name: string;
   status?: string;
+  location?: string;
+  isOpen?: boolean;
 };
 
 const emptyForm: ProductFormState = {
@@ -99,6 +101,7 @@ const ManageProducts = () => {
   const [submitting, setSubmitting] = useState(false);
   const [shops, setShops] = useState<ShopSummary[]>([]);
   const [shopsLoading, setShopsLoading] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const defaultShopId = useMemo(() => {
     if (!shops.length) return '';
@@ -119,7 +122,12 @@ const ManageProducts = () => {
         const res = await http.get('/shops/my');
         const data = (toItems(res) ?? []) as ShopSummary[];
         if (!active) return;
-        setShops(data);
+        setShops(
+          data.map((shop) => ({
+            ...shop,
+            isOpen: typeof shop.isOpen === 'boolean' ? shop.isOpen : true,
+          })),
+        );
       } catch (err) {
         if (active) {
           showToast(toErrorMessage(err), 'error');
@@ -242,32 +250,125 @@ const ManageProducts = () => {
     }
   };
 
+  const handleToggleShop = async (shop: ShopSummary) => {
+    const id = shop._id || shop.id;
+    if (!id) return;
+    try {
+      const nextIsOpen = !shop.isOpen;
+      setTogglingId(id);
+      const res = await http.patch(`/shops/${id}`, { isOpen: nextIsOpen });
+      const updated = toItem(res) as ShopSummary;
+      setShops((prev) =>
+        prev.map((s) => {
+          const matchId = s._id || s.id;
+          if (matchId !== id) return s;
+          const normalized: ShopSummary = {
+            ...s,
+            ...updated,
+            isOpen:
+              typeof updated?.isOpen === 'boolean'
+                ? updated.isOpen
+                : nextIsOpen,
+          };
+          return normalized;
+        }),
+      );
+      showToast(nextIsOpen ? 'Shop marked open' : 'Shop marked closed', 'success');
+    } catch (err) {
+      showToast(toErrorMessage(err), 'error');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const canAddProduct = shops.length > 0;
 
   return (
     <div className={styles.manageProducts}>
-      <h2>Manage Products</h2>
-      <button onClick={openNew} disabled={!canAddProduct}>
-        Add Product
-      </button>
-      {!canAddProduct && !shopsLoading && (
-        <p className={styles.emptyState}>Create a shop before adding products.</p>
-      )}
+      <div className={styles.header}>
+        <div>
+          <h2>Manage Products</h2>
+          <p className={styles.subtitle}>
+            Keep your menu current and control when your shop is open for orders.
+          </p>
+        </div>
+        <button onClick={openNew} disabled={!canAddProduct}>
+          Add Product
+        </button>
+      </div>
+
+      <section
+        className={styles.shopAvailability}
+        aria-labelledby="shop-availability-heading"
+      >
+        <div className={styles.sectionHeader}>
+          <h3 id="shop-availability-heading">Shop availability</h3>
+          {togglingId && <span className={styles.sectionStatus}>Updating…</span>}
+        </div>
+        {shopsLoading ? (
+          <p className={styles.mutedText}>Loading your shops…</p>
+        ) : shops.length ? (
+          <ul className={styles.shopList}>
+            {shops.map((shop) => {
+              const id = shop._id || shop.id || shop.name;
+              const isApproved = shop.status === 'approved';
+              const disabled = togglingId === (shop._id || shop.id) || !isApproved;
+              return (
+                <li key={id} className={styles.shopItem}>
+                  <div className={styles.shopInfo}>
+                    <p className={styles.shopName}>{shop.name}</p>
+                    <p className={styles.shopMeta}>
+                      {shop.location ? `${shop.location} · ` : ''}
+                      {isApproved ? 'Approved' : (shop.status || 'Pending').replace(/^(.)/, (c) => c.toUpperCase())}
+                    </p>
+                  </div>
+                  <label
+                    className={styles.shopToggle}
+                    data-disabled={disabled ? 'true' : 'false'}
+                  >
+                    <input
+                      type="checkbox"
+                      role="switch"
+                      className={styles.toggleInput}
+                      checked={Boolean(shop.isOpen)}
+                      onChange={() => handleToggleShop(shop)}
+                      disabled={disabled}
+                      aria-label={`Mark ${shop.name} as ${shop.isOpen ? 'closed' : 'open'}`}
+                    />
+                    <span className={styles.toggleTrack} aria-hidden="true">
+                      <span className={styles.toggleThumb} />
+                    </span>
+                    <span className={styles.toggleStatus}>
+                      {shop.isOpen ? 'Open' : 'Closed'}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className={styles.mutedText}>Create a shop before adding products.</p>
+        )}
+        {!shopsLoading && shops.some((shop) => shop.status !== 'approved') && (
+          <p className={styles.hint}>Shops must be approved before they can be opened.</p>
+        )}
+      </section>
+
       {loading && <p>Loading...</p>}
       <div className={styles.grid}>
         {items.map((p) => {
           const cardProduct = toCardProduct(p);
-            return (
-              <div key={p._id} className={styles.cardWrapper}>
-                <ProductCard product={cardProduct} showActions={false} />
-                <div className={styles.actions}>
-                  <button onClick={() => openEdit(p)}>Edit</button>
-                  <button onClick={() => handleDelete(p._id)}>Delete</button>
-                </div>
+          return (
+            <div key={p._id} className={styles.cardWrapper}>
+              <ProductCard product={cardProduct} showActions={false} />
+              <div className={styles.actions}>
+                <button onClick={() => openEdit(p)}>Edit</button>
+                <button onClick={() => handleDelete(p._id)}>Delete</button>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+      </div>
 
       {showModal && (
         <div className={styles.modal}>

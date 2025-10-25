@@ -14,6 +14,7 @@ const ShopSchema = new mongoose.Schema(
     image: { type: String },
     banner: { type: String },
     description: { type: String, default: '', maxlength: 1000 },
+    isOpen: { type: Boolean, default: true },
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],
@@ -41,6 +42,7 @@ ShopSchema.methods.toCardJSON = function () {
     banner: this.banner || null,
     description: this.description || '',
     status: this.status,
+    isOpen: Boolean(this.isOpen),
     ratingAvg: this.ratingAvg || 0,
     ratingCount: this.ratingCount || 0,
     createdAt: this.createdAt,

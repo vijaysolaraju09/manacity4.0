@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Clock, Loader2, RefreshCw, Trophy, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw } from 'lucide-react';
 import type { RootState, AppDispatch } from '@/store';
 import { createEventsQueryKey, fetchEvents } from '@/store/events.slice';
 import type { EventSummary } from '@/types/events';
+import { formatINR } from '@/utils/currency';
+import { formatCountdown } from '@/utils/time';
+import fallbackImage from '@/assets/no-image.svg';
 import styles from './EventsHub.module.scss';
 
 type TabKey = 'all' | 'events' | 'tournaments' | 'registrations';
@@ -37,12 +39,6 @@ const determineStage = (event: EventSummary, now: number): EventStage => {
   return 'upcoming';
 };
 
-type ExtendedEventSummary = EventSummary & {
-  myRegistrationStatus?: string | null;
-  registrationStatus?: string | null;
-  registration?: { status?: string | null } | null;
-};
-
 const safeImage = (url?: string | null) =>
   typeof url === 'string' && url.trim().length > 0 ? url : fallbackImage;
 
@@ -59,8 +55,22 @@ const isRegistered = (event: ExtendedEventSummary) => {
   return status !== 'withdrawn' && status !== 'canceled';
 };
 
+const formatCountdownLabel = (timestamp: number, prefix: 'Starts' | 'Ends') => {
+  const parts = formatCountdown(timestamp);
+  const segments: string[] = [];
+  if (parts.d > 0) {
+    segments.push(`${parts.d}d`);
+  }
+  if (parts.h > 0 || parts.d > 0) {
+    segments.push(`${parts.h}h`);
+  }
+  segments.push(`${parts.m}m`);
+  return `${prefix} in ${segments.join(' ')}`;
+};
+
 const EventsHub = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const eventsState = useSelector((state: RootState) => state.events.list);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
   const [now, setNow] = useState(() => Date.now());
@@ -82,14 +92,12 @@ const EventsHub = () => {
   const items = useMemo(() => {
     return Array.isArray(eventsState.items) ? (eventsState.items as ExtendedEventSummary[]) : [];
   }, [eventsState.items]);
+
   const loading = eventsState.loading && items.length === 0;
   const error = eventsState.error;
 
   const registeredItems = useMemo(() => items.filter((item) => isRegistered(item)), [items]);
-  const registeredIds = useMemo(
-    () => new Set(registeredItems.map((item) => item._id)),
-    [registeredItems],
-  );
+  const registeredIds = useMemo(() => new Set(registeredItems.map((item) => item._id)), [registeredItems]);
 
   const groupedItems = useMemo(() => {
     const base = items.filter((item) => !registeredIds.has(item._id));
@@ -151,10 +159,10 @@ const EventsHub = () => {
     const startAt = Date.parse(event.startAt);
     const endAt = event.endAt ? Date.parse(event.endAt) : Number.NaN;
     if (stage === 'live' && Number.isFinite(endAt)) {
-      return `Ends in ${formatCountdown(endAt, now)}`;
+      return formatCountdownLabel(endAt, 'Ends');
     }
     if (stage === 'upcoming' && Number.isFinite(startAt)) {
-      return `Starts in ${formatCountdown(startAt, now)}`;
+      return formatCountdownLabel(startAt, 'Starts');
     }
     if (stage === 'completed' && Number.isFinite(endAt)) {
       const date = new Date(endAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
@@ -162,16 +170,6 @@ const EventsHub = () => {
     }
     return stage === 'live' ? 'Happening now' : 'Schedule TBA';
   };
-
-
-  const handleRefresh = () => {
-    dispatch(fetchEvents({ ...queryParams }));
-  };
-
-  const renderList = (list: ExtendedEventSummary[]) => {
-    if (eventsState.loading && list.length === 0) {
-      return <p className={styles.message}>Loading events…</p>;
-    }
 
   const renderPrimaryCta = (event: EventSummary) => {
     const stage = determineStage(event, now);
@@ -220,27 +218,7 @@ const EventsHub = () => {
       { live: 0, upcoming: 0, completed: 0, totalRegistrations: 0 },
     );
 
-    return loading ? (
-      <div className={styles.skeletonGrid}>
-        {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index} className={styles.skeletonCard} />
-        ))}
-      </div>
-    ) : error && gridEvents.length === 0 ? (
-      <div className={styles.feedbackCard}>
-        <h3>Unable to load events</h3>
-        <p>{error}</p>
-      </div>
-    ) : gridEvents.length === 0 ? (
-      <div className={styles.feedbackCard}>
-        <h3>No events available yet</h3>
-        <p>
-          We are lining up the next wave of community experiences. Check back soon for new
-          tournaments and meetups.
-        </p>
-      </div>
-    ) : (
-    if (eventsState.loading && gridEvents.length === 0) {
+    if (loading && gridEvents.length === 0) {
       return (
         <div className={styles.skeletonGrid}>
           {Array.from({ length: 6 }).map((_, index) => (
@@ -250,11 +228,11 @@ const EventsHub = () => {
       );
     }
 
-    if (eventsState.error && gridEvents.length === 0) {
+    if (error && gridEvents.length === 0) {
       return (
         <div className={styles.feedbackCard}>
           <h3>Unable to load events</h3>
-          <p>{eventsState.error}</p>
+          <p>{error}</p>
         </div>
       );
     }
@@ -264,8 +242,7 @@ const EventsHub = () => {
         <div className={styles.feedbackCard}>
           <h3>No events available yet</h3>
           <p>
-            We are lining up the next wave of community experiences. Check back soon for new
-            tournaments and meetups.
+            We are lining up the next wave of community experiences. Check back soon for new tournaments and meetups.
           </p>
         </div>
       );
@@ -277,8 +254,7 @@ const EventsHub = () => {
           <div>
             <h3>Browse all events</h3>
             <p>
-              {gridEvents.length} experiences are currently open. Pick one to view the details and
-              register.
+              {gridEvents.length} experiences are currently open. Pick one to view the details and register.
             </p>
           </div>
           <div className={styles.gridHints}>
@@ -306,7 +282,6 @@ const EventsHub = () => {
                   {event.highlightLabel && (
                     <span className={styles.highlightBadge}>{event.highlightLabel}</span>
                   )}
-                  {event.highlightLabel && <span className={styles.highlightBadge}>{event.highlightLabel}</span>}
                 </div>
                 <div className={styles.cardBody}>
                   <div className={styles.cardChips}>
@@ -318,7 +293,6 @@ const EventsHub = () => {
                   {event.shortDescription && (
                     <p className={styles.cardSubtitle}>{event.shortDescription}</p>
                   )}
-                  {event.shortDescription && <p className={styles.cardSubtitle}>{event.shortDescription}</p>}
                   <div className={styles.cardStats}>
                     <span>
                       <Clock size={14} /> {renderCountdown(event)}
@@ -359,26 +333,6 @@ const EventsHub = () => {
     );
   };
 
-    if (eventsState.error && list.length === 0) {
-      return <p className={styles.message}>Unable to load events. Please try again.</p>;
-    }
-
-    if (list.length === 0) {
-      return <p className={styles.message}>Nothing to show yet.</p>;
-    }
-
-    return (
-      <ul className={styles.list}>
-        {list.map((event) => (
-          <li key={event._id} className={styles.listItem}>
-            <span className={styles.listTitle}>{event.title}</span>
-            <span className={styles.listMeta}>{event.type === 'tournament' ? 'Tournament' : 'Event'}</span>
-          </li>
-        ))}
-      </ul>
-    );
-  };
-
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -389,7 +343,6 @@ const EventsHub = () => {
           onClick={handleRefresh}
           disabled={eventsState.loading}
         >
-        <button type="button" className={styles.refreshButton} onClick={handleRefresh} disabled={eventsState.loading}>
           <RefreshCw size={16} />
           <span>Refresh</span>
         </button>

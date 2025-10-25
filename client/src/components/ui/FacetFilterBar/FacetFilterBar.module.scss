@@ -41,7 +41,7 @@
   border-radius: 999px;
   background: var(--color-bg);
   cursor: pointer;
-  flex: 1 1 180px;
+  flex: 0 0 auto;
   min-width: 160px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }

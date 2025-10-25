@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import styles from './ServiceProviders.module.scss';
 import SkeletonList from '@/components/ui/SkeletonList';
 import ErrorCard from '@/components/ui/ErrorCard';
@@ -60,6 +61,9 @@ const ServiceProviders = () => {
 
   return (
     <div className={styles.page}>
+      <button type="button" className={styles.backButton} onClick={() => navigate(-1)}>
+        <ArrowLeft size={16} aria-hidden="true" /> Back to services
+      </button>
       <div className={styles.header}>
         <h1 className={styles.title}>{service?.name ?? 'Service providers'}</h1>
         <p className={styles.subtitle}>

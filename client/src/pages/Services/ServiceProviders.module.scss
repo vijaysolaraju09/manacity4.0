@@ -7,6 +7,33 @@
   padding: 1.5rem 1rem 4rem;
 }
 
+.backButton {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.backButton:hover,
+.backButton:focus-visible {
+  background: #eef2ff;
+  color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.backButton:focus-visible {
+  outline: none;
+}
+
 @media (min-width: 768px) {
   .page {
     padding: 2rem 2.5rem 4rem;

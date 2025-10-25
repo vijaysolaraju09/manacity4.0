@@ -142,6 +142,7 @@ const eventSchema = new Schema(
     description: { type: String, default: '', maxlength: 12000 },
     rules: { type: String, default: '', maxlength: 12000 },
     prizePool: { type: String },
+    entryFeePaise: { type: Number, default: 0, min: 0 },
     bannerUrl: { type: String },
     coverUrl: { type: String },
     registeredCount: { type: Number, default: 0, min: 0 },
@@ -203,6 +204,11 @@ eventSchema.methods.toCardJSON = function toCardJSON() {
     venue: this.venue,
     visibility: this.visibility,
     bannerUrl: this.bannerUrl || null,
+    prizePool: this.prizePool || null,
+    entryFeePaise:
+      typeof this.entryFeePaise === 'number' && Number.isFinite(this.entryFeePaise)
+        ? this.entryFeePaise
+        : 0,
   };
 };
 
@@ -214,6 +220,10 @@ eventSchema.methods.toDetailJSON = function toDetailJSON() {
     description: this.description,
     rules: this.rules,
     prizePool: this.prizePool,
+    entryFeePaise:
+      typeof this.entryFeePaise === 'number' && Number.isFinite(this.entryFeePaise)
+        ? this.entryFeePaise
+        : 0,
     coverUrl: this.coverUrl || null,
     updatesCount: this.updatesCount,
     leaderboardVersion: this.leaderboardVersion,

@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import styles from './FacetFilterBar.module.scss';
 
 interface Props {
@@ -11,8 +13,6 @@ interface Props {
   onCategoryChange: (v: string) => void;
   openOnly: boolean;
   onOpenChange: (v: boolean) => void;
-  sort: string;
-  onSortChange: (v: string) => void;
 }
 
 const FacetFilterBar = ({
@@ -26,9 +26,9 @@ const FacetFilterBar = ({
   onCategoryChange,
   openOnly,
   onOpenChange,
-  sort,
-  onSortChange,
 }: Props) => {
+  const openToggleId = useId();
+
   return (
     <div className={styles.bar}>
       <div className={styles.controls}>
@@ -46,35 +46,23 @@ const FacetFilterBar = ({
             </option>
           ))}
         </select>
-        <select value={sort} onChange={(e) => onSortChange(e.target.value)}>
-          <option value="rating">Rating</option>
-          <option value="distance">Distance</option>
-          <option value="productCount">Product count</option>
+        <select value={category} onChange={(e) => onCategoryChange(e.target.value)}>
+          <option value="">All categories</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
-      </div>
-      <div className={styles.chips}>
-        <button
-          className={!category ? styles.active : ''}
-          onClick={() => onCategoryChange('')}
-        >
-          All
-        </button>
-        {categories.map((c) => (
-          <button
-            key={c}
-            className={category === c ? styles.active : ''}
-            onClick={() => onCategoryChange(c)}
-          >
-            {c}
-          </button>
-        ))}
-        <label className={styles.openNow}>
+        <label className={styles.openNow} htmlFor={openToggleId}>
+          <span>Open now</span>
           <input
+            id={openToggleId}
+            className={styles.toggle}
             type="checkbox"
             checked={openOnly}
             onChange={(e) => onOpenChange(e.target.checked)}
           />
-          Open now
         </label>
       </div>
     </div>

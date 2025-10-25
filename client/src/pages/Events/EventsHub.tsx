@@ -1,17 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  Activity,
-  ArrowRight,
-  CalendarClock,
-  Clock,
-  Loader2,
-  RefreshCw,
-  Sparkles,
-  Target,
-  Trophy,
-  Users,
-} from 'lucide-react';
+import { ArrowRight, Clock, Loader2, RefreshCw, Target, Trophy, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { RootState, AppDispatch } from '@/store';
 import {
@@ -198,12 +187,6 @@ const EventsHub = () => {
     [items, tick],
   );
 
-  const occupancyPercent = useMemo(() => {
-    if (stageSummary.totalCapacity === 0) return 0;
-    const ratio = stageSummary.totalRegistrations / stageSummary.totalCapacity;
-    return Math.min(100, Math.round(ratio * 100));
-  }, [stageSummary.totalCapacity, stageSummary.totalRegistrations]);
-
   const spotlightEvent = useMemo(() => {
     if (featuredEvents.length > 0) {
       const live = featuredEvents.find((event) => determineStage(event, tick) === 'live');
@@ -330,12 +313,6 @@ const EventsHub = () => {
     <div className={styles.page}>
       <section className={styles.hero}>
         <div className={styles.heroBody}>
-          <span className={styles.heroEyebrow}>Community spotlight</span>
-          <h1 className={styles.heroTitle}>Discover tournaments and on-ground events built for you</h1>
-          <p className={styles.heroSubtitle}>
-            Browse competitive brackets, casual meetups, and cultural gatherings powered by the same
-            Manacity community you play with every day.
-          </p>
           <div className={styles.heroActions}>
             <button
               type="button"
@@ -353,36 +330,6 @@ const EventsHub = () => {
             >
               {mine ? 'Showing events I joined' : 'Show only my registrations'}
             </button>
-          </div>
-        </div>
-        <div className={styles.metricGrid}>
-          <div className={styles.metricCard}>
-            <span className={styles.metricIcon}>
-              <Sparkles size={16} />
-            </span>
-            <span className={styles.metricLabel}>Live now</span>
-            <strong className={styles.metricValue}>{stageSummary.live}</strong>
-            <span className={styles.metricHint}>Catch the action in progress</span>
-          </div>
-          <div className={styles.metricCard}>
-            <span className={styles.metricIcon}>
-              <CalendarClock size={16} />
-            </span>
-            <span className={styles.metricLabel}>Upcoming</span>
-            <strong className={styles.metricValue}>{stageSummary.upcoming}</strong>
-            <span className={styles.metricHint}>Reserve your slot early</span>
-          </div>
-          <div className={styles.metricCard}>
-            <span className={styles.metricIcon}>
-              <Activity size={16} />
-            </span>
-            <span className={styles.metricLabel}>Overall occupancy</span>
-            <strong className={styles.metricValue}>
-              {occupancyPercent}%
-            </strong>
-            <span className={styles.metricHint}>
-              {stageSummary.totalRegistrations.toLocaleString()} players registered
-            </span>
           </div>
         </div>
       </section>

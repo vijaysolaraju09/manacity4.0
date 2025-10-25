@@ -54,16 +54,18 @@ const FacetFilterBar = ({
             </option>
           ))}
         </select>
-        <label className={styles.openNow} htmlFor={openToggleId}>
-          <span>Open now</span>
-          <input
-            id={openToggleId}
-            className={styles.toggle}
-            type="checkbox"
-            checked={openOnly}
-            onChange={(e) => onOpenChange(e.target.checked)}
-          />
-        </label>
+        <div className={styles.openNowContainer}>
+          <label className={styles.openNow} htmlFor={openToggleId}>
+            <span>Open now</span>
+            <input
+              id={openToggleId}
+              className={styles.toggle}
+              type="checkbox"
+              checked={openOnly}
+              onChange={(e) => onOpenChange(e.target.checked)}
+            />
+          </label>
+        </div>
       </div>
     </div>
   );

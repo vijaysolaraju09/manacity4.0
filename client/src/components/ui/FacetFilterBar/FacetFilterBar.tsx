@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import styles from './FacetFilterBar.module.scss';
 
 interface Props {
@@ -25,6 +27,8 @@ const FacetFilterBar = ({
   openOnly,
   onOpenChange,
 }: Props) => {
+  const openToggleId = useId();
+
   return (
     <div className={styles.bar}>
       <div className={styles.controls}>
@@ -50,13 +54,16 @@ const FacetFilterBar = ({
             </option>
           ))}
         </select>
+        <label className={styles.openNow} htmlFor={openToggleId}>
+          <span>Open now</span>
         <label className={styles.openNow}>
           <input
+            id={openToggleId}
+            className={styles.toggle}
             type="checkbox"
             checked={openOnly}
             onChange={(e) => onOpenChange(e.target.checked)}
           />
-          Open now
         </label>
       </div>
     </div>

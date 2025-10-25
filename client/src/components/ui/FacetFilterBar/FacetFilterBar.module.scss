@@ -30,6 +30,66 @@
 }
 
 .openNow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg);
+  cursor: pointer;
+  flex: 1 1 180px;
+  min-width: 160px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.openNow:hover,
+.openNow:focus-within {
+  border-color: var(--color-border-strong, var(--color-border));
+  box-shadow: 0 0 0 2px rgba(20, 115, 230, 0.12);
+}
+
+.toggle {
+  appearance: none;
+  width: 2.75rem;
+  height: 1.45rem;
+  background: var(--color-border-muted, rgba(15, 23, 42, 0.16));
+  border-radius: 999px;
+  position: relative;
+  border: 1px solid transparent;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
+  transition: transform 0.2s ease;
+}
+
+.toggle:checked {
+  background: var(--color-primary, #2563eb);
+}
+
+.toggle:checked::after {
+  transform: translateX(1.25rem);
+}
+
+.toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.32);
+}
+
   display: flex;
   align-items: center;
   gap: 0.4rem;

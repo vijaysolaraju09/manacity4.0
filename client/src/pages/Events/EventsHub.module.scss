@@ -1,11 +1,10 @@
 .page {
   min-height: 100dvh;
-  padding: clamp(1.25rem, 4vw, 3rem);
-  background: linear-gradient(180deg, var(--background) 0%, #f4f7ff 55%, #eef3ff 100%);
-  color: var(--color-text);
   display: flex;
   flex-direction: column;
-  gap: clamp(1.5rem, 4vw, 3rem);
+  gap: 1.5rem;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  background-color: var(--background);
 }
 
 .header {
@@ -100,30 +99,35 @@
 .feedbackCard h3 {
   margin: 0;
   font-size: 1.4rem;
-  color: var(--color-text);
 }
 
-.feedbackCard p {
+.list {
   margin: 0;
-  color: rgba(15, 23, 42, 0.65);
-}
-
-.gridHeader {
+  padding: 0;
+  list-style: none;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.gridHeader h3 {
-  margin: 0;
-  font-size: 1.3rem;
+.listItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(6px);
+}
+
+.listTitle {
+  font-weight: 600;
   color: var(--color-text);
 }
 
-.gridHeader p {
-  margin: 0.25rem 0 0;
+.listMeta {
+  font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.6);
   max-width: 520px;
 }
@@ -361,6 +365,10 @@
 .secondaryAction:hover,
 .ghostAction:hover {
   transform: translateY(-1px);
+}
+
+.message {
+  margin: 0;
 }
 
 .message {

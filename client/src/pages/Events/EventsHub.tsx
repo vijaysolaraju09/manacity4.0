@@ -2,11 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Clock, Loader2, RefreshCw, Trophy, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { RefreshCw } from 'lucide-react';
 import type { RootState, AppDispatch } from '@/store';
 import { createEventsQueryKey, fetchEvents } from '@/store/events.slice';
 import type { EventSummary } from '@/types/events';
-import fallbackImage from '@/assets/no-image.svg';
-import { formatINR } from '@/utils/currency';
 import styles from './EventsHub.module.scss';
 
 type TabKey = 'all' | 'events' | 'tournaments' | 'registrations';
@@ -38,19 +37,10 @@ const determineStage = (event: EventSummary, now: number): EventStage => {
   return 'upcoming';
 };
 
-const formatCountdown = (target: number, now: number) => {
-  const diff = Math.max(0, target - now);
-  const totalSeconds = Math.floor(diff / 1000);
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  if (days > 0) {
-    return `${days}d ${hours}h`;
-  }
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${Math.max(minutes, 0)}m`;
+type ExtendedEventSummary = EventSummary & {
+  myRegistrationStatus?: string | null;
+  registrationStatus?: string | null;
+  registration?: { status?: string | null } | null;
 };
 
 const safeImage = (url?: string | null) =>
@@ -71,7 +61,6 @@ const isRegistered = (event: ExtendedEventSummary) => {
 
 const EventsHub = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
   const eventsState = useSelector((state: RootState) => state.events.list);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
   const [now, setNow] = useState(() => Date.now());
@@ -174,6 +163,16 @@ const EventsHub = () => {
     return stage === 'live' ? 'Happening now' : 'Schedule TBA';
   };
 
+
+  const handleRefresh = () => {
+    dispatch(fetchEvents({ ...queryParams }));
+  };
+
+  const renderList = (list: ExtendedEventSummary[]) => {
+    if (eventsState.loading && list.length === 0) {
+      return <p className={styles.message}>Loading events…</p>;
+    }
+
   const renderPrimaryCta = (event: EventSummary) => {
     const stage = determineStage(event, now);
     if (stage === 'completed') {
@@ -241,6 +240,38 @@ const EventsHub = () => {
         </p>
       </div>
     ) : (
+    if (eventsState.loading && gridEvents.length === 0) {
+      return (
+        <div className={styles.skeletonGrid}>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className={styles.skeletonCard} />
+          ))}
+        </div>
+      );
+    }
+
+    if (eventsState.error && gridEvents.length === 0) {
+      return (
+        <div className={styles.feedbackCard}>
+          <h3>Unable to load events</h3>
+          <p>{eventsState.error}</p>
+        </div>
+      );
+    }
+
+    if (gridEvents.length === 0) {
+      return (
+        <div className={styles.feedbackCard}>
+          <h3>No events available yet</h3>
+          <p>
+            We are lining up the next wave of community experiences. Check back soon for new
+            tournaments and meetups.
+          </p>
+        </div>
+      );
+    }
+
+    return (
       <>
         <div className={styles.gridHeader}>
           <div>
@@ -275,6 +306,7 @@ const EventsHub = () => {
                   {event.highlightLabel && (
                     <span className={styles.highlightBadge}>{event.highlightLabel}</span>
                   )}
+                  {event.highlightLabel && <span className={styles.highlightBadge}>{event.highlightLabel}</span>}
                 </div>
                 <div className={styles.cardBody}>
                   <div className={styles.cardChips}>
@@ -286,6 +318,7 @@ const EventsHub = () => {
                   {event.shortDescription && (
                     <p className={styles.cardSubtitle}>{event.shortDescription}</p>
                   )}
+                  {event.shortDescription && <p className={styles.cardSubtitle}>{event.shortDescription}</p>}
                   <div className={styles.cardStats}>
                     <span>
                       <Clock size={14} /> {renderCountdown(event)}
@@ -326,6 +359,26 @@ const EventsHub = () => {
     );
   };
 
+    if (eventsState.error && list.length === 0) {
+      return <p className={styles.message}>Unable to load events. Please try again.</p>;
+    }
+
+    if (list.length === 0) {
+      return <p className={styles.message}>Nothing to show yet.</p>;
+    }
+
+    return (
+      <ul className={styles.list}>
+        {list.map((event) => (
+          <li key={event._id} className={styles.listItem}>
+            <span className={styles.listTitle}>{event.title}</span>
+            <span className={styles.listMeta}>{event.type === 'tournament' ? 'Tournament' : 'Event'}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -336,6 +389,7 @@ const EventsHub = () => {
           onClick={handleRefresh}
           disabled={eventsState.loading}
         >
+        <button type="button" className={styles.refreshButton} onClick={handleRefresh} disabled={eventsState.loading}>
           <RefreshCw size={16} />
           <span>Refresh</span>
         </button>

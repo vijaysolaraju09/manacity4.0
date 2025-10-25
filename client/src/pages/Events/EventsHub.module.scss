@@ -1,330 +1,127 @@
 .page {
   min-height: 100dvh;
-  padding: clamp(1.25rem, 4vw, 3rem);
-  background: linear-gradient(180deg, var(--background) 0%, #f4f7ff 55%, #eef3ff 100%);
-  color: var(--color-text);
   display: flex;
   flex-direction: column;
-  gap: clamp(1.5rem, 4vw, 3rem);
+  gap: 1.5rem;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  background-color: var(--background);
 }
 
-.hero {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: clamp(1.25rem, 3vw, 2.5rem);
-  background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.08), rgba(79, 70, 229, 0.2));
-  border-radius: clamp(1.25rem, 3vw, 2rem);
-  padding: clamp(1.5rem, 4vw, 3rem);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.25);
-  box-shadow: 0 32px 64px rgba(15, 23, 42, 0.12);
-  position: relative;
-  overflow: hidden;
-}
-
-.hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-      circle at 0% 0%,
-      rgba(255, 255, 255, 0.45),
-      rgba(255, 255, 255, 0) 45%
-    ),
-    radial-gradient(circle at 100% 0%, rgba(79, 70, 229, 0.35), rgba(79, 70, 229, 0) 55%);
-  pointer-events: none;
-}
-
-.heroBody,
-.metricGrid {
-  position: relative;
-  z-index: 1;
-}
-
-.heroBody {
+.header {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 1rem;
-  max-width: 520px;
 }
 
-.heroEyebrow {
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(var(--color-primary-rgb), 0.85);
-  font-weight: 600;
-}
-
-.heroTitle {
+.title {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3.25rem);
-  line-height: 1.15;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 700;
   color: var(--color-text);
 }
 
-.heroSubtitle {
-  margin: 0;
-  font-size: clamp(0.95rem, 2vw, 1.05rem);
-  color: rgba(15, 23, 42, 0.7);
+.refreshButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background-color: rgba(148, 163, 184, 0.12);
+  color: var(--color-text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
-.heroActions {
+.refreshButton:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.refreshButton:not(:disabled):hover {
+  background-color: rgba(148, 163, 184, 0.2);
+}
+
+.tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-.primaryAction,
-.secondaryAction,
-.ghostAction {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
+.tab,
+.activeTab {
+  border: 1px solid rgba(148, 163, 184, 0.4);
   border-radius: 999px;
-  padding: 0.55rem 1.5rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
-}
-
-.primaryAction {
-  background: linear-gradient(135deg, var(--color-primary), #4f46e5);
-  color: var(--color-on-primary);
-  box-shadow: 0 16px 36px rgba(var(--color-primary-rgb), 0.35);
-}
-
-.primaryAction:disabled {
-  cursor: progress;
-  opacity: 0.85;
-  box-shadow: none;
-}
-
-.secondaryAction {
-  background: rgba(var(--color-primary-rgb), 0.12);
-  color: var(--color-primary);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.25);
-}
-
-.ghostAction {
-  background: rgba(255, 255, 255, 0.4);
-  color: rgba(15, 23, 42, 0.75);
-  border: 1px solid rgba(148, 163, 184, 0.45);
-}
-
-.ghostActionActive {
-  background: rgba(var(--color-primary-rgb), 0.18);
-  color: var(--color-primary);
-  border-color: rgba(var(--color-primary-rgb), 0.35);
-  box-shadow: 0 12px 24px rgba(var(--color-primary-rgb), 0.18);
-}
-
-.primaryAction:hover:not(:disabled),
-.secondaryAction:hover,
-.ghostAction:hover {
-  transform: translateY(-1px);
-}
-
-.metricGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.9rem;
-  align-content: start;
-}
-
-.metricCard {
-  backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.65);
-  border-radius: 1.1rem;
-  padding: 1rem 1.15rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.08);
-  display: grid;
-  gap: 0.35rem;
-  align-content: start;
-}
-
-.metricIcon {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.85rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(var(--color-primary-rgb), 0.12);
-  color: var(--color-primary);
-}
-
-.metricLabel {
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(15, 23, 42, 0.6);
-}
-
-.metricValue {
-  font-size: clamp(1.45rem, 2.5vw, 2rem);
-  color: var(--color-text);
-  font-weight: 700;
-}
-
-.metricHint {
-  font-size: 0.85rem;
-  color: rgba(15, 23, 42, 0.65);
-}
-
-.controlBar {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.tabList {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-
-.tabButton {
-  border-radius: 999px;
-  padding: 0.4rem 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.45);
-  background: rgba(255, 255, 255, 0.75);
-  color: rgba(15, 23, 42, 0.6);
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.tabButton:hover {
-  transform: translateY(-1px);
-  color: var(--color-primary);
-  border-color: rgba(var(--color-primary-rgb), 0.35);
-}
-
-.tabButtonActive {
-  background: linear-gradient(120deg, var(--color-primary), #4f46e5);
-  color: var(--color-on-primary);
-  border-color: transparent;
-  box-shadow: 0 16px 28px rgba(var(--color-primary-rgb), 0.25);
-}
-
-.filterRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.filterSegment {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.65rem 0.9rem;
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  box-shadow: var(--shadow-sm);
-  min-width: 220px;
-}
-
-.segmentLabel {
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(15, 23, 42, 0.55);
-}
-
-.segmentButtons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.segmentButton {
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 0.4rem 1.2rem;
   background: transparent;
   color: rgba(15, 23, 42, 0.7);
-  padding: 0.3rem 0.8rem;
-  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.segmentButton:hover {
-  border-color: rgba(var(--color-primary-rgb), 0.4);
+.activeTab {
+  background-color: rgba(var(--color-primary-rgb), 0.12);
   color: var(--color-primary);
 }
 
-.segmentButtonActive {
-  background: rgba(var(--color-primary-rgb), 0.15);
-  border-color: rgba(var(--color-primary-rgb), 0.4);
-  color: var(--color-primary);
-  box-shadow: 0 10px 18px rgba(var(--color-primary-rgb), 0.15);
+.tabContent {
+  flex: 1;
 }
 
-.spotlight {
+.cardsGrid {
   display: grid;
-  gap: 1.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  align-items: stretch;
+  gap: clamp(1rem, 2.5vw, 1.75rem);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
-.spotlightCard {
-  display: grid;
-  grid-template-columns: minmax(220px, 320px) minmax(260px, 1fr);
-  gap: clamp(1rem, 3vw, 2rem);
-  padding: clamp(1.25rem, 3vw, 2rem);
-  background: var(--color-surface);
-  border-radius: 1.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  box-shadow: 0 28px 44px rgba(15, 23, 42, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.spotlightMedia {
-  border-radius: 1.25rem;
-  background: #e5edff center/cover no-repeat;
-  min-height: 260px;
-  position: relative;
-}
-
-.spotlightMedia::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.12), rgba(15, 23, 42, 0.4));
-  border-radius: inherit;
-}
-
-.spotlightContent {
+.card {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  background: var(--color-surface, #ffffff);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  overflow: hidden;
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+}
+
+.cardMedia {
+  min-height: 180px;
+  background: #eff3ff center/cover no-repeat;
   position: relative;
-  z-index: 1;
 }
 
-.spotlightHeader {
+.highlightBadge {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--color-primary);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.25);
+}
+
+.cardBody {
+  padding: 1.1rem 1.2rem 0.9rem;
   display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
-.spotlightChips {
-  display: inline-flex;
+.cardChips {
+  display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
 }
 
 .categoryChip,
 .entryChip,
-.stageBadge,
-.statChip {
+.stageBadge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -335,7 +132,6 @@
   border: 1px solid rgba(148, 163, 184, 0.35);
   background: rgba(148, 163, 184, 0.14);
   color: rgba(15, 23, 42, 0.7);
-  text-transform: none;
 }
 
 .entryChip {
@@ -346,7 +142,7 @@
 
 .stageBadge {
   border: none;
-  color: var(--color-on-primary);
+  color: var(--color-on-primary, #fff);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.7rem;
@@ -364,238 +160,6 @@
 .stageCompleted {
   background: linear-gradient(135deg, #e2e8f0, #cbd5f5);
   color: rgba(15, 23, 42, 0.8);
-}
-
-.iconButton {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.9rem;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(255, 255, 255, 0.85);
-  color: rgba(15, 23, 42, 0.65);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
-}
-
-.iconButton:hover {
-  transform: translateY(-1px);
-  color: var(--color-primary);
-  border-color: rgba(var(--color-primary-rgb), 0.35);
-}
-
-.spotlightTitle {
-  margin: 0;
-  font-size: clamp(1.75rem, 3vw, 2.4rem);
-  color: var(--color-text);
-}
-
-.spotlightSubtitle {
-  margin: 0;
-  font-size: 0.95rem;
-  color: rgba(15, 23, 42, 0.65);
-}
-
-.spotlightStats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.statChip {
-  background: rgba(var(--color-primary-rgb), 0.08);
-  border-color: rgba(var(--color-primary-rgb), 0.25);
-  color: rgba(15, 23, 42, 0.75);
-}
-
-.progressWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.progressBar {
-  width: 100%;
-  height: 0.6rem;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.2);
-  overflow: hidden;
-}
-
-.progressFill {
-  height: 100%;
-  background: linear-gradient(135deg, var(--color-primary), #4f46e5);
-  border-radius: inherit;
-  transition: width 0.3s ease;
-}
-
-.progressLabel {
-  font-size: 0.8rem;
-  color: rgba(15, 23, 42, 0.6);
-}
-
-.spotlightActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.highlightList {
-  display: grid;
-  gap: 1rem;
-  align-content: start;
-}
-
-.highlightCard {
-  background: var(--color-surface);
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 1.25rem;
-  padding: 1rem 1.1rem;
-  box-shadow: var(--shadow-lg);
-  display: grid;
-  gap: 0.6rem;
-}
-
-.highlightHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.highlightCard h3 {
-  margin: 0;
-  font-size: 1.05rem;
-  color: var(--color-text);
-}
-
-.highlightCard p {
-  margin: 0;
-  font-size: 0.85rem;
-  color: rgba(15, 23, 42, 0.6);
-}
-
-.highlightStats {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  color: rgba(15, 23, 42, 0.6);
-}
-
-.highlightStats span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.highlightBadge {
-  position: absolute;
-  top: 0.85rem;
-  left: 0.85rem;
-  background: rgba(255, 255, 255, 0.8);
-  color: var(--color-primary);
-  border-radius: 999px;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.25);
-}
-
-.feedbackCard {
-  background: var(--color-surface);
-  border-radius: 1.25rem;
-  border: 1px solid rgba(148, 163, 184, 0.26);
-  padding: clamp(1.5rem, 4vw, 2.5rem);
-  text-align: center;
-  box-shadow: var(--shadow-lg);
-  display: grid;
-  gap: 0.5rem;
-}
-
-.feedbackCard h3 {
-  margin: 0;
-  font-size: 1.4rem;
-  color: var(--color-text);
-}
-
-.feedbackCard p {
-  margin: 0;
-  color: rgba(15, 23, 42, 0.65);
-}
-
-.gridHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.gridHeader h3 {
-  margin: 0;
-  font-size: 1.3rem;
-  color: var(--color-text);
-}
-
-.gridHeader p {
-  margin: 0.25rem 0 0;
-  color: rgba(15, 23, 42, 0.6);
-  max-width: 520px;
-}
-
-.gridHints {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  color: rgba(15, 23, 42, 0.55);
-  font-size: 0.8rem;
-}
-
-.gridHints span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.75rem;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.18);
-}
-
-.cardsGrid {
-  display: grid;
-  gap: clamp(1rem, 2.5vw, 1.75rem);
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
-.card {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-surface);
-  border-radius: 1.25rem;
-  border: 1px solid rgba(148, 163, 184, 0.26);
-  overflow: hidden;
-  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
-}
-
-.cardMedia {
-  min-height: 180px;
-  background: #eff3ff center/cover no-repeat;
-  position: relative;
-}
-
-.cardBody {
-  padding: 1.1rem 1.2rem 0.9rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.cardChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
 }
 
 .cardTitle {
@@ -636,80 +200,55 @@
   padding: 0.9rem 1.2rem 1.2rem;
 }
 
-.loadMore {
-  align-self: center;
+.primaryAction,
+.secondaryAction,
+.ghostAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   border-radius: 999px;
-  padding: 0.6rem 1.75rem;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.35);
-  background: rgba(var(--color-primary-rgb), 0.1);
-  color: var(--color-primary);
+  padding: 0.55rem 1.5rem;
   font-weight: 600;
+  border: none;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
-.loadMore:hover {
+.primaryAction {
+  background: linear-gradient(135deg, var(--color-primary), #4f46e5);
+  color: var(--color-on-primary, #fff);
+  box-shadow: 0 16px 36px rgba(var(--color-primary-rgb), 0.35);
+}
+
+.primaryAction:disabled {
+  cursor: progress;
+  opacity: 0.85;
+  box-shadow: none;
+}
+
+.secondaryAction {
+  background: rgba(var(--color-primary-rgb), 0.12);
+  color: var(--color-primary);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.25);
+}
+
+.ghostAction {
+  background: rgba(255, 255, 255, 0.6);
+  color: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+}
+
+.primaryAction:hover:not(:disabled),
+.secondaryAction:hover,
+.ghostAction:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(var(--color-primary-rgb), 0.25);
 }
 
-.skeletonGrid {
-  display: grid;
-  gap: 1.2rem;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.skeletonCard {
-  height: 240px;
-  border-radius: 1.2rem;
-  background: linear-gradient(90deg, #e2e8f0 25%, #f8fafc 50%, #e2e8f0 75%);
-  background-size: 400% 100%;
-  animation: shimmer 1.8s ease infinite;
-}
-
-.spin {
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-@media (max-width: 960px) {
-  .spotlightCard {
-    grid-template-columns: 1fr;
-  }
-
-  .spotlightMedia {
-    min-height: 220px;
-  }
-}
-
-@media (max-width: 720px) {
-  .hero {
-    grid-template-columns: 1fr;
-  }
-
-  .metricGrid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  }
-
-  .filterSegment {
-    width: 100%;
-    min-width: 0;
-  }
+.message {
+  margin: 0;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+  color: rgba(15, 23, 42, 0.7);
 }

@@ -56,6 +56,7 @@ const FacetFilterBar = ({
         </select>
         <label className={styles.openNow} htmlFor={openToggleId}>
           <span>Open now</span>
+        <label className={styles.openNow}>
           <input
             id={openToggleId}
             className={styles.toggle}

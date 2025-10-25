@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
+  ArrowLeft,
   CalendarClock,
   ChevronDown,
   ChevronUp,
@@ -580,6 +581,9 @@ const EventDetailPage = () => {
 
   return (
     <div className={styles.page}>
+      <button type="button" className={styles.backLink} onClick={() => navigate(-1)}>
+        <ArrowLeft size={16} aria-hidden="true" /> Back to events
+      </button>
       <section className={styles.hero}>
         <div className={styles.heroMedia} style={{ backgroundImage: `url(${heroBanner})` }} aria-hidden="true">
           <div className={styles.heroMediaOverlay} />

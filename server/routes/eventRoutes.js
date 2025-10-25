@@ -113,7 +113,7 @@ router.get('/:id', getEvent);
 router.get('/:id/updates', listUpdates);
 router.get('/:id/leaderboard', getLeaderboard);
 router.get('/:id/bracket', getBracket);
-router.get('/:id/form', protect, getEventForm);
+router.get('/:id/form', getEventForm);
 router.get('/:id/form/preview', protect, getEventFormPreview);
 router.get('/:id/registrations', protect, listRegistrations);
 

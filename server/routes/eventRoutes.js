@@ -3,6 +3,7 @@ const { z } = require('zod');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const protect = require('../middleware/authMiddleware');
+const optionalAuth = require('../middleware/optionalAuth');
 const ensureAdmin = require('../middleware/ensureAdmin');
 const validate = require('../middleware/validate');
 const {
@@ -115,7 +116,7 @@ router.get('/:id/leaderboard', getLeaderboard);
 router.get('/:id/bracket', getBracket);
 router.get('/:id/form', getEventForm);
 router.get('/:id/form/preview', protect, getEventFormPreview);
-router.get('/:id/registrations', protect, listRegistrations);
+router.get('/:id/registrations', optionalAuth, listRegistrations);
 
 // Authenticated user
 router.post('/:id/register', protect, registerLimiter, submitRegistration);

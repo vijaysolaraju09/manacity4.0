@@ -274,7 +274,10 @@ exports.submitRegistration = async (req, res, next) => {
 exports.listRegistrations = async (req, res, next) => {
   try {
     const event = await loadEventOrThrow(req.params.id);
-    if (!isOrganizer(event, req.user)) {
+    const isPrivilegedViewer = isOrganizer(event, req.user);
+    const publicStatuses = ['published', 'ongoing', 'completed'];
+    const isPublicVisibility = ['public', null, undefined].includes(event.visibility);
+    if (!isPrivilegedViewer && (!isPublicVisibility || !publicStatuses.includes(event.status))) {
       throw AppError.forbidden('NOT_ALLOWED', 'Only organizers or admins can view registrations');
     }
     const page = Math.max(1, Number(req.query.page) || 1);
@@ -332,24 +335,53 @@ exports.listRegistrations = async (req, res, next) => {
     ]);
 
     const total = countResult?.[0]?.total || 0;
-    const preparedItems = items.map((doc) => ({
-      id: String(doc._id),
-      eventId: doc.eventId,
-      userId: doc.userId,
-      status: doc.status,
-      payment: doc.payment || { required: false },
-      data: toPlainObject(doc.data),
-      user: doc.user
+    const preparedItems = items.map((doc) => {
+      const data = toPlainObject(doc.data);
+      const teamName =
+        doc.teamName ||
+        data.teamName ||
+        data.team_name ||
+        data.name ||
+        (Array.isArray(data.members) && data.members[0]?.name) ||
+        null;
+      const user = doc.user
         ? {
-            id: String(doc.user._id),
+            _id: String(doc.user._id),
             name: doc.user.name,
-            phone: doc.user.phone,
-            email: doc.user.email,
+            ...(isPrivilegedViewer
+              ? { phone: doc.user.phone, email: doc.user.email }
+              : {}),
           }
-        : null,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-    }));
+        : null;
+
+      const item = {
+        id: String(doc._id),
+        eventId: doc.eventId,
+        status: doc.status,
+        teamName: typeof teamName === 'string' ? teamName : undefined,
+        user,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      };
+
+      if (isPrivilegedViewer) {
+        const rawMembers = Array.isArray(doc.members) ? doc.members : data.members;
+        const members = Array.isArray(rawMembers)
+          ? rawMembers.filter((member) => member && typeof member === 'object')
+          : undefined;
+        if (members) {
+          item.members = members;
+        }
+        item.userId = doc.userId;
+        item.payment = doc.payment || { required: false };
+        item.data = data;
+      } else {
+        const paymentRequired = Boolean(doc.payment?.required);
+        item.payment = { required: paymentRequired };
+      }
+
+      return item;
+    });
 
     res.json({
       ok: true,
@@ -358,6 +390,7 @@ exports.listRegistrations = async (req, res, next) => {
         total,
         page,
         limit,
+        preview: !isPrivilegedViewer,
       },
       traceId: req.traceId,
     });

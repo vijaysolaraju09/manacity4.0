@@ -57,6 +57,19 @@ const FacetFilterBar = ({
         <div className={styles.openNowContainer}>
           <span className={styles.openNowLabel}>Open now</span>
           <div className={styles.checkboxWrapper}>
+            <input
+              id={openToggleId}
+              type="checkbox"
+              checked={openOnly}
+              onChange={(e) => onOpenChange(e.target.checked)}
+              aria-label="Toggle open shops only"
+            />
+            <label className={styles.toggle} htmlFor={openToggleId}>
+              <span className={styles.toggleThumb}>
+                <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                  <path d="M5,1 L5,1 C2.790861,1 1,2.790861 1,5 L1,5 C1,7.209139 2.790861,9 5,9 L5,9 C7.209139,9 9,7.209139 9,5 L9,5 C9,2.790861 7.209139,1 5,1 L5,9 L5,1 Z" />
+                </svg>
+              </span>
             <label className={`${styles.rocker} ${styles.rockerSmall}`} htmlFor={openToggleId}>
               <input
                 id={openToggleId}

@@ -58,7 +58,7 @@ describe('cartController', () => {
       _id: new Types.ObjectId(),
       currency: 'INR',
       items: [
-        { productId, qty: 2, unitPrice: 19950, appliedDiscount: 0 },
+        { productId, product: productId, qty: 2, unitPrice: 19950, appliedDiscount: 0 },
       ],
       subtotal: 39900,
       discountTotal: 0,
@@ -83,6 +83,7 @@ describe('cartController', () => {
       userId,
       expect.objectContaining({
         productId: expect.any(Types.ObjectId),
+        product: expect.any(Types.ObjectId),
         qty: 2,
         unitPrice: 19950,
       }),

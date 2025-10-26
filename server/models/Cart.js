@@ -3,6 +3,14 @@ const { Schema, model } = require('mongoose');
 const cartItemSchema = new Schema(
   {
     productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+    product: {
+      type: Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true,
+      default() {
+        return this.productId;
+      },
+    },
     variantId: { type: Schema.Types.ObjectId, ref: 'ProductVariant' },
     qty: { type: Number, required: true, min: 1 },
     unitPrice: { type: Number, required: true, min: 0 },
@@ -10,6 +18,16 @@ const cartItemSchema = new Schema(
   },
   { _id: false }
 );
+
+cartItemSchema.pre('validate', function syncProductFields(next) {
+  if (!this.product && this.productId) {
+    this.product = this.productId;
+  }
+  if (!this.productId && this.product) {
+    this.productId = this.product;
+  }
+  next();
+});
 
 function computeTotals(cart) {
   let subtotal = 0;
@@ -55,11 +73,20 @@ cartSchema.statics.upsertItem = async function (userId, item) {
   if (idx >= 0) {
     cart.items[idx].qty += normalizedQty;
     cart.items[idx].unitPrice = normalizedUnitPrice;
+    if (!cart.items[idx].product && cart.items[idx].productId) {
+      cart.items[idx].product = cart.items[idx].productId;
+    }
     if (item.appliedDiscount !== undefined)
       cart.items[idx].appliedDiscount = item.appliedDiscount;
   } else {
+    const normalizedProductId = item.productId || item.product;
+    if (!normalizedProductId) {
+      throw new Error('Cart item requires a product reference');
+    }
     cart.items.push({
       ...item,
+      productId: normalizedProductId,
+      product: item.product || item.productId || normalizedProductId,
       qty: normalizedQty,
       unitPrice: normalizedUnitPrice,
     });

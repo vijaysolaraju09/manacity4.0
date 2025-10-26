@@ -95,6 +95,23 @@ const dynamicFormSchema = new Schema(
   { _id: false }
 );
 
+const sanitizeStringArray = (values = []) =>
+  Array.isArray(values)
+    ? values
+        .map((value) => sanitizeHtml(String(value ?? '')))
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0)
+    : [];
+
+const contactSchema = new Schema(
+  {
+    name: { type: String, set: (value) => sanitizeHtml(value) },
+    phone: { type: String, set: (value) => sanitizeHtml(value) },
+    email: { type: String, set: (value) => sanitizeHtml(value) },
+  },
+  { _id: false }
+);
+
 const eventSchema = new Schema(
   {
     title: {
@@ -123,6 +140,8 @@ const eventSchema = new Schema(
     maxParticipants: { type: Number, required: true, min: 1 },
     registrationOpenAt: { type: Date, required: true },
     registrationCloseAt: { type: Date, required: true },
+    regOpenAt: { type: Date },
+    regCloseAt: { type: Date },
     startAt: { type: Date, required: true },
     endAt: { type: Date },
     timezone: { type: String, default: 'Asia/Kolkata' },
@@ -143,8 +162,57 @@ const eventSchema = new Schema(
     rules: { type: String, default: '', maxlength: 12000 },
     prizePool: { type: String },
     entryFeePaise: { type: Number, default: 0, min: 0 },
+    shortDescription: {
+      type: String,
+      default: '',
+      maxlength: 500,
+      set: (value) => sanitizeHtml(value),
+    },
+    highlightLabel: {
+      type: String,
+      default: '',
+      maxlength: 120,
+      set: (value) => sanitizeHtml(value),
+    },
+    accentColor: {
+      type: String,
+      default: '',
+      set: (value) => sanitizeHtml(value),
+    },
+    iconUrl: {
+      type: String,
+      default: '',
+      set: (value) => sanitizeHtml(value),
+    },
+    featured: { type: Boolean, default: false },
     bannerUrl: { type: String },
     coverUrl: { type: String },
+    livestreamUrl: {
+      type: String,
+      default: '',
+      set: (value) => sanitizeHtml(value),
+    },
+    venueMapUrl: {
+      type: String,
+      default: '',
+      set: (value) => sanitizeHtml(value),
+    },
+    structure: {
+      type: String,
+      default: '',
+      set: (value) => sanitizeHtml(value),
+    },
+    rewards: {
+      type: [String],
+      default: [],
+      set: (values) => sanitizeStringArray(values),
+    },
+    registrationChecklist: {
+      type: [String],
+      default: [],
+      set: (values) => sanitizeStringArray(values),
+    },
+    contact: { type: contactSchema, default: undefined },
     registeredCount: { type: Number, default: 0, min: 0 },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     updatesCount: { type: Number, default: 0 },
@@ -184,6 +252,22 @@ eventSchema.pre('save', function clampRegisteredCount(next) {
   next();
 });
 
+eventSchema.pre('validate', function syncRegistrationWindows(next) {
+  if (!this.regOpenAt && this.registrationOpenAt) {
+    this.regOpenAt = this.registrationOpenAt;
+  }
+  if (!this.registrationOpenAt && this.regOpenAt) {
+    this.registrationOpenAt = this.regOpenAt;
+  }
+  if (!this.regCloseAt && this.registrationCloseAt) {
+    this.regCloseAt = this.registrationCloseAt;
+  }
+  if (!this.registrationCloseAt && this.regCloseAt) {
+    this.registrationCloseAt = this.regCloseAt;
+  }
+  next();
+});
+
 eventSchema.methods.toCardJSON = function toCardJSON() {
   return {
     id: this._id.toString(),
@@ -197,6 +281,8 @@ eventSchema.methods.toCardJSON = function toCardJSON() {
     registeredCount: this.registeredCount,
     registrationOpenAt: this.registrationOpenAt,
     registrationCloseAt: this.registrationCloseAt,
+    regOpenAt: this.regOpenAt || this.registrationOpenAt,
+    regCloseAt: this.regCloseAt || this.registrationCloseAt,
     startAt: this.startAt,
     endAt: this.endAt,
     status: this.status,
@@ -205,6 +291,11 @@ eventSchema.methods.toCardJSON = function toCardJSON() {
     visibility: this.visibility,
     bannerUrl: this.bannerUrl || null,
     prizePool: this.prizePool || null,
+    shortDescription: this.shortDescription || null,
+    highlightLabel: this.highlightLabel || null,
+    accentColor: this.accentColor || null,
+    iconUrl: this.iconUrl || null,
+    featured: Boolean(this.featured),
     entryFeePaise:
       typeof this.entryFeePaise === 'number' && Number.isFinite(this.entryFeePaise)
         ? this.entryFeePaise
@@ -227,6 +318,14 @@ eventSchema.methods.toDetailJSON = function toDetailJSON() {
     coverUrl: this.coverUrl || null,
     updatesCount: this.updatesCount,
     leaderboardVersion: this.leaderboardVersion,
+    livestreamUrl: this.livestreamUrl || null,
+    venueMapUrl: this.venueMapUrl || null,
+    structure: this.structure || null,
+    rewards: Array.isArray(this.rewards) ? this.rewards : [],
+    registrationChecklist: Array.isArray(this.registrationChecklist)
+      ? this.registrationChecklist
+      : [],
+    contact: this.contact || null,
   };
 };
 

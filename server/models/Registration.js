@@ -14,9 +14,23 @@ const paymentSchema = new Schema(
       type: String,
       set: (value) => sanitizeHtml(value),
     },
+    paidProofUrl: {
+      type: String,
+      set: (value) => sanitizeHtml(value),
+    },
   },
   { _id: false }
 );
+
+paymentSchema.pre('validate', function syncProofFields(next) {
+  if (!this.paidProofUrl && this.proofUrl) {
+    this.paidProofUrl = this.proofUrl;
+  }
+  if (!this.proofUrl && this.paidProofUrl) {
+    this.proofUrl = this.paidProofUrl;
+  }
+  next();
+});
 
 const registrationSchema = new Schema(
   {
@@ -46,6 +60,9 @@ registrationSchema.index({ eventId: 1, status: 1, createdAt: -1 });
 registrationSchema.pre('save', function normalizeData(next) {
   if (this.payment && typeof this.payment.proofUrl === 'string') {
     this.payment.proofUrl = sanitizeHtml(this.payment.proofUrl);
+  }
+  if (this.payment && typeof this.payment.paidProofUrl === 'string') {
+    this.payment.paidProofUrl = sanitizeHtml(this.payment.paidProofUrl);
   }
   if (this.data instanceof Map) {
     for (const [key, value] of this.data.entries()) {

@@ -4,8 +4,18 @@ import { toItems, toItem, toErrorMessage } from '@/lib/response';
 export interface Notification {
   _id: string;
   userId: string;
-  type: 'order' | 'system' | 'offer' | 'event';
+  type: 'order' | 'system' | 'offer' | 'event' | 'service_request';
   message: string;
+  title?: string;
+  subtitle?: string;
+  iconUrl?: string;
+  imageUrl?: string;
+  actionUrl?: string;
+  deepLink?: string;
+  payload?: unknown;
+  metadata?: unknown;
+  priority?: 'low' | 'normal' | 'high';
+  expiresAt?: string;
   read: boolean;
   createdAt: string;
 }

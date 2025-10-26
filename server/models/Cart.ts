@@ -2,6 +2,7 @@ import { Schema, Document, model, Model, Types } from 'mongoose';
 
 export interface CartItem {
   productId: Schema.Types.ObjectId;
+  product?: Schema.Types.ObjectId;
   variantId?: Schema.Types.ObjectId;
   qty: number;
   unitPrice: number;
@@ -11,6 +12,14 @@ export interface CartItem {
 const CartItemSchema = new Schema<CartItem>(
   {
     productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+    product: {
+      type: Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true,
+      default: function defaultProduct(this: CartItem) {
+        return (this as any).productId;
+      },
+    },
     variantId: { type: Schema.Types.ObjectId, ref: 'ProductVariant' },
     qty: { type: Number, required: true, min: 1 },
     unitPrice: { type: Number, required: true, min: 0 },
@@ -18,6 +27,17 @@ const CartItemSchema = new Schema<CartItem>(
   },
   { _id: false }
 );
+
+CartItemSchema.pre('validate', function syncProductFields(next) {
+  const doc = this as unknown as { productId?: Types.ObjectId; product?: Types.ObjectId };
+  if (!doc.product && doc.productId) {
+    doc.product = doc.productId;
+  }
+  if (!doc.productId && doc.product) {
+    doc.productId = doc.product;
+  }
+  next();
+});
 
 export interface CartAttrs {
   userId: Schema.Types.ObjectId;
@@ -95,11 +115,20 @@ cartSchema.statics.upsertItem = async function (userId, item) {
   if (idx >= 0) {
     cart.items[idx].qty += normalizedQty;
     cart.items[idx].unitPrice = normalizedUnitPrice;
+    if (!cart.items[idx].product && cart.items[idx].productId) {
+      cart.items[idx].product = cart.items[idx].productId;
+    }
     if (item.appliedDiscount !== undefined)
       cart.items[idx].appliedDiscount = item.appliedDiscount;
   } else {
+    const normalizedProductId = item.productId ?? item.product;
+    if (!normalizedProductId) {
+      throw new Error('Cart item requires a product reference');
+    }
     cart.items.push({
       ...item,
+      productId: normalizedProductId as Types.ObjectId,
+      product: (item.product ?? item.productId ?? normalizedProductId) as Types.ObjectId,
       qty: normalizedQty,
       unitPrice: normalizedUnitPrice,
     });

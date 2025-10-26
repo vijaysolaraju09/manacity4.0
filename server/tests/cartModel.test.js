@@ -29,6 +29,7 @@ describe('Cart schema', () => {
     });
     expect(created1).toBe(true);
     expect(cart1.items).toHaveLength(1);
+    expect(cart1.items[0].product).toEqual(productId);
     expect(cart1.subtotal).toBe(25800);
     expect(cart1.discountTotal).toBe(2500);
     expect(cart1.grandTotal).toBe(23300);

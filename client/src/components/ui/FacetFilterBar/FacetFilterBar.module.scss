@@ -72,6 +72,66 @@
 }
 
 .toggle::before {
+.rocker {
+  display: inline-block;
+  position: relative;
+  font-size: 2em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #888;
+  width: 7em;
+  height: 4em;
+  overflow: hidden;
+  border-bottom: 0.5em solid #eee;
+}
+
+.rockerSmall {
+  font-size: 0.75em;
+}
+
+.rocker::before {
+  content: "";
+  position: absolute;
+  top: 0.5em;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #999;
+  border: 0.5em solid #eee;
+  border-bottom: 0;
+}
+
+.switchLeft,
+.switchRight {
+  cursor: pointer;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5em;
+  width: 3em;
+  transition: 0.2s;
+  user-select: none;
+}
+
+.switchLeft {
+  height: 2.4em;
+  width: 2.75em;
+  left: 0.85em;
+  bottom: 0.4em;
+  background-color: #ddd;
+  transform: rotate(15deg) skewX(15deg);
+}
+
+.switchRight {
+  right: 0.5em;
+  bottom: 0;
+  background-color: #bd5757;
+  color: #fff;
+}
+
+.switchLeft::before,
+.switchRight::before {
   content: "";
   position: relative;
   top: 1px;
@@ -124,6 +184,66 @@
   stroke: #52d66b;
   stroke-dasharray: 25;
   stroke-dashoffset: 25;
+  width: 0.4em;
+  height: 2.45em;
+  bottom: -0.45em;
+  background-color: #ccc;
+  transform: skewY(-65deg);
+}
+
+.switchLeft::before {
+  left: -0.4em;
+}
+
+.switchRight::before {
+  right: -0.375em;
+  background-color: transparent;
+  transform: skewY(65deg);
+}
+
+.checkboxWrapper input:checked + .switchLeft {
+  background-color: #0084d0;
+  color: #fff;
+  bottom: 0;
+  left: 0.5em;
+  height: 2.5em;
+  width: 3em;
+  transform: rotate(0deg) skewX(0deg);
+}
+
+.checkboxWrapper input:checked + .switchLeft::before {
+  background-color: transparent;
+  width: 3.0833em;
+}
+
+.checkboxWrapper input:checked + .switchLeft + .switchRight {
+  background-color: #ddd;
+  color: #888;
+  bottom: 0.4em;
+  right: 0.8em;
+  height: 2.4em;
+  width: 2.75em;
+  transform: rotate(-15deg) skewX(-15deg);
+}
+
+.checkboxWrapper input:checked + .switchLeft + .switchRight::before {
+  background-color: #ccc;
+}
+
+.checkboxWrapper input:focus + .switchLeft {
+  color: #333;
+}
+
+.checkboxWrapper input:checked:focus + .switchLeft {
+  color: #fff;
+}
+
+.checkboxWrapper input:focus + .switchLeft + .switchRight {
+  color: #fff;
+}
+
+.checkboxWrapper input:checked:focus + .switchLeft + .switchRight {
+  color: #333;
 }
 
 @media (min-width: 640px) {

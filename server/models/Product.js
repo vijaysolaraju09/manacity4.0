@@ -3,14 +3,14 @@ const { Schema, model } = require('mongoose');
 const productSchema = new Schema(
   {
     shop: { type: Schema.Types.ObjectId, ref: 'Shop', required: true },
-    name: { type: String, required: true },
-    description: { type: String, default: '' },
+    name: { type: String, required: true, trim: true },
+    description: { type: String, default: '', trim: true },
     price: { type: Number, required: true },
     mrp: { type: Number, required: true },
     discount: { type: Number, default: 0 },
-    image: { type: String },
+    image: { type: String, trim: true },
     images: { type: [String], default: [] },
-    category: { type: String, required: true },
+    category: { type: String, required: true, trim: true },
     stock: { type: Number, default: 0 },
     available: { type: Boolean, default: true },
     isSpecial: { type: Boolean, default: false },

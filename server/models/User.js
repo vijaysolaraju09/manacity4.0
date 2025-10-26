@@ -42,9 +42,9 @@ const userSchema = new mongoose.Schema(
       enum: ["customer", "verified", "business", "admin"],
       default: "customer",
     },
-    location: { type: String },
-    address: { type: String },
-    isVerified: { type: Boolean, default: false },
+    location: { type: String, trim: true },
+    address: { type: String, trim: true },
+    isVerified: { type: Boolean, default: false, alias: "verified" },
     isActive: { type: Boolean, default: true },
     verificationStatus: {
       type: String,

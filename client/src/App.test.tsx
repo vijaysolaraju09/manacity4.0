@@ -109,7 +109,7 @@ describe('Verified detail routing', () => {
           element: <AppRoutes />,
         },
       ],
-      { initialEntries: ['/verified-users/123'] }
+      { initialEntries: ['/providers/123'] }
     );
 
     render(<RouterProvider router={router} />);

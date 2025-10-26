@@ -65,7 +65,17 @@ const ServiceRequestSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      index: true,
+    },
     serviceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Service',
+      default: null,
+    },
+    service: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Service',
       default: null,
@@ -76,6 +86,11 @@ const ServiceRequestSchema = new mongoose.Schema(
       maxlength: 150,
     },
     description: {
+      type: String,
+      trim: true,
+      maxlength: 1000,
+    },
+    desc: {
       type: String,
       trim: true,
       maxlength: 1000,
@@ -108,7 +123,19 @@ const ServiceRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['open', 'offered', 'assigned', 'completed', 'closed'],
+      enum: [
+        'open',
+        'offered',
+        'assigned',
+        'in_progress',
+        'completed',
+        'closed',
+        'OPEN',
+        'ASSIGNED',
+        'IN_PROGRESS',
+        'COMPLETED',
+        'CLOSED',
+      ],
       default: 'open',
       index: true,
     },
@@ -123,6 +150,11 @@ const ServiceRequestSchema = new mongoose.Schema(
       maxlength: 1000,
     },
     assignedProviderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    provider: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       default: null,
@@ -152,8 +184,92 @@ const ServiceRequestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const normalizeStatusValue = (value) => {
+  if (!value) return 'open';
+  const raw = String(value).trim();
+  if (!raw) return 'open';
+  const upper = raw.toUpperCase();
+  if (upper === 'IN_PROGRESS') return 'in_progress';
+  if (['OPEN', 'ASSIGNED', 'COMPLETED', 'CLOSED'].includes(upper)) {
+    return upper.toLowerCase();
+  }
+  const lower = raw.toLowerCase();
+  if (
+    ['open', 'offered', 'assigned', 'completed', 'closed', 'in_progress'].includes(
+      lower
+    )
+  ) {
+    return lower;
+  }
+  return 'open';
+};
+
+const syncRequestFields = (doc) => {
+  if (!doc) return;
+  if (doc.user && !doc.userId) doc.userId = doc.user;
+  if (!doc.user && doc.userId) doc.user = doc.userId;
+
+  if (doc.service && !doc.serviceId) doc.serviceId = doc.service;
+  if (!doc.service && doc.serviceId) doc.service = doc.serviceId;
+
+  if (typeof doc.desc === 'string' && !doc.description) doc.description = doc.desc;
+  if (typeof doc.description === 'string' && !doc.desc) doc.desc = doc.description;
+
+  if (doc.provider && !doc.assignedProviderId)
+    doc.assignedProviderId = doc.provider;
+  if (!doc.provider && doc.assignedProviderId) doc.provider = doc.assignedProviderId;
+
+  if (typeof doc.status !== 'undefined') {
+    doc.status = normalizeStatusValue(doc.status);
+  }
+};
+
+const ensurePairedField = (target, primary, secondary) => {
+  if (!target) return;
+  const hasPrimary = Object.prototype.hasOwnProperty.call(target, primary);
+  const hasSecondary = Object.prototype.hasOwnProperty.call(target, secondary);
+  if (hasPrimary && !hasSecondary) target[secondary] = target[primary];
+  else if (hasSecondary && !hasPrimary) target[primary] = target[secondary];
+};
+
+const syncUpdateFields = (update = {}) => {
+  const apply = (target = {}) => {
+    ensurePairedField(target, 'user', 'userId');
+    ensurePairedField(target, 'service', 'serviceId');
+    ensurePairedField(target, 'desc', 'description');
+    ensurePairedField(target, 'provider', 'assignedProviderId');
+
+    if (Object.prototype.hasOwnProperty.call(target, 'status')) {
+      target.status = normalizeStatusValue(target.status);
+    }
+  };
+
+  apply(update);
+  if (update.$set) apply(update.$set);
+  if (update.$setOnInsert) apply(update.$setOnInsert);
+
+  return update;
+};
+
+ServiceRequestSchema.pre('validate', function (next) {
+  syncRequestFields(this);
+  next();
+});
+
+ServiceRequestSchema.pre('save', function (next) {
+  syncRequestFields(this);
+  next();
+});
+
+ServiceRequestSchema.pre('findOneAndUpdate', function (next) {
+  this.setUpdate(syncUpdateFields(this.getUpdate() || {}));
+  next();
+});
+
 ServiceRequestSchema.index({ createdAt: -1 });
 ServiceRequestSchema.index({ visibility: 1, status: 1, createdAt: -1 });
 ServiceRequestSchema.index({ userId: 1, createdAt: -1 });
+ServiceRequestSchema.index({ provider: 1, createdAt: -1 });
+ServiceRequestSchema.index({ assignedProviderId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('ServiceRequest', ServiceRequestSchema);

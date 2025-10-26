@@ -1,6 +1,6 @@
 const express = require('express');
-const protect = require('../middleware/authMiddleware');
-const ensureAdmin = require('../middleware/ensureAdmin');
+const protect = require('../../middleware/authMiddleware');
+const ensureAdmin = require('../../middleware/ensureAdmin');
 const {
   listServices,
   getServiceProviders,
@@ -9,7 +9,7 @@ const {
   getMyServiceRequests,
   getAssignedServiceRequests,
   adminUpdateServiceRequest,
-} = require('../controllers/servicesController');
+} = require('../../controllers/servicesController');
 
 const router = express.Router();
 

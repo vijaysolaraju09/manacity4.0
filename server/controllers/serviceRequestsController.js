@@ -8,7 +8,19 @@ const { Types } = mongoose;
 
 const MAX_REOPEN_COUNT = 3;
 const OFFERABLE_STATUSES = new Set(['open', 'offered']);
-const ADMIN_STATUS_ALLOWED = new Set(['open', 'offered', 'assigned', 'completed', 'closed']);
+const ADMIN_STATUS_ALLOWED = new Set([
+  'open',
+  'offered',
+  'assigned',
+  'in_progress',
+  'completed',
+  'closed',
+]);
+
+const isAssignedStatus = (value) => {
+  const normalized = sanitizeString(value).toLowerCase();
+  return normalized === 'assigned' || normalized === 'in_progress';
+};
 
 const sanitizeString = (value) => {
   if (typeof value === 'string') return value.trim();
@@ -747,7 +759,7 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
         updates.changed = true;
         updates.status = normalized;
         const historyType =
-          normalized === 'assigned'
+          normalized === 'assigned' || normalized === 'in_progress'
             ? 'assigned'
             : normalized === 'completed'
             ? 'completed'
@@ -805,7 +817,7 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
             : 'Assigned provider cleared',
         });
         updates.assignedProviderId = providerObjectId;
-        if (providerObjectId && request.status !== 'assigned') {
+        if (providerObjectId && !isAssignedStatus(request.status)) {
           request.status = 'assigned';
         }
       }
@@ -830,7 +842,7 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
       );
     }
 
-    if (updates.status && (updates.status !== 'assigned' || !updates.assignedProviderId)) {
+    if (updates.status && (!isAssignedStatus(updates.status) || !updates.assignedProviderId)) {
       const statusSubType =
         updates.status === 'completed'
           ? 'completed'

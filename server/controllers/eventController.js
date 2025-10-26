@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Event = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
+const Registration = require('../models/Registration');
 const EventUpdate = require('../models/EventUpdate');
 const Match = require('../models/Match');
 const LeaderboardEntry = require('../models/LeaderboardEntry');
@@ -23,11 +24,24 @@ const toObjectId = (value) => {
   return null;
 };
 
+const resolveTimestamp = (value) => {
+  if (!value) return Number.NaN;
+  if (value instanceof Date) {
+    const time = value.getTime();
+    return Number.isNaN(time) ? Number.NaN : time;
+  }
+  const date = new Date(value);
+  const time = date.getTime();
+  return Number.isNaN(time) ? Number.NaN : time;
+};
+
 const computeIsRegistrationOpen = (event) => {
   if (!event) return false;
-  if (event.status !== 'published') return false;
-  const openAt = event.registrationOpenAt?.getTime?.() ?? new Date(event.registrationOpenAt).getTime();
-  const closeAt = event.registrationCloseAt?.getTime?.() ?? new Date(event.registrationCloseAt).getTime();
+  if (!['published', 'ongoing'].includes(event.status)) return false;
+  const openAtSource = event.regOpenAt ?? event.registrationOpenAt;
+  const closeAtSource = event.regCloseAt ?? event.registrationCloseAt;
+  const openAt = resolveTimestamp(openAtSource);
+  const closeAt = resolveTimestamp(closeAtSource);
   if (!Number.isFinite(openAt) || !Number.isFinite(closeAt)) return false;
   const now = Date.now();
   return now >= openAt && now <= closeAt;
@@ -286,13 +300,54 @@ exports.listEvents = async (req, res, next) => {
       Event.countDocuments(filter),
     ]);
 
+    const registrationMap = new Map();
+    const legacyRegistrationMap = new Map();
+    if (req.user?._id && items.length) {
+      const eventIds = items.map((event) => event._id);
+      const [legacyRegs, dynamicRegs] = await Promise.all([
+        EventRegistration.find({ event: { $in: eventIds }, user: req.user._id })
+          .select('event status')
+          .lean(),
+        Registration.find({ eventId: { $in: eventIds }, userId: req.user._id })
+          .select('eventId status')
+          .lean(),
+      ]);
+
+      legacyRegs.forEach((doc) => {
+        const key = doc.event?.toString();
+        if (!key) return;
+        legacyRegistrationMap.set(key, { status: doc.status });
+      });
+
+      dynamicRegs.forEach((doc) => {
+        const key = doc.eventId?.toString();
+        if (!key) return;
+        registrationMap.set(key, { status: doc.status || 'submitted' });
+      });
+    }
+
+    const mappedItems = items.map((event) => {
+      const base = event.toCardJSON();
+      const eventId = event._id?.toString();
+      const registration =
+        (eventId ? legacyRegistrationMap.get(eventId) : null) ||
+        (eventId ? registrationMap.get(eventId) : null) ||
+        null;
+      if (registration) {
+        base.registration = { status: registration.status };
+        base.registrationStatus = registration.status;
+        base.myRegistrationStatus = registration.status;
+      }
+      return {
+        ...base,
+        lifecycleStatus: deriveLifecycleStatus(event),
+      };
+    });
+
     res.json({
       ok: true,
       data: {
-        items: items.map((event) => ({
-          ...event.toCardJSON(),
-          lifecycleStatus: deriveLifecycleStatus(event),
-        })),
+        items: mappedItems,
         total,
         page: pageNumber,
         pageSize: limit,
@@ -431,18 +486,72 @@ exports.cancelEvent = async (req, res, next) => {
   }
 };
 
+exports.updateRegistrationWindow = async (req, res, next) => {
+  try {
+    const event = await loadEventOrThrow(req.params.id);
+    const openSource =
+      req.body?.regOpenAt ?? req.body?.registrationOpenAt ?? req.body?.openAt ?? req.body?.open;
+    const closeSource =
+      req.body?.regCloseAt ?? req.body?.registrationCloseAt ?? req.body?.closeAt ?? req.body?.close;
+
+    const openAt = toDateSafe(openSource);
+    const closeAt = toDateSafe(closeSource);
+
+    if (!openAt || !closeAt) {
+      throw AppError.badRequest('INVALID_WINDOW', 'Provide valid registration window dates');
+    }
+
+    if (openAt >= closeAt) {
+      throw AppError.badRequest(
+        'INVALID_WINDOW_ORDER',
+        'Registration open time must be before the close time'
+      );
+    }
+
+    event.regOpenAt = openAt;
+    event.regCloseAt = closeAt;
+    event.registrationOpenAt = openAt;
+    event.registrationCloseAt = closeAt;
+
+    await event.save();
+
+    const data = event.toDetailJSON();
+    data.isRegistrationOpen = computeIsRegistrationOpen(event);
+
+    res.json({ ok: true, data, traceId: req.traceId });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getEvent = async (req, res, next) => {
   try {
     const event = await loadEventOrThrow(req.params.id);
     const data = event.toDetailJSON();
     data.isRegistrationOpen = computeIsRegistrationOpen(event);
     if (req.user) {
-      const registration = await EventRegistration.findOne({
+      let registration = await EventRegistration.findOne({
         event: event._id,
         user: req.user._id,
       })
         .select('_id status')
         .lean();
+
+      if (!registration) {
+        const fallback = await Registration.findOne({
+          eventId: event._id,
+          userId: req.user._id,
+        })
+          .select('_id status')
+          .lean();
+        if (fallback) {
+          registration = {
+            _id: fallback._id,
+            status: fallback.status || 'submitted',
+          };
+        }
+      }
+
       data.registration = registration || null;
     }
     res.json({ ok: true, data, traceId: req.traceId });
@@ -525,7 +634,7 @@ exports.register = async (req, res, next) => {
     const event = await loadEventOrThrow(req.params.id);
     if (!req.user) throw AppError.unauthorized('LOGIN_REQUIRED', 'Login required');
     if (!computeIsRegistrationOpen(event))
-      throw AppError.badRequest('REGISTRATION_CLOSED', 'Registration is closed');
+      throw AppError.badRequest('REGISTRATION_CLOSED', 'Registration window is closed');
 
     if (event.teamSize > 1) {
       const members = Array.isArray(req.body.members) ? req.body.members : [];
@@ -577,6 +686,9 @@ exports.register = async (req, res, next) => {
       status,
     });
 
+    const totalRegistrations = await EventRegistration.countDocuments({ event: event._id });
+    await Event.updateOne({ _id: event._id }, { $set: { registeredCount: totalRegistrations } });
+
     if (status === 'registered') {
       await notifyUsers(req.user._id, `You are registered for ${event.title}`);
     } else {
@@ -619,6 +731,9 @@ exports.unregister = async (req, res, next) => {
     }
 
     await notifyUsers(req.user._id, `You have been removed from ${event.title}`);
+
+    const totalRegistrations = await EventRegistration.countDocuments({ event: event._id });
+    await Event.updateOne({ _id: event._id }, { $set: { registeredCount: totalRegistrations } });
 
     res.json({ ok: true, data: true, traceId: req.traceId });
   } catch (err) {
@@ -712,12 +827,17 @@ exports.getLeaderboard = async (req, res, next) => {
   try {
     const event = await loadEventOrThrow(req.params.id);
     const entries = await LeaderboardEntry.find({ event: event._id })
-      .sort({ rank: 1, points: -1 })
+      .sort({ score: -1, points: -1, rank: 1 })
       .lean();
+    const normalized = entries.map((entry) => ({
+      ...entry,
+      score: Number.isFinite(Number(entry.score)) ? Number(entry.score) : Number(entry.points) || 0,
+      points: Number.isFinite(Number(entry.points)) ? Number(entry.points) : Number(entry.score) || 0,
+    }));
     res.json({
       ok: true,
       data: {
-        entries,
+        entries: normalized,
         version: event.leaderboardVersion,
       },
       traceId: req.traceId,
@@ -733,24 +853,54 @@ exports.postLeaderboard = async (req, res, next) => {
     if (!isOrganizer(event, req.user))
       throw AppError.forbidden('NOT_ALLOWED', 'Only organizers can update leaderboard');
 
-    const payload = Array.isArray(req.body) ? req.body : req.body?.entries;
-    if (!Array.isArray(payload))
-      throw AppError.badRequest('INVALID_PAYLOAD', 'Entries array required');
+    const payloadRaw = Array.isArray(req.body)
+      ? req.body
+      : Array.isArray(req.body?.entries)
+      ? req.body.entries
+      : req.body && typeof req.body === 'object'
+      ? [req.body]
+      : [];
 
-    const entries = payload.map((entry) => ({
-      participantId: entry.participantId ? toObjectId(entry.participantId) : null,
-      user: entry.user ? toObjectId(entry.user) : null,
-      teamName: entry.teamName,
-      points: Number.isFinite(entry.points) ? entry.points : Number(entry.points) || 0,
-      rank: entry.rank,
-      wins: entry.wins,
-      losses: entry.losses,
-      kills: entry.kills,
-      time: entry.time,
-      metadata: entry.metadata,
-    }));
+    if (!payloadRaw.length)
+      throw AppError.badRequest('INVALID_PAYLOAD', 'Provide at least one leaderboard entry');
 
-    const bulkOps = entries
+    const prepared = payloadRaw
+      .map((entry) => {
+        if (!entry || typeof entry !== 'object') return null;
+        const participantId = toObjectId(entry.participantId ?? entry.registrationId);
+        const user = toObjectId(entry.userId ?? entry.user ?? entry.playerId);
+        const teamName = typeof entry.teamName === 'string' ? entry.teamName : undefined;
+        const scoreRaw =
+          entry.score ?? entry.points ?? entry.total ?? entry.value ?? entry.kills ?? entry.time;
+        const score = Number(scoreRaw);
+        const normalizedScore = Number.isFinite(score) ? score : 0;
+        const rank = Number.isFinite(Number(entry.rank)) ? Number(entry.rank) : undefined;
+        const wins = Number.isFinite(Number(entry.wins)) ? Number(entry.wins) : undefined;
+        const losses = Number.isFinite(Number(entry.losses)) ? Number(entry.losses) : undefined;
+        const kills = Number.isFinite(Number(entry.kills)) ? Number(entry.kills) : undefined;
+        const time = Number.isFinite(Number(entry.time)) ? Number(entry.time) : undefined;
+
+        if (!participantId && !user && !teamName) return null;
+
+        return {
+          participantId,
+          user,
+          teamName,
+          score: normalizedScore,
+          rank,
+          wins,
+          losses,
+          kills,
+          time,
+          metadata: entry.metadata,
+        };
+      })
+      .filter(Boolean);
+
+    if (!prepared.length)
+      throw AppError.badRequest('INVALID_ENTRIES', 'Entries require a participant and score');
+
+    const bulkOps = prepared
       .map((entry) => {
         const filter = { event: event._id };
         if (entry.participantId) filter.participantId = entry.participantId;
@@ -760,50 +910,45 @@ exports.postLeaderboard = async (req, res, next) => {
         return {
           updateOne: {
             filter,
-            update: { $set: { ...entry, event: event._id } },
+            update: {
+              $set: {
+                event: event._id,
+                participantId: entry.participantId ?? null,
+                user: entry.user ?? null,
+                teamName: entry.teamName ?? null,
+                score: entry.score,
+                points: entry.score,
+                rank: entry.rank,
+                wins: entry.wins,
+                losses: entry.losses,
+                kills: entry.kills,
+                time: entry.time,
+                metadata: entry.metadata,
+              },
+            },
             upsert: true,
           },
         };
       })
       .filter(Boolean);
 
-    if (bulkOps.length) await LeaderboardEntry.bulkWrite(bulkOps);
-
-    const keys = new Set(
-      entries.map((entry) =>
-        JSON.stringify({
-          participantId: entry.participantId ? entry.participantId.toString() : null,
-          user: entry.user ? entry.user.toString() : null,
-          teamName: entry.teamName || null,
-        })
-      )
-    );
-
-    const existing = await LeaderboardEntry.find({ event: event._id })
-      .select('_id participantId user teamName')
-      .lean();
-    const removals = existing
-      .filter((doc) => {
-        const key = JSON.stringify({
-          participantId: doc.participantId ? doc.participantId.toString() : null,
-          user: doc.user ? doc.user.toString() : null,
-          teamName: doc.teamName || null,
-        });
-        return !keys.has(key);
-      })
-      .map((doc) => doc._id);
-    if (removals.length) await LeaderboardEntry.deleteMany({ _id: { $in: removals } });
+    if (bulkOps.length) await LeaderboardEntry.bulkWrite(bulkOps, { ordered: false });
 
     event.leaderboardVersion += 1;
     await event.save();
 
     const updatedEntries = await LeaderboardEntry.find({ event: event._id })
-      .sort({ rank: 1, points: -1 })
+      .sort({ score: -1, points: -1, rank: 1 })
       .lean();
+    const normalized = updatedEntries.map((entry) => ({
+      ...entry,
+      score: Number.isFinite(Number(entry.score)) ? Number(entry.score) : Number(entry.points) || 0,
+      points: Number.isFinite(Number(entry.points)) ? Number(entry.points) : Number(entry.score) || 0,
+    }));
 
     res.json({
       ok: true,
-      data: { entries: updatedEntries, version: event.leaderboardVersion },
+      data: { entries: normalized, version: event.leaderboardVersion },
       traceId: req.traceId,
     });
   } catch (err) {

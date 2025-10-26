@@ -9,6 +9,7 @@ const leaderboardEntrySchema = new Schema(
     displayName: { type: String },
     avatarUrl: { type: String },
     points: { type: Number, default: 0 },
+    score: { type: Number, default: 0 },
     rank: { type: Number },
     wins: { type: Number },
     losses: { type: Number },
@@ -26,6 +27,17 @@ const leaderboardEntrySchema = new Schema(
 
 leaderboardEntrySchema.index({ event: 1, rank: 1 });
 leaderboardEntrySchema.index({ event: 1, points: -1 });
+leaderboardEntrySchema.index({ event: 1, score: -1 });
 leaderboardEntrySchema.index({ event: 1, participantId: 1 }, { unique: false });
+
+leaderboardEntrySchema.pre('save', function syncScore(next) {
+  if (this.isModified('points') && !this.isModified('score')) {
+    this.score = this.points;
+  }
+  if (this.isModified('score') && !this.isModified('points')) {
+    this.points = this.score;
+  }
+  next();
+});
 
 module.exports = model('LeaderboardEntry', leaderboardEntrySchema);

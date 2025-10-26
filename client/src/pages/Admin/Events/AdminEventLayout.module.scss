@@ -242,6 +242,58 @@
   border: 1px solid rgba(148, 163, 184, 0.3);
 }
 
+.timelineHeader {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.windowForm {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(10, 16, 32, 0.6);
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+}
+
+.windowRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.windowRow input {
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(15, 23, 42, 0.65);
+  color: #f8fafc;
+}
+
+.windowRow input:disabled {
+  opacity: 0.6;
+}
+
+.windowControls {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.errorText {
+  grid-column: 1 / -1;
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+
 .timeline strong {
   display: block;
   color: #f8fafc;

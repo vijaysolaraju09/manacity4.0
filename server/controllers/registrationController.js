@@ -97,8 +97,8 @@ const toIsoStringOrNull = (value) => {
 };
 
 const formatRegistrationWindow = (event) => {
-  const openAt = toIsoStringOrNull(event?.registrationOpenAt);
-  const closeAt = toIsoStringOrNull(event?.registrationCloseAt);
+  const openAt = toIsoStringOrNull(event?.regOpenAt ?? event?.registrationOpenAt);
+  const closeAt = toIsoStringOrNull(event?.regCloseAt ?? event?.registrationCloseAt);
   return {
     openAt,
     closeAt,
@@ -242,16 +242,26 @@ exports.submitRegistration = async (req, res, next) => {
       registration = created;
     });
 
+    const registrationPayload = {
+      id: String(registration._id),
+      _id: registration._id,
+      eventId: registration.eventId,
+      userId: registration.userId,
+      status: registration.status,
+      payment: registration.payment,
+      data: sanitized,
+      fields: sanitized,
+      createdAt: registration.createdAt,
+    };
+
+    const totalRegistrations = await Registration.countDocuments({ eventId: event._id });
+    await Event.updateOne({ _id: event._id }, { $set: { registeredCount: totalRegistrations } });
+
     res.status(201).json({
       ok: true,
       data: {
-        id: String(registration._id),
-        eventId: registration.eventId,
-        userId: registration.userId,
-        status: registration.status,
-        payment: registration.payment,
-        data: sanitized,
-        createdAt: registration.createdAt,
+        registration: registrationPayload,
+        ...registrationPayload,
       },
       traceId: req.traceId,
     });

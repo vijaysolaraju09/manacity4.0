@@ -238,11 +238,16 @@ const EventDetailPage = () => {
         closesIn: '',
       };
     }
-    const openTime = Date.parse(event.registrationOpenAt);
-    const closeTime = Date.parse(event.registrationCloseAt);
-    const withinWindow =
-      (!Number.isFinite(openTime) || openTime <= now) && (!Number.isFinite(closeTime) || closeTime >= now);
-    const closesIn = Number.isFinite(closeTime)
+    const openSource = event.regOpenAt ?? event.registrationOpenAt;
+    const closeSource = event.regCloseAt ?? event.registrationCloseAt;
+    const openTime = openSource ? Date.parse(openSource) : Number.NaN;
+    const closeTime = closeSource ? Date.parse(closeSource) : Number.NaN;
+    const isAfterOpen = Number.isFinite(openTime) ? openTime <= now : true;
+    const isBeforeClose = Number.isFinite(closeTime) ? closeTime >= now : true;
+    const rawOpen = isAfterOpen && isBeforeClose;
+    const computedOpen =
+      typeof event.isRegistrationOpen === 'boolean' ? event.isRegistrationOpen && rawOpen : rawOpen;
+    const closesInLabel = Number.isFinite(closeTime) && closeTime >= now
       ? (() => {
           const parts = formatCountdown(closeTime);
           if (parts.d > 0) return `${parts.d}d ${parts.h}h`;
@@ -250,13 +255,28 @@ const EventDetailPage = () => {
           return `${parts.m}m`;
         })()
       : '';
+    const opensInLabel = Number.isFinite(openTime) && openTime > now
+      ? (() => {
+          const parts = formatCountdown(openTime);
+          if (parts.d > 0) return `${parts.d}d ${parts.h}h`;
+          if (parts.h > 0) return `${parts.h}h ${parts.m}m`;
+          return `${parts.m}m`;
+        })()
+      : '';
+    const statusLabel = computedOpen
+      ? closesInLabel
+        ? `Closes in ${closesInLabel}`
+        : 'Closes soon'
+      : opensInLabel
+      ? `Opens in ${opensInLabel}`
+      : 'Closed';
     return {
-      isOpen: withinWindow && stage === 'upcoming',
-      opensAt: formatDateTime(event.registrationOpenAt),
-      closesAt: formatDateTime(event.registrationCloseAt),
-      closesIn: closesIn ? `Closes in ${closesIn}` : 'Closes soon',
+      isOpen: computedOpen,
+      opensAt: openSource ? formatDateTime(openSource) : '',
+      closesAt: closeSource ? formatDateTime(closeSource) : '',
+      closesIn: statusLabel,
     };
-  }, [event, now, stage]);
+  }, [event, now]);
 
   const capacityFull = Boolean(
     event?.maxParticipants && event.maxParticipants > 0 && event.registeredCount >= event.maxParticipants,
@@ -277,7 +297,12 @@ const EventDetailPage = () => {
   const isRegistered = Boolean(myRegistration.data && myRegistration.data.status !== 'withdrawn');
   const waitlisted = myRegistration.data?.status === 'waitlisted';
 
-  const canRegister = registrationWindow.isOpen && !capacityFull && !isRegistered;
+  const canRegister =
+    registrationWindow.isOpen &&
+    !capacityFull &&
+    !isRegistered &&
+    stage !== 'completed' &&
+    event?.status !== 'canceled';
   const canUnregister = isRegistered && stage === 'upcoming';
 
   const entryLabel = getEntryLabel(event);
@@ -357,7 +382,7 @@ const EventDetailPage = () => {
                 </div>
                 <div className={styles.infoRow}>
                   <span className={styles.inlineLabel}>Status</span>
-                  <span>{registrationWindow.isOpen ? registrationWindow.closesIn : 'Closed'}</span>
+                  <span>{registrationWindow.closesIn}</span>
                 </div>
               </div>
               <div className={styles.infoCard}>
@@ -545,7 +570,7 @@ const EventDetailPage = () => {
               <div key={entry.participantId ?? `${index}-${entry.teamName ?? entry.user}`} className={styles.tableRow}>
                 <span>{entry.rank ?? index + 1}</span>
                 <span>{entry.teamName ?? entry.user ?? 'Participant'}</span>
-                <span>{entry.points ?? 0}</span>
+                <span>{entry.score ?? entry.points ?? 0}</span>
               </div>
             ))}
           </div>
@@ -665,9 +690,7 @@ const EventDetailPage = () => {
                   <span>Closes</span>
                   <strong>{registrationWindow.closesAt || 'TBA'}</strong>
                 </div>
-                <span className={styles.insightPill}>
-                  {registrationWindow.isOpen ? registrationWindow.closesIn : 'Registrations closed'}
-                </span>
+                <span className={styles.insightPill}>{registrationWindow.closesIn}</span>
               </div>
             </div>
             <div className={styles.insightCard}>

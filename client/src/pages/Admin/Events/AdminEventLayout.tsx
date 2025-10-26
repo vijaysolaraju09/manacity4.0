@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { NavLink, Outlet, useParams } from 'react-router-dom';
 import { Loader2, RefreshCw } from 'lucide-react';
 import {
@@ -7,6 +7,7 @@ import {
   startEvent as startEventAdmin,
   completeEvent as completeEventAdmin,
   cancelEvent as cancelEventAdmin,
+  updateEventWindow,
 } from '@/api/admin';
 import { formatDateTime } from '@/utils/date';
 import { formatINR } from '@/utils/currency';
@@ -25,6 +26,8 @@ type AdminEvent = {
   endAt?: string;
   registrationOpenAt?: string;
   registrationCloseAt?: string;
+  regOpenAt?: string;
+  regCloseAt?: string;
   registeredCount?: number;
   maxParticipants?: number;
   teamSize?: number;
@@ -87,6 +90,8 @@ const normalizeAdminEvent = (raw: any): AdminEvent => ({
   endAt: raw?.endAt ?? raw?.end_at ?? undefined,
   registrationOpenAt: raw?.registrationOpenAt ?? raw?.registration_open_at ?? raw?.startAt,
   registrationCloseAt: raw?.registrationCloseAt ?? raw?.registration_close_at ?? raw?.startAt,
+  regOpenAt: raw?.regOpenAt ?? raw?.registrationOpenAt ?? raw?.registration_open_at ?? raw?.startAt,
+  regCloseAt: raw?.regCloseAt ?? raw?.registrationCloseAt ?? raw?.registration_close_at ?? raw?.startAt,
   registeredCount: Number(raw?.registeredCount ?? raw?.registered ?? 0),
   maxParticipants: Number(raw?.maxParticipants ?? raw?.capacity ?? 0),
   teamSize: Number(raw?.teamSize ?? 1),
@@ -118,6 +123,24 @@ const AdminEventLayout = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<LifecycleAction | null>(null);
+  const [editingWindow, setEditingWindow] = useState(false);
+  const [windowSaving, setWindowSaving] = useState(false);
+  const [windowError, setWindowError] = useState<string | null>(null);
+  const [windowForm, setWindowForm] = useState<{ open: string; close: string }>({ open: '', close: '' });
+  const toLocalInput = (value?: string | null) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+  };
+
+  const toIsoString = (value: string) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toISOString();
+  };
   const [tick, setTick] = useState(Date.now());
 
   const loadEvent = async () => {
@@ -137,6 +160,19 @@ const AdminEventLayout = () => {
   useEffect(() => {
     void loadEvent();
   }, [eventId]);
+
+  useEffect(() => {
+    if (!event) return;
+    setWindowForm({
+      open: toLocalInput(event.regOpenAt ?? event.registrationOpenAt),
+      close: toLocalInput(event.regCloseAt ?? event.registrationCloseAt),
+    });
+  }, [
+    event?.regOpenAt,
+    event?.registrationOpenAt,
+    event?.regCloseAt,
+    event?.registrationCloseAt,
+  ]);
 
   useEffect(() => {
     const interval = window.setInterval(() => setTick(Date.now()), 1000);
@@ -209,10 +245,10 @@ const AdminEventLayout = () => {
 
   const registrationWindow = useMemo(
     () => ({
-      open: safeFormat(event?.registrationOpenAt),
-      close: safeFormat(event?.registrationCloseAt),
+      open: safeFormat(event?.regOpenAt ?? event?.registrationOpenAt),
+      close: safeFormat(event?.regCloseAt ?? event?.registrationCloseAt),
     }),
-    [event?.registrationCloseAt, event?.registrationOpenAt],
+    [event?.regCloseAt, event?.registrationCloseAt, event?.regOpenAt, event?.registrationOpenAt],
   );
 
   const occupancy = useMemo(() => {
@@ -261,6 +297,34 @@ const AdminEventLayout = () => {
       showToast(toErrorMessage(err), 'error');
     } finally {
       setBusyAction(null);
+    }
+  };
+
+  const handleWindowSubmit = async (eventObj: FormEvent<HTMLFormElement>) => {
+    eventObj.preventDefault();
+    if (!eventId) return;
+    setWindowError(null);
+    setWindowSaving(true);
+    try {
+      const openIso = toIsoString(windowForm.open);
+      const closeIso = toIsoString(windowForm.close);
+      if (!openIso || !closeIso) {
+        throw new Error('Please provide valid open and close dates');
+      }
+      if (new Date(openIso).getTime() >= new Date(closeIso).getTime()) {
+        throw new Error('Open time must be earlier than the close time');
+      }
+
+      await updateEventWindow(eventId, { regOpenAt: openIso, regCloseAt: closeIso });
+      showToast('Registration window updated', 'success');
+      setEditingWindow(false);
+      await loadEvent();
+    } catch (err) {
+      const message = toErrorMessage(err);
+      setWindowError(message);
+      showToast(message, 'error');
+    } finally {
+      setWindowSaving(false);
     }
   };
 
@@ -384,14 +448,96 @@ const AdminEventLayout = () => {
 
       <section className={styles.overview}>
         <div className={styles.timeline}>
-          <div>
-            <span className={styles.label}>Registration opens</span>
-            <strong>{registrationWindow.open}</strong>
+          <div className={styles.timelineHeader}>
+            <div>
+              <span className={styles.label}>Registration window</span>
+              <strong>
+                {registrationWindow.open} → {registrationWindow.close}
+              </strong>
+            </div>
+            <button
+              type="button"
+              className={styles.secondaryBtn}
+              onClick={() => {
+                setEditingWindow((prev) => !prev);
+                setWindowError(null);
+                if (!editingWindow) {
+                  setWindowForm({
+                    open: toLocalInput(event?.regOpenAt ?? event?.registrationOpenAt),
+                    close: toLocalInput(event?.regCloseAt ?? event?.registrationCloseAt),
+                  });
+                }
+              }}
+            >
+              {editingWindow ? 'Close editor' : 'Edit window'}
+            </button>
           </div>
-          <div>
-            <span className={styles.label}>Registration closes</span>
-            <strong>{registrationWindow.close}</strong>
-          </div>
+          {editingWindow ? (
+            <form className={styles.windowForm} onSubmit={handleWindowSubmit}>
+              <div className={styles.windowRow}>
+                <label className={styles.label} htmlFor="window-open">
+                  Opens on
+                </label>
+                <input
+                  id="window-open"
+                  type="datetime-local"
+                  value={windowForm.open}
+                  onChange={(eventObj) =>
+                    setWindowForm((prev) => ({ ...prev, open: eventObj.target.value }))
+                  }
+                  disabled={windowSaving}
+                  required
+                />
+              </div>
+              <div className={styles.windowRow}>
+                <label className={styles.label} htmlFor="window-close">
+                  Closes on
+                </label>
+                <input
+                  id="window-close"
+                  type="datetime-local"
+                  value={windowForm.close}
+                  onChange={(eventObj) =>
+                    setWindowForm((prev) => ({ ...prev, close: eventObj.target.value }))
+                  }
+                  disabled={windowSaving}
+                  required
+                />
+              </div>
+              {windowError && <p className={styles.errorText}>{windowError}</p>}
+              <div className={styles.windowControls}>
+                <button type="submit" className={styles.secondaryBtn} disabled={windowSaving}>
+                  {windowSaving ? <Loader2 size={16} className={styles.spin} /> : 'Save window'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.ghostBtn}
+                  onClick={() => {
+                    setEditingWindow(false);
+                    setWindowError(null);
+                    setWindowForm({
+                      open: toLocalInput(event?.regOpenAt ?? event?.registrationOpenAt),
+                      close: toLocalInput(event?.regCloseAt ?? event?.registrationCloseAt),
+                    });
+                  }}
+                  disabled={windowSaving}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <div>
+                <span className={styles.label}>Registration opens</span>
+                <strong>{registrationWindow.open}</strong>
+              </div>
+              <div>
+                <span className={styles.label}>Registration closes</span>
+                <strong>{registrationWindow.close}</strong>
+              </div>
+            </>
+          )}
           <div>
             <span className={styles.label}>Event ends</span>
             <strong>{safeFormat(event?.endAt)}</strong>

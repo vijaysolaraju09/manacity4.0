@@ -440,3 +440,11 @@ export const startEvent = async (id: string) => eventLifecycleEndpoint(id, 'star
 export const completeEvent = async (id: string) => eventLifecycleEndpoint(id, 'complete');
 
 export const cancelEvent = async (id: string) => eventLifecycleEndpoint(id, 'cancel');
+
+export const updateEventWindow = async (
+  id: string,
+  payload: { regOpenAt: string; regCloseAt: string },
+) => {
+  const res = await adminApi.patch(withAdminPrefix(`events/${id}/window`), payload);
+  return extractEntity<any>(res.data);
+};

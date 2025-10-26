@@ -180,11 +180,12 @@ export const submitRegistration = createAsyncThunk<
     }
 
     const res = await http.post(`/events/${eventId}/register`, body);
-    const payload = res?.data?.data ?? res?.data;
+    const payload = res?.data?.data ?? res?.data ?? {};
+    const record = (payload as any)?.registration ?? payload;
     return {
-      id: String(payload?.id ?? payload?._id ?? ''),
-      status: String(payload?.status ?? payload?.data?.status ?? 'submitted'),
-      payment: payload?.payment,
+      id: String(record?.id ?? record?._id ?? ''),
+      status: String(record?.status ?? payload?.status ?? (payload as any)?.data?.status ?? 'submitted'),
+      payment: record?.payment ?? payload?.payment,
     };
   } catch (err) {
     const fallback = toErrorMessage(err);

@@ -21,6 +21,7 @@ const {
   listUpdates,
   getLeaderboard,
   postLeaderboard,
+  updateRegistrationWindow,
   seedBracket,
   getBracket,
   reportMatch,
@@ -109,7 +110,7 @@ const toggleFormSchema = {
 };
 
 // Public
-router.get('/', listEvents);
+router.get('/', optionalAuth, listEvents);
 router.get('/:id', getEvent);
 router.get('/:id/updates', listUpdates);
 router.get('/:id/leaderboard', getLeaderboard);
@@ -133,6 +134,7 @@ router.post('/:id/complete', protect, completeEvent);
 router.post('/:id/cancel', protect, cancelEvent);
 router.post('/:id/updates', protect, postUpdate);
 router.post('/:id/leaderboard', protect, postLeaderboard);
+router.patch('/:id/window', protect, ensureAdmin, updateRegistrationWindow);
 router.post('/:id/bracket/seed', protect, seedBracket);
 router.post('/matches/:matchId/verify', protect, verifyMatch);
 router.put('/:id/form/attach', protect, ensureAdmin, validate(attachTemplateSchema), attachFormTemplate);

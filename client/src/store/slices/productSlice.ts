@@ -76,7 +76,15 @@ export const updateProduct = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const res = await http.patch(`/products/${id}`, data);
+      const { shopId, ...payload } = data;
+      if (!shopId) {
+        const res = await http.patch(`/products/${id}`, data);
+        return toItem(res) as Product;
+      }
+      const sanitizedPayload = Object.fromEntries(
+        Object.entries(payload).filter(([, value]) => value !== undefined)
+      ) as Partial<UpdateProductPayload>;
+      const res = await http.patch(`/shops/${shopId}/products/${id}`, sanitizedPayload);
       return toItem(res) as Product;
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));

@@ -99,6 +99,7 @@ const ManageProducts = () => {
   const [form, setForm] = useState<ProductFormState>(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [shops, setShops] = useState<ShopSummary[]>([]);
   const [shopsLoading, setShopsLoading] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -155,11 +156,13 @@ const ManageProducts = () => {
   const resetForm = () => {
     setForm((prev) => ({ ...emptyForm, shopId: prev.shopId || defaultShopId }));
     setEditId(null);
+    setFormError(null);
   };
 
   const openNew = () => {
     setForm((prev) => ({ ...emptyForm, shopId: prev.shopId || defaultShopId }));
     setEditId(null);
+    setFormError(null);
     setShowModal(true);
   };
 
@@ -175,25 +178,27 @@ const ManageProducts = () => {
       imageUrl: p.image || '',
       stock: typeof p.stock === 'number' ? p.stock : 0,
     });
+    setFormError(null);
     setShowModal(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     if (!form.shopId) {
-      showToast('Select a shop for this product', 'error');
+      setFormError('Select a shop for this product');
       return;
     }
     if (!form.name || !form.price || form.price <= 0) {
-      showToast('Please provide a name and valid price', 'error');
+      setFormError('Please provide a name and valid price');
       return;
     }
     if (!form.mrp || form.mrp <= 0) {
-      showToast('Please provide a valid MRP', 'error');
+      setFormError('Please provide a valid MRP');
       return;
     }
     if (form.price > form.mrp) {
-      showToast('Price cannot exceed MRP', 'error');
+      setFormError('Price cannot exceed MRP');
       return;
     }
     const pricePaise = Math.round(form.price * 100);
@@ -220,20 +225,21 @@ const ManageProducts = () => {
           shopId: form.shopId,
         };
         await dispatch(updateProduct({ id: editId, data: updatePayload })).unwrap();
-        showToast('Product updated');
+        await dispatch(fetchMyProducts()).unwrap();
+        showToast('Product updated', 'success');
       } else {
         const createPayload: CreateProductPayload = {
           ...payloadBase,
           shopId: form.shopId,
         };
         await dispatch(createProduct(createPayload)).unwrap();
-        showToast('Product added');
+        showToast('Product added', 'success');
       }
       setShowModal(false);
       resetForm();
       window.dispatchEvent(new Event('productsUpdated'));
     } catch (err) {
-      showToast(toErrorMessage(err), 'error');
+      setFormError(toErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -373,6 +379,11 @@ const ManageProducts = () => {
       {showModal && (
         <div className={styles.modal}>
           <form onSubmit={handleSubmit} className={styles.form}>
+            {formError && (
+              <p className={styles.formError} role="alert">
+                {formError}
+              </p>
+            )}
             <label>
               Shop
               <select

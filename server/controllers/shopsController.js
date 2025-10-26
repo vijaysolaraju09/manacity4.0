@@ -2,6 +2,30 @@ const Shop = require('../models/Shop');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
+const { normalizeProduct } = require('../utils/normalize');
+
+const ensurePaise = (value, field) => {
+  if (typeof value !== 'number' || !Number.isInteger(value)) {
+    throw AppError.badRequest('INVALID_PRICE', `${field} must be an integer amount in paise`);
+  }
+  if (value <= 0) {
+    throw AppError.badRequest('INVALID_PRICE', `${field} must be greater than 0`);
+  }
+  return value;
+};
+
+const ensureRupees = (value, field) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    throw AppError.badRequest('INVALID_PRICE', `${field} must be a valid number`);
+  }
+  if (numeric <= 0) {
+    throw AppError.badRequest('INVALID_PRICE', `${field} must be greater than 0`);
+  }
+  return numeric;
+};
+
+const toPrice = (paise) => paise / 100;
 
 exports.createShop = async (req, res, next) => {
   try {
@@ -142,6 +166,112 @@ exports.getProductsByShop = async (req, res, next) => {
   try {
     const products = await Product.find({ shop: req.params.id, isDeleted: false }).lean();
     return res.json({ ok: true, data: { items: products }, traceId: req.traceId });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.updateShopProduct = async (req, res, next) => {
+  try {
+    const { shopId, productId } = req.params;
+
+    const shop = await Shop.findById(shopId).select('owner location');
+    if (!shop) {
+      return next(AppError.notFound('SHOP_NOT_FOUND', 'Shop not found'));
+    }
+
+    if (shop.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return next(AppError.forbidden('NOT_AUTHORIZED', 'Not authorized'));
+    }
+
+    const product = await Product.findOne({ _id: productId, shop: shopId, isDeleted: false });
+    if (!product) {
+      return next(AppError.notFound('PRODUCT_NOT_FOUND', 'Product not found'));
+    }
+
+    const update = {};
+
+    const {
+      name,
+      description,
+      category,
+      pricePaise,
+      mrpPaise,
+      price,
+      mrp,
+      imageUrl,
+      stock,
+      status,
+      available,
+      isSpecial,
+    } = req.body || {};
+
+    if (name !== undefined) update.name = name;
+    if (description !== undefined) update.description = description;
+    if (category !== undefined) update.category = category;
+
+    if (pricePaise !== undefined) {
+      const ensured = ensurePaise(pricePaise, 'Price');
+      update.price = toPrice(ensured);
+    } else if (price !== undefined) {
+      update.price = ensureRupees(price, 'Price');
+    }
+
+    if (mrpPaise !== undefined) {
+      const ensured = ensurePaise(mrpPaise, 'MRP');
+      update.mrp = toPrice(ensured);
+    } else if (mrp !== undefined) {
+      update.mrp = ensureRupees(mrp, 'MRP');
+    }
+
+    const nextPrice = update.price !== undefined ? update.price : product.price;
+    const nextMrp = update.mrp !== undefined ? update.mrp : product.mrp;
+    if (nextPrice && nextMrp && nextPrice > nextMrp) {
+      return next(AppError.badRequest('INVALID_PRICE', 'Price cannot exceed MRP'));
+    }
+
+    if (update.price !== undefined || update.mrp !== undefined) {
+      update.discount = nextMrp > 0 ? Math.round(((nextMrp - nextPrice) / nextMrp) * 100) : 0;
+    }
+
+    if (imageUrl !== undefined) {
+      const trimmed = typeof imageUrl === 'string' ? imageUrl.trim() : '';
+      update.image = trimmed || undefined;
+      update.images = trimmed ? [trimmed] : [];
+    }
+
+    if (stock !== undefined) {
+      const numericStock = Number(stock);
+      if (!Number.isFinite(numericStock) || numericStock < 0) {
+        return next(AppError.badRequest('INVALID_STOCK', 'Stock must be a non-negative number'));
+      }
+      update.stock = numericStock;
+    }
+
+    if (status !== undefined) update.status = status;
+    if (available !== undefined) update.available = available;
+    if (isSpecial !== undefined) update.isSpecial = isSpecial;
+
+    update.updatedBy = req.user._id;
+    if (shop.location) {
+      update.city = shop.location;
+    }
+
+    const updatedProduct = await Product.findOneAndUpdate(
+      { _id: productId, shop: shopId, isDeleted: false },
+      update,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProduct) {
+      return next(AppError.notFound('PRODUCT_NOT_FOUND', 'Product not found'));
+    }
+
+    return res.json({
+      ok: true,
+      data: { product: normalizeProduct(updatedProduct) },
+      traceId: req.traceId,
+    });
   } catch (err) {
     return next(err);
   }

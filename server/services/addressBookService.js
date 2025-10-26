@@ -35,8 +35,17 @@ const sanitizeAddressPayload = (input) => {
     lastUsedAt: new Date(),
   };
 
-  const line2 = toOptionalTrimmedString(value.line2);
+  const line2 =
+    toOptionalTrimmedString(value.line2) ||
+    toOptionalTrimmedString(value.area) ||
+    undefined;
   if (line2) payload.line2 = line2;
+
+  const phone =
+    toOptionalTrimmedString(value.phone) ||
+    toOptionalTrimmedString(value.contact) ||
+    toOptionalTrimmedString(value.phoneNumber);
+  if (phone) payload.phone = phone;
 
   if (value.coords && typeof value.coords === 'object') {
     const lat = Number(value.coords.lat);
@@ -63,6 +72,7 @@ const toAddressResponse = (doc) => {
     city: doc.city,
     state: doc.state,
     pincode: doc.pincode,
+    phone: doc.phone || '',
     isDefault: !!doc.isDefault,
     coords: doc.coords ? { ...doc.coords } : null,
     lastUsedAt: doc.lastUsedAt ? doc.lastUsedAt.toISOString() : null,
@@ -109,6 +119,9 @@ const createOrUpdateAddress = async (userId, input) => {
       existing.label = payload.label;
       existing.line2 = payload.line2 || '';
       existing.coords = payload.coords;
+      if (payload.phone !== undefined) {
+        existing.phone = payload.phone;
+      }
       existing.lastUsedAt = new Date();
       if (payload.isDefault) {
         existing.isDefault = true;
@@ -187,6 +200,23 @@ const upsertAddressFromShipping = async (userId, shipping) => {
   return createOrUpdateAddress(userId, payload);
 };
 
+const setDefaultAddress = async (userId, addressId) => {
+  if (!addressId) {
+    throw AppError.badRequest('INVALID_ADDRESS', 'Address id is required');
+  }
+
+  const address = await UserAddress.findOne({ user: userId, _id: addressId });
+  if (!address) {
+    throw AppError.notFound('ADDRESS_NOT_FOUND', 'Address not found');
+  }
+
+  address.isDefault = true;
+  address.lastUsedAt = new Date();
+  await address.save();
+  await markDefaultAddress(userId, address._id);
+  return address;
+};
+
 module.exports = {
   sanitizeAddressPayload,
   toAddressResponse,
@@ -194,4 +224,5 @@ module.exports = {
   createOrUpdateAddress,
   upsertAddressFromShipping,
   findAddressesForUser,
+  setDefaultAddress,
 };

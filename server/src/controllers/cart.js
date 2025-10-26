@@ -96,12 +96,22 @@ const buildResponseItem = (product, unitPricePaise, shopId) => {
 
   const productId = product._id?.toString?.() || product.id?.toString?.();
 
+  const normalizedPricePaise = Number.isFinite(product.pricePaise)
+    ? Math.max(0, Math.round(product.pricePaise))
+    : unitPricePaise;
+  const mrpPaise = Number.isFinite(product.mrpPaise)
+    ? Math.max(0, Math.round(product.mrpPaise))
+    : Number.isFinite(product.mrp)
+      ? Math.max(0, Math.round(toPaise(product.mrp)))
+      : undefined;
+
   return {
     productId,
     shopId,
-    pricePaise: unitPricePaise,
+    pricePaise: normalizedPricePaise,
     name: product.name,
     image: primaryImage,
+    mrpPaise,
     product: {
       _id: productId,
       id: productId,
@@ -110,7 +120,9 @@ const buildResponseItem = (product, unitPricePaise, shopId) => {
       image: primaryImage,
       images,
       price: product.price,
-      pricePaise: unitPricePaise,
+      mrp: product.mrp,
+      pricePaise: normalizedPricePaise,
+      mrpPaise,
       shopId,
     },
     shop:
@@ -132,7 +144,7 @@ const loadProductMap = async (items = []) => {
   if (!productIds.length) return new Map();
 
   const products = await Product.find({ _id: { $in: productIds } })
-    .select('name price image images shop status isDeleted')
+    .select('name price mrp image images shop status isDeleted')
     .populate('shop', 'name image owner')
     .lean();
   return new Map(products.map((product) => [product._id.toString(), product]));

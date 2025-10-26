@@ -90,12 +90,22 @@ const buildResponseItem = (product, unitPricePaise, shopId) => {
 
   const productId = product._id?.toString?.() || product.id?.toString?.();
 
+  const normalizedPricePaise = Number.isFinite(product.pricePaise)
+    ? Math.max(0, Math.round(product.pricePaise))
+    : unitPricePaise;
+  const mrpPaise = Number.isFinite(product.mrpPaise)
+    ? Math.max(0, Math.round(product.mrpPaise))
+    : Number.isFinite(product.mrp)
+      ? Math.max(0, Math.round(toPaise(product.mrp)))
+      : undefined;
+
   return {
     productId,
     shopId,
-    pricePaise: unitPricePaise,
+    pricePaise: normalizedPricePaise,
     name: product.name,
     image: primaryImage,
+    mrpPaise,
     product: {
       _id: productId,
       id: productId,
@@ -104,7 +114,9 @@ const buildResponseItem = (product, unitPricePaise, shopId) => {
       image: primaryImage,
       images,
       price: product.price,
-      pricePaise: unitPricePaise,
+      mrp: product.mrp,
+      pricePaise: normalizedPricePaise,
+      mrpPaise,
       shopId,
     },
     shop:
@@ -117,6 +129,51 @@ const buildResponseItem = (product, unitPricePaise, shopId) => {
           }
         : shopId,
   };
+};
+
+const loadProductMap = async (items = []) => {
+  const productIds = items
+    .map((item) => parseObjectId(item.productId || item.product))
+    .filter(Boolean);
+  if (!productIds.length) return new Map();
+
+  const products = await Product.find({ _id: { $in: productIds } })
+    .select('name price mrp image images shop status isDeleted')
+    .populate('shop', 'name image owner')
+    .lean();
+  return new Map(products.map((product) => [product._id.toString(), product]));
+};
+
+const buildCartResponse = async (cart) => {
+  const serialized = serializeCart(cart);
+  const productMap = await loadProductMap(cart?.items || []);
+
+  const items = serialized.items.map((item) => {
+    const product = productMap.get(item.productId);
+    if (!product) {
+      return {
+        ...item,
+        pricePaise: item.unitPricePaise,
+        lineTotalPaise: item.subtotalPaise,
+        name: null,
+        image: null,
+        product: null,
+        shop: null,
+      };
+    }
+
+    const shopId = toIdString(product.shop?._id ?? product.shop);
+    const responseItem = buildResponseItem(product, item.unitPricePaise, shopId);
+    return {
+      ...item,
+      ...responseItem,
+      mrpPaise: responseItem?.mrpPaise ?? item.mrpPaise,
+      lineTotalPaise: item.subtotalPaise,
+      subtotalPaise: item.subtotalPaise,
+    };
+  });
+
+  return { ...serialized, items };
 };
 
 exports.addToCart = async (req, res, next) => {
@@ -159,13 +216,23 @@ exports.addToCart = async (req, res, next) => {
       unitPrice: unitPricePaise,
     });
 
-    const responseItem = buildResponseItem(product, unitPricePaise, shopId);
+    const cartResponse = await buildCartResponse(cart);
+    const productIdString = productObjectId.toString();
+    const matchedItem = cartResponse.items.find((item) => item.productId === productIdString);
+    const responseItem =
+      matchedItem ||
+      {
+        ...buildResponseItem(product, unitPricePaise, shopId),
+        qty: quantityToAdd,
+        unitPricePaise,
+        lineTotalPaise: unitPricePaise * quantityToAdd,
+      };
 
     res.status(created ? 201 : 200).json({
       ok: true,
       data: {
         cartItem: responseItem,
-        cart: serializeCart(cart),
+        cart: cartResponse,
       },
       traceId: req.traceId,
     });
@@ -181,10 +248,11 @@ exports.addToCart = async (req, res, next) => {
 exports.getMyCart = async (req, res, next) => {
   try {
     const cart = await CartModel.findOne({ userId: req.user._id });
+    const response = await buildCartResponse(cart);
     res.json({
       ok: true,
       data: {
-        cart: serializeCart(cart),
+        cart: response,
       },
       traceId: req.traceId,
     });
@@ -217,10 +285,12 @@ exports.removeFromCart = async (req, res, next) => {
       throw AppError.notFound('CART_ITEM_NOT_FOUND', 'Cart item not found');
     }
 
+    const response = await buildCartResponse(result.cart);
+
     res.json({
       ok: true,
       data: {
-        cart: serializeCart(result.cart),
+        cart: response,
       },
       traceId: req.traceId,
     });

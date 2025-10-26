@@ -1,0 +1,437 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ShoppingCart, Trash2 } from 'lucide-react';
+
+import { http } from '@/lib/http';
+import { toErrorMessage } from '@/lib/response';
+import { formatINR } from '@/utils/currency';
+import showToast from '@/components/ui/Toast';
+import { Button } from '@/components/ui/button';
+import QuantityStepper from '@/components/ui/QuantityStepper/QuantityStepper';
+import ErrorCard from '@/components/ui/ErrorCard';
+import { Skeleton } from '@/components/ui/skeleton';
+import AddressSelectModal from '@/components/address/AddressSelectModal';
+import fallbackImage from '@/assets/no-image.svg';
+import { paths } from '@/routes/paths';
+
+const maybeNumber = (value: unknown): number | undefined => {
+  if (value === null || value === undefined) return undefined;
+  const num = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(num)) return undefined;
+  return num;
+};
+
+const maybePaise = (value: unknown): number | undefined => {
+  const num = maybeNumber(value);
+  return num === undefined ? undefined : Math.round(num);
+};
+
+const maybeRupeesToPaise = (value: unknown): number | undefined => {
+  if (value === null || value === undefined || value === '') return undefined;
+  const num = Number(value);
+  return Number.isFinite(num) ? Math.round(num * 100) : undefined;
+};
+
+type CartItem = {
+  productId: string;
+  name: string;
+  image: string | null;
+  qty: number;
+  unitPricePaise: number;
+  lineTotalPaise: number;
+  mrpPaise?: number;
+};
+
+type CartData = {
+  items: CartItem[];
+  subtotalPaise: number;
+  discountPaise: number;
+  grandPaise: number;
+  currency: string;
+};
+
+const extractCartPayload = (input: any) => {
+  if (!input) return null;
+  if (input.data?.data?.cart) return input.data.data.cart;
+  if (input.data?.cart) return input.data.cart;
+  if (input.cart) return input.cart;
+  return input;
+};
+
+const parseCart = (payload: any): CartData => {
+  const raw = extractCartPayload(payload) ?? {};
+  const rawItems: any[] = Array.isArray(raw.items) ? raw.items : [];
+
+  const items: CartItem[] = rawItems
+    .map((item) => {
+      if (!item) return null;
+      const productId = String(item.productId ?? item.id ?? '');
+      if (!productId) return null;
+
+      const qty = (() => {
+        const num = maybeNumber(item.qty);
+        if (!Number.isFinite(num)) return 1;
+        const value = Math.floor(Number(num));
+        return value > 0 ? value : 1;
+      })();
+
+      const product = item.product ?? {};
+      const unitPricePaise =
+        maybePaise(item.unitPricePaise) ??
+        maybePaise(item.pricePaise) ??
+        maybeRupeesToPaise(item.unitPrice) ??
+        maybeRupeesToPaise(item.price) ??
+        maybePaise(product.pricePaise) ??
+        maybeRupeesToPaise(product.price);
+
+      const resolvedUnitPrice = typeof unitPricePaise === 'number' && unitPricePaise > 0 ? unitPricePaise : 0;
+      const subtotal = maybePaise(item.subtotalPaise) ?? resolvedUnitPrice * qty;
+
+      const nameSource = [item.name, product.name, product.title].find(
+        (value) => typeof value === 'string' && value.trim(),
+      );
+      const imageSource = [item.image, product.image, Array.isArray(product.images) ? product.images[0] : null].find(
+        (value) => typeof value === 'string' && value,
+      );
+
+      const mrpPaise =
+        maybePaise(item.mrpPaise) ??
+        maybePaise(product.mrpPaise) ??
+        maybeRupeesToPaise(product.mrp) ??
+        maybeRupeesToPaise(product?.pricing?.mrp);
+
+      return {
+        productId,
+        name: typeof nameSource === 'string' && nameSource.trim() ? nameSource.trim() : 'Item',
+        image: typeof imageSource === 'string' ? imageSource : null,
+        qty,
+        unitPricePaise: resolvedUnitPrice,
+        lineTotalPaise: Math.max(0, Math.round(subtotal)),
+        mrpPaise: typeof mrpPaise === 'number' && mrpPaise > 0 ? mrpPaise : undefined,
+      } satisfies CartItem;
+    })
+    .filter((value): value is CartItem => Boolean(value));
+
+  const computedSubtotal = items.reduce((total, item) => total + item.unitPricePaise * item.qty, 0);
+  const rawSubtotal = maybePaise(raw.totals?.subtotalPaise ?? raw.subtotalPaise);
+  const subtotalPaise = Math.max(0, Math.round(rawSubtotal ?? computedSubtotal));
+
+  const computedDiscount = items.reduce((total, item) => {
+    if (item.mrpPaise && item.mrpPaise > item.unitPricePaise) {
+      return total + (item.mrpPaise - item.unitPricePaise) * item.qty;
+    }
+    return total;
+  }, 0);
+  const discountPaise = Math.max(
+    0,
+    Math.round(maybePaise(raw.totals?.discountPaise ?? raw.discountPaise) ?? computedDiscount),
+  );
+
+  const grandPaise = Math.max(
+    0,
+    Math.round(maybePaise(raw.totals?.grandPaise ?? raw.grandPaise) ?? subtotalPaise - discountPaise),
+  );
+
+  return {
+    items,
+    subtotalPaise,
+    discountPaise,
+    grandPaise,
+    currency: typeof raw.currency === 'string' && raw.currency ? raw.currency : 'INR',
+  };
+};
+
+const CartPage = () => {
+  const navigate = useNavigate();
+  const [cart, setCart] = useState<CartData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
+  const [placingOrder, setPlacingOrder] = useState(false);
+
+  const markPending = useCallback((productId: string, isPending: boolean) => {
+    setPendingIds((prev) => {
+      const next = new Set(prev);
+      if (isPending) {
+        next.add(productId);
+      } else {
+        next.delete(productId);
+      }
+      return next;
+    });
+  }, []);
+
+  const refreshCart = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await http.get('/api/cart');
+      setCart(parseCart(response));
+    } catch (err) {
+      const message = toErrorMessage(err);
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshCart();
+  }, [refreshCart]);
+
+  const handleRemove = useCallback(
+    async (productId: string, itemName: string) => {
+      markPending(productId, true);
+      try {
+        const response = await http.delete(`/api/cart/${productId}`);
+        setCart(parseCart(response));
+        showToast(`Removed ${itemName}`, 'success');
+      } catch (err) {
+        const message = toErrorMessage(err);
+        showToast(message, 'error');
+      } finally {
+        markPending(productId, false);
+      }
+    },
+    [markPending],
+  );
+
+  const handleQuantityChange = useCallback(
+    async (productId: string, nextQty: number, itemName: string) => {
+      if (nextQty <= 0) {
+        await handleRemove(productId, itemName);
+        return;
+      }
+      markPending(productId, true);
+      try {
+        const response = await http.post('/api/cart', { productId, qty: nextQty });
+        setCart(parseCart(response));
+        showToast(`Updated ${itemName} to ${nextQty}`, 'success');
+      } catch (err) {
+        const message = toErrorMessage(err);
+        showToast(message, 'error');
+      } finally {
+        markPending(productId, false);
+      }
+    },
+    [handleRemove, markPending],
+  );
+
+  const handleProceedToCheckout = () => {
+    if (!cart || cart.items.length === 0) {
+      showToast('Your cart is empty', 'info');
+      return;
+    }
+    setAddressModalOpen(true);
+  };
+
+  const handlePlaceOrder = useCallback(
+    async (addressId: string) => {
+      setPlacingOrder(true);
+      try {
+        await http.post('/api/orders/checkout', { addressId, addressRef: addressId });
+        showToast('Order placed successfully', 'success');
+        setAddressModalOpen(false);
+        setCart((prev) => (prev ? { ...prev, items: [], subtotalPaise: 0, discountPaise: 0, grandPaise: 0 } : prev));
+        if (typeof paths.orders?.mine === 'function') {
+          navigate(paths.orders.mine());
+        } else if (typeof paths.orders?.root === 'function') {
+          navigate(paths.orders.root());
+        } else {
+          navigate('/orders/mine');
+        }
+      } catch (err) {
+        const message = toErrorMessage(err);
+        showToast(message, 'error');
+        throw err;
+      } finally {
+        setPlacingOrder(false);
+      }
+    },
+    [navigate],
+  );
+
+  const itemCount = useMemo(() => cart?.items.reduce((total, item) => total + item.qty, 0) ?? 0, [cart]);
+
+  const subtotalLabel = formatINR(cart?.subtotalPaise ?? 0);
+  const discountLabel = formatINR(cart?.discountPaise ?? 0);
+  const totalLabel = formatINR(cart?.grandPaise ?? 0);
+
+  const isEmpty = !loading && (!cart || cart.items.length === 0);
+
+  const handleContinueShopping = () => {
+    if (typeof paths.shops === 'function') {
+      navigate(paths.shops());
+      return;
+    }
+    if (typeof paths.home === 'function') {
+      navigate(paths.home());
+      return;
+    }
+    navigate('/');
+  };
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">My Cart</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Review your items and adjust quantities before checking out.
+        </p>
+      </header>
+
+      {loading ? (
+        <div className="mt-10 space-y-4" aria-live="polite">
+          {[0, 1, 2].map((key) => (
+            <Skeleton key={key} className="h-28 w-full rounded-3xl" />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="mt-8">
+          <ErrorCard message={error} onRetry={refreshCart} />
+        </div>
+      ) : isEmpty ? (
+        <div className="mt-12 flex flex-col items-center justify-center gap-6 rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-10 text-center dark:border-slate-700 dark:bg-slate-900/40">
+          <ShoppingCart className="h-12 w-12 text-blue-500" aria-hidden="true" />
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Your cart is empty</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              Add items to your cart to see them here.
+            </p>
+          </div>
+          <Button
+            type="button"
+            onClick={handleContinueShopping}
+            className="rounded-full px-6 py-2"
+          >
+            Start shopping
+          </Button>
+        </div>
+      ) : (
+        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <section aria-label="Cart items" className="space-y-4">
+            {cart?.items.map((item) => {
+              const pending = pendingIds.has(item.productId);
+              const imageSrc = item.image || fallbackImage;
+              const priceLabel = formatINR(item.unitPricePaise);
+              const lineTotalLabel = formatINR(item.lineTotalPaise);
+              const hasDiscount = typeof item.mrpPaise === 'number' && item.mrpPaise > item.unitPricePaise;
+              const mrpLabel = hasDiscount ? formatINR(item.mrpPaise ?? 0) : null;
+              return (
+                <article
+                  key={item.productId}
+                  className="flex flex-col gap-4 rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-800/60 dark:bg-slate-900/80 lg:flex-row"
+                >
+                  <div className="flex w-full flex-col gap-4 sm:flex-row">
+                    <div className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
+                      <img
+                        src={imageSrc}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                        onError={(event) => {
+                          if (event.currentTarget.src !== fallbackImage) {
+                            event.currentTarget.src = fallbackImage;
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-1 flex-col gap-2">
+                      <div className="flex flex-col gap-1">
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                          {item.name}
+                        </h3>
+                        <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                          <span className="font-semibold text-slate-900 dark:text-slate-50">{priceLabel}</span>
+                          {mrpLabel ? (
+                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-300">
+                              Save {formatINR((item.mrpPaise ?? 0) - item.unitPricePaise)}
+                            </span>
+                          ) : null}
+                        </div>
+                        {mrpLabel ? (
+                          <span className="text-xs text-slate-500 line-through dark:text-slate-400">{mrpLabel}</span>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <QuantityStepper
+                          value={item.qty}
+                          onChange={(value) => handleQuantityChange(item.productId, value, item.name)}
+                          disabled={pending}
+                          ariaLabel={`Quantity for ${item.name}`}
+                        />
+                        <div className="flex items-center gap-4">
+                          <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {lineTotalLabel}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemove(item.productId, item.name)}
+                            disabled={pending}
+                            className="flex items-center gap-2 text-sm text-rose-600 hover:text-rose-700 dark:text-rose-300"
+                          >
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+
+          <aside
+            className="flex h-fit flex-col gap-6 rounded-3xl border border-slate-200/70 bg-white/95 p-6 shadow-lg dark:border-slate-800/70 dark:bg-slate-900/80"
+            aria-label="Order summary"
+          >
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Price summary</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {itemCount} item{itemCount === 1 ? '' : 's'} in your cart
+              </p>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                <span>Subtotal</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{subtotalLabel}</span>
+              </div>
+              <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-300">
+                <span>Discount</span>
+                <span>-{discountLabel}</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                <span>Shipping</span>
+                <span>Calculated at checkout</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between border-t border-slate-200 pt-4 text-base font-semibold text-slate-900 dark:border-slate-700 dark:text-slate-50">
+              <span>Total</span>
+              <span>{totalLabel}</span>
+            </div>
+            <Button
+              type="button"
+              onClick={handleProceedToCheckout}
+              className="w-full rounded-full py-3 text-base font-semibold"
+              disabled={placingOrder || (cart?.items.length ?? 0) === 0}
+            >
+              Proceed to checkout
+            </Button>
+          </aside>
+        </div>
+      )}
+
+      <AddressSelectModal
+        open={addressModalOpen}
+        onClose={() => setAddressModalOpen(false)}
+        onConfirm={handlePlaceOrder}
+        isSubmitting={placingOrder}
+      />
+    </div>
+  );
+};
+
+export default CartPage;

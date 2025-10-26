@@ -230,7 +230,7 @@ const createShopOrder = async ({
   }
   await notifyUser(user._id, {
     type: 'order',
-    message: `Your order ${code || ''} with ${shop.name} is awaiting shop acceptance.`,
+    message: 'Order placed',
   });
 
   if (shippingAddressInput) {
@@ -508,7 +508,7 @@ exports.updateOrderStatus = async (req, res, next) => {
     const code = orderCode(order);
     await notifyUser(order.user, {
       type: 'order',
-      message: `Order ${code || ''} is now ${statusLabel(nextStatus)}.`,
+      message: `Order is ${statusLabel(nextStatus)}`,
     });
     res.json({ ok: true, data: { order }, traceId: req.traceId });
   } catch (err) {
@@ -547,7 +547,7 @@ exports.cancelOrder = async (req, res, next) => {
     }
     await notifyUser(order.user, {
       type: 'order',
-      message: `Order ${code || ''} has been cancelled.`,
+      message: 'Order is cancelled',
     });
     res.json({ ok: true, data: { order }, traceId: req.traceId });
   } catch (err) {

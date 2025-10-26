@@ -220,6 +220,12 @@ const sendNotification = async (userIds, subType, message) => {
   );
 };
 
+const toStatusMessage = (status) => {
+  if (!status) return 'Service request updated';
+  const normalized = String(status).trim().replace(/_/g, ' ');
+  return `Service request ${normalized}`;
+};
+
 exports.createServiceRequest = async (req, res, next) => {
   try {
     const body = req.body || {};
@@ -556,10 +562,11 @@ exports.updateOffer = async (req, res, next) => {
       await populateRequest(request);
 
       await sendNotification(
-        [offer.providerId, request.userId],
+        offer.providerId,
         'assigned',
-        'Service request assigned to a provider'
+        'You have been assigned to a service request'
       );
+      await sendNotification(request.userId, 'assigned', 'Service request assigned');
     } else {
       offer.status = 'rejected';
       appendHistory(request, {
@@ -642,7 +649,7 @@ exports.completeServiceRequest = async (req, res, next) => {
     await request.save();
     await populateRequest(request);
 
-    await sendNotification(req.user._id, 'completed', 'Service request marked completed');
+    await sendNotification(req.user._id, 'completed', 'Service request completed');
     if (request.assignedProviderId)
       await sendNotification(
         request.assignedProviderId,
@@ -835,11 +842,7 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
         'assigned',
         'You have been assigned to a service request'
       );
-      await sendNotification(
-        request.userId,
-        'assigned',
-        'Your service request has been assigned to a provider'
-      );
+      await sendNotification(request.userId, 'assigned', 'Service request assigned');
     }
 
     if (updates.status && (!isAssignedStatus(updates.status) || !updates.assignedProviderId)) {
@@ -856,7 +859,7 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
       await sendNotification(
         request.userId,
         statusSubType,
-        'Service request updated by admin'
+        toStatusMessage(updates.status)
       );
     }
 

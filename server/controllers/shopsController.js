@@ -2,6 +2,7 @@ const Shop = require('../models/Shop');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
+const { notifyUser } = require('../services/notificationService');
 const { normalizeProduct } = require('../utils/normalize');
 
 const ensurePaise = (value, field) => {
@@ -341,6 +342,7 @@ exports.approveShop = async (req, res, next) => {
         businessStatus: 'approved',
         role: 'business',
       });
+      await notifyUser(shop.owner, { type: 'system', message: 'Your request has been approved' });
     }
     return res.json({ ok: true, data: { shop: shop.toCardJSON() }, traceId: req.traceId });
   } catch (err) {

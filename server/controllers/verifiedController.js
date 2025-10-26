@@ -412,7 +412,7 @@ exports.approveVerified = async (req, res, next) => {
     });
     await notifyUser(verified.user._id, {
       type: 'system',
-      message: 'Your verification request has been approved. Welcome to the verified directory!',
+      message: 'Your request has been approved',
     });
     const card = verified.toCardJSON(verified.user);
     res.json({ ok: true, data: { verified: card }, traceId: req.traceId });
@@ -497,7 +497,7 @@ exports.updateVerificationRequestStatus = async (req, res, next) => {
 
     let message;
     if (status === 'approved') {
-      message = 'Your verification request has been approved. Welcome to the verified directory!';
+      message = 'Your request has been approved';
     } else if (status === 'rejected') {
       message = 'Your verification request was rejected. You can review the feedback and try again.';
     } else {

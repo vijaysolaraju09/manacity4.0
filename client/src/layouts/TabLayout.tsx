@@ -35,6 +35,24 @@ const TabLayout = () => {
     };
   }, [dispatch, isAuthenticated]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+    const refresh = () => {
+      dispatch(fetchNotifs({ page: 1 }));
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refresh();
+      }
+    };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [dispatch, isAuthenticated]);
+
   const tabs = [
     { name: "Home", icon: Home, path: paths.home() },
     { name: "Shops", icon: Store, path: paths.shops() },

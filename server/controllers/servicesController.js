@@ -799,7 +799,7 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
         notifyUser(requestOwnerId, {
           type: 'service_request',
           subType: 'service_assigned',
-          message: 'Your service request was assigned',
+          message: 'Service request assigned',
           metadata: { requestId: toIdString(updated._id) },
         })
       );
@@ -812,9 +812,7 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
         notifyUser(requestOwnerId, {
           type: 'service_request',
           subType: 'service_status',
-          message: `Your service request status is now ${formatStatusLabel(
-            updated.status
-          )}`,
+          message: `Service request ${formatStatusLabel(updated.status)}`,
           metadata: { requestId: toIdString(updated._id) },
         })
       );

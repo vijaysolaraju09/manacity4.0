@@ -3,6 +3,7 @@ const Shop = require('../models/Shop');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
+const { notifyUser } = require('../services/notificationService');
 
 const STATUS_TO_INTERNAL = {
   active: 'approved',
@@ -332,6 +333,9 @@ const transitionShopStatus = async (req, res, next, status) => {
         update.role = 'business';
       }
       await User.findByIdAndUpdate(shop.owner, update);
+      if (status === 'approved') {
+        await notifyUser(shop.owner, { type: 'system', message: 'Your request has been approved' });
+      }
     }
 
     const [withOwner] = await Shop.aggregate([

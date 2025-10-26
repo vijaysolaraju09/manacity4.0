@@ -26,12 +26,18 @@ const normalizeEntries = (entries: EditableEntry[]): EventLeaderboardEntry[] =>
     participantId: entry.participantId,
     teamName: entry.teamName?.trim() || undefined,
     user: entry.user?.trim() || undefined,
-    points:
-      typeof entry.points === 'number' && Number.isFinite(entry.points)
-        ? entry.points
-        : Number.isFinite(Number(entry.points))
-        ? Number(entry.points)
-        : 0,
+    score: (() => {
+      if (typeof entry.score === 'number' && Number.isFinite(entry.score)) return entry.score;
+      if (typeof entry.points === 'number' && Number.isFinite(entry.points)) return entry.points;
+      const numeric = Number(entry.score ?? entry.points);
+      return Number.isFinite(numeric) ? numeric : 0;
+    })(),
+    points: (() => {
+      if (typeof entry.points === 'number' && Number.isFinite(entry.points)) return entry.points;
+      if (typeof entry.score === 'number' && Number.isFinite(entry.score)) return entry.score;
+      const numeric = Number(entry.points ?? entry.score);
+      return Number.isFinite(numeric) ? numeric : 0;
+    })(),
     rank:
       typeof entry.rank === 'number' && Number.isFinite(entry.rank)
         ? entry.rank
@@ -118,7 +124,11 @@ const AdminLeaderboard = () => {
       (event: ChangeEvent<HTMLInputElement>) => {
         const raw = event.target.value;
         const value = raw.trim().length === 0 ? undefined : Number(raw);
-        updateEntry(index, { [key]: value } as Partial<EditableEntry>);
+        const patch: Partial<EditableEntry> = { [key]: value } as Partial<EditableEntry>;
+        if (key === 'points') {
+          patch.score = value;
+        }
+        updateEntry(index, patch);
       },
     [updateEntry],
   );
@@ -232,7 +242,7 @@ const AdminLeaderboard = () => {
               <tr>
                 <th>Rank</th>
                 <th>Team / Player</th>
-                <th>Points</th>
+                <th>Score</th>
                 <th>Wins</th>
                 <th>Losses</th>
                 <th>Kills</th>
@@ -270,7 +280,7 @@ const AdminLeaderboard = () => {
                   <td>
                     <input
                       type="number"
-                      value={entry.points ?? ''}
+                      value={entry.score ?? entry.points ?? ''}
                       onChange={handleNumberChange(index, 'points')}
                       className={styles.input}
                     />

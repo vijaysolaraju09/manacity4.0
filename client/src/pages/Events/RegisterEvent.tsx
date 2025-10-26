@@ -434,7 +434,7 @@ const RegisterEventPage = () => {
           <h2 className={styles.cardTitle}>You're on the list!</h2>
           <p>
             Keep this information handy. We'll also send a confirmation to your registered contact
-            details.
+            details. You can revisit it anytime from the “My Registrations” tab on the events hub.
           </p>
           <dl className={styles.detailsList}>
             <div>
@@ -453,6 +453,13 @@ const RegisterEventPage = () => {
               onClick={() => navigate(`/events/${id}`)}
             >
               View event details
+            </button>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => navigate('/events#registrations')}
+            >
+              View my registrations
             </button>
             <button type="button" className={styles.secondaryButton} onClick={() => navigate('/events')}>
               Explore more events

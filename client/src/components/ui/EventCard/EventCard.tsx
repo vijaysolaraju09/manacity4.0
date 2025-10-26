@@ -19,6 +19,11 @@ const EventCard = ({ event }: Props) => {
     if (!max || max <= 0) return `${event.registeredCount}`;
     return `${Math.min(event.registeredCount, max)}/${max}`;
   }, [event.registeredCount, event.maxParticipants]);
+  const registrationStart = event.regOpenAt ?? event.registrationOpenAt;
+  const registrationEnd = event.regCloseAt ?? event.registrationCloseAt;
+  const registrationLabel = `${registrationStart ? formatDate(registrationStart) : 'TBA'} → ${
+    registrationEnd ? formatDate(registrationEnd) : 'TBA'
+  }`;
 
   return (
     <button
@@ -40,9 +45,7 @@ const EventCard = ({ event }: Props) => {
         <h3>{event.title}</h3>
         <p className={styles.time}>Starts: {formatDateTime(event.startAt)}</p>
         {event.endAt && <p className={styles.time}>Ends: {formatDateTime(event.endAt)}</p>}
-        <p className={styles.meta}>
-          Registration: {formatDate(event.registrationOpenAt)} → {formatDate(event.registrationCloseAt)}
-        </p>
+        <p className={styles.meta}>Registration: {registrationLabel}</p>
         <p className={styles.meta}>Slots filled: {slots}</p>
         <p className={styles.meta}>Format: {toLabel(event.format)}</p>
       </div>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Clock, Loader2, RefreshCw, Trophy, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { RootState, AppDispatch } from '@/store';
 import { createEventsQueryKey, fetchEvents } from '@/store/events.slice';
 import type { EventSummary } from '@/types/events';
@@ -12,11 +12,7 @@ import styles from './EventsHub.module.scss';
 
 type TabKey = 'all' | 'events' | 'tournaments' | 'registrations';
 
-type ExtendedEventSummary = EventSummary & {
-  myRegistrationStatus?: string | null;
-  registrationStatus?: string | null;
-  registration?: { status?: string | null } | null;
-};
+type ExtendedEventSummary = EventSummary;
 
 type EventStage = 'live' | 'upcoming' | 'completed';
 
@@ -71,6 +67,7 @@ const formatCountdownLabel = (timestamp: number, prefix: 'Starts' | 'Ends') => {
 const EventsHub = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const location = useLocation();
   const eventsState = useSelector((state: RootState) => state.events.list);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
   const [now, setNow] = useState(() => Date.now());
@@ -80,6 +77,21 @@ const EventsHub = () => {
     const interval = window.setInterval(() => setNow(Date.now()), 60000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const hash = location.hash.replace('#', '').toLowerCase();
+    if (!hash) return;
+    const mapping: Partial<Record<string, TabKey>> = {
+      registrations: 'registrations',
+      events: 'events',
+      tournaments: 'tournaments',
+      all: 'all',
+    };
+    const resolved = mapping[hash];
+    if (resolved) {
+      setActiveTab(resolved);
+    }
+  }, [location.hash]);
 
   const queryParams = useMemo(() => ({ page: 1, pageSize: 50 }), []);
   const queryKey = useMemo(() => createEventsQueryKey(queryParams), [queryParams]);
@@ -354,7 +366,15 @@ const EventsHub = () => {
             key={tab.id}
             type="button"
             className={tab.id === activeTab ? styles.activeTab : styles.tab}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => {
+              setActiveTab(tab.id);
+              const hash = tab.id === 'all' ? '' : `#${tab.id}`;
+              if (hash) {
+                navigate({ pathname: '/events', hash }, { replace: true });
+              } else {
+                navigate('/events', { replace: true });
+              }
+            }}
           >
             {tab.label}
           </button>

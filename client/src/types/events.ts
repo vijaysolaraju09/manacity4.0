@@ -19,6 +19,8 @@ export interface EventSummary {
   registeredCount: number;
   registrationOpenAt: string;
   registrationCloseAt: string;
+  regOpenAt?: string | null;
+  regCloseAt?: string | null;
   startAt: string;
   endAt?: string | null;
   status: EventStatus;
@@ -35,6 +37,9 @@ export interface EventSummary {
   shortDescription?: string | null;
   accentColor?: string | null;
   iconUrl?: string | null;
+  registration?: { status?: string | null } | null;
+  registrationStatus?: string | null;
+  myRegistrationStatus?: string | null;
 }
 
 export interface EventDetail extends EventSummary {
@@ -79,6 +84,7 @@ export interface EventLeaderboardEntry {
   participantId?: string;
   teamName?: string;
   user?: string;
+  score?: number;
   points?: number;
   rank?: number;
   wins?: number;
@@ -139,6 +145,10 @@ export const adaptEventSummary = (raw: any): EventSummary | null => {
       raw.registrationOpenAt || raw.registration_open_at || raw.startAt || new Date().toISOString(),
     registrationCloseAt:
       raw.registrationCloseAt || raw.registration_close_at || raw.startAt || new Date().toISOString(),
+    regOpenAt:
+      raw.regOpenAt || raw.registrationOpenAt || raw.registration_open_at || raw.startAt || null,
+    regCloseAt:
+      raw.regCloseAt || raw.registrationCloseAt || raw.registration_close_at || raw.startAt || null,
     startAt: raw.startAt || raw.start_date || new Date().toISOString(),
     endAt: raw.endAt || raw.end_date || null,
     status: (raw.status as EventStatus) || 'draft',
@@ -174,6 +184,37 @@ export const adaptEventSummary = (raw: any): EventSummary | null => {
     summary.lifecycleStatus = normalizedLifecycle as 'upcoming' | 'ongoing' | 'past';
   } else {
     summary.lifecycleStatus = deriveLifecycleStatus(summary);
+  }
+
+  const registrationInfo = raw.registration ?? raw.registrationStatus ?? raw.myRegistration;
+  if (registrationInfo && typeof registrationInfo === 'object') {
+    const status =
+      registrationInfo.status ??
+      registrationInfo.state ??
+      raw.registrationStatus ??
+      raw.myRegistrationStatus ??
+      null;
+    summary.registration = { status: status ?? null };
+    if (status) {
+      summary.registrationStatus = status;
+      summary.myRegistrationStatus = status;
+    }
+  } else if (typeof registrationInfo === 'string') {
+    summary.registration = { status: registrationInfo };
+    summary.registrationStatus = registrationInfo;
+    summary.myRegistrationStatus = registrationInfo;
+  } else {
+    const status =
+      raw.registrationStatus ??
+      raw.myRegistrationStatus ??
+      raw.my_registration_status ??
+      raw.registration_status ??
+      null;
+    if (status) {
+      summary.registration = { status };
+      summary.registrationStatus = status;
+      summary.myRegistrationStatus = status;
+    }
   }
 
   return summary;
@@ -279,12 +320,14 @@ export const adaptEventUpdate = (raw: any): EventUpdate | null => {
 
 export const adaptEventLeaderboardEntry = (raw: any): EventLeaderboardEntry | null => {
   if (!raw) return null;
+  const resolvedScore = Number(raw.score ?? raw.points ?? raw.total ?? 0) || 0;
   return {
     _id: raw._id ?? raw.id ?? undefined,
     participantId: raw.participantId ?? raw.participant_id ?? raw.registrationId ?? undefined,
     teamName: raw.teamName ?? raw.team ?? raw.player ?? undefined,
     user: raw.user ?? raw.username ?? raw.playerName ?? undefined,
-    points: Number(raw.points ?? raw.score ?? raw.total) || 0,
+    score: resolvedScore,
+    points: resolvedScore,
     rank: Number(raw.rank ?? raw.position) || undefined,
     wins: Number(raw.wins ?? raw.win) || undefined,
     losses: Number(raw.losses ?? raw.loss) || undefined,

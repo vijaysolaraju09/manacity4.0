@@ -702,23 +702,6 @@ const EventDetailPage = () => {
                 </div>
               </div>
             </div>
-            <div className={styles.insightCard}>
-              <div className={styles.insightHeader}>
-                <MapPin size={16} />
-                <span>{event.mode === 'venue' ? 'On-ground venue' : 'Online experience'}</span>
-              </div>
-              <div className={styles.insightBody}>
-                <div className={styles.insightLine}>
-                  <span>Mode</span>
-                  <strong>{event.mode === 'venue' ? 'On-ground' : 'Online'}</strong>
-                </div>
-                <div className={styles.insightLine}>
-                  <span>Format</span>
-                  <strong>{event.format}</strong>
-                </div>
-                {event.venue && <p className={styles.insightNote}>{event.venue}</p>}
-              </div>
-            </div>
           </div>
         </div>
       </section>

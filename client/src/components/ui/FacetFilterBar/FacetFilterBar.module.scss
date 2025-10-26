@@ -71,7 +71,6 @@
 .toggleLabel {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
   cursor: pointer;
   user-select: none;
 }
@@ -114,21 +113,6 @@
   transition: stroke 0.2s ease;
 }
 
-.toggleText {
-  display: inline-flex;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #94a3b8;
-}
-
-.switchLeft,
-.switchRight {
-  transition: color 0.2s ease;
-}
-
 .checkboxWrapper input[type="checkbox"]:checked + .toggleLabel .toggleTrack {
   background: #52d66b;
 }
@@ -139,24 +123,6 @@
 
 .checkboxWrapper input[type="checkbox"]:checked + .toggleLabel .toggleThumb path {
   stroke: #52d66b;
-}
-
-.checkboxWrapper input[type="checkbox"]:checked + .toggleLabel .switchLeft {
-  color: #0f172a;
-}
-
-
-.checkboxWrapper input[type="checkbox"]:checked + .toggleLabel .switchRight {
-  color: #94a3b8;
-}
-
-
-.checkboxWrapper input[type="checkbox"]:not(:checked) + .toggleLabel .switchLeft {
-  color: #94a3b8;
-}
-
-.checkboxWrapper input[type="checkbox"]:not(:checked) + .toggleLabel .switchRight {
-  color: #0f172a;
 }
 
 @media (min-width: 640px) {

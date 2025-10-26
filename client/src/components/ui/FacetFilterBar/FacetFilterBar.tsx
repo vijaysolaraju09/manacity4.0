@@ -72,10 +72,6 @@ const FacetFilterBar = ({
                   </svg>
                 </span>
               </span>
-              <span className={styles.toggleText} aria-hidden="true">
-                <span className={styles.switchLeft}>Yes</span>
-                <span className={styles.switchRight}>No</span>
-              </span>
             </label>
           </div>
         </div>

@@ -4,13 +4,13 @@ import { Mic } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import ProductCard from '../../components/ui/ProductCard.tsx';
+import SpecialProductCard from '@/components/specials/SpecialProductCard';
 import SectionHeader from '../../components/ui/SectionHeader';
 import EmptyState from '../../components/ui/EmptyState';
 import { fetchShops } from '@/store/shops';
 import { fetchServices } from '@/store/services';
 import { createEventsQueryKey, fetchEvents } from '@/store/events.slice';
-import { fetchSpecialProducts } from '@/store/products';
+import { fetchSpecialProducts, type Product as SpecialProduct } from '@/store/products';
 import { http } from '@/lib/http';
 import { toItems, toErrorMessage } from '@/lib/response';
 import type { RootState } from '@/store';
@@ -23,6 +23,10 @@ import fallbackImage from '../../assets/no-image.svg';
 import { formatDateTime } from '@/utils/date';
 import ServiceCard from '@/components/services/ServiceCard';
 import { paths } from '@/routes/paths';
+import {
+  getSpecialProductDetailsTarget,
+  isSpecialProductCallToOrder,
+} from '@/utils/specialProducts';
 import ShopCard from '@/components/ui/ShopCard/ShopCard';
 import Button from '@/components/ui/button';
 import HorizontalCarousel from '@/components/ui/HorizontalCarousel';
@@ -272,6 +276,15 @@ const Section = ({
 }: SectionProps) => {
   const loading = status === 'loading' || status === 'idle';
   const items = Array.isArray(data) ? data : [];
+  const handleSpecialDetails = (selected: SpecialProduct) => {
+    const target = getSpecialProductDetailsTarget(selected);
+    if (!target) return;
+    if (/^https?:/i.test(target)) {
+      window.open(target, '_blank', 'noopener');
+      return;
+    }
+    navigate(target);
+  };
   if (loading)
     return (
       <section className={`${styles.section} px-4 md:px-6 lg:px-8`}>
@@ -327,11 +340,15 @@ const Section = ({
       <HorizontalCarousel>
         {items.map((item: any) => {
           if (type === 'product') {
+            const product = item as SpecialProduct;
+
             return (
-              <ProductCard
-                key={item._id}
-                product={item}
-                onClick={() => navigate(paths.products.detail(item._id))}
+              <SpecialProductCard
+                key={product._id}
+                product={product}
+                onDetails={
+                  isSpecialProductCallToOrder(product) ? undefined : handleSpecialDetails
+                }
               />
             );
           }

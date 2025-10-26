@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { http } from "@/lib/http";
 import { toItems, toItem, toErrorMessage } from "@/lib/response";
 import { pickPaise, rupeesToPaise } from "@/utils/currency";
+import { DEFAULT_SPECIAL_PRODUCT_IMAGE } from "@/constants/specials";
 
 export interface Product extends Record<PropertyKey, unknown> {
   _id: string;
@@ -17,6 +18,15 @@ export interface Product extends Record<PropertyKey, unknown> {
   available?: boolean;
   isSpecial?: boolean;
   shop?: string;
+  ctaLabel?: string;
+  ctaType?: string;
+  ctaUrl?: string;
+  ctaPhone?: string;
+  productId?: string;
+  phone?: string;
+  contactNumber?: string;
+  specialNote?: string;
+  actionLabel?: string;
 }
 
 type St<T> = {
@@ -137,9 +147,80 @@ export const fetchSpecialProducts = createAsyncThunk(
   "products/fetchSpecial",
   async (params: any | undefined, { rejectWithValue }) => {
     try {
-      const res = await http.get("/special", { params });
+      const res = await http.get("/special/products", { params });
       const items = toItems(res) as any[];
-      return items.map(normalizeProduct);
+      return items.map((item) => {
+        const normalized = normalizeProduct(item);
+        const ctaLabelCandidates = [
+          item.ctaLabel,
+          item.actionLabel,
+          item.ctaText,
+        ];
+        const ctaLabel = ctaLabelCandidates.find(
+          (value) => typeof value === "string" && value.trim().length > 0,
+        ) as string | undefined;
+
+        const linkedProductId = (() => {
+          if (typeof item.productId === "string" && item.productId.trim()) {
+            return item.productId.trim();
+          }
+          if (typeof item.linkedProduct === "string" && item.linkedProduct.trim()) {
+            return item.linkedProduct.trim();
+          }
+          if (item.linkedProduct && typeof item.linkedProduct === "object") {
+            const candidate =
+              item.linkedProduct._id || item.linkedProduct.id || item.linkedProduct;
+            if (typeof candidate === "string" && candidate.trim()) {
+              return candidate.trim();
+            }
+          }
+          return undefined;
+        })();
+
+        const ctaPhoneCandidates = [item.ctaPhone, item.phone, item.contactNumber];
+        const ctaPhone = ctaPhoneCandidates.find(
+          (value) => typeof value === "string" && value.trim().length > 0,
+        ) as string | undefined;
+
+        const enriched: Product = {
+          ...normalized,
+          description:
+            typeof item.description === "string" && item.description.trim().length > 0
+              ? item.description
+              : normalized.description,
+          ctaLabel,
+          actionLabel: ctaLabel,
+          ctaType:
+            typeof item.ctaType === "string" && item.ctaType.trim().length > 0
+              ? item.ctaType.trim().toLowerCase()
+              : undefined,
+          ctaUrl:
+            typeof item.ctaUrl === "string" && item.ctaUrl.trim().length > 0
+              ? item.ctaUrl.trim()
+              : undefined,
+          ctaPhone,
+          productId: linkedProductId,
+          phone:
+            typeof item.phone === "string" && item.phone.trim().length > 0
+              ? item.phone.trim()
+              : undefined,
+          contactNumber:
+            typeof item.contactNumber === "string" && item.contactNumber.trim().length > 0
+              ? item.contactNumber.trim()
+              : undefined,
+          specialNote:
+            typeof item.note === "string" && item.note.trim().length > 0
+              ? item.note.trim()
+              : undefined,
+          isSpecial: true,
+        };
+
+        if (!enriched.image) {
+          enriched.image = DEFAULT_SPECIAL_PRODUCT_IMAGE;
+        }
+
+        return enriched;
+      });
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }

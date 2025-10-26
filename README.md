@@ -71,3 +71,26 @@ Every pull request runs ESLint, Prettier (check mode), and TypeScript type-check
 
 ## License
 MIT
+
+## Backend Setup
+
+### Quick Start
+1. Copy the example environment file and update the values for your local database and secrets:
+   ```bash
+   cp server/.env.example server/.env
+   ```
+2. Install backend dependencies:
+   ```bash
+   npm install --prefix server
+   ```
+3. Start the Express API (either directly or via the root helper script):
+   ```bash
+   npm run dev --prefix server
+   # or
+   npm run server
+   ```
+4. When running the full stack from the repository root, install the shared tooling and use the combined dev script:
+   ```bash
+   npm install
+   npm run dev
+   ```

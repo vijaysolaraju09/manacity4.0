@@ -9,6 +9,7 @@ import type { VerifiedCard } from '@/types/verified';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorCard from '@/components/ui/ErrorCard';
 import SkeletonList from '@/components/ui/SkeletonList';
+import { paths } from '@/routes/paths';
 
 const VerifiedList = () => {
   const d = useDispatch<any>();
@@ -158,7 +159,7 @@ const VerifiedList = () => {
               key={v._id}
               type="button"
               className={styles.card}
-              onClick={() => navigate(`/verified-users/${v._id}`)}
+              onClick={() => navigate(paths.providers.detail(v._id))}
             >
               <img
                 className={styles.avatar}

@@ -11,6 +11,10 @@ export const paths = {
   shop: (id: string = ':id') => `/shops/${id}`,
   specialShop: () => '/special-shop',
   voiceOrder: () => '/voice-order',
+  providers: {
+    list: () => '/providers',
+    detail: (id: string = ':id') => `/providers/${id}`,
+  },
   services: {
     catalog: () => '/services',
     requests: () => '/services/requests',

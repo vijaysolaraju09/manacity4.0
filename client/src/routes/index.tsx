@@ -127,6 +127,7 @@ const AppRoutes = () => (
             <Route path="requests/mine" element={<MyRequests />} />
           </Route>
           <Route key="service-request" path="services/request" element={<ServiceRequestFormPage />} />
+          <Route key="providers" path="providers" element={<VerifiedList />} />
           <Route key="verified-list" path="verified-users" element={<VerifiedList />} />
           <Route key="legacy-verified" path="verified" element={<LegacyVerified />} />
           <Route key="events" path="events" element={<Events />} />
@@ -151,6 +152,7 @@ const AppRoutes = () => (
           path="verified-users/:id"
           element={<VerifiedDetails />}
         />
+        <Route key="provider-details" path="providers/:id" element={<VerifiedDetails />} />
         <Route key="order-detail" path="orders/:id" element={<OrderDetail />} />
         <Route key="cart" path="cart" element={<Cart />} />
         <Route key="checkout" path="checkout" element={<Checkout />} />

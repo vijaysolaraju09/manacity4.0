@@ -1,4 +1,6 @@
 /* eslint-disable no-unused-vars */
+const { fail } = require('../utils/response');
+
 const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode || err.status || 500;
   const message = err.message || 'Internal Server Error';
@@ -17,7 +19,12 @@ const errorHandler = (err, req, res, next) => {
     response.errors = errors;
   }
 
-  res.status(statusCode).json(response);
+  const payload = {
+    ...fail(message),
+    ...response,
+  };
+
+  res.status(statusCode).json(payload);
 };
 
 module.exports = errorHandler;

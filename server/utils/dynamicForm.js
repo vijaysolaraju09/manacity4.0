@@ -28,6 +28,7 @@ const STRING_FIELD_TYPES = new Set([
 const sanitizeHtml = (value) => {
   if (typeof value !== 'string') return '';
   return value
+    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001F\u007F]/g, '')
     .replace(/<[^>]+>/g, '')
     .trim();

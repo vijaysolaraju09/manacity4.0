@@ -153,6 +153,7 @@ exports.addToCart = async (req, res, next) => {
 
     const { cart, created } = await CartModel.upsertItem(req.user._id, {
       productId: productObjectId,
+      product: productObjectId,
       variantId: variantObjectId,
       qty: quantityToAdd,
       unitPrice: unitPricePaise,

@@ -28,7 +28,7 @@ const VerifiedDetails = lazy(() => import('@/pages/Verified/Details'));
 const VerifiedList = lazy(() => import('@/pages/Verified/List'));
 const SpecialShop = lazy(() => import('@/pages/SpecialShop/SpecialShop'));
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
-const Cart = lazy(() => import('@/pages/Cart/Cart'));
+const Cart = lazy(() => import('@/pages/CartPage'));
 const Checkout = lazy(() => import('@/pages/Checkout/Checkout'));
 const Events = lazy(() => import('@/pages/Events/Events'));
 const VoiceOrder = lazy(() => import('@/pages/VoiceOrder/VoiceOrder'));

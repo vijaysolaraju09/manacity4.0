@@ -12,6 +12,7 @@ const userAddressSchema = new Schema(
     city: { type: String, required: true, trim: true },
     state: { type: String, required: true, trim: true },
     pincode: { type: String, required: true, trim: true },
+    phone: { type: String, trim: true },
     coords: {
       lat: { type: Number },
       lng: { type: Number },

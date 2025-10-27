@@ -11,7 +11,7 @@ import cartReducer, {
 } from './cartSlice';
 import type { CartItem, CartState } from './cartSlice';
 import type { RootState } from '@/store';
-import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, vi, type MockInstance } from 'vitest';
 
 describe('cartSlice reducers', () => {
   const baseItem: CartItem = {
@@ -22,7 +22,10 @@ describe('cartSlice reducers', () => {
     qty: 1,
   };
 
-  let setItemSpy: ReturnType<typeof vi.spyOn>;
+  let setItemSpy: MockInstance<
+    Parameters<Storage['setItem']>,
+    ReturnType<Storage['setItem']>
+  >;
 
   const getState = (state: CartState) => ({ cart: state } as unknown as RootState);
 

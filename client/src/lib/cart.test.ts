@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { toCartItem, buildCartItemPayload } from './cart';
 
 describe('cart helpers', () => {
@@ -31,10 +31,17 @@ describe('cart helpers', () => {
   });
 
   describe('buildCartItemPayload', () => {
-    let consoleSpy: ReturnType<typeof vi.spyOn>;
+    let consoleSpy: MockInstance<
+      Parameters<typeof console.error>,
+      ReturnType<typeof console.error>
+    >;
 
     beforeEach(() => {
-      consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation((..._args: Parameters<typeof console.error>) => {
+          return undefined;
+        });
     });
 
     afterEach(() => {

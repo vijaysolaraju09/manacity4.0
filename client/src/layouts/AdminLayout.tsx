@@ -24,6 +24,9 @@ const AdminLayout = () => {
                 Dashboard
               </NavLink>
             </li>
+            <li>
+              <NavLink to={paths.admin.announcements()}>Announcements</NavLink>
+            </li>
             <li className="nav-group">
               <span className="nav-group__label">Requests</span>
               <ul>

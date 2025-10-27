@@ -35,6 +35,40 @@ const adminServiceRoutes = require("./routes/adminServiceRoutes");
 const adminServiceRequestRoutes = require("./routes/adminServiceRequestRoutes");
 const AppError = require("./utils/AppError");
 const logger = require("./utils/logger");
+const adminAnnouncementRoutes = require("./routes/adminAnnouncementRoutes");
+
+const env = process.env.NODE_ENV || "development";
+const isDevelopment = env === "development";
+
+const logProcessError = (event, error) => {
+  const normalized =
+    error instanceof Error ? error : new Error(typeof error === "string" ? error : "Process error");
+
+  const logPayload = {
+    event,
+    error: {
+      message: normalized.message,
+    },
+  };
+
+  if (isDevelopment && normalized.stack) {
+    logPayload.error.stack = normalized.stack;
+  }
+
+  logger.error(logPayload, `Unhandled ${event}`);
+
+  if (!isDevelopment) {
+    process.exit(1);
+  }
+};
+
+process.on("unhandledRejection", (reason) => {
+  logProcessError("unhandledRejection", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  logProcessError("uncaughtException", error);
+});
 
 const app = express();
 
@@ -137,6 +171,7 @@ app.use("/api/services", standardLimiter, serviceRoutes);
 app.use("/api/service-requests", standardLimiter, serviceRequestRoutes);
 app.use("/api/admin/services", adminServiceRoutes);
 app.use("/api/admin/service-requests", adminServiceRequestRoutes);
+app.use("/api/admin/announcements", adminAnnouncementRoutes);
 
 if (process.env.NODE_ENV === "production") {
   const clientPath = path.join(__dirname, "..", "client", "dist");

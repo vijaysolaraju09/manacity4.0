@@ -1,14 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const {
-  getBanner,
+  getAnnouncement,
   getOffers,
   getVerifiedUsers,
   getEvents,
   getSpecialProducts,
 } = require("../controllers/homeController");
 
-router.get("/banner", getBanner);
+router.get("/banner", getAnnouncement);
+router.get("/announcement", getAnnouncement);
 router.get("/offers", getOffers);
 router.get("/verified-users", getVerifiedUsers);
 router.get("/events", getEvents);

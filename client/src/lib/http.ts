@@ -16,6 +16,7 @@ type AugmentedConfig = InternalAxiosRequestConfig & { __retryCount?: number };
 const MAX_RETRIES = 3;
 const RETRYABLE_METHODS = new Set(['get', 'head']);
 const RETRY_BASE_DELAY = 300;
+const isDev = typeof import.meta !== 'undefined' && Boolean(import.meta.env?.DEV);
 
 let store: Store | null = null;
 
@@ -106,9 +107,6 @@ const createHttpClient = ({
     },
     async (error: AxiosError) => {
       const envelopeMessage = detectEnvelopeError(error?.response?.data);
-      if (envelopeMessage) {
-        showToast(envelopeMessage, 'error');
-      }
       if (shouldRetry(error)) {
         const config = error.config as AugmentedConfig;
         config.__retryCount = (config.__retryCount ?? 0) + 1;
@@ -126,11 +124,25 @@ const createHttpClient = ({
         }
       }
 
-      if (!envelopeMessage) {
-        const message = toErrorMessage(error);
-        if (message) {
-          showToast(message, 'error');
-        }
+      const fallbackMessage = envelopeMessage ?? toErrorMessage(error);
+
+      if (isDev && fallbackMessage) {
+        const method = (error.config?.method || 'GET').toUpperCase();
+        const url = error.config?.url || error.request?.url || 'unknown';
+        const status = error.response?.status;
+        // eslint-disable-next-line no-console
+        console.error('[http]', {
+          method,
+          url,
+          status,
+          message: fallbackMessage,
+        });
+      }
+
+      if (envelopeMessage) {
+        showToast(envelopeMessage, 'error');
+      } else if (fallbackMessage) {
+        showToast(fallbackMessage, 'error');
       }
 
       return Promise.reject(error);

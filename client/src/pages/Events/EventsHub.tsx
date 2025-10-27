@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Clock, Loader2, RefreshCw, Trophy, Users } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Loader2, RefreshCw, Trophy, Users } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { RootState, AppDispatch } from '@/store';
 import { createEventsQueryKey, fetchEvents } from '@/store/events.slice';
 import type { EventSummary } from '@/types/events';
 import { formatINR } from '@/utils/currency';
 import { formatCountdown } from '@/utils/time';
+import { formatDateTime, formatTimeAgo } from '@/utils/date';
+import { cn } from '@/utils/cn';
 import fallbackImage from '@/assets/no-image.svg';
 import styles from './EventsHub.module.scss';
 
@@ -44,6 +46,15 @@ const TABS: Array<{ id: TabKey; label: string }> = [
   { id: 'tournaments', label: 'Tournaments' },
   { id: 'registrations', label: 'My Registrations' },
 ];
+
+const REGISTRATION_STATUS_LABELS: Record<string, string> = {
+  registered: 'Registered',
+  waitlisted: 'Waitlisted',
+  checked_in: 'Checked in',
+  checkedin: 'Checked in',
+  withdrawn: 'Withdrawn',
+  disqualified: 'Disqualified',
+};
 
 const isRegistered = (event: ExtendedEventSummary) => {
   const status = event.myRegistrationStatus ?? event.registrationStatus ?? event.registration?.status;
@@ -212,7 +223,137 @@ const EventsHub = () => {
     );
   };
 
+  const renderRegistrationList = (list: ExtendedEventSummary[]) => {
+    if (loading && list.length === 0) {
+      return (
+        <div className={styles.skeletonGrid}>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={`registration-skeleton-${index}`} className={styles.skeletonCard} />
+          ))}
+        </div>
+      );
+    }
+
+    if (error && list.length === 0) {
+      return (
+        <div className={styles.feedbackCard}>
+          <h3>Unable to load registrations</h3>
+          <p>{error}</p>
+        </div>
+      );
+    }
+
+    if (list.length === 0) {
+      return (
+        <div className={styles.feedbackCard}>
+          <h3>No registrations yet</h3>
+          <p>
+            When you register for an event, the confirmation will appear here with payment status and
+            quick links back to the details.
+          </p>
+        </div>
+      );
+    }
+
+    const sorted = [...list].sort((a, b) => {
+      const aSubmittedRaw = Date.parse(a.registration?.submittedAt ?? '');
+      const bSubmittedRaw = Date.parse(b.registration?.submittedAt ?? '');
+      const aFallback = Date.parse(a.startAt);
+      const bFallback = Date.parse(b.startAt);
+      const aTime = Number.isFinite(aSubmittedRaw) ? aSubmittedRaw : Number.isFinite(aFallback) ? aFallback : 0;
+      const bTime = Number.isFinite(bSubmittedRaw) ? bSubmittedRaw : Number.isFinite(bFallback) ? bFallback : 0;
+      return bTime - aTime;
+    });
+
+    return (
+      <>
+        <div className={styles.registrationsHeader}>
+          <div>
+            <h3>My registrations</h3>
+            <p>Track your event sign-ups, payment proofs, and upcoming dates in one place.</p>
+          </div>
+          <span className={styles.registrationsHint}>
+            {list.length} active {list.length === 1 ? 'registration' : 'registrations'}
+          </span>
+        </div>
+        <div className={styles.registrationsList}>
+          {sorted.map((event) => {
+            const statusRaw =
+              event.myRegistrationStatus ?? event.registrationStatus ?? event.registration?.status ?? '';
+            const statusKey = statusRaw?.toLowerCase()?.replace(/[\s-]+/g, '_') ?? '';
+            const statusLabel = REGISTRATION_STATUS_LABELS[statusKey] ?? (statusRaw || 'Registered');
+            const statusClass =
+              statusKey === 'waitlisted'
+                ? styles.statusWaitlisted
+                : statusKey === 'checked_in'
+                ? styles.statusCheckedIn
+                : statusKey === 'withdrawn'
+                ? styles.statusWithdrawn
+                : statusKey === 'disqualified'
+                ? styles.statusDisqualified
+                : styles.statusRegistered;
+            const proofUrl = event.registration?.paymentProofUrl;
+            const paymentRequired = event.registration?.paymentRequired;
+            const proofLabel = proofUrl
+              ? 'Payment proof uploaded'
+              : paymentRequired
+              ? 'Payment proof pending'
+              : 'No payment required';
+            const proofClass = proofUrl
+              ? styles.proofComplete
+              : paymentRequired
+              ? styles.proofPending
+              : styles.proofOptional;
+            const eventDateLabel = formatDateTime(event.startAt);
+            const submittedAt = event.registration?.submittedAt;
+            const submittedLabel = submittedAt
+              ? `Registered ${formatDateTime(submittedAt)} · ${formatTimeAgo(submittedAt)}`
+              : null;
+            const statusIcon =
+              statusKey === 'registered' || statusKey === 'checked_in'
+                ? <CheckCircle2 size={14} />
+                : <AlertCircle size={14} />;
+
+            return (
+              <article key={event._id} className={styles.registrationCard}>
+                <div className={styles.registrationInfo}>
+                  <h4>{event.title}</h4>
+                  <div className={styles.registrationMeta}>
+                    <span>{eventDateLabel}</span>
+                    {submittedLabel && <span>{submittedLabel}</span>}
+                  </div>
+                </div>
+                <div className={styles.registrationBadges}>
+                  <span className={cn(styles.statusBadge, statusClass)}>
+                    {statusIcon} {statusLabel}
+                  </span>
+                  <span className={cn(styles.proofBadge, proofClass)}>
+                    {proofUrl ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                    {proofLabel}
+                  </span>
+                </div>
+                <div className={styles.registrationActions}>
+                  <button
+                    type="button"
+                    className={styles.secondaryAction}
+                    onClick={() => navigate(`/events/${event._id}`)}
+                  >
+                    View details
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </>
+    );
+  };
+
   const renderList = (list: ExtendedEventSummary[]) => {
+    if (activeTab === 'registrations') {
+      return renderRegistrationList(list);
+    }
+
     const gridEvents = list;
     const stageSummary = gridEvents.reduce(
       (acc, event) => {

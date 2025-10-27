@@ -7,10 +7,21 @@
   background: var(--color-card);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(15, 23, 42, 0.05);
 }
 
 .read {
   opacity: 0.6;
+}
+
+.unread {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.12) 0%,
+    rgba(59, 130, 246, 0.05) 100%
+  );
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 12px 24px -12px rgba(37, 99, 235, 0.35);
 }
 
 .icon {

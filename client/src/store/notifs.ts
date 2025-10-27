@@ -37,11 +37,16 @@ export const fetchNotifs = createAsyncThunk(
     try {
       const page = params?.page ?? 1;
       const limit = params?.limit ?? 20;
-      const res = await http.get('/notifications', { params: { page, limit } });
+      const res = await http.get('api/notifications', { params: { page, limit } });
       const items = toItems(res) as Notif[];
       const payload = res.data?.data ?? res.data ?? {};
       const hasMore = Boolean(payload.hasMore);
-      const unread = typeof payload.unread === 'number' ? payload.unread : 0;
+      const unread =
+        typeof payload.unread === 'number'
+          ? payload.unread
+          : Array.isArray(items)
+          ? items.filter((notif) => !notif.read).length
+          : 0;
       return { items, hasMore, unread, page };
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
@@ -53,7 +58,7 @@ export const markNotifRead = createAsyncThunk(
   'notifs/markRead',
   async (id: string, { rejectWithValue }) => {
     try {
-      await http.patch(`/notifications/${id}/read`);
+      await http.patch(`api/notifications/${id}/read`);
       return id;
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
@@ -65,7 +70,7 @@ export const removeNotif = createAsyncThunk(
   'notifs/remove',
   async (id: string, { rejectWithValue }) => {
     try {
-      await http.delete(`/notifications/${id}`);
+      await http.delete(`api/notifications/${id}`);
       return id;
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));

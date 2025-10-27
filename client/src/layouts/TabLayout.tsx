@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import { Bell, CalendarDays, Gift, Home, Settings, ShoppingCart, Store, UserRound, Users } from "lucide-react";
@@ -19,8 +19,12 @@ const TabLayout = () => {
   const cartItemCount = useSelector(selectItemCount);
   const dispatch = useDispatch<AppDispatch>();
 
+  const hasBootstrapped = useRef(false);
+
   useEffect(() => {
-    if (isAuthenticated && notifStatus === 'idle') {
+    if (!isAuthenticated) return;
+    if (notifStatus === 'idle' || !hasBootstrapped.current) {
+      hasBootstrapped.current = true;
       dispatch(fetchNotifs({ page: 1 }));
     }
   }, [notifStatus, dispatch, isAuthenticated]);
@@ -29,7 +33,7 @@ const TabLayout = () => {
     if (!isAuthenticated) return undefined;
     const interval = window.setInterval(() => {
       dispatch(fetchNotifs({ page: 1 }));
-    }, 45000);
+    }, 60000);
     return () => {
       window.clearInterval(interval);
     };
@@ -52,6 +56,11 @@ const TabLayout = () => {
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [dispatch, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    dispatch(fetchNotifs({ page: 1 }));
+  }, [dispatch, isAuthenticated, location.pathname]);
 
   const tabs = [
     { name: "Home", icon: Home, path: paths.home() },

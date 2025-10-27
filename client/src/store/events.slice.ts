@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { http, adminHttp } from '@/lib/http';
 import { toErrorMessage, toItem, toItems } from '@/lib/response';
+import { submitRegistration } from './registrationsSlice';
 import {
   adaptEventDetail,
   adaptEventSummary,
@@ -433,6 +434,79 @@ const eventsSlice = createSlice({
         if (state.detail.data) {
           state.detail.data.registration = action.payload;
           state.detail.data.registeredCount = (state.detail.data.registeredCount || 0) + 1;
+        }
+      })
+      .addCase(submitRegistration.fulfilled, (state, action) => {
+        const eventId = action.meta.arg?.eventId;
+        if (!eventId) return;
+        const result = action.payload;
+        const status = result?.status ?? 'registered';
+        if (state.list.items) {
+          state.list.items = state.list.items.map((event) => {
+            if (event._id !== eventId) return event;
+            const payment = result?.payment ?? null;
+            const nextRegistration = {
+              status,
+              paymentRequired:
+                typeof payment?.required === 'boolean'
+                  ? payment.required
+                  : event.registration?.paymentRequired,
+              paymentAmount:
+                typeof payment?.amount === 'number'
+                  ? payment.amount
+                  : event.registration?.paymentAmount ?? null,
+              paymentCurrency:
+                typeof payment?.currency === 'string'
+                  ? payment.currency
+                  : event.registration?.paymentCurrency ?? null,
+              paymentProofUrl:
+                typeof payment?.proofUrl === 'string'
+                  ? payment.proofUrl
+                  : event.registration?.paymentProofUrl ?? null,
+              submittedAt: event.registration?.submittedAt ?? new Date().toISOString(),
+            };
+            return {
+              ...event,
+              registration: nextRegistration,
+              registrationStatus: status,
+              myRegistrationStatus: status,
+            };
+          });
+        }
+        if (state.detail.data && state.detail.data._id === eventId) {
+          const payment = result?.payment ?? state.detail.data.registration?.payment ?? null;
+          state.detail.data.registration = {
+            ...(state.detail.data.registration ?? {
+              _id: result?.id ?? '',
+              status: status as EventRegistration['status'],
+            }),
+            status: status as EventRegistration['status'],
+            payment,
+            proofUrl: payment?.proofUrl ?? state.detail.data.registration?.proofUrl ?? null,
+            createdAt: state.detail.data.registration?.createdAt ?? new Date().toISOString(),
+          } as EventRegistration;
+          state.detail.data.myRegistrationStatus = status;
+          const registrationMeta = state.detail.data.registration as EventRegistration & {
+            paymentProofUrl?: string | null;
+            paymentRequired?: boolean;
+            paymentAmount?: number | null;
+            paymentCurrency?: string | null;
+            submittedAt?: string | null;
+          };
+          registrationMeta.paymentProofUrl = payment?.proofUrl ?? registrationMeta.paymentProofUrl ?? null;
+          registrationMeta.paymentRequired =
+            typeof payment?.required === 'boolean'
+              ? payment.required
+              : registrationMeta.paymentRequired;
+          registrationMeta.paymentAmount =
+            typeof payment?.amount === 'number'
+              ? payment.amount
+              : registrationMeta.paymentAmount ?? null;
+          registrationMeta.paymentCurrency =
+            typeof payment?.currency === 'string'
+              ? payment.currency
+              : registrationMeta.paymentCurrency ?? null;
+          registrationMeta.submittedAt = registrationMeta.submittedAt ?? new Date().toISOString();
         }
       })
       .addCase(registerForEvent.rejected, (state, action) => {

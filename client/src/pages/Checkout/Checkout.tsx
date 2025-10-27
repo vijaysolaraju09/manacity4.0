@@ -20,7 +20,7 @@ import fallbackImage from '@/assets/no-image.svg';
 import { checkoutOrders } from '@/api/orders';
 import {
   createAddress,
-  listAddresses,
+  listMyAddresses,
   type Address,
   type AddressPayload,
 } from '@/api/addresses';
@@ -217,7 +217,7 @@ const Checkout = () => {
     const loadAddresses = async () => {
       setIsAddressLoading(true);
       try {
-        const items = await listAddresses();
+        const items = await listMyAddresses();
         if (!isMounted) return;
         setAddressBookAvailable(true);
         setAddresses(items);

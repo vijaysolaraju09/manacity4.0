@@ -46,7 +46,7 @@ const OrderDetail = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await http.get(`/orders/${id}`);
+        const res = await http.get(`/api/orders/${id}`);
         const data = normalizeOrder(toItem(res));
         setOrder(data);
       } catch (err) {
@@ -173,7 +173,7 @@ const OrderDetail = () => {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <span className="rounded-full border border-indigo-300/70 bg-indigo-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-600 dark:border-indigo-500/40 dark:bg-indigo-500/20 dark:text-indigo-200">
-                      {order.status.replace(/_/g, ' ')}
+                      {order.status.replace(/_/g, ' ').toUpperCase()}
                     </span>
                     <span className="rounded-full border border-slate-200/70 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-300">
                       {orderItems.length} products

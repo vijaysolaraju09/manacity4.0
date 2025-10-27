@@ -299,7 +299,7 @@ export const fetchMyOrders = createAsyncThunk(
   'orders/fetchMine',
   async (_: void, { rejectWithValue }) => {
     try {
-      const res = await http.get('/orders/mine');
+      const res = await http.get('/api/orders/my');
       const data = toItems(res) as any[];
       return data.map(normalizeOrder);
     } catch (err) {
@@ -312,7 +312,7 @@ export const fetchReceivedOrders = createAsyncThunk(
   'orders/fetchReceived',
   async (_: void, { rejectWithValue }) => {
     try {
-      const res = await http.get('/orders/received');
+      const res = await http.get('/api/orders/received');
       const data = toItems(res) as any[];
       return data.map(normalizeOrder);
     } catch (err) {
@@ -328,7 +328,7 @@ export const updateOrderStatus = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const res = await http.patch(`/orders/${id}/status`, { status, note });
+      const res = await http.patch(`/api/orders/${id}/status`, { status, note });
       return normalizeOrder(toItem(res));
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));

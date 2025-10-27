@@ -13,6 +13,7 @@ export interface AddressPayload {
   city: string;
   state: string;
   pincode: string;
+  phone?: string;
   isDefault?: boolean;
   coords?: AddressCoords | null;
 }
@@ -33,7 +34,7 @@ const toIdString = (value: unknown): string | undefined => {
   return undefined;
 };
 
-const normalizeAddress = (input: unknown): Address => {
+export const normalizeAddress = (input: unknown): Address => {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid address payload');
   }
@@ -50,6 +51,7 @@ const normalizeAddress = (input: unknown): Address => {
   const city = typeof value.city === 'string' ? value.city : '';
   const state = typeof value.state === 'string' ? value.state : '';
   const pincode = typeof value.pincode === 'string' ? value.pincode : '';
+  const phone = typeof value.phone === 'string' ? value.phone : undefined;
   const isDefault = value.isDefault === true;
   const lastUsedAt =
     typeof value.lastUsedAt === 'string' && value.lastUsedAt ? value.lastUsedAt : null;
@@ -73,14 +75,14 @@ const normalizeAddress = (input: unknown): Address => {
     city,
     state,
     pincode,
+    phone,
     isDefault,
     coords: coords ?? null,
     lastUsedAt,
   } satisfies Address;
 };
 
-export const listAddresses = async (): Promise<Address[]> => {
-  const response = await http.get('/addresses');
+const handleListResponse = (response: unknown) => {
   const items = toItems(response);
 
   return items
@@ -94,7 +96,41 @@ export const listAddresses = async (): Promise<Address[]> => {
     .filter((item): item is Address => Boolean(item));
 };
 
+export const listAddresses = async (): Promise<Address[]> => {
+  const response = await http.get('/api/addresses');
+  return handleListResponse(response);
+};
+
+export const listMyAddresses = async (): Promise<Address[]> => {
+  try {
+    const response = await http.get('/api/addresses/my');
+    return handleListResponse(response);
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return listAddresses();
+    }
+    throw error;
+  }
+};
+
 export const createAddress = async (payload: AddressPayload): Promise<Address> => {
-  const response = await http.post('/addresses', payload);
+  const response = await http.post('/api/addresses', payload);
+  return normalizeAddress(toItem(response));
+};
+
+export const updateAddress = async (
+  id: string,
+  payload: Partial<AddressPayload>,
+): Promise<Address> => {
+  const response = await http.patch(`/api/addresses/${id}`, payload);
+  return normalizeAddress(toItem(response));
+};
+
+export const deleteAddress = async (id: string): Promise<void> => {
+  await http.delete(`/api/addresses/${id}`);
+};
+
+export const setDefaultAddress = async (id: string): Promise<Address> => {
+  const response = await http.patch(`/api/addresses/${id}`, { isDefault: true });
   return normalizeAddress(toItem(response));
 };

@@ -66,6 +66,13 @@ const OrderListItem = ({
   const totalPaise = order.totals?.grandPaise ?? 0;
   const showCancel = Boolean(onCancel);
   const showReturn = Boolean(onReturn);
+  const addressSummary = useMemo(() => {
+    const address = order.shippingAddress;
+    if (!address) return null;
+    return [address.address1, address.address2, address.city, address.pincode]
+      .filter((value) => typeof value === 'string' && value.trim())
+      .join(', ');
+  }, [order.shippingAddress]);
 
   return (
     <Card className="flex flex-col gap-4 rounded-3xl border border-slate-200/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl dark:border-slate-800/70 dark:bg-slate-900/70">
@@ -97,7 +104,7 @@ const OrderListItem = ({
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">Order #{order.id.slice(-6)}</p>
                 <Badge className={cn('rounded-full px-3 py-1 text-xs font-semibold', statusTone[order.status])}>
-                  {order.status.replace(/_/g, ' ')}
+                  {order.status.replace(/_/g, ' ').toUpperCase()}
                 </Badge>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-300">Placed {formatDate(order.createdAt)}</p>
@@ -105,6 +112,9 @@ const OrderListItem = ({
                 {shopName}
                 {order.items?.length ? ` • ${order.items.length} item${order.items.length === 1 ? '' : 's'}` : ''}
               </p>
+              {addressSummary ? (
+                <p className="text-xs text-slate-500 dark:text-slate-400">Deliver to: {addressSummary}</p>
+              ) : null}
             </div>
           </div>
           <div className="ml-auto flex flex-col items-end gap-2 text-right">

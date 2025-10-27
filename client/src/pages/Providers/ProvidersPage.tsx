@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, memo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Building2, MapPin, PhoneCall, Search, Star } from 'lucide-react';
@@ -12,6 +12,8 @@ import fallbackImage from '@/assets/no-image.svg';
 import { paths } from '@/routes/paths';
 import { cn } from '@/lib/utils';
 import styles from './ProvidersPage.module.scss';
+
+const PAGE_SIZE = 24;
 
 const normalizeProviders = (items: unknown[]): VerifiedCard[] =>
   items
@@ -67,6 +69,78 @@ const normalizeProviders = (items: unknown[]): VerifiedCard[] =>
     })
     .filter(Boolean) as VerifiedCard[];
 
+type ProviderCardProps = {
+  provider: VerifiedCard;
+  onViewProfile: (id: string) => void;
+};
+
+const ProviderCard = memo(({ provider, onViewProfile }: ProviderCardProps) => {
+  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(provider.user.name)}&background=0B3C8A&color=FFFFFF`;
+  const displayImage = (provider as any)?.avatarUrl || provider.portfolio?.[0] || avatarUrl;
+  const ratingLabel =
+    provider.ratingAvg && provider.ratingCount
+      ? `${provider.ratingAvg.toFixed(1)} out of 5 stars based on ${provider.ratingCount} reviews`
+      : 'No reviews yet';
+  const phoneNumber = provider.user.phone?.replace(/\s+/g, '');
+
+  return (
+    <li className={styles.card}>
+      <article className={styles.cardBody}>
+        <button
+          type="button"
+          className={styles.cardMedia}
+          onClick={() => onViewProfile(provider._id)}
+          aria-label={`View ${provider.user.name}'s profile`}
+        >
+          <img
+            src={displayImage || fallbackImage}
+            alt={provider.user.name}
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.src = fallbackImage;
+            }}
+          />
+        </button>
+        <div className={styles.cardContent}>
+          <h2 className={styles.cardTitle}>{provider.user.name}</h2>
+          <p className={styles.cardProfession}>
+            <Building2 className={styles.cardIcon} aria-hidden="true" />
+            {provider.profession || 'Profession not provided'}
+          </p>
+          {provider.user.location ? (
+            <p className={styles.cardLocation}>
+              <MapPin className={styles.cardIcon} aria-hidden="true" />
+              {provider.user.location}
+            </p>
+          ) : null}
+          <div className={styles.cardMeta}>
+            <span className={styles.rating} aria-label={ratingLabel}>
+              <Star className={styles.ratingIcon} aria-hidden="true" />
+              {provider.ratingAvg ? provider.ratingAvg.toFixed(1) : 'New'}
+              {provider.ratingCount ? (
+                <span className={styles.ratingCount}>({provider.ratingCount})</span>
+              ) : null}
+            </span>
+            <a
+              className={cn(styles.callButton, !phoneNumber && styles.callButtonDisabled)}
+              href={phoneNumber ? `tel:${phoneNumber}` : undefined}
+              aria-label={phoneNumber ? `Call ${provider.user.name}` : 'Phone number unavailable'}
+              onClick={(event) => {
+                if (!phoneNumber) event.preventDefault();
+              }}
+            >
+              <PhoneCall className={styles.callIcon} aria-hidden="true" />
+              <span>Call</span>
+            </a>
+          </div>
+        </div>
+      </article>
+    </li>
+  );
+});
+
+ProviderCard.displayName = 'ProviderCard';
+
 const ProvidersPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -97,6 +171,23 @@ const ProvidersPage = () => {
     return normalizeProviders(items);
   }, [items]);
 
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [providers, profession, city]);
+
+  const limitedProviders = useMemo(
+    () => providers.slice(0, visibleCount),
+    [providers, visibleCount],
+  );
+
+  const showLoadMore = providers.length > visibleCount;
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount((count) => Math.min(count + PAGE_SIZE, providers.length));
+  }, [providers.length]);
+
   if (!isBusiness) {
     return (
       <section className={styles.page} aria-labelledby="providers-heading">
@@ -122,6 +213,13 @@ const ProvidersPage = () => {
   const isLoading = status === 'loading';
   const hasError = status === 'failed';
   const hasProviders = providers.length > 0;
+
+  const handleViewProfile = useCallback(
+    (id: string) => {
+      navigate(paths.providers.detail(id));
+    },
+    [navigate],
+  );
 
   return (
     <section className={styles.page} aria-labelledby="providers-heading">
@@ -180,71 +278,20 @@ const ProvidersPage = () => {
           />
         ) : null}
         {hasProviders ? (
-          <ul className={styles.grid} aria-live="polite">
-            {providers.map((provider) => {
-              const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(provider.user.name)}&background=0B3C8A&color=FFFFFF`;
-              const displayImage = (provider as any)?.avatarUrl || provider.portfolio?.[0] || avatarUrl;
-              const ratingLabel =
-                provider.ratingAvg && provider.ratingCount
-                  ? `${provider.ratingAvg.toFixed(1)} out of 5 stars based on ${provider.ratingCount} reviews`
-                  : 'No reviews yet';
-              const phoneNumber = provider.user.phone?.replace(/\s+/g, '');
-              return (
-                <li key={provider._id} className={styles.card}>
-                  <article className={styles.cardBody}>
-                    <button
-                      type="button"
-                      className={styles.cardMedia}
-                      onClick={() => navigate(paths.providers.detail(provider._id))}
-                      aria-label={`View ${provider.user.name}'s profile`}
-                    >
-                      <img
-                        src={displayImage || fallbackImage}
-                        alt={provider.user.name}
-                        loading="lazy"
-                        onError={(event) => {
-                          event.currentTarget.src = fallbackImage;
-                        }}
-                      />
-                    </button>
-                    <div className={styles.cardContent}>
-                      <h2 className={styles.cardTitle}>{provider.user.name}</h2>
-                      <p className={styles.cardProfession}>
-                        <Building2 className={styles.cardIcon} aria-hidden="true" />
-                        {provider.profession || 'Profession not provided'}
-                      </p>
-                      {provider.user.location ? (
-                        <p className={styles.cardLocation}>
-                          <MapPin className={styles.cardIcon} aria-hidden="true" />
-                          {provider.user.location}
-                        </p>
-                      ) : null}
-                      <div className={styles.cardMeta}>
-                        <span className={styles.rating} aria-label={ratingLabel}>
-                          <Star className={styles.ratingIcon} aria-hidden="true" />
-                          {provider.ratingAvg ? provider.ratingAvg.toFixed(1) : 'New'}
-                          {provider.ratingCount ? (
-                            <span className={styles.ratingCount}>({provider.ratingCount})</span>
-                          ) : null}
-                        </span>
-                        <a
-                          className={cn(styles.callButton, !phoneNumber && styles.callButtonDisabled)}
-                          href={phoneNumber ? `tel:${phoneNumber}` : undefined}
-                          aria-label={phoneNumber ? `Call ${provider.user.name}` : 'Phone number unavailable'}
-                          onClick={(event) => {
-                            if (!phoneNumber) event.preventDefault();
-                          }}
-                        >
-                          <PhoneCall className={styles.callIcon} aria-hidden="true" />
-                          <span>Call</span>
-                        </a>
-                      </div>
-                    </div>
-                  </article>
-                </li>
-              );
-            })}
-          </ul>
+          <>
+            <ul className={styles.grid} aria-live="polite">
+              {limitedProviders.map((provider) => (
+                <ProviderCard key={provider._id} provider={provider} onViewProfile={handleViewProfile} />
+              ))}
+            </ul>
+            {showLoadMore ? (
+              <div className={styles.loadMoreRow}>
+                <button type="button" className={styles.loadMoreButton} onClick={handleLoadMore}>
+                  Load more providers
+                </button>
+              </div>
+            ) : null}
+          </>
         ) : null}
       </div>
     </section>

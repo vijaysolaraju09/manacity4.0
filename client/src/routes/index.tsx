@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, type LazyExoticComponent, type ComponentType, type ReactNode } from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
@@ -6,6 +6,28 @@ import TabLayout from '@/layouts/TabLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import Loader from '@/components/Loader';
 import ScrollToTop from './ScrollToTop';
+
+const RouteSkeleton = ({ label }: { label: string }) => (
+  <div className="flex min-h-[40vh] items-center justify-center px-6 py-10">
+    <div className="w-full max-w-md animate-pulse space-y-4" role="status" aria-live="polite">
+      <div className="h-6 w-2/3 rounded-full bg-slate-200 dark:bg-slate-700" />
+      <div className="h-4 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
+      <div className="h-4 w-5/6 rounded-full bg-slate-200 dark:bg-slate-700" />
+      <div className="h-4 w-3/4 rounded-full bg-slate-200 dark:bg-slate-700" />
+      <span className="sr-only">Loading {label}</span>
+    </div>
+  </div>
+);
+
+const withSuspense = <P extends object>(
+  Component: LazyExoticComponent<ComponentType<P>>,
+  fallback: ReactNode,
+  props?: P,
+) => (
+  <Suspense fallback={fallback}>
+    <Component {...(props as P)} />
+  </Suspense>
+);
 
 const Landing = lazy(() => import('@/pages/Landing/Landing'));
 const Login = lazy(() => import('@/pages/auth/Login/Login'));
@@ -127,35 +149,86 @@ const AppRoutes = () => (
             <Route path="requests" element={<PublicRequests />} />
             <Route path="requests/mine" element={<MyRequests />} />
           </Route>
-          <Route key="service-request" path="services/request" element={<ServiceRequestFormPage />} />
-          <Route key="providers" path="providers" element={<ProvidersPage />} />
+          <Route
+            key="service-request"
+            path="services/request"
+            element={withSuspense(
+              ServiceRequestFormPage,
+              <RouteSkeleton label="Service request" />,
+            )}
+          />
+          <Route
+            key="providers"
+            path="providers"
+            element={withSuspense(ProvidersPage, <RouteSkeleton label="Providers" />)}
+          />
           <Route key="verified-list" path="verified-users" element={<VerifiedList />} />
           <Route key="legacy-verified" path="verified" element={<LegacyVerified />} />
-          <Route key="events" path="events" element={<Events />} />
-          <Route key="special-shop" path="special-shop" element={<SpecialShop />} />
+          <Route
+            key="events"
+            path="events"
+            element={withSuspense(Events, <RouteSkeleton label="Events" />)}
+          />
+          <Route
+            key="special-shop"
+            path="special-shop"
+            element={withSuspense(SpecialShop, <RouteSkeleton label="Special shop" />)}
+          />
           <Route key="voice-order" path="voice-order" element={<VoiceOrder />} />
           <Route key="order-now" path="order-now" element={<OrderNow />} />
-          <Route key="notifications" path="notifications" element={<Notifications />} />
+          <Route
+            key="notifications"
+            path="notifications"
+            element={withSuspense(Notifications, <RouteSkeleton label="Notifications" />)}
+          />
           <Route key="profile" path="profile" element={<Profile />} />
           <Route key="settings" path="settings" element={<Settings />} />
           <Route key="manage-products" path="manage-products" element={<ManageProducts />} />
-          <Route key="orders-received" path="orders/received" element={<ReceivedOrders />} />
-          <Route key="orders-mine" path="orders/mine" element={<MyOrders />} />
-          <Route key="orders-service" path="orders/service" element={<ServiceOrders />} />
+          <Route
+            key="orders-received"
+            path="orders/received"
+            element={withSuspense(ReceivedOrders, <RouteSkeleton label="Orders" />)}
+          />
+          <Route
+            key="orders-mine"
+            path="orders/mine"
+            element={withSuspense(MyOrders, <RouteSkeleton label="My orders" />)}
+          />
+          <Route
+            key="orders-service"
+            path="orders/service"
+            element={withSuspense(ServiceOrders, <RouteSkeleton label="Service orders" />)}
+          />
         </Route>
         <Route key="shop-details" path="shops/:id" element={<ShopDetails />} />
         <Route key="product-details" path="product/:id" element={<ProductDetails />} />
-        <Route key="event-details" path="events/:id" element={<EventDetailPage />} />
-        <Route key="event-register" path="events/:id/register" element={<EventRegisterPage />} />
-        <Route key="service-providers" path="services/:id" element={<ServiceProviders />} />
+        <Route
+          key="event-details"
+          path="events/:id"
+          element={withSuspense(EventDetailPage, <RouteSkeleton label="Event" />)}
+        />
+        <Route
+          key="event-register"
+          path="events/:id/register"
+          element={withSuspense(EventRegisterPage, <RouteSkeleton label="Event registration" />)}
+        />
+        <Route
+          key="service-providers"
+          path="services/:id"
+          element={withSuspense(ServiceProviders, <RouteSkeleton label="Service providers" />)}
+        />
         <Route
           key="verified-details"
           path="verified-users/:id"
           element={<VerifiedDetails />}
         />
         <Route key="provider-details" path="providers/:id" element={<VerifiedDetails />} />
-        <Route key="order-detail" path="orders/:id" element={<OrderDetail />} />
-        <Route key="cart" path="cart" element={<Cart />} />
+        <Route
+          key="order-detail"
+          path="orders/:id"
+          element={withSuspense(OrderDetail, <RouteSkeleton label="Order details" />)}
+        />
+        <Route key="cart" path="cart" element={withSuspense(Cart, <RouteSkeleton label="Cart" />)} />
         <Route key="checkout" path="checkout" element={<Checkout />} />
       </Route>
 

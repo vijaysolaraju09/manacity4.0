@@ -64,6 +64,8 @@ const ReceivedOrders = () => {
       ? selectReceivedOrders(state)
       : selectOrdersByStatus(state, 'received', activeStatus as OrderStatus)
   );
+  const userRole = useSelector((state: RootState) => state.auth.user?.role);
+  const canManageOrders = userRole === 'business' || userRole === 'admin';
 
   useEffect(() => {
     if (receivedState.status === 'idle') {
@@ -88,6 +90,19 @@ const ReceivedOrders = () => {
   const handleRetry = () => {
     dispatch(fetchReceivedOrders());
   };
+
+  if (!canManageOrders) {
+    return (
+      <div className={styles.guard}>
+        <EmptyState
+          title="Business access required"
+          message="Only approved business accounts can review incoming orders. Visit your profile to request business verification."
+          ctaLabel="Go to profile"
+          onCtaClick={() => navigate(paths.profile())}
+        />
+      </div>
+    );
+  }
 
   const performStatusUpdate = async (
     order: Order,

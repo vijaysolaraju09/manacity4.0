@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SkeletonProductCard from '@/components/ui/Skeletons/SkeletonProductCard';
 import EmptyState from '@/components/ui/EmptyState';
@@ -13,6 +13,65 @@ import styles from './ProductsList.module.scss';
 import cardStyles from './Products.module.scss';
 
 import type { Product as ProductCardProduct } from '@/components/ui/ProductCard.tsx';
+
+const PAGE_SIZE = 24;
+
+type ProductListItemProps = {
+  product: Product;
+  onSelect: (id: string | null) => void;
+};
+
+const ProductListItem = memo(({ product, onSelect }: ProductListItemProps) => {
+  const id = product._id || (product as any).id;
+  const shopId = normalizeShopId(product);
+  const primaryImage = Array.isArray(product.images)
+    ? product.images.find((src) => typeof src === 'string' && src.trim())
+    : product.image;
+  const imageSrc = primaryImage || fallbackImage;
+  const priceLabel = formatINR(product.pricePaise);
+  const mrpValue = typeof product.mrpPaise === 'number' ? product.mrpPaise : undefined;
+  const mrpLabel = typeof mrpValue === 'number' ? formatINR(mrpValue) : null;
+  const discount = getDiscount(product);
+
+  return (
+    <button
+      type="button"
+      className={cardStyles.card}
+      data-testid="product-card"
+      onClick={() => onSelect(id ? String(id) : null)}
+    >
+      <img
+        className={cardStyles.img}
+        src={imageSrc}
+        alt={product.name}
+        loading="lazy"
+        onError={(event) => {
+          event.currentTarget.src = fallbackImage;
+        }}
+      />
+      <h3 className={cardStyles.title}>{product.name}</h3>
+      <div className={cardStyles.priceRow}>
+        <span>{priceLabel}</span>
+        {mrpLabel && mrpValue !== undefined && mrpValue > product.pricePaise && (
+          <span className={cardStyles.mrp}>{mrpLabel}</span>
+        )}
+        {discount > 0 && <span className={cardStyles.save}>Save {discount}%</span>}
+      </div>
+      <div className={cardStyles.meta}>
+        <span className={cardStyles.shop} title={getShopName(product)}>
+          {getShopName(product)}
+        </span>
+        {product.category ? (
+          <span className={cardStyles.category}>{product.category}</span>
+        ) : shopId ? (
+          <span className={cardStyles.category}>Shop #{shopId.slice(-4)}</span>
+        ) : null}
+      </div>
+    </button>
+  );
+});
+
+ProductListItem.displayName = 'ProductListItem';
 
 interface Product extends ProductCardProduct {
   category?: string;
@@ -101,6 +160,7 @@ const ProductsList = () => {
   const [appliedFilters, setAppliedFilters] = useState<FiltersState>(defaultFilters);
   const [sort, setSort] = useState<string>('newest');
   const [reloadKey, setReloadKey] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const handleApply = useCallback(
     (event?: React.FormEvent<HTMLFormElement>) => {
@@ -165,6 +225,10 @@ const ProductsList = () => {
       controller.abort();
     };
   }, [appliedFilters.search, appliedFilters.shopId, appliedFilters.category, reloadKey]);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [appliedFilters.search, appliedFilters.shopId, appliedFilters.category, sort]);
 
   const shopOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -231,7 +295,27 @@ const ProductsList = () => {
     sort,
   ]);
 
+  const paginatedItems = useMemo(
+    () => visibleItems.slice(0, visibleCount),
+    [visibleItems, visibleCount],
+  );
+
+  const hasMore = visibleItems.length > visibleCount;
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount((count) => Math.min(count + PAGE_SIZE, visibleItems.length));
+  }, [visibleItems.length]);
+
   const isLoading = status === 'loading' && items.length === 0;
+
+  const handleProductSelect = useCallback(
+    (productId: string | null) => {
+      if (productId) {
+        navigate(paths.products.detail(productId));
+      }
+    },
+    [navigate],
+  );
 
   return (
     <div className={styles.page}>
@@ -333,68 +417,26 @@ const ProductsList = () => {
         </div>
       ) : (
         <div className={cardStyles.grid}>
-          {visibleItems.map((product) => {
-            const id = product._id || (product as any).id;
-            const shopId = normalizeShopId(product);
-            const primaryImage = Array.isArray(product.images)
-              ? product.images.find((src) => typeof src === 'string' && src.trim())
-              : product.image;
-            const imageSrc = primaryImage || fallbackImage;
-            const priceLabel = formatINR(product.pricePaise);
-            const mrpValue = typeof product.mrpPaise === 'number' ? product.mrpPaise : undefined;
-            const mrpLabel = typeof mrpValue === 'number' ? formatINR(mrpValue) : null;
-            const discount = getDiscount(product);
-
-            return (
-              <button
-                key={id ?? product.name}
-                type="button"
-                className={cardStyles.card}
-                data-testid="product-card"
-                onClick={() => {
-                  if (id) {
-                    navigate(paths.products.detail(String(id)));
-                  }
-                }}
-              >
-                <img
-                  className={cardStyles.img}
-                  src={imageSrc}
-                  alt={product.name}
-                  loading="lazy"
-                  onError={(event) => {
-                    event.currentTarget.src = fallbackImage;
-                  }}
-                />
-                <h3 className={cardStyles.title}>{product.name}</h3>
-                <div className={cardStyles.priceRow}>
-                  <span>{priceLabel}</span>
-                  {mrpLabel && mrpValue !== undefined && mrpValue > product.pricePaise && (
-                    <span className={cardStyles.mrp}>{mrpLabel}</span>
-                  )}
-                  {discount > 0 && (
-                    <span className={cardStyles.save}>Save {discount}%</span>
-                  )}
-                </div>
-                <div className={cardStyles.meta}>
-                  <span className={cardStyles.shop} title={getShopName(product)}>
-                    {getShopName(product)}
-                  </span>
-                  {product.category ? (
-                    <span className={cardStyles.category}>{product.category}</span>
-                  ) : shopId ? (
-                    <span className={cardStyles.category}>Shop #{shopId.slice(-4)}</span>
-                  ) : null}
-                </div>
-              </button>
-            );
-          })}
+          {paginatedItems.map((product) => (
+            <ProductListItem key={product._id ?? product.name} product={product} onSelect={handleProductSelect} />
+          ))}
         </div>
       )}
 
       {status === 'loading' && items.length > 0 && (
         <div className={styles.loadingHint} role="status">
           Updating results…
+        </div>
+      )}
+      {hasMore && (
+        <div className={styles.loadMoreRow}>
+          <button
+            type="button"
+            className={styles.loadMoreButton}
+            onClick={handleLoadMore}
+          >
+            Load more products
+          </button>
         </div>
       )}
     </div>

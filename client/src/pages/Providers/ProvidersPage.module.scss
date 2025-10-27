@@ -198,6 +198,35 @@
   color: var(--gray-500);
 }
 
+.loadMoreRow {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.75rem;
+}
+
+.loadMoreButton {
+  border: 1px solid rgba(11, 60, 138, 0.18);
+  background: #ffffff;
+  color: #0b3c8a;
+  border-radius: 9999px;
+  padding: 0.7rem 1.8rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(11, 60, 138, 0.18);
+    border-color: rgba(11, 60, 138, 0.28);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(11, 60, 138, 0.28);
+  }
+}
+
 .callButton {
   display: inline-flex;
   align-items: center;

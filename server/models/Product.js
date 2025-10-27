@@ -33,4 +33,8 @@ productSchema.pre('save', function (next) {
   next();
 });
 
+productSchema.index({ shop: 1, isDeleted: 1 });
+productSchema.index({ shop: 1, status: 1 });
+productSchema.index({ category: 1, isDeleted: 1 });
+
 module.exports = model('Product', productSchema);

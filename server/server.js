@@ -38,22 +38,50 @@ const logger = require("./utils/logger");
 
 const app = express();
 
-const allowedOrigins = (
-  process.env.CORS_ORIGIN ||
-  'http://localhost:5173,https://manacity4-0-1.onrender.com'
-)
-  .split(',')
-  .map((o) => o.trim());
+const normalizeOrigin = (origin = '') => {
+  try {
+    const url = new URL(origin);
+    return `${url.protocol}//${url.host}`;
+  } catch (err) {
+    return origin.trim().replace(/\/+$/, '');
+  }
+};
+
+const parseOrigins = (value) =>
+  String(value || '')
+    .split(',')
+    .map((entry) => normalizeOrigin(entry))
+    .filter(Boolean);
+
+const fallbackOrigins = [
+  'http://localhost:5173',
+  'https://manacity4-0-1.onrender.com',
+];
+
+const configuredOrigins = parseOrigins(process.env.CORS_ORIGIN);
+const allowedOrigins = configuredOrigins.length > 0 ? configuredOrigins : fallbackOrigins;
 
 const corsOptions = {
-  origin: allowedOrigins,
+  origin(origin, callback) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    const normalized = normalizeOrigin(origin);
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(normalized)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 };
 
 app.use(cors(corsOptions));
-app.use(helmet());
+const helmetOptions = process.env.ENABLE_CSP === 'true' ? undefined : { contentSecurityPolicy: false };
+app.use(helmet(helmetOptions));
 // express-mongo-sanitize's built-in middleware attempts to reassign `req.query`,
 // which is a read-only getter in Express 5 and causes an error. Instead of
 // using the default middleware, manually sanitize request objects in-place.
@@ -72,7 +100,14 @@ app.use(context);
 
 const authLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const standardLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -83,23 +118,23 @@ app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/home", homeRoutes);
 app.use("/api/shops", shopRoutes);
-app.use("/api/cart", cartRoutes);
+app.use("/api/cart", standardLimiter, cartRoutes);
 app.use("/api/verified", verifiedRoutes);
 app.use("/api/admin/verified", adminVerifiedRoutes);
-app.use("/api/events", eventRoutes);
+app.use("/api/events", standardLimiter, eventRoutes);
 app.use("/api/form-templates", formTemplateRoutes);
 app.use("/api/registrations", registrationRoutes);
 app.use("/api/special", specialRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/orders", orderRoutes);
+app.use("/api/orders", standardLimiter, orderRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/admin/events", adminEventRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/pros", proRoutes);
-app.use("/api/services", serviceRoutes);
-app.use("/api/service-requests", serviceRequestRoutes);
+app.use("/api/services", standardLimiter, serviceRoutes);
+app.use("/api/service-requests", standardLimiter, serviceRequestRoutes);
 app.use("/api/admin/services", adminServiceRoutes);
 app.use("/api/admin/service-requests", adminServiceRequestRoutes);
 

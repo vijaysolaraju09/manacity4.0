@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
@@ -10,8 +10,65 @@ import styles from "./Shops.module.scss";
 import FacetFilterBar from "../../components/ui/FacetFilterBar/FacetFilterBar";
 import useDebounce from "@/hooks/useDebounce";
 import { paths } from "@/routes/paths";
-import fallbackImage from "../../assets/no-image.svg";
 import getImageOrPlaceholder from "@/utils/getImageOrPlaceholder";
+import type { Shop } from "@/store/shops";
+
+const PAGE_SIZE = 24;
+
+type ShopCardProps = {
+  shop: Shop;
+  onSelect: (id: string) => void;
+};
+
+const ShopCard = memo(({ shop, onSelect }: ShopCardProps) => {
+  const image = getImageOrPlaceholder(shop.image || shop.banner);
+  const rating =
+    typeof shop.ratingAvg === "number" && Number.isFinite(shop.ratingAvg)
+      ? shop.ratingAvg
+      : null;
+  const distanceValue =
+    typeof shop.distance === "number" && Number.isFinite(shop.distance)
+      ? Math.max(0, shop.distance)
+      : null;
+  const distance = distanceValue !== null ? `${distanceValue.toFixed(1)} km` : null;
+
+  return (
+    <button
+      type="button"
+      className={`${styles.shopCard} cursor-pointer text-left`}
+      onClick={() => onSelect(shop._id)}
+    >
+      <img
+        className={styles.thumb}
+        src={image}
+        alt={shop.name}
+        loading="lazy"
+        onError={(event) => {
+          const placeholder = getImageOrPlaceholder(null);
+          if (event.currentTarget.src !== placeholder) {
+            event.currentTarget.src = placeholder;
+          }
+        }}
+      />
+      <div className="flex flex-1 flex-col gap-2">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-lg font-semibold text-gray-900">{shop.name}</h3>
+          {rating !== null && (
+            <span className="text-sm font-medium text-gray-700">{rating.toFixed(1)}</span>
+          )}
+        </div>
+        <p className={styles.meta}>{shop.location || shop.address || "Location coming soon"}</p>
+        <div className={styles.chips}>
+          {shop.category && <span>{shop.category}</span>}
+          {shop.isOpen !== undefined && <span>{shop.isOpen ? "Open now" : "Closed"}</span>}
+          {distance && <span>{distance}</span>}
+        </div>
+      </div>
+    </button>
+  );
+});
+
+ShopCard.displayName = "ShopCard";
 
 const Shops = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -42,18 +99,38 @@ const Shops = () => {
     dispatch(fetchShops(params));
   }, [searchParams, dispatch]);
 
-  const filteredShops = shops.filter((shop) => {
-    return (
-      (!category || shop.category === category) &&
-      (!location || shop.location === location) &&
-      (!debouncedSearch || shop.name.toLowerCase().includes(debouncedSearch.toLowerCase())) &&
-      (!openOnly || shop.isOpen)
-    );
-  });
-
-  const sortedShops = [...filteredShops].sort(
-    (a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0)
+  const filteredShops = useMemo(
+    () =>
+      shops.filter((shop) =>
+        (!category || shop.category === category) &&
+        (!location || shop.location === location) &&
+        (!debouncedSearch || shop.name.toLowerCase().includes(debouncedSearch.toLowerCase())) &&
+        (!openOnly || shop.isOpen),
+      ),
+    [shops, category, location, debouncedSearch, openOnly],
   );
+
+  const sortedShops = useMemo(
+    () => [...filteredShops].sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0)),
+    [filteredShops],
+  );
+
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [category, location, debouncedSearch, openOnly]);
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount((count) => Math.min(count + PAGE_SIZE, sortedShops.length));
+  }, [sortedShops.length]);
+
+  const visibleShops = useMemo(
+    () => sortedShops.slice(0, visibleCount),
+    [sortedShops, visibleCount],
+  );
+
+  const showLoadMore = sortedShops.length > visibleCount;
 
   const categories = ["Restaurant", "Mechanic", "Fashion", "Grocery"];
   const locations = ["Town Center", "West End", "East Side", "North Market"];
@@ -67,6 +144,13 @@ const Shops = () => {
 
   const retryFetch = () =>
     dispatch(fetchShops(Object.fromEntries(searchParams.entries())));
+
+  const handleShopSelect = useCallback(
+    (id: string) => {
+      navigate(paths.shop(id));
+    },
+    [navigate],
+  );
 
   return (
     <div className={`${styles.page} px-4 md:px-6 lg:px-8`}>
@@ -108,59 +192,24 @@ const Shops = () => {
       )}
 
       {status === "succeeded" && sortedShops.length > 0 && (
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {sortedShops.map((shop) => {
-            const image = getImageOrPlaceholder(shop.image || shop.banner);
-            const rating =
-              typeof shop.ratingAvg === "number" && Number.isFinite(shop.ratingAvg)
-                ? shop.ratingAvg
-                : null;
-            const distanceValue =
-              typeof shop.distance === "number" && Number.isFinite(shop.distance)
-                ? Math.max(0, shop.distance)
-                : null;
-            const distance = distanceValue !== null ? `${distanceValue.toFixed(1)} km` : null;
-
-            return (
+        <>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {visibleShops.map((shop) => (
+              <ShopCard key={shop._id} shop={shop} onSelect={handleShopSelect} />
+            ))}
+          </div>
+          {showLoadMore ? (
+            <div className="mt-6 flex justify-center">
               <button
-                key={shop._id}
                 type="button"
-                className={`${styles.shopCard} cursor-pointer text-left`}
-                onClick={() => navigate(paths.shop(shop._id))}
+                className="rounded-full border border-blue-200 bg-white px-6 py-2 text-sm font-semibold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                onClick={handleLoadMore}
               >
-                <img
-                  className={styles.thumb}
-                  src={image}
-                  alt={shop.name}
-                  onError={(e) => {
-                    const placeholder = getImageOrPlaceholder(null);
-                    if (e.currentTarget.src !== placeholder) {
-                      e.currentTarget.src = placeholder;
-                    }
-                  }}
-                />
-                <div className="flex flex-1 flex-col gap-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {shop.name}
-                    </h3>
-                    {rating !== null && (
-                      <span className="text-sm font-medium text-gray-700">{rating.toFixed(1)}</span>
-                    )}
-                  </div>
-                  <p className={styles.meta}>{shop.location || shop.address || "Location coming soon"}</p>
-                  <div className={styles.chips}>
-                    {shop.category && <span>{shop.category}</span>}
-                    {shop.isOpen !== undefined && (
-                      <span>{shop.isOpen ? "Open now" : "Closed"}</span>
-                    )}
-                    {distance && <span>{distance}</span>}
-                  </div>
-                </div>
+                Load more shops
               </button>
-            );
-          })}
-        </div>
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );

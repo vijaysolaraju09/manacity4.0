@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, type Draft, type PayloadAction } from '@reduxjs/toolkit';
 import { http, adminHttp } from '@/lib/http';
 import { toErrorMessage, toItems } from '@/lib/response';
 import type {
@@ -206,7 +206,7 @@ const normalizeRequest = (data: any): ServiceRequest => ({
   updatedAt: data.updatedAt,
 });
 
-const applyRequestUpdate = (state: ServiceRequestsState, updated: ServiceRequest) => {
+const applyRequestUpdate = (state: Draft<ServiceRequestsState>, updated: ServiceRequest) => {
   state.mine.items = state.mine.items.map((item) =>
     item._id === updated._id ? updated : item
   );
@@ -226,40 +226,63 @@ const applyRequestUpdate = (state: ServiceRequestsState, updated: ServiceRequest
   );
 };
 
-export const createServiceRequest = createAsyncThunk(
+interface PublicRequestsResponse {
+  items: PublicServiceRequest[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+interface AdminRequestsResponse {
+  items: ServiceRequest[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export const createServiceRequest = createAsyncThunk<
+  ServiceRequest,
+  CreateServiceRequestPayload,
+  { rejectValue: string }
+>(
   'serviceRequests/create',
-  async (payload: CreateServiceRequestPayload, { rejectWithValue }) => {
+  async (payload, thunkApi) => {
     try {
       const res = await http.post('/service-requests', payload);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
       return request;
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
     }
   }
 );
 
-export const fetchMyServiceRequests = createAsyncThunk(
+export const fetchMyServiceRequests = createAsyncThunk<
+  ServiceRequest[],
+  void,
+  { rejectValue: string }
+>(
   'serviceRequests/fetchMine',
-  async (_: void, { rejectWithValue }) => {
+  async (_unused, thunkApi) => {
     try {
       const res = await http.get('/service-requests/mine');
       const items = (toItems(res) as any[]).map(normalizeRequest);
       return items as ServiceRequest[];
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
     }
   }
 );
 
-export const fetchPublicServiceRequests = createAsyncThunk(
+export const fetchPublicServiceRequests = createAsyncThunk<
+  PublicRequestsResponse,
+  { page?: number; pageSize?: number; q?: string; serviceId?: string } | undefined,
+  { rejectValue: string }
+>(
   'serviceRequests/fetchPublic',
-  async (
-    params: { page?: number; pageSize?: number; q?: string; serviceId?: string } | undefined,
-    { rejectWithValue }
-  ) => {
+  async (params, thunkApi) => {
     try {
       const res = await http.get('/service-requests/public', { params });
       const body = res?.data?.data ?? res?.data ?? {};
@@ -269,58 +292,57 @@ export const fetchPublicServiceRequests = createAsyncThunk(
         typeof body.pageSize === 'number' ? body.pageSize : params?.pageSize ?? items.length;
       const total = typeof body.total === 'number' ? body.total : items.length;
       return { items, page, pageSize, total };
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
     }
   }
 );
 
-export const submitServiceOffer = createAsyncThunk(
+export const submitServiceOffer = createAsyncThunk<
+  ServiceRequest,
+  { requestId: string; payload: SubmitServiceOfferPayload },
+  { rejectValue: string }
+>(
   'serviceRequests/submitOffer',
-  async (
-    { requestId, payload }: { requestId: string; payload: SubmitServiceOfferPayload },
-    { rejectWithValue }
-  ) => {
+  async ({ requestId, payload }, thunkApi) => {
     try {
       const res = await http.post(`/service-requests/${requestId}/offers`, payload);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
       return request;
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
     }
   }
 );
 
-export const actOnServiceOffer = createAsyncThunk(
+export const actOnServiceOffer = createAsyncThunk<
+  ServiceRequest,
+  { requestId: string; offerId: string; payload: ActOnServiceOfferPayload },
+  { rejectValue: string }
+>(
   'serviceRequests/actOnOffer',
-  async (
-    {
-      requestId,
-      offerId,
-      payload,
-    }: { requestId: string; offerId: string; payload: ActOnServiceOfferPayload },
-    { rejectWithValue }
-  ) => {
+  async ({ requestId, offerId, payload }, thunkApi) => {
     try {
       const res = await http.patch(`/service-requests/${requestId}/offers/${offerId}`, payload);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
       return request;
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
     }
   }
 );
 
-export const completeServiceRequest = createAsyncThunk(
+export const completeServiceRequest = createAsyncThunk<
+  ServiceRequest,
+  { id: string; message?: string },
+  { rejectValue: string }
+>(
   'serviceRequests/complete',
-  async (
-    { id, message }: { id: string; message?: string },
-    { rejectWithValue }
-  ) => {
+  async ({ id, message }, thunkApi) => {
     try {
       const body = message ? { message } : undefined;
       const res = await http.post(`/service-requests/${id}/complete`, body);
@@ -328,18 +350,19 @@ export const completeServiceRequest = createAsyncThunk(
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
       return request;
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
     }
   }
 );
 
-export const reopenServiceRequest = createAsyncThunk(
+export const reopenServiceRequest = createAsyncThunk<
+  ServiceRequest,
+  { id: string; message?: string },
+  { rejectValue: string }
+>(
   'serviceRequests/reopen',
-  async (
-    { id, message }: { id: string; message?: string },
-    { rejectWithValue }
-  ) => {
+  async ({ id, message }, thunkApi) => {
     try {
       const body = message ? { message } : undefined;
       const res = await http.post(`/service-requests/${id}/reopen`, body);
@@ -347,15 +370,19 @@ export const reopenServiceRequest = createAsyncThunk(
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
       return request;
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
     }
   }
 );
 
-export const adminFetchServiceRequests = createAsyncThunk(
+export const adminFetchServiceRequests = createAsyncThunk<
+  AdminRequestsResponse,
+  Record<string, unknown> | undefined,
+  { rejectValue: string }
+>(
   'serviceRequests/adminFetch',
-  async (params: Record<string, unknown> | undefined, { rejectWithValue }) => {
+  async (params, thunkApi) => {
     try {
       const res = await adminHttp.get('/admin/service-requests', { params });
       const body = res?.data?.data ?? res?.data ?? {};
@@ -364,31 +391,32 @@ export const adminFetchServiceRequests = createAsyncThunk(
       const page = typeof body.page === 'number' ? body.page : params?.page ?? 1;
       const pageSize = typeof body.pageSize === 'number' ? body.pageSize : params?.pageSize ?? items.length;
       return { items, total, page, pageSize };
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
     }
   }
 );
 
-export const adminUpdateServiceRequest = createAsyncThunk(
+export const adminUpdateServiceRequest = createAsyncThunk<
+  ServiceRequest,
+  { id: string; payload: UpdateServiceRequestPayload },
+  { rejectValue: string }
+>(
   'serviceRequests/adminUpdate',
-  async (
-    { id, payload }: { id: string; payload: UpdateServiceRequestPayload },
-    { rejectWithValue }
-  ) => {
+  async ({ id, payload }, thunkApi) => {
     try {
       const res = await adminHttp.patch(`/admin/service-requests/${id}`, payload);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
       return request;
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
     }
   }
 );
 
-const serviceRequestsSlice = createSlice({
+const serviceRequestsSlice = createSlice<ServiceRequestsState>({
   name: 'serviceRequests',
   initialState,
   reducers: {},
@@ -398,32 +426,32 @@ const serviceRequestsSlice = createSlice({
         state.createStatus = 'loading';
         state.createError = null;
       })
-      .addCase(createServiceRequest.fulfilled, (state, action) => {
+      .addCase(createServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         state.createStatus = 'succeeded';
         state.createError = null;
         state.mine.items = [action.payload, ...state.mine.items];
       })
       .addCase(createServiceRequest.rejected, (state, action) => {
         state.createStatus = 'failed';
-        state.createError = (action.payload as string) || action.error.message || 'Failed to submit request';
+        state.createError = action.payload ?? action.error.message ?? 'Failed to submit request';
       })
       .addCase(fetchMyServiceRequests.pending, (state) => {
         state.mine.status = 'loading';
         state.mine.error = null;
       })
-      .addCase(fetchMyServiceRequests.fulfilled, (state, action) => {
+      .addCase(fetchMyServiceRequests.fulfilled, (state, action: PayloadAction<ServiceRequest[]>) => {
         state.mine.status = 'succeeded';
         state.mine.items = action.payload;
       })
       .addCase(fetchMyServiceRequests.rejected, (state, action) => {
         state.mine.status = 'failed';
-        state.mine.error = (action.payload as string) || action.error.message || 'Failed to load requests';
+        state.mine.error = action.payload ?? action.error.message ?? 'Failed to load requests';
       })
       .addCase(fetchPublicServiceRequests.pending, (state) => {
         state.publicList.status = 'loading';
         state.publicList.error = null;
       })
-      .addCase(fetchPublicServiceRequests.fulfilled, (state, action) => {
+      .addCase(fetchPublicServiceRequests.fulfilled, (state, action: PayloadAction<PublicRequestsResponse>) => {
         state.publicList.status = 'succeeded';
         state.publicList.items = action.payload.items;
         state.publicList.page = action.payload.page;
@@ -432,14 +460,13 @@ const serviceRequestsSlice = createSlice({
       })
       .addCase(fetchPublicServiceRequests.rejected, (state, action) => {
         state.publicList.status = 'failed';
-        state.publicList.error =
-          (action.payload as string) || action.error.message || 'Failed to load public requests';
+        state.publicList.error = action.payload ?? action.error.message ?? 'Failed to load public requests';
       })
       .addCase(adminFetchServiceRequests.pending, (state) => {
         state.admin.status = 'loading';
         state.admin.error = null;
       })
-      .addCase(adminFetchServiceRequests.fulfilled, (state, action) => {
+      .addCase(adminFetchServiceRequests.fulfilled, (state, action: PayloadAction<AdminRequestsResponse>) => {
         state.admin.status = 'succeeded';
         state.admin.items = action.payload.items;
         state.admin.total = action.payload.total;
@@ -448,21 +475,21 @@ const serviceRequestsSlice = createSlice({
       })
       .addCase(adminFetchServiceRequests.rejected, (state, action) => {
         state.admin.status = 'failed';
-        state.admin.error = (action.payload as string) || action.error.message || 'Failed to load service requests';
+        state.admin.error = action.payload ?? action.error.message ?? 'Failed to load service requests';
       })
-      .addCase(submitServiceOffer.fulfilled, (state, action) => {
+      .addCase(submitServiceOffer.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         applyRequestUpdate(state, action.payload);
       })
-      .addCase(actOnServiceOffer.fulfilled, (state, action) => {
+      .addCase(actOnServiceOffer.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         applyRequestUpdate(state, action.payload);
       })
-      .addCase(completeServiceRequest.fulfilled, (state, action) => {
+      .addCase(completeServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         applyRequestUpdate(state, action.payload);
       })
-      .addCase(reopenServiceRequest.fulfilled, (state, action) => {
+      .addCase(reopenServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         applyRequestUpdate(state, action.payload);
       })
-      .addCase(adminUpdateServiceRequest.fulfilled, (state, action) => {
+      .addCase(adminUpdateServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         applyRequestUpdate(state, action.payload);
       });
   },

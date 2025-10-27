@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { ShoppingCart, Trash2 } from 'lucide-react';
 
 import { http } from '@/lib/http';
@@ -10,9 +11,10 @@ import { Button } from '@/components/ui/button';
 import QuantityStepper from '@/components/ui/QuantityStepper/QuantityStepper';
 import ErrorCard from '@/components/ui/ErrorCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import AddressSelectModal from '@/components/address/AddressSelectModal';
+import AddressSelectModal, { type Address } from '@/components/address/AddressSelectModal';
 import fallbackImage from '@/assets/no-image.svg';
 import { paths } from '@/routes/paths';
+import { hydrateCart, type CartItem as StoreCartItem } from '@/store/slices/cartSlice';
 
 const maybeNumber = (value: unknown): number | undefined => {
   if (value === null || value === undefined) return undefined;
@@ -34,6 +36,7 @@ const maybeRupeesToPaise = (value: unknown): number | undefined => {
 
 type CartItem = {
   productId: string;
+  shopId: string | null;
   name: string;
   image: string | null;
   qty: number;
@@ -76,6 +79,26 @@ const parseCart = (payload: any): CartData => {
       })();
 
       const product = item.product ?? {};
+      const rawShop = item.shop ?? product.shop ?? null;
+      const shopId = (() => {
+        if (typeof item.shopId === 'string' && item.shopId.trim()) {
+          return item.shopId.trim();
+        }
+        if (rawShop && typeof rawShop === 'object') {
+          const candidate = rawShop as { _id?: unknown; id?: unknown };
+          const value = candidate.id ?? candidate._id;
+          if (typeof value === 'string' && value.trim()) {
+            return value.trim();
+          }
+        }
+        if (typeof rawShop === 'string' && rawShop.trim()) {
+          return rawShop.trim();
+        }
+        if (typeof product.shopId === 'string' && product.shopId.trim()) {
+          return product.shopId.trim();
+        }
+        return null;
+      })();
       const unitPricePaise =
         maybePaise(item.unitPricePaise) ??
         maybePaise(item.pricePaise) ??
@@ -102,6 +125,7 @@ const parseCart = (payload: any): CartData => {
 
       const result: CartItem = {
         productId,
+        shopId,
         name: typeof nameSource === 'string' && nameSource.trim() ? nameSource.trim() : 'Item',
         image: typeof imageSource === 'string' ? imageSource : null,
         qty,
@@ -145,6 +169,7 @@ const parseCart = (payload: any): CartData => {
 
 const CartPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [cart, setCart] = useState<CartData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -164,19 +189,40 @@ const CartPage = () => {
     });
   }, []);
 
+  const syncStore = useCallback(
+    (next: CartData | null) => {
+      const items: StoreCartItem[] = Array.isArray(next?.items)
+        ? next!.items
+            .filter((item) => item.productId && item.qty > 0)
+            .map((item) => ({
+              productId: item.productId,
+              shopId: item.shopId ?? item.productId,
+              name: item.name,
+              image: item.image ?? undefined,
+              pricePaise: item.unitPricePaise,
+              qty: item.qty,
+            }))
+        : [];
+      dispatch(hydrateCart(items));
+    },
+    [dispatch],
+  );
+
   const refreshCart = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await http.get('/api/cart');
-      setCart(parseCart(response));
+      const parsed = parseCart(response);
+      setCart(parsed);
+      syncStore(parsed);
     } catch (err) {
       const message = toErrorMessage(err);
       setError(message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [syncStore]);
 
   useEffect(() => {
     refreshCart();
@@ -187,7 +233,9 @@ const CartPage = () => {
       markPending(productId, true);
       try {
         const response = await http.delete(`/api/cart/${productId}`);
-        setCart(parseCart(response));
+        const parsed = parseCart(response);
+        setCart(parsed);
+        syncStore(parsed);
         showToast(`Removed ${itemName}`, 'success');
       } catch (err) {
         const message = toErrorMessage(err);
@@ -196,7 +244,7 @@ const CartPage = () => {
         markPending(productId, false);
       }
     },
-    [markPending],
+    [markPending, syncStore],
   );
 
   const handleQuantityChange = useCallback(
@@ -208,7 +256,9 @@ const CartPage = () => {
       markPending(productId, true);
       try {
         const response = await http.post('/api/cart', { productId, qty: nextQty });
-        setCart(parseCart(response));
+        const parsed = parseCart(response);
+        setCart(parsed);
+        syncStore(parsed);
         showToast(`Updated ${itemName} to ${nextQty}`, 'success');
       } catch (err) {
         const message = toErrorMessage(err);
@@ -217,7 +267,7 @@ const CartPage = () => {
         markPending(productId, false);
       }
     },
-    [handleRemove, markPending],
+    [handleRemove, markPending, syncStore],
   );
 
   const handleProceedToCheckout = () => {
@@ -229,13 +279,43 @@ const CartPage = () => {
   };
 
   const handlePlaceOrder = useCallback(
-    async (addressId: string) => {
+    async (address: Address) => {
       setPlacingOrder(true);
       try {
-        await http.post('/api/orders/checkout', { addressId, addressRef: addressId });
+        const shippingAddress = {
+          name: address.label,
+          label: address.label,
+          phone: address.phone,
+          address1: address.line1,
+          address2: address.line2 ?? undefined,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+          geo:
+            address.coords &&
+            (typeof address.coords.lat === 'number' || typeof address.coords.lng === 'number')
+              ? {
+                  lat: typeof address.coords.lat === 'number' ? address.coords.lat : undefined,
+                  lng: typeof address.coords.lng === 'number' ? address.coords.lng : undefined,
+                }
+              : undefined,
+        } as const;
+
+        await http.post('/api/orders/checkout', {
+          addressId: address.id,
+          shippingAddress,
+          fulfillmentType: 'delivery',
+          paymentMethod: 'cod',
+        });
         showToast('Order placed successfully', 'success');
         setAddressModalOpen(false);
-        setCart((prev) => (prev ? { ...prev, items: [], subtotalPaise: 0, discountPaise: 0, grandPaise: 0 } : prev));
+        setCart((prev) => {
+          const next = prev
+            ? { ...prev, items: [], subtotalPaise: 0, discountPaise: 0, grandPaise: 0 }
+            : prev;
+          syncStore(next ?? { items: [], subtotalPaise: 0, discountPaise: 0, grandPaise: 0, currency: 'INR' });
+          return next;
+        });
         if (typeof paths.orders?.mine === 'function') {
           navigate(paths.orders.mine());
         } else if (typeof paths.orders?.root === 'function') {
@@ -251,7 +331,7 @@ const CartPage = () => {
         setPlacingOrder(false);
       }
     },
-    [navigate],
+    [navigate, syncStore],
   );
 
   const itemCount = useMemo(() => cart?.items.reduce((total, item) => total + item.qty, 0) ?? 0, [cart]);

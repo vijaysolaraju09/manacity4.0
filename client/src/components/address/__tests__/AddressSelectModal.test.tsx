@@ -33,7 +33,11 @@ describe('AddressSelectModal', () => {
     ]);
 
     render(
-      <AddressSelectModal open onClose={() => undefined} onConfirm={() => undefined} />,
+      <AddressSelectModal
+        open
+        onClose={() => undefined}
+        onConfirm={() => undefined}
+      />,
     );
 
     expect(await screen.findByText('Home')).toBeInTheDocument();
@@ -80,6 +84,8 @@ describe('AddressSelectModal', () => {
     await userEvent.click(officeButton);
     await userEvent.click(action);
 
-    expect(onConfirm).toHaveBeenCalledWith('addr-2');
+    expect(onConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'addr-2', label: 'Office' }),
+    );
   });
 });

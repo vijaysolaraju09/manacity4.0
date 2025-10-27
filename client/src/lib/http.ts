@@ -29,10 +29,29 @@ const delay = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
+const ABSOLUTE_URL_PATTERN = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//;
+
 const normalizeUrl = (config: InternalAxiosRequestConfig) => {
-  if (config.url?.startsWith('/')) {
-    config.url = config.url.slice(1);
+  const originalUrl = config.url;
+  if (!originalUrl) {
+    return config;
   }
+
+  if (ABSOLUTE_URL_PATTERN.test(originalUrl)) {
+    return config;
+  }
+
+  let normalized = originalUrl.trim();
+
+  if (normalized.startsWith('/')) {
+    normalized = normalized.slice(1);
+  }
+
+  if (normalized.startsWith('api/')) {
+    normalized = normalized.slice(4);
+  }
+
+  config.url = normalized;
   return config;
 };
 

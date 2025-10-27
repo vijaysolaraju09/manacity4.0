@@ -2,8 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, MapPin, Plus, X } from 'lucide-react';
 
-import { http } from '@/lib/http';
-import { toErrorMessage, toItems } from '@/lib/response';
+import {
+  createAddress as createAddressApi,
+  listMyAddresses,
+  setDefaultAddress as setDefaultAddressApi,
+  type Address,
+} from '@/api/addresses';
+import { toErrorMessage } from '@/lib/response';
 import { cn } from '@/lib/utils';
 import showToast from '@/components/ui/Toast';
 import { Button } from '@/components/ui/button';
@@ -11,17 +16,7 @@ import { Input } from '@/components/ui/input';
 import ErrorCard from '@/components/ui/ErrorCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export type Address = {
-  id: string;
-  label: string;
-  line1: string;
-  line2?: string;
-  city: string;
-  state: string;
-  pincode: string;
-  phone?: string;
-  isDefault?: boolean;
-};
+export type { Address };
 
 interface AddressSelectModalProps {
   open: boolean;
@@ -29,38 +24,6 @@ interface AddressSelectModalProps {
   onConfirm: (addressId: string) => Promise<void> | void;
   isSubmitting?: boolean;
 }
-
-const normalizeString = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  return value.trim();
-};
-
-const normalizeAddress = (input: any): Address | null => {
-  if (!input || typeof input !== 'object') return null;
-  const id = normalizeString(input.id ?? input._id);
-  if (!id) return null;
-  const label = normalizeString(input.label ?? input.name ?? '');
-  const line1 = normalizeString(input.line1 ?? input.address1 ?? '');
-  const line2 = normalizeString(input.line2 ?? input.address2 ?? input.area ?? '');
-  const city = normalizeString(input.city ?? input.town ?? '');
-  const state = normalizeString(input.state ?? input.region ?? '');
-  const pincode = normalizeString(input.pincode ?? input.postalCode ?? '');
-  if (!label || !line1 || !city || !state || !pincode) {
-    return null;
-  }
-
-  return {
-    id,
-    label,
-    line1,
-    line2,
-    city,
-    state,
-    pincode,
-    phone: normalizeString(input.phone ?? input.contact ?? ''),
-    isDefault: Boolean(input.isDefault),
-  };
-};
 
 const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: AddressSelectModalProps) => {
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -104,19 +67,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
     setLoading(true);
     setError(null);
     try {
-      let response;
-      try {
-        response = await http.get('/api/addresses/my');
-      } catch (err: any) {
-        if (err?.response?.status === 404) {
-          response = await http.get('/api/addresses');
-        } else {
-          throw err;
-        }
-      }
-      const normalized = toItems(response)
-        .map((item) => normalizeAddress(item))
-        .filter((value): value is Address => Boolean(value));
+      const normalized = await listMyAddresses();
       applySelection(normalized);
     } catch (err) {
       setError(toErrorMessage(err));
@@ -149,7 +100,10 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
     event.preventDefault();
     setFormError(null);
 
-    const requiredFields: (keyof typeof formValues)[] = ['label', 'line1', 'city', 'state', 'pincode'];
+    const normalizeString = (value: unknown) =>
+      typeof value === 'string' ? value.trim() : '';
+
+    const requiredFields: (keyof typeof formValues)[] = ['label', 'line1', 'city', 'state', 'pincode', 'phone'];
     const missing = requiredFields.some((field) => !normalizeString(formValues[field]));
     if (missing) {
       const message = 'Please fill in all required address fields.';
@@ -158,41 +112,45 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
       return;
     }
 
+    const phoneValue = normalizeString(formValues.phone);
+    if (!/^\d{10}$/u.test(phoneValue)) {
+      const message = 'Phone number must be 10 digits.';
+      setFormError(message);
+      showToast(message, 'error');
+      return;
+    }
+
+    const pincodeValue = normalizeString(formValues.pincode);
+    if (!/^\d{6}$/u.test(pincodeValue)) {
+      const message = 'Pincode must be 6 digits.';
+      setFormError(message);
+      showToast(message, 'error');
+      return;
+    }
+
     setAdding(true);
     try {
-      const payload: Record<string, string | boolean> = {
+      const payload = {
         label: normalizeString(formValues.label),
         line1: normalizeString(formValues.line1),
         line2: normalizeString(formValues.area),
         city: normalizeString(formValues.city),
         state: normalizeString(formValues.state),
-        pincode: normalizeString(formValues.pincode),
+        pincode: pincodeValue,
+        phone: phoneValue,
+        ...(addresses.length ? {} : { isDefault: true }),
       };
-      const phone = normalizeString(formValues.phone);
-      if (phone) {
-        payload.phone = phone;
-      }
-      if (!addresses.length) {
-        payload.isDefault = true;
-      }
 
-      const response = await http.post('/api/addresses', payload);
-      const rawAddress =
-        response?.data?.data?.address ?? response?.data?.address ?? response?.data ?? null;
-      const normalized = normalizeAddress(rawAddress);
-      if (normalized) {
-        setAddresses((prev) => {
-          const filtered = prev.filter((addr) => addr.id !== normalized.id);
-          const others = normalized.isDefault
-            ? filtered.map((addr) => ({ ...addr, isDefault: false }))
-            : filtered;
-          const next = normalized.isDefault ? [normalized, ...others] : [normalized, ...others];
-          return next;
-        });
-        setSelectedId(normalized.id);
-      } else {
-        await fetchAddresses();
-      }
+      const created = await createAddressApi(payload);
+      setAddresses((prev) => {
+        const filtered = prev.filter((addr) => addr.id !== created.id);
+        const others = created.isDefault
+          ? filtered.map((addr) => ({ ...addr, isDefault: false }))
+          : filtered;
+        const next = created.isDefault ? [created, ...others] : [created, ...others];
+        return next;
+      });
+      setSelectedId(created.id);
       showToast('Address saved', 'success');
       resetForm();
     } catch (err) {
@@ -207,15 +165,15 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
   const handleSetDefault = async (addressId: string) => {
     setDefaultUpdatingId(addressId);
     try {
-      await http.patch(`/api/addresses/${addressId}/default`);
+      const updated = await setDefaultAddressApi(addressId);
       setAddresses((prev) =>
         prev.map((address) =>
-          address.id === addressId
-            ? { ...address, isDefault: true }
+          address.id === updated.id
+            ? { ...address, ...updated }
             : { ...address, isDefault: false },
         ),
       );
-      setSelectedId(addressId);
+      setSelectedId(updated.id);
       showToast('Default address updated', 'success');
     } catch (err) {
       const message = toErrorMessage(err);

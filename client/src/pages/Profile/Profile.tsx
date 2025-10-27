@@ -49,6 +49,7 @@ import { paths } from '@/routes/paths';
 import type { User } from '@/types/user';
 
 import styles from './Profile.module.scss';
+import AddressManager from './components/AddressManager';
 
 const editProfileSchema = z.object({
   name: z
@@ -452,9 +453,7 @@ const Profile = () => {
           <div className="space-y-4">
             <InfoRow icon={MapPin} label="Location" value={user?.location} />
             <InfoRow icon={Home} label="Address" value={user?.address} />
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-white/40 dark:text-slate-300">
-              Add multiple delivery addresses and pin favourite locations. This feature is coming soon.
-            </div>
+            <AddressManager />
           </div>
         ),
       },

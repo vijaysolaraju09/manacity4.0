@@ -27,9 +27,10 @@ interface StatusChipProps {
   className?: string;
 }
 
-const StatusChip = ({ status, className = '' }: StatusChipProps) => (
-  <span className={`${styles.chip} ${styles[status]} ${className}`}>{status}</span>
-);
+const StatusChip = ({ status, className = '' }: StatusChipProps) => {
+  const label = status.replace(/_/g, ' ').toUpperCase();
+  return <span className={`${styles.chip} ${styles[status]} ${className}`}>{label}</span>;
+};
 
 export default StatusChip;
 

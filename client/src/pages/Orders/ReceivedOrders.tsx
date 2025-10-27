@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+
 import {
   fetchReceivedOrders,
   selectOrdersByStatus,
@@ -9,49 +11,52 @@ import {
   type OrderStatus,
 } from '@/store/orders';
 import type { RootState, AppDispatch } from '@/store';
-import { OrderCard } from '@/components/base';
 import Shimmer from '@/components/Shimmer';
 import ErrorCard from '@/components/ui/ErrorCard';
 import EmptyState from '@/components/ui/EmptyState';
 import showToast from '@/components/ui/Toast';
+import StatusChip from '@/components/ui/StatusChip';
+import { Button } from '@/components/ui/button';
 import { toErrorMessage } from '@/lib/response';
+import { formatINR } from '@/utils/currency';
 import fallbackImage from '@/assets/no-image.svg';
-import styles from './ReceivedOrders.module.scss';
 import { paths } from '@/routes/paths';
-import { useNavigate } from 'react-router-dom';
+
+import styles from './ReceivedOrders.module.scss';
 
 const statusOptions: (OrderStatus | 'all')[] = [
   'all',
-  'draft',
-  'pending',
   'placed',
   'accepted',
   'rejected',
+  'out_for_delivery',
+  'delivered',
   'cancelled',
-  'completed',
 ];
 
 const statusDisplay: Record<OrderStatus | 'all', string> = {
-  all: 'All',
-  draft: 'Draft',
-  pending: 'Pending',
-  placed: 'Placed',
-  confirmed: 'Confirmed',
-  accepted: 'Accepted',
-  rejected: 'Rejected',
-  preparing: 'Preparing',
-  ready: 'Ready',
-  out_for_delivery: 'Out for delivery',
-  delivered: 'Delivered',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-  returned: 'Returned',
+  all: 'ALL',
+  placed: 'PLACED',
+  accepted: 'ACCEPTED',
+  rejected: 'REJECTED',
+  out_for_delivery: 'OUT FOR DELIVERY',
+  delivered: 'DELIVERED',
+  cancelled: 'CANCELLED',
+  draft: 'DRAFT',
+  pending: 'PENDING',
+  confirmed: 'CONFIRMED',
+  preparing: 'PREPARING',
+  ready: 'READY',
+  completed: 'COMPLETED',
+  returned: 'RETURNED',
 };
 
 const ReceivedOrders = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const [activeStatus, setActiveStatus] = useState<(typeof statusOptions)[number]>('all');
+  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, OrderStatus>>({});
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
 
   const receivedState = useSelector((state: RootState) => state.orders.received);
   const orders = useSelector((state: RootState) =>
@@ -84,27 +89,96 @@ const ReceivedOrders = () => {
     dispatch(fetchReceivedOrders());
   };
 
-  const handleAccept = async (order: Order) => {
+  const performStatusUpdate = async (
+    order: Order,
+    nextStatus: OrderStatus,
+    {
+      note,
+      successMessage,
+      confirmMessage,
+    }: { note?: string; successMessage: string; confirmMessage?: string },
+  ) => {
+    if (confirmMessage && !window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setOptimisticStatuses((current) => ({ ...current, [order.id]: nextStatus }));
+    setPendingOrderId(order.id);
+
     try {
-      await dispatch(updateOrderStatus({ id: order.id, status: 'accepted' })).unwrap();
-      showToast('Order accepted', 'success');
+      await dispatch(updateOrderStatus({ id: order.id, status: nextStatus, note })).unwrap();
+      showToast(successMessage, 'success');
     } catch (err) {
+      setOptimisticStatuses((current) => {
+        const copy = { ...current };
+        delete copy[order.id];
+        return copy;
+      });
       showToast(toErrorMessage(err), 'error');
+    } finally {
+      setPendingOrderId(null);
+      setOptimisticStatuses((current) => {
+        const copy = { ...current };
+        delete copy[order.id];
+        return copy;
+      });
     }
   };
 
-  const handleReject = async (order: Order) => {
+  const handleAccept = (order: Order) =>
+    performStatusUpdate(order, 'accepted', { successMessage: 'Order accepted' });
+
+  const handleReject = (order: Order) => {
     const reason = window.prompt('Reason for rejecting this order:', '');
     if (reason === null) return;
-    try {
-      await dispatch(
-        updateOrderStatus({ id: order.id, status: 'rejected', note: reason?.trim() || undefined })
-      ).unwrap();
-      showToast('Order rejected', 'success');
-    } catch (err) {
-      showToast(toErrorMessage(err), 'error');
-    }
+    const note = reason.trim() || undefined;
+    performStatusUpdate(order, 'rejected', {
+      successMessage: 'Order rejected',
+      note,
+      confirmMessage: note ? undefined : 'Reject this order without a reason?',
+    });
   };
+
+  const handleOutForDelivery = (order: Order) =>
+    performStatusUpdate(order, 'out_for_delivery', {
+      successMessage: 'Marked as out for delivery',
+      confirmMessage: 'Mark this order as out for delivery?',
+    });
+
+  const handleDelivered = (order: Order) =>
+    performStatusUpdate(order, 'delivered', {
+      successMessage: 'Order marked as delivered',
+      confirmMessage: 'Confirm that this order has been delivered?',
+    });
+
+  const resolveStatus = (order: Order): OrderStatus =>
+    optimisticStatuses[order.id] ?? order.status;
+
+  const formatAddress = (order: Order) => {
+    const address = order.shippingAddress;
+    if (!address) {
+      return 'No delivery address';
+    }
+    return [address.address1, address.address2, address.city, address.pincode]
+      .filter((value) => typeof value === 'string' && value.trim())
+      .join(', ');
+  };
+
+  const formatDateTime = (iso: string) => {
+    const date = new Date(iso);
+    return date.toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  };
+
+  const itemsSummary = (order: Order) =>
+    (order.items ?? []).map((item) => {
+      const qtyRaw = Number(item.qty);
+      const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? qtyRaw : 1;
+      const price = formatINR(item.unitPricePaise);
+      return `${qty} x ${item.title} — ${price}`;
+    });
 
   return (
     <div className={styles.receivedOrders}>
@@ -121,7 +195,7 @@ const ReceivedOrders = () => {
             className={activeStatus === status ? styles.active : ''}
             onClick={() => setActiveStatus(status)}
           >
-            {statusDisplay[status] || status}
+            {statusDisplay[status] || status.toUpperCase()}
           </button>
         ))}
       </div>
@@ -157,39 +231,109 @@ const ReceivedOrders = () => {
               {dayOrders.map((order) => {
                 const orderItems = order.items ?? [];
                 const quantity = orderItems.reduce((total, item) => total + item.qty, 0);
-                const awaitingAcceptance = order.status === 'pending';
                 const customerName = order.customer.name || 'Customer';
                 const customerPhone = order.customer.phone;
+                const currentStatus = resolveStatus(order);
+                const isUpdating = pendingOrderId === order.id;
+                const canAccept = ['pending', 'placed', 'confirmed'].includes(currentStatus);
+                const canReject = ['pending', 'placed', 'confirmed'].includes(currentStatus);
+                const canOutForDelivery =
+                  currentStatus === 'accepted' ||
+                  currentStatus === 'confirmed' ||
+                  currentStatus === 'preparing' ||
+                  currentStatus === 'ready';
+                const canMarkDelivered = currentStatus === 'out_for_delivery';
+                const summary = itemsSummary(order);
                 return (
                   <div key={order.id} className={styles.orderBlock}>
-                    <OrderCard
-                      items={orderItems.map((item, index) => ({
-                        id: item.productId || `${order.id}-${index}`,
-                        title: item.title,
-                        image: item.image || fallbackImage,
-                      }))}
-                      shop={customerName}
-                      phone={customerPhone || undefined}
-                      onCall={customerPhone ? () => (window.location.href = `tel:${customerPhone}`) : undefined}
-                      date={order.createdAt}
-                      status={order.status}
-                      quantity={quantity}
-                      totalPaise={order.totals.grandPaise}
-                      className={styles.card}
-                    />
+                    <div className={styles.card}>
+                      <div className={styles.cardHeader}>
+                        <div>
+                          <p className={styles.orderId}>Order #{order.id}</p>
+                          <p className={styles.meta}>
+                            {formatDateTime(order.createdAt)} • {customerName}
+                          </p>
+                          {customerPhone ? (
+                            <p className={styles.meta}>Phone: {customerPhone}</p>
+                          ) : null}
+                        </div>
+                        <StatusChip status={currentStatus} />
+                      </div>
+                      <div className={styles.summaryRow}>
+                        <div className={styles.summaryColumn}>
+                          <p className={styles.summaryLabel}>Delivery address</p>
+                          <p className={styles.summaryValue}>{formatAddress(order)}</p>
+                        </div>
+                        <div className={styles.summaryColumn}>
+                          <p className={styles.summaryLabel}>Items</p>
+                          <p className={styles.summaryValue}>{quantity}</p>
+                        </div>
+                        <div className={styles.summaryColumn}>
+                          <p className={styles.summaryLabel}>Total</p>
+                          <p className={styles.summaryValue}>{formatINR(order.totals.grandPaise)}</p>
+                        </div>
+                      </div>
+                      <div className={styles.itemsList}>
+                        {summary.map((line, index) => (
+                          <span key={`${order.id}-item-${index}`}>{line}</span>
+                        ))}
+                      </div>
+                      {order.notes ? (
+                        <p className={styles.notes}>Customer note: {order.notes}</p>
+                      ) : null}
+                    </div>
                     <div className={styles.cardActions}>
-                      <button type="button" onClick={() => navigate(paths.orders.detail(order.id))}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(paths.orders.detail(order.id))}
+                      >
                         View details
-                      </button>
-                      {awaitingAcceptance && (
-                        <>
-                          <button type="button" onClick={() => handleAccept(order)}>
-                            Accept
-                          </button>
-                          <button type="button" onClick={() => handleReject(order)}>
-                            Reject
-                          </button>
-                        </>
+                      </Button>
+                      {canAccept && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleAccept(order)}
+                          disabled={isUpdating}
+                        >
+                          {isUpdating && resolveStatus(order) === 'accepted' ? 'Updating…' : 'Accept'}
+                        </Button>
+                      )}
+                      {canReject && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleReject(order)}
+                          disabled={isUpdating}
+                          className={styles.danger}
+                        >
+                          Reject
+                        </Button>
+                      )}
+                      {canOutForDelivery && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleOutForDelivery(order)}
+                          disabled={isUpdating}
+                        >
+                          {isUpdating && resolveStatus(order) === 'out_for_delivery'
+                            ? 'Updating…'
+                            : 'Out for delivery'}
+                        </Button>
+                      )}
+                      {canMarkDelivered && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleDelivered(order)}
+                          disabled={isUpdating}
+                        >
+                          {isUpdating && resolveStatus(order) === 'delivered' ? 'Updating…' : 'Delivered'}
+                        </Button>
                       )}
                     </div>
                   </div>

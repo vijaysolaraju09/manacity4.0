@@ -76,24 +76,85 @@
 
 .card {
   margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .cardActions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
 
-  button {
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    border-radius: var(--radius-sm);
-    padding: 0.35rem 0.75rem;
-    font-size: 0.85rem;
-    cursor: pointer;
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
 
-    &:hover {
-      background: var(--color-surface-alt);
-    }
-  }
+.orderId {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin: 0;
+}
+
+.meta {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.summaryRow {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.summaryColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summaryLabel {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.summaryValue {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+}
+
+.itemsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.notes {
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  font-size: 0.85rem;
+}
+
+.danger {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
 }
 

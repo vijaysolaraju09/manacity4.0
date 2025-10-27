@@ -1,14 +1,39 @@
 const Event = require('../models/Event');
 const User = require('../models/User');
+const Announcement = require('../models/Announcement');
 
-// Dummy static data for now — you’ll later fetch from DB
-exports.getBanner = async (req, res) => {
-  res.json({
-    image: "https://via.placeholder.com/600x200.png?text=Admin+Banner",
-    text: "Big Sale this weekend!",
-    link: "/special-shop",
-  });
+const serializeAnnouncement = (doc) => {
+  if (!doc) return null;
+  const announcement = doc.toObject ? doc.toObject() : doc;
+  return {
+    _id: announcement._id,
+    title: announcement.title,
+    text: announcement.text,
+    image: announcement.image,
+    ctaText: announcement.ctaText,
+    ctaLink: announcement.ctaLink,
+    active: announcement.active,
+    createdAt: announcement.createdAt,
+    updatedAt: announcement.updatedAt,
+  };
 };
+
+const findActiveAnnouncement = () =>
+  Announcement.findOne({ active: true, deletedAt: null })
+    .sort({ updatedAt: -1, createdAt: -1 })
+    .lean();
+
+const respondWithAnnouncement = async (_req, res, next) => {
+  try {
+    const active = await findActiveAnnouncement();
+    res.json({ announcement: serializeAnnouncement(active) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getAnnouncement = respondWithAnnouncement;
+exports.getBanner = respondWithAnnouncement;
 
 exports.getOffers = async (req, res) => {
   res.json([

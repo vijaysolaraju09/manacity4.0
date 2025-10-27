@@ -52,6 +52,7 @@ export const paths = {
     },
     shops: () => '/admin/shops',
     products: () => '/admin/products',
+    announcements: () => '/admin/announcements',
     events: {
       list: () => '/admin/events',
       create: () => '/admin/events/new',

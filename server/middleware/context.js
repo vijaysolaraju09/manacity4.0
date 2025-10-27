@@ -2,16 +2,20 @@ const { randomUUID } = require('crypto');
 
 const logger = require('../utils/logger');
 
+const enableRequestLogging = (process.env.NODE_ENV || 'development') === 'development';
+
 module.exports = (req, res, next) => {
   const traceId = randomUUID();
-  const start = process.hrtime.bigint();
   req.traceId = traceId;
   req.log = logger.child({ traceId });
 
-  req.log.info(
-    { method: req.method, url: req.originalUrl },
-    'request start'
-  );
+  if (!enableRequestLogging) {
+    next();
+    return;
+  }
+
+  const start = process.hrtime.bigint();
+  req.log.info({ method: req.method, url: req.originalUrl }, 'request start');
 
   const logCompletion = () => {
     if (res.locals.__requestLogDone) return;

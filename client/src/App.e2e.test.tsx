@@ -161,7 +161,7 @@ const defaultOrders = [
 ];
 
 const baseHandlers: HandlerMap = {
-  '/admin/messages': () => Promise.resolve(createResponse({ data: [] })),
+  '/home/announcement': () => Promise.resolve(createResponse({ announcement: null })),
   '/shops': () => Promise.resolve(createResponse({ data: defaultShops })),
   '/verified': () => Promise.resolve(createResponse({ data: defaultVerified })),
   '/special': () => Promise.resolve(createResponse({ data: defaultProducts })),

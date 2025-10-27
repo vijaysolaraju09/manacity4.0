@@ -196,11 +196,15 @@ Available through the admin router:
 | GET | `/api/admin/verified/requests` | List pending verification requests. | Admin bearer token. | `{ items, total }`.
 | PATCH | `/api/admin/verification-requests/:id` | Update request status (approve/reject). | Admin bearer token. Body `{ status, notes? }`. | `{ request }`.
 
-## Notifications & messaging (`/api/admin/messages`)
+## Announcements (`/api/home/announcement`, `/api/admin/announcements`)
 
 | Method | Path | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| GET | `/api/admin/messages` | Retrieve messages submitted to the admin dashboard. | No auth required in router, but intended for admin UI. | `{ items }` sorted by date.
+| GET | `/api/home/announcement` | Public endpoint returning the currently active announcement. | None. | `{ announcement }` or `{ announcement: null }`. |
+| GET | `/api/admin/announcements` | List announcements for the admin console. | Admin bearer token. | `{ items }` sorted by creation date. |
+| POST | `/api/admin/announcements` | Create a new announcement. | Admin bearer token. Body `{ title, text, image?, ctaText?, ctaLink?, active? }`. | `{ announcement }`. |
+| PATCH | `/api/admin/announcements/:id` | Update announcement content or activation state. | Admin bearer token. Body supports same fields as `POST`. | `{ announcement }`. |
+| DELETE | `/api/admin/announcements/:id` | Soft-delete an announcement. | Admin bearer token. | `204 No Content`. |
 
 ## Metrics (`/api/admin/metrics`)
 

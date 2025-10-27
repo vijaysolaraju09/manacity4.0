@@ -67,6 +67,7 @@ const AdminLogin = lazy(() => import('@/pages/AdminLogin/AdminLogin'));
 const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
 const AdminShops = lazy(() => import('@/pages/AdminShops'));
 const AdminProducts = lazy(() => import('@/pages/AdminProducts'));
+const AdminBannersPage = lazy(() => import('@/pages/Admin/Banners/AdminBanners'));
 const AdminEventsRoot = lazy(() => import('@/pages/Admin/Events/AdminEventsRoot'));
 const AdminEventsListPage = lazy(() => import('@/pages/Admin/Events/AdminEventsList'));
 const AdminEventManageLayout = lazy(() => import('@/pages/Admin/Events/AdminEventLayout'));
@@ -105,9 +106,10 @@ const AppRoutes = () => (
       <Route key="admin-login" path="/admin/login" element={<AdminLogin />} />
 
       <Route key="admin-guard" element={<AdminProtectedRoute />}>
-        <Route key="admin" path="/admin" element={<AdminLayout />}>
-          <Route key="admin-dashboard" index element={<AdminDashboard />} />
-          <Route key="admin-shops" path="shops" element={<AdminShops />} />
+          <Route key="admin" path="/admin" element={<AdminLayout />}>
+            <Route key="admin-dashboard" index element={<AdminDashboard />} />
+            <Route key="admin-announcements" path="announcements" element={<AdminBannersPage />} />
+            <Route key="admin-shops" path="shops" element={<AdminShops />} />
           <Route key="admin-products" path="products" element={<AdminProducts />} />
           <Route key="admin-form-templates" path="form-templates" element={<AdminFormBuilderPage />} />
           <Route key="admin-events" path="events" element={<AdminEventsRoot />}>

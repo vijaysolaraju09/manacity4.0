@@ -12,7 +12,7 @@ import { fetchServices } from '@/store/services';
 import { createEventsQueryKey, fetchEvents } from '@/store/events.slice';
 import { fetchSpecialProducts, type Product as SpecialProduct } from '@/store/products';
 import { http } from '@/lib/http';
-import { toItems, toErrorMessage } from '@/lib/response';
+import { toErrorMessage } from '@/lib/response';
 import type { RootState } from '@/store';
 import EventsSkeleton from '@/components/common/EventsSkeleton';
 import ShopsSkeleton from '@/components/common/ShopsSkeleton';
@@ -31,13 +31,23 @@ import ShopCard from '@/components/ui/ShopCard/ShopCard';
 import Button from '@/components/ui/button';
 import HorizontalCarousel from '@/components/ui/HorizontalCarousel';
 
+interface Announcement {
+  _id: string;
+  title: string;
+  text: string;
+  image?: string | null;
+  ctaText?: string | null;
+  ctaLink?: string | null;
+  active: boolean;
+}
+
 const Home = () => {
   const navigate = useNavigate();
   const d = useDispatch<any>();
 
-  const [banners, setBanners] = useState<any[]>([]);
-  const [bannerStatus, setBannerStatus] = useState<'idle' | 'loading' | 'succeeded' | 'failed'>('idle');
-  const [bannerError, setBannerError] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+  const [announcementStatus, setAnnouncementStatus] = useState<'idle' | 'loading' | 'succeeded' | 'failed'>('idle');
+  const [announcementError, setAnnouncementError] = useState<string | null>(null);
 
   const shops = useSelector((s: RootState) => s.shops);
   const services = useSelector((s: RootState) => s.services);
@@ -55,27 +65,40 @@ const Home = () => {
 
   const pendingFeaturedEventsAbort = useRef<(() => void) | null>(null);
 
-  const loadBanners = useCallback(async () => {
-    setBannerStatus('loading');
-    setBannerError(null);
+  const loadAnnouncement = useCallback(async () => {
+    setAnnouncementStatus('loading');
+    setAnnouncementError(null);
     try {
-      const res = await http.get('/admin/messages');
-      const items = toItems(res);
-      const filtered = items.filter((m: any) => m.type === 'banner');
-      setBanners(filtered);
-      setBannerStatus('succeeded');
+      const res = await http.get('/home/announcement');
+      const item = (res?.data?.announcement ?? null) as Announcement | null;
+      setAnnouncement(item);
+      setAnnouncementStatus('succeeded');
     } catch (err) {
-      setBanners([]);
-      setBannerStatus('failed');
-      setBannerError(toErrorMessage(err));
+      setAnnouncement(null);
+      setAnnouncementStatus('failed');
+      setAnnouncementError(toErrorMessage(err));
     }
   }, []);
 
   useEffect(() => {
-    if (bannerStatus === 'idle') {
-      void loadBanners();
+    if (announcementStatus === 'idle') {
+      void loadAnnouncement();
     }
-  }, [bannerStatus, loadBanners]);
+  }, [announcementStatus, loadAnnouncement]);
+
+  const handleAnnouncementCta = useCallback(
+    (item: Announcement) => {
+      if (!item.ctaLink) return;
+      if (/^https?:/i.test(item.ctaLink)) {
+        window.open(item.ctaLink, '_blank', 'noopener');
+        return;
+      }
+
+      const target = item.ctaLink.startsWith('/') ? item.ctaLink : `/${item.ctaLink}`;
+      navigate(target);
+    },
+    [navigate]
+  );
 
   useEffect(() => {
     if (shops.status === 'idle') d(fetchShops({ sort: '-createdAt', pageSize: 10 }));
@@ -109,55 +132,68 @@ const Home = () => {
 
   return (
     <div className="space-y-12">
-      <section className={`${styles.hero}`}>
-        <div className="px-4 md:px-6 lg:px-8 space-y-8">
-          <div className={styles.section}>
-            <SectionHeader title="Admin Banners" className={styles.sectionHeader} />
-            {bannerStatus === 'loading' ? (
-              <SkeletonList count={1} lines={1} />
-            ) : bannerStatus === 'failed' ? (
-              <ErrorCard
-                message={bannerError || 'Failed to load banners'}
-                onRetry={() => {
-                  void loadBanners();
-                }}
-              />
-            ) : (banners ?? []).length === 0 ? (
-              <EmptyState
-                title="No banners configured"
-                message="Add a banner to highlight announcements, offers, or important updates for your community."
-                ctaLabel="Refresh"
-                onCtaClick={() => {
-                  void loadBanners();
-                }}
-              />
-            ) : (
-              <div className={styles.grid}>
-                {(banners ?? []).map((b) => (
-                  <motion.div
-                    key={b._id}
-                    className={`${styles.card} overflow-hidden`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <img
-                      src={b.image || fallbackImage}
-                      alt={b.message || 'banner'}
-                      loading="lazy"
-                      className="h-44 w-full object-cover"
-                      onError={(e) => (e.currentTarget.src = fallbackImage)}
-                    />
-                    {b.message && (
-                      <div className="px-4 py-3">
-                        <p className="text-sm text-gray-600">{b.message}</p>
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            )}
+      {announcementStatus === 'loading' ? (
+        <section className="px-4 md:px-6 lg:px-8">
+          <div className="animate-pulse overflow-hidden rounded-2xl border border-slate-200 bg-white shadow">
+            <div className="h-44 bg-slate-200 md:h-56" />
           </div>
+        </section>
+      ) : announcementStatus === 'failed' ? (
+        <section className="px-4 md:px-6 lg:px-8">
+          <div className="flex flex-col gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 md:flex-row md:items-center md:justify-between">
+            <span>{announcementError || 'Failed to load announcement.'}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void loadAnnouncement();
+              }}
+            >
+              Retry
+            </Button>
+          </div>
+        </section>
+      ) : announcement ? (
+        <section className="px-4 md:px-6 lg:px-8">
+          <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg md:flex-row">
+            <div className="md:w-2/5">
+              {announcement.image ? (
+                <img
+                  src={announcement.image}
+                  alt={announcement.title}
+                  loading="lazy"
+                  className="h-56 w-full object-cover md:h-full"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = fallbackImage;
+                  }}
+                />
+              ) : (
+                <div className="h-40 w-full bg-gradient-to-br from-blue-500/20 via-indigo-500/20 to-purple-500/10 md:h-full" />
+              )}
+            </div>
+            <div className="flex flex-1 flex-col justify-center gap-4 p-6">
+              <div className="space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                  Announcement
+                </span>
+                <h2 className="text-2xl font-semibold text-slate-900">{announcement.title}</h2>
+                <p className="text-sm text-slate-600">{announcement.text}</p>
+              </div>
+              {announcement.ctaText && announcement.ctaLink ? (
+                <div>
+                  <Button size="lg" onClick={() => handleAnnouncementCta(announcement)}>
+                    {announcement.ctaText}
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
+      <section className={`${styles.hero}`}>
+        <div className="space-y-8 px-4 md:px-6 lg:px-8">
           <motion.div
             className={`${styles.card} overflow-hidden px-4 py-6 md:px-6 lg:px-8`}
             initial={{ opacity: 0, y: 16 }}

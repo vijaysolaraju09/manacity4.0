@@ -11,13 +11,32 @@ module.exports = (err, req, res, _next) => {
     req.traceId = traceId;
   }
 
-  const requestLogger = (req.log || logger.child({ traceId })).child({
+  const loggerContext = {
     status,
     method: req.method,
     url: req.originalUrl,
-  });
+  };
 
-  requestLogger.error({ err, traceId }, err.message || 'Unhandled error');
+  if (req.user?.id) {
+    loggerContext.userId = req.user.id;
+  } else if (req.user?._id) {
+    loggerContext.userId = req.user._id.toString();
+  }
+
+  const requestLogger = (req.log || logger.child({ traceId })).child(loggerContext);
+
+  const errorPayload = {
+    traceId,
+    error: {
+      message: err.message || 'Unhandled error',
+    },
+  };
+
+  if ((process.env.NODE_ENV || 'development') === 'development' && err.stack) {
+    errorPayload.error.stack = err.stack;
+  }
+
+  requestLogger.error(errorPayload, err.message || 'Unhandled error');
 
   const error = {
     code,

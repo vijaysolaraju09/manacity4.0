@@ -173,9 +173,31 @@ export interface SeriesPoint {
   value: number;
 }
 
+export interface AnalyticsResponse {
+  totals: {
+    users: number;
+    shops: number;
+    products: number;
+    orders: number;
+    gmv: number;
+  };
+  trends?: {
+    orders?: SeriesPoint[];
+    gmv?: SeriesPoint[];
+  };
+  generatedAt: string;
+}
+
 export const fetchMetrics = async () => {
   const res = await adminApi.get(withAdminPrefix('metrics'));
   return extractEntity<MetricsSummary>(res.data);
+};
+
+export const fetchAdminAnalytics = async (since?: string) => {
+  const res = await adminApi.get(withAdminPrefix('analytics'), {
+    params: since ? { since } : undefined,
+  });
+  return extractEntity<AnalyticsResponse>(res.data);
 };
 
 export const fetchMetricSeries = async (

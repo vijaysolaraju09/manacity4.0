@@ -11,6 +11,7 @@ import FacetFilterBar from "../../components/ui/FacetFilterBar/FacetFilterBar";
 import useDebounce from "@/hooks/useDebounce";
 import { paths } from "@/routes/paths";
 import fallbackImage from "../../assets/no-image.svg";
+import getImageOrPlaceholder from "@/utils/getImageOrPlaceholder";
 
 const Shops = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -57,6 +58,13 @@ const Shops = () => {
   const categories = ["Restaurant", "Mechanic", "Fashion", "Grocery"];
   const locations = ["Town Center", "West End", "East Side", "North Market"];
 
+  const clearFilters = () => {
+    setSearch("");
+    setCategory("");
+    setLocation("");
+    setOpenOnly(false);
+  };
+
   const retryFetch = () =>
     dispatch(fetchShops(Object.fromEntries(searchParams.entries())));
 
@@ -84,6 +92,7 @@ const Shops = () => {
           onCategoryChange={setCategory}
           openOnly={openOnly}
           onOpenChange={setOpenOnly}
+          onClear={clearFilters}
         />
       </div>
 
@@ -101,7 +110,7 @@ const Shops = () => {
       {status === "succeeded" && sortedShops.length > 0 && (
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {sortedShops.map((shop) => {
-            const image = shop.image || shop.banner || fallbackImage;
+            const image = getImageOrPlaceholder(shop.image || shop.banner);
             const rating =
               typeof shop.ratingAvg === "number" && Number.isFinite(shop.ratingAvg)
                 ? shop.ratingAvg
@@ -123,7 +132,12 @@ const Shops = () => {
                   className={styles.thumb}
                   src={image}
                   alt={shop.name}
-                  onError={(e) => (e.currentTarget.src = fallbackImage)}
+                  onError={(e) => {
+                    const placeholder = getImageOrPlaceholder(null);
+                    if (e.currentTarget.src !== placeholder) {
+                      e.currentTarget.src = placeholder;
+                    }
+                  }}
                 />
                 <div className="flex flex-1 flex-col gap-2">
                   <div className="flex items-start justify-between gap-3">

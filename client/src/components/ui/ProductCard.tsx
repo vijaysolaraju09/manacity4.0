@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { AiFillStar } from 'react-icons/ai';
-import fallbackImage from '../../assets/no-image.svg';
+import getImageOrPlaceholder from '@/utils/getImageOrPlaceholder';
 import WishlistHeart from './WishlistHeart';
 import PriceBlock from './PriceBlock';
 import styles from './ProductCard.module.scss';
@@ -62,10 +62,15 @@ const ProductCard = ({
     >
       <div className={styles.imageWrapper}>
         <img
-          src={product.image || fallbackImage}
+          src={getImageOrPlaceholder(product.image)}
           alt={product.name}
           loading="lazy"
-          onError={(e) => (e.currentTarget.src = fallbackImage)}
+          onError={(event) => {
+            const placeholder = getImageOrPlaceholder(null);
+            if (event.currentTarget.src !== placeholder) {
+              event.currentTarget.src = placeholder;
+            }
+          }}
         />
         {computedDiscount && (
           <span className={styles.badge}>{computedDiscount}% OFF</span>

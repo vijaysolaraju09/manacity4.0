@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiMapPin } from 'react-icons/fi';
 import styles from './ShopCard.module.scss';
-import fallbackImage from '../../../assets/no-image.svg';
+import getImageOrPlaceholder from '@/utils/getImageOrPlaceholder';
 
 export interface ShopCardProps {
   shop: {
@@ -22,9 +22,14 @@ export interface ShopCardProps {
 const ShopCard = ({ shop, onClick }: ShopCardProps) => (
   <motion.div whileHover={{ scale: 1.02 }} className={styles.card} onClick={onClick}>
     <img
-      src={shop.banner || shop.logo || shop.image || fallbackImage}
+      src={getImageOrPlaceholder(shop.banner || shop.logo || shop.image)}
       alt={shop.name}
-      onError={(e) => (e.currentTarget.src = fallbackImage)}
+      onError={(event) => {
+        const placeholder = getImageOrPlaceholder(null);
+        if (event.currentTarget.src !== placeholder) {
+          event.currentTarget.src = placeholder;
+        }
+      }}
     />
     <div className={styles.info}>
       <h3>{shop.name}</h3>

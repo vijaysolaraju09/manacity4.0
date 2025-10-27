@@ -22,6 +22,8 @@ export interface FacetFilterBarProps {
   sort: string;
   sortOptions: SortOption[];
   onSortChange: (v: string) => void;
+  hasActiveFilters?: boolean;
+  onClear?: () => void;
 }
 
 const FacetFilterBar = ({
@@ -39,6 +41,8 @@ const FacetFilterBar = ({
   sort,
   sortOptions,
   onSortChange,
+  hasActiveFilters,
+  onClear,
 }: FacetFilterBarProps) => {
   const [open, setOpen] = useState(false);
 
@@ -83,6 +87,11 @@ const FacetFilterBar = ({
           ))}
         </select>
       </label>
+      {hasActiveFilters && onClear ? (
+        <button type="button" className={styles.clearButton} onClick={onClear}>
+          Clear filters
+        </button>
+      ) : null}
     </div>
   );
 

@@ -13,6 +13,7 @@ interface Props {
   onCategoryChange: (v: string) => void;
   openOnly: boolean;
   onOpenChange: (v: boolean) => void;
+  onClear: () => void;
 }
 
 const FacetFilterBar = ({
@@ -26,8 +27,12 @@ const FacetFilterBar = ({
   onCategoryChange,
   openOnly,
   onOpenChange,
+  onClear,
 }: Props) => {
   const openToggleId = useId();
+  const hasActiveFilters = Boolean(
+    search.trim() || location || category || openOnly,
+  );
 
   return (
     <div className={styles.bar}>
@@ -75,6 +80,11 @@ const FacetFilterBar = ({
             </label>
           </div>
         </div>
+        {hasActiveFilters ? (
+          <button type="button" className={styles.clearButton} onClick={onClear}>
+            Clear
+          </button>
+        ) : null}
       </div>
     </div>
   );

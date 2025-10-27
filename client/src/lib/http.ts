@@ -8,6 +8,8 @@ import { API_BASE } from '@/config/api';
 import { logout } from '@/store/slices/authSlice';
 import { clearAdminToken } from '@/store/slices/adminSlice';
 import { paths } from '@/routes/paths';
+import showToast from '@/components/ui/Toast';
+import { toErrorMessage } from './response';
 
 type AugmentedConfig = InternalAxiosRequestConfig & { __retryCount?: number };
 
@@ -51,6 +53,19 @@ const shouldRetry = (error: AxiosError): error is AxiosError & {
   return true;
 };
 
+const detectEnvelopeError = (payload: unknown): string | null => {
+  if (!payload || typeof payload !== 'object') return null;
+  const data = payload as Record<string, unknown>;
+  if (data.ok === false) {
+    return (
+      toErrorMessage({ response: { data } }) ||
+      (typeof data.msg === 'string' ? data.msg : null) ||
+      'Request failed'
+    );
+  }
+  return null;
+};
+
 interface HttpClientOptions {
   tokenStorageKey: string;
   onUnauthorized?: () => void;
@@ -81,8 +96,19 @@ const createHttpClient = ({
   });
 
   instance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      const message = detectEnvelopeError(response?.data);
+      if (message) {
+        showToast(message, 'error');
+        return Promise.reject(new Error(message));
+      }
+      return response;
+    },
     async (error: AxiosError) => {
+      const envelopeMessage = detectEnvelopeError(error?.response?.data);
+      if (envelopeMessage) {
+        showToast(envelopeMessage, 'error');
+      }
       if (shouldRetry(error)) {
         const config = error.config as AugmentedConfig;
         config.__retryCount = (config.__retryCount ?? 0) + 1;
@@ -97,6 +123,13 @@ const createHttpClient = ({
         onUnauthorized?.();
         if (redirectTo) {
           window.location.assign(redirectTo);
+        }
+      }
+
+      if (!envelopeMessage) {
+        const message = toErrorMessage(error);
+        if (message) {
+          showToast(message, 'error');
         }
       }
 

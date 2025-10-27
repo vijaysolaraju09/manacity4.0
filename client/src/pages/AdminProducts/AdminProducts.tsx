@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   fetchProducts,
   updateProduct as apiUpdateProduct,
@@ -39,6 +39,9 @@ const emptyForm = {
   images: '',
 };
 
+const focusableSelectors =
+  'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
 const AdminProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -57,6 +60,8 @@ const AdminProducts = () => {
   const [edit, setEdit] = useState<Product | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const modalRef = useRef<HTMLFormElement | null>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -87,6 +92,46 @@ const AdminProducts = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!edit) return undefined;
+    const node = modalRef.current;
+    if (!node) return undefined;
+
+    lastFocusedRef.current = document.activeElement as HTMLElement | null;
+    const focusable = node.querySelectorAll<HTMLElement>(focusableSelectors);
+    const first = focusable[0];
+    (first ?? node).focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setEdit(null);
+        return;
+      }
+      if (event.key !== 'Tab' || focusable.length === 0) return;
+      const nodes = Array.from(node.querySelectorAll<HTMLElement>(focusableSelectors));
+      if (nodes.length === 0) return;
+      const firstNode = nodes[0];
+      const lastNode = nodes[nodes.length - 1];
+      if (event.shiftKey) {
+        if (document.activeElement === firstNode) {
+          event.preventDefault();
+          lastNode.focus();
+        }
+      } else if (document.activeElement === lastNode) {
+        event.preventDefault();
+        firstNode.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      lastFocusedRef.current?.focus();
+    };
+  }, [edit]);
 
   const openEdit = (p: Product) => {
     setEdit(p);
@@ -303,9 +348,21 @@ const AdminProducts = () => {
         );
       })()}
       {edit && (
-        <div className="modal">
-          <form className="modal-content" onSubmit={handleSave}>
-            <h3>Edit Product</h3>
+        <div
+          className="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-edit-product-heading"
+          onClick={() => setEdit(null)}
+        >
+          <form
+            ref={modalRef}
+            className="modal-content"
+            onSubmit={handleSave}
+            tabIndex={-1}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 id="admin-edit-product-heading">Edit Product</h3>
             <label>
               Name
               <input

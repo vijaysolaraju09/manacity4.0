@@ -24,6 +24,7 @@ const MyRequests = lazy(() => import('@/pages/Services/MyRequests'));
 const ServiceProviders = lazy(() => import('@/pages/Services/ServiceProviders'));
 const ServiceRequestFormPage = lazy(() => import('@/pages/Services/ServiceRequestForm'));
 const LegacyVerified = lazy(() => import('@/pages/Services/LegacyVerified'));
+const ProvidersPage = lazy(() => import('@/pages/Providers/ProvidersPage'));
 const VerifiedDetails = lazy(() => import('@/pages/Verified/Details'));
 const VerifiedList = lazy(() => import('@/pages/Verified/List'));
 const SpecialShop = lazy(() => import('@/pages/SpecialShop/SpecialShop'));
@@ -127,7 +128,7 @@ const AppRoutes = () => (
             <Route path="requests/mine" element={<MyRequests />} />
           </Route>
           <Route key="service-request" path="services/request" element={<ServiceRequestFormPage />} />
-          <Route key="providers" path="providers" element={<VerifiedList />} />
+          <Route key="providers" path="providers" element={<ProvidersPage />} />
           <Route key="verified-list" path="verified-users" element={<VerifiedList />} />
           <Route key="legacy-verified" path="verified" element={<LegacyVerified />} />
           <Route key="events" path="events" element={<Events />} />

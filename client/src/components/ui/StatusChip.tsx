@@ -16,11 +16,14 @@ export type Status =
   | 'draft'
   | 'approved'
   | 'active'
+  | 'assigned'
   | 'suspended'
   | 'inactive'
   | 'upcoming'
   | 'ongoing'
-  | 'past';
+  | 'past'
+  | 'open'
+  | 'in_progress';
 
 interface StatusChipProps {
   status: Status;

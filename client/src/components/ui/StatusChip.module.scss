@@ -10,7 +10,8 @@
 
 .pending,
 .draft,
-.upcoming {
+.upcoming,
+.open {
   background: var(--blue-100);
   color: var(--blue-700);
 }
@@ -23,7 +24,9 @@
 .out_for_delivery,
 .approved,
 .active,
-.ongoing {
+.ongoing,
+.assigned,
+.in_progress {
   background: var(--blue-600);
   color: var(--white);
 }

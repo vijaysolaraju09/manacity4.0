@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, MapPin, Plus, X } from 'lucide-react';
 
@@ -25,6 +25,9 @@ interface AddressSelectModalProps {
   isSubmitting?: boolean;
 }
 
+const focusableSelectors =
+  'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
 const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: AddressSelectModalProps) => {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -33,6 +36,8 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
   const [defaultUpdatingId, setDefaultUpdatingId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const [formValues, setFormValues] = useState({
     label: '',
     line1: '',
@@ -81,6 +86,47 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
       fetchAddresses();
     }
   }, [open, fetchAddresses]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const node = dialogRef.current;
+    if (!node) return undefined;
+
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+
+    const focusable = node.querySelectorAll<HTMLElement>(focusableSelectors);
+    const first = focusable[0];
+    (first ?? node).focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || focusable.length === 0) return;
+      const focusArray = Array.from(node.querySelectorAll<HTMLElement>(focusableSelectors));
+      if (focusArray.length === 0) return;
+      const firstEl = focusArray[0];
+      const lastEl = focusArray[focusArray.length - 1];
+      if (event.shiftKey) {
+        if (document.activeElement === firstEl) {
+          event.preventDefault();
+          lastEl.focus();
+        }
+      } else if (document.activeElement === lastEl) {
+        event.preventDefault();
+        firstEl.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previouslyFocusedRef.current?.focus();
+    };
+  }, [open, onClose]);
 
   const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -297,15 +343,23 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4 py-8 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="address-modal-heading"
       onClick={handleOverlayClick}
     >
       <div
         className="relative flex w-full max-w-4xl flex-col gap-6 rounded-3xl border border-slate-200/60 bg-white p-6 shadow-2xl dark:border-slate-800/70 dark:bg-slate-900"
+        ref={dialogRef}
+        tabIndex={-1}
         onClick={handleContainerClick}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Choose delivery address</h2>
+            <h2
+              id="address-modal-heading"
+              className="text-xl font-semibold text-slate-900 dark:text-slate-50"
+            >
+              Choose delivery address
+            </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Select an address for this order or add a new one.
             </p>
@@ -334,62 +388,91 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
             <Plus className="h-4 w-4" aria-hidden="true" /> Add new address
           </h3>
           <form className="grid gap-3 md:grid-cols-2" onSubmit={handleAddAddress}>
-            <Input
-              value={formValues.label}
-              onChange={handleInputChange('label')}
-              placeholder="Label (e.g., Home, Office)"
-              aria-label="Address label"
-              disabled={adding || isSubmitting}
-              required
-            />
-            <Input
-              value={formValues.phone}
-              onChange={handleInputChange('phone')}
-              placeholder="Phone"
-              aria-label="Phone number"
-              disabled={adding || isSubmitting}
-            />
-            <Input
-              value={formValues.line1}
-              onChange={handleInputChange('line1')}
-              placeholder="Address line 1"
-              aria-label="Address line 1"
-              disabled={adding || isSubmitting}
-              className="md:col-span-2"
-              required
-            />
-            <Input
-              value={formValues.area}
-              onChange={handleInputChange('area')}
-              placeholder="Apartment, suite, area (optional)"
-              aria-label="Address line 2"
-              disabled={adding || isSubmitting}
-              className="md:col-span-2"
-            />
-            <Input
-              value={formValues.city}
-              onChange={handleInputChange('city')}
-              placeholder="City"
-              aria-label="City"
-              disabled={adding || isSubmitting}
-              required
-            />
-            <Input
-              value={formValues.state}
-              onChange={handleInputChange('state')}
-              placeholder="State"
-              aria-label="State"
-              disabled={adding || isSubmitting}
-              required
-            />
-            <Input
-              value={formValues.pincode}
-              onChange={handleInputChange('pincode')}
-              placeholder="Pincode"
-              aria-label="Pincode"
-              disabled={adding || isSubmitting}
-              required
-            />
+            <label className="flex flex-col gap-1" htmlFor="address-label">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+                Label
+              </span>
+              <Input
+                id="address-label"
+                value={formValues.label}
+                onChange={handleInputChange('label')}
+                placeholder="Label (e.g., Home, Office)"
+                disabled={adding || isSubmitting}
+                required
+              />
+            </label>
+            <label className="flex flex-col gap-1" htmlFor="address-phone">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+                Phone
+              </span>
+              <Input
+                id="address-phone"
+                value={formValues.phone}
+                onChange={handleInputChange('phone')}
+                placeholder="Phone"
+                disabled={adding || isSubmitting}
+              />
+            </label>
+            <label className="flex flex-col gap-1 md:col-span-2" htmlFor="address-line1">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+                Address line 1
+              </span>
+              <Input
+                id="address-line1"
+                value={formValues.line1}
+                onChange={handleInputChange('line1')}
+                placeholder="Address line 1"
+                disabled={adding || isSubmitting}
+                required
+              />
+            </label>
+            <label className="flex flex-col gap-1 md:col-span-2" htmlFor="address-line2">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+                Address line 2 (optional)
+              </span>
+              <Input
+                id="address-line2"
+                value={formValues.area}
+                onChange={handleInputChange('area')}
+                placeholder="Apartment, suite, area"
+                disabled={adding || isSubmitting}
+              />
+            </label>
+            <label className="flex flex-col gap-1" htmlFor="address-city">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">City</span>
+              <Input
+                id="address-city"
+                value={formValues.city}
+                onChange={handleInputChange('city')}
+                placeholder="City"
+                disabled={adding || isSubmitting}
+                required
+              />
+            </label>
+            <label className="flex flex-col gap-1" htmlFor="address-state">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">State</span>
+              <Input
+                id="address-state"
+                value={formValues.state}
+                onChange={handleInputChange('state')}
+                placeholder="State"
+                disabled={adding || isSubmitting}
+                required
+              />
+            </label>
+            <label className="flex flex-col gap-1" htmlFor="address-pincode">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+                Pincode
+              </span>
+              <Input
+                id="address-pincode"
+                value={formValues.pincode}
+                onChange={handleInputChange('pincode')}
+                placeholder="Pincode"
+                disabled={adding || isSubmitting}
+                required
+              />
+            </label>
             <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-3">
               {formError ? (
                 <p className="text-sm font-medium text-rose-600" role="alert">

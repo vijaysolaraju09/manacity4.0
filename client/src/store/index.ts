@@ -10,6 +10,7 @@ import catalogReducer from './products';
 import verifiedReducer from './verified';
 import servicesReducer from './services';
 import serviceRequestsReducer from './serviceRequests';
+import providerServiceRequestsReducer from './providerServiceRequests';
 import notifsReducer from './notifs';
 import ordersReducer from './orders';
 import userProfileReducer from './user';
@@ -30,6 +31,7 @@ export const store = configureStore({
     verified: verifiedReducer,
     services: servicesReducer,
     serviceRequests: serviceRequestsReducer,
+    providerServiceRequests: providerServiceRequestsReducer,
     notifs: notifsReducer,
     orders: ordersReducer,
     userProfile: userProfileReducer,

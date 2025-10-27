@@ -408,8 +408,12 @@ const Profile = () => {
         { label: 'Received Orders', path: paths.orders.received() },
       );
     }
-    if (user.isVerified) {
-      actions.push({ label: 'Service Orders', path: paths.orders.service() });
+    const shouldShowServiceOrders = user.role === 'business' || user.isVerified;
+    if (shouldShowServiceOrders) {
+      const hasAction = actions.some((action) => action.path === paths.orders.service());
+      if (!hasAction) {
+        actions.push({ label: 'Service Orders', path: paths.orders.service() });
+      }
     }
     if (actions.length === 0) {
       actions.push({ label: 'My Orders', path: paths.orders.mine() });

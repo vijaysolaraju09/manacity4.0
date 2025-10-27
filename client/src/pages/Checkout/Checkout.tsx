@@ -89,8 +89,11 @@ const toShippingAddress = (payload: AddressPayload | Address) => {
     shipping.address2 = line2;
   }
 
-  if ('id' in payload && payload.id) {
-    shipping.referenceId = payload.id;
+  if ('id' in payload && typeof payload.id === 'string') {
+    const trimmedId = payload.id.trim();
+    if (/^[a-f\d]{24}$/iu.test(trimmedId)) {
+      shipping.referenceId = trimmedId;
+    }
   }
 
   return shipping;

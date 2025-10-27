@@ -21,7 +21,7 @@ export type { Address };
 interface AddressSelectModalProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: (addressId: string) => Promise<void> | void;
+  onConfirm: (address: Address) => Promise<void> | void;
   isSubmitting?: boolean;
 }
 
@@ -49,8 +49,12 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
   });
 
   const hasAddresses = addresses.length > 0;
+  const selectedAddress = useMemo(
+    () => addresses.find((address) => address.id === selectedId) ?? null,
+    [addresses, selectedId],
+  );
   const disablePlaceOrder =
-    !selectedId || isSubmitting || loading || defaultUpdatingId !== null || adding || !hasAddresses;
+    !selectedAddress || isSubmitting || loading || defaultUpdatingId !== null || adding || !hasAddresses;
 
   const resetForm = () => {
     setFormValues({ label: '', line1: '', area: '', city: '', state: '', pincode: '', phone: '' });
@@ -230,12 +234,12 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
   };
 
   const handlePlaceOrder = async () => {
-    if (!selectedId) {
+    if (!selectedAddress) {
       showToast('Please select an address to continue.', 'error');
       return;
     }
     try {
-      await onConfirm(selectedId);
+      await onConfirm(selectedAddress);
     } catch (err) {
       // The parent component is responsible for displaying error feedback.
     }
@@ -334,65 +338,77 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
         })}
       </div>
     );
-  }, [addresses, defaultUpdatingId, error, fetchAddresses, handleSetDefault, isSubmitting, loading, selectedId]);
+  }, [
+    addresses,
+    defaultUpdatingId,
+    error,
+    fetchAddresses,
+    handleSetDefault,
+    isSubmitting,
+    loading,
+    selectedId,
+  ]);
 
   if (!open) return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4 py-8 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex min-h-full items-center justify-center overflow-y-auto bg-slate-900/70 px-4 py-10 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="address-modal-heading"
       onClick={handleOverlayClick}
     >
       <div
-        className="relative flex w-full max-w-4xl flex-col gap-6 rounded-3xl border border-slate-200/60 bg-white p-6 shadow-2xl dark:border-slate-800/70 dark:bg-slate-900"
+        className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-slate-200/60 bg-white shadow-2xl dark:border-slate-800/70 dark:bg-slate-900"
+        style={{ maxHeight: 'min(90vh, 48rem)' }}
         ref={dialogRef}
         tabIndex={-1}
         onClick={handleContainerClick}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2
-              id="address-modal-heading"
-              className="text-xl font-semibold text-slate-900 dark:text-slate-50"
-            >
-              Choose delivery address
-            </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Select an address for this order or add a new one.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            aria-label="Close address selection"
-            className="rounded-full text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white"
-          >
-            <X className="h-5 w-5" aria-hidden="true" />
-          </Button>
-        </div>
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col gap-6 p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2
+                  id="address-modal-heading"
+                  className="text-xl font-semibold text-slate-900 dark:text-slate-50"
+                >
+                  Choose delivery address
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Select an address for this order or add a new one.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                aria-label="Close address selection"
+                className="rounded-full text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white"
+              >
+                <X className="h-5 w-5" aria-hidden="true" />
+              </Button>
+            </div>
 
-        <section className="space-y-4">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Saved addresses
-          </h3>
-          {addressContent}
-        </section>
+            <section className="space-y-4">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Saved addresses
+              </h3>
+              {addressContent}
+            </section>
 
-        <section className="space-y-4">
-          <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            <Plus className="h-4 w-4" aria-hidden="true" /> Add new address
-          </h3>
-          <form className="grid gap-3 md:grid-cols-2" onSubmit={handleAddAddress}>
-            <label className="flex flex-col gap-1" htmlFor="address-label">
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
-                Label
-              </span>
-              <Input
+            <section className="space-y-4">
+              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <Plus className="h-4 w-4" aria-hidden="true" /> Add new address
+              </h3>
+              <form className="grid gap-3 md:grid-cols-2" onSubmit={handleAddAddress}>
+              <label className="flex flex-col gap-1" htmlFor="address-label">
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+                  Label
+                </span>
+                <Input
                 id="address-label"
                 value={formValues.label}
                 onChange={handleInputChange('label')}
@@ -491,10 +507,12 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
                 {adding ? 'Saving…' : 'Save address'}
               </Button>
             </div>
-          </form>
-        </section>
+              </form>
+            </section>
+          </div>
+        </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-end">
+        <div className="flex flex-col gap-3 border-t border-slate-200 bg-white/80 p-6 dark:border-slate-800 dark:bg-slate-900/80 sm:flex-row sm:items-center sm:justify-end">
           <Button
             type="button"
             variant="ghost"

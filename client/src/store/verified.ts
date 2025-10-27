@@ -51,7 +51,7 @@ export const fetchVerifiedById = createAsyncThunk<
   }
 });
 
-const verifiedSlice = createSlice<VerifiedState>({
+const verifiedSlice = createSlice({
   name: 'verified',
   initialState: initial,
   reducers: {},

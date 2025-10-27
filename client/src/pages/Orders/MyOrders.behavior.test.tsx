@@ -38,7 +38,7 @@ const createOrdersState = (state?: Partial<OrdersSliceState>): OrdersSliceState 
   };
 };
 
-const renderWithState = (state?: Partial<OrdersTestState>) => {
+const renderWithState = (state?: { orders?: Partial<OrdersSliceState> }) => {
   const mergedState: OrdersTestState = {
     orders: createOrdersState(state?.orders),
   };

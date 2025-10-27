@@ -65,6 +65,17 @@ GET /api/health -> { "ok": true }
 - `npm run lint` – ESLint
 - `npm run format` / `npm run format:check` – Prettier
 - `npm run typecheck` – TypeScript project references
+- `npm run seed:qa` – seed idempotent QA fixtures (shop, products, service, event)
+
+## QA Data
+
+Run the QA seed to populate deterministic fixtures for manual verification:
+
+```bash
+npm run seed:qa --prefix server
+```
+
+The script creates a verified business owner with a shop, three everyday products, three active special products, a QA delivery service, and an upcoming community event with registrations currently open. You can safely rerun the command; it only inserts records that do not already exist.
 
 ## Continuous Integration
 Every pull request runs ESLint, Prettier (check mode), and TypeScript type-checking for both the client and server via [GitHub Actions](.github/workflows/ci.yml).

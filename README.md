@@ -105,3 +105,14 @@ MIT
    npm install
    npm run dev
    ```
+
+## Release Notes — Cart, Services, Events, Notifications
+- **New endpoints and UI pages:** Added consolidated cart API with checkout validation, provider assignment routes for services, and refreshed client views for the cart, special shop, provider hub, event registration, and notification center.
+- **Security and validation improvements:** Hardened request validation with Express Validator and Zod, expanded authentication checks on order and service actions, and enforced role-based access on analytics and notification APIs.
+- **Accessibility and performance changes:** Introduced semantic headings, ARIA labelling on notification and cart widgets, lazy-loaded analytics widgets, and cached event leaderboards for faster refreshes.
+- **Seed script for QA:** Use `npm run seed:qa --prefix server` to populate deterministic fixtures covering carts, services, events, and notification scenarios before manual verification.
+
+## Rollback Plan
+- **Git tags before/after:** Tag the current release candidate (e.g., `v4.0.0-rc`) before deploying and the production cut (`v4.0.0`) afterward; use `git checkout <tag>` to revert to the desired state if rollback is required.
+- **Environment variable toggles:** Disable announcement banners, event registrations, and push notifications by setting `ANNOUNCEMENTS_ENABLED=false`, `EVENTS_PUBLIC_REGISTRATION=false`, and `NOTIFICATIONS_PUSH_ENABLED=false` in the environment.
+- **Route removal safety:** To revert feature routes, remove the cart upgrade, services workflow, and notification center mounts from the router modules, redeploy, and confirm legacy fallbacks through `npm run test --prefix server` and targeted smoke tests via `npm run dev` locally.

@@ -11,6 +11,14 @@
   margin-top: 1.5rem;
 }
 
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
 @media (min-width: 768px) {
   .page {
     padding-left: 1.5rem;
@@ -35,6 +43,10 @@
   padding-bottom: 1rem;
 }
 
+.toolbar .filters {
+  flex: 1 1 auto;
+}
+
 .filterButton {
   padding-left: 0.75rem;
   padding-right: 0.75rem;
@@ -48,6 +60,29 @@
   border-style: solid;
   border-color: #e5e7eb;
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.markAllButton {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  border-radius: 9999px;
+  background-color: #1d4ed8;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 10px 15px -3px rgba(29, 78, 216, 0.35);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.markAllButton:disabled {
+  background-color: rgba(29, 78, 216, 0.5);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.markAllButton:not(:disabled):hover {
+  background-color: #2563eb;
+  box-shadow: 0 20px 25px -15px rgba(37, 99, 235, 0.45);
 }
 
 .active {
@@ -97,6 +132,43 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.paginationButton {
+  padding: 0.4rem 0.9rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background-color: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.paginationButton:hover:not(:disabled) {
+  background-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 12px 20px -10px rgba(37, 99, 235, 0.45);
+}
+
+.paginationButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.paginationInfo {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
 }
 
 .actionButton {

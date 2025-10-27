@@ -1,5 +1,7 @@
 import { useRef } from 'react';
 import type { ReactNode } from 'react';
+import { cn } from '@/utils/cn';
+import { formatTimeAgo } from '@/utils/date';
 import styles from './NotificationCard.module.scss';
 
 export interface NotificationCardProps {
@@ -32,7 +34,7 @@ const NotificationCard = ({
 
   return (
     <div
-      className={`${styles.card} ${read ? styles.read : ''}`}
+      className={cn(styles.card, read ? styles.read : styles.unread)}
       onClick={onClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -44,7 +46,7 @@ const NotificationCard = ({
       )}
       <div className={styles.info}>
         <p>{message}</p>
-        <span className={styles.time}>{new Date(timestamp).toLocaleTimeString()}</span>
+        <span className={styles.time}>{formatTimeAgo(timestamp)}</span>
       </div>
     </div>
   );

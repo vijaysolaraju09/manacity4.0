@@ -763,7 +763,7 @@ const EventDetailPage = () => {
             {waitlisted && <span className={styles.waitlistedChip}>Waitlisted</span>}
           </div>
           <div className={styles.actionButtons}>
-            {canRegister && (
+            {canRegister ? (
               <button
                 type="button"
                 className={styles.primaryBtn}
@@ -772,7 +772,11 @@ const EventDetailPage = () => {
               >
                 {actions.register === 'loading' ? <Loader2 className={styles.spin} /> : 'Register now'}
               </button>
-            )}
+            ) : !canUnregister && !registrationWindow.isOpen ? (
+              <button type="button" className={styles.secondaryBtn} disabled>
+                Registrations closed
+              </button>
+            ) : null}
             {canUnregister && (
               <button
                 type="button"
@@ -821,6 +825,10 @@ const EventDetailPage = () => {
             disabled={actions.unregister === 'loading'}
           >
             {actions.unregister === 'loading' ? <Loader2 className={styles.spin} /> : 'Unregister'}
+          </button>
+        ) : !registrationWindow.isOpen ? (
+          <button type="button" className={styles.secondaryBtn} disabled>
+            Registrations closed
           </button>
         ) : (
           <button type="button" className={styles.secondaryBtn} onClick={() => goToTab('leaderboard')}>

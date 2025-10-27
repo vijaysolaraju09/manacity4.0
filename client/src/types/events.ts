@@ -8,6 +8,15 @@ export type EventFormat =
   | 'single_match'
   | 'custom';
 
+export interface EventRegistrationMeta {
+  status?: string | null;
+  paymentRequired?: boolean;
+  paymentAmount?: number | null;
+  paymentCurrency?: string | null;
+  paymentProofUrl?: string | null;
+  submittedAt?: string | null;
+}
+
 export interface EventSummary {
   _id: string;
   title: string;
@@ -37,7 +46,7 @@ export interface EventSummary {
   shortDescription?: string | null;
   accentColor?: string | null;
   iconUrl?: string | null;
-  registration?: { status?: string | null } | null;
+  registration?: EventRegistrationMeta | null;
   registrationStatus?: string | null;
   myRegistrationStatus?: string | null;
 }
@@ -51,7 +60,7 @@ export interface EventDetail extends EventSummary {
   updatesCount?: number;
   leaderboardVersion?: number;
   isRegistrationOpen?: boolean;
-  registration?: EventRegistration | null;
+  registration?: (EventRegistration & EventRegistrationMeta) | null;
   rewards?: string[];
   structure?: 'solo' | 'team' | string;
   registrationChecklist?: string[];
@@ -97,6 +106,14 @@ export interface EventRegistration {
   _id: string;
   status: 'registered' | 'waitlisted' | 'checked_in' | 'withdrawn' | 'disqualified';
   teamName?: string;
+  payment?: {
+    required?: boolean;
+    amount?: number;
+    currency?: string;
+    proofUrl?: string | null;
+  } | null;
+  proofUrl?: string | null;
+  createdAt?: string;
 }
 
 const deriveLifecycleStatus = (summary: EventSummary): 'upcoming' | 'ongoing' | 'past' => {
@@ -194,7 +211,51 @@ export const adaptEventSummary = (raw: any): EventSummary | null => {
       raw.registrationStatus ??
       raw.myRegistrationStatus ??
       null;
-    summary.registration = { status: status ?? null };
+    const paymentSource =
+      registrationInfo.payment ??
+      raw.registrationPayment ??
+      raw.payment ??
+      raw.paymentInfo ??
+      null;
+    const paymentProof =
+      registrationInfo.paymentProofUrl ??
+      registrationInfo.proofUrl ??
+      paymentSource?.proofUrl ??
+      raw.registrationProofUrl ??
+      raw.paymentProofUrl ??
+      null;
+    const paymentAmount =
+      typeof registrationInfo.paymentAmount === 'number'
+        ? registrationInfo.paymentAmount
+        : typeof paymentSource?.amount === 'number'
+        ? paymentSource.amount
+        : null;
+    const paymentCurrency =
+      typeof registrationInfo.paymentCurrency === 'string'
+        ? registrationInfo.paymentCurrency
+        : typeof paymentSource?.currency === 'string'
+        ? paymentSource.currency
+        : null;
+    const paymentRequired =
+      typeof registrationInfo.paymentRequired === 'boolean'
+        ? registrationInfo.paymentRequired
+        : typeof paymentSource?.required === 'boolean'
+        ? paymentSource.required
+        : undefined;
+    const submittedAt =
+      typeof registrationInfo.submittedAt === 'string'
+        ? registrationInfo.submittedAt
+        : typeof registrationInfo.createdAt === 'string'
+        ? registrationInfo.createdAt
+        : null;
+    summary.registration = {
+      status: status ?? null,
+      paymentRequired,
+      paymentAmount,
+      paymentCurrency,
+      paymentProofUrl: typeof paymentProof === 'string' ? paymentProof : null,
+      submittedAt,
+    };
     if (status) {
       summary.registrationStatus = status;
       summary.myRegistrationStatus = status;

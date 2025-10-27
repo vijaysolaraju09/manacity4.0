@@ -196,6 +196,13 @@
   gap: 0.5rem;
 }
 
+.fieldError {
+  display: block;
+  margin-top: 0.25rem;
+  color: #dc2626;
+  font-size: 0.85rem;
+}
+
 .formError {
   margin: 0;
   color: #dc2626;

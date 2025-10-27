@@ -1,7 +1,7 @@
 import { AiFillStar } from 'react-icons/ai';
 import type { ReactNode } from 'react';
 import styles from './ProviderCard.module.scss';
-import fallbackAvatar from '@/assets/no-image.svg';
+import getImageOrPlaceholder from '@/utils/getImageOrPlaceholder';
 import type { ServiceProvider } from '@/types/services';
 
 interface ProviderCardProps {
@@ -16,9 +16,12 @@ const ProviderCard = ({ provider, actions }: ProviderCardProps) => {
   const phone = user?.phone ?? '';
   const ratingAvg = typeof provider.ratingAvg === 'number' ? provider.ratingAvg : undefined;
   const ratingCount = typeof provider.ratingCount === 'number' ? provider.ratingCount : undefined;
-  const avatarUrl = user?.avatarUrl
-    ? user.avatarUrl
-    : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=128`;
+  const avatarUrl = getImageOrPlaceholder(
+    user?.avatarUrl ||
+      (name
+        ? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=128`
+        : ''),
+  );
 
   return (
     <div className={styles.card}>
@@ -27,7 +30,10 @@ const ProviderCard = ({ provider, actions }: ProviderCardProps) => {
         alt={name}
         className={styles.avatar}
         onError={(event) => {
-          event.currentTarget.src = fallbackAvatar;
+          const placeholder = getImageOrPlaceholder(null);
+          if (event.currentTarget.src !== placeholder) {
+            event.currentTarget.src = placeholder;
+          }
         }}
       />
       <div className={styles.info}>

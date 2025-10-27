@@ -13,6 +13,7 @@ const {
   getMetricsSummary,
   getMetricSeries,
 } = require('../controllers/adminMetricsController');
+const { getAdminAnalytics } = require('../controllers/adminAnalyticsController');
 const {
   listShopRequests,
   listShops,
@@ -63,6 +64,7 @@ router.get('/orders', protect, isAdmin, getAllOrders);
 
 router.get('/metrics', protect, isAdmin, getMetricsSummary);
 router.get('/metrics/timeseries', protect, isAdmin, getMetricSeries);
+router.get('/analytics', protect, isAdmin, getAdminAnalytics);
 
 router.get('/shops/requests', protect, isAdmin, listShopRequests);
 router.get('/shops', protect, isAdmin, listShops);

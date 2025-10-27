@@ -28,6 +28,21 @@
     flex: 1;
     min-width: 140px;
   }
+
+  .clearButton {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: var(--color-muted-bg, #e2e8f0);
+    color: #0f172a;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: var(--color-muted-bg-hover, #cbd5f5);
+    }
+  }
 }
 
 .openNowContainer {

@@ -1,6 +1,7 @@
 import PriceBlock from './PriceBlock';
 import WishlistHeart from '../ui/WishlistHeart';
 import styles from './ProductCard.module.scss';
+import getImageOrPlaceholder from '@/utils/getImageOrPlaceholder';
 
 export interface Product {
   id: string;
@@ -40,11 +41,17 @@ const ProductCard = ({ product, ctaLabel, onCtaClick, onClick, className = '' }:
     >
       <div className={styles.imageWrapper}>
         <img
-          src={product.image}
+          src={getImageOrPlaceholder(product.image)}
           alt={product.title}
           loading="lazy"
           width={300}
           height={400}
+          onError={(event) => {
+            const placeholder = getImageOrPlaceholder(null);
+            if (event.currentTarget.src !== placeholder) {
+              event.currentTarget.src = placeholder;
+            }
+          }}
         />
         {product.discountPercent && (
           <span className={styles.badge}>{product.discountPercent}% OFF</span>

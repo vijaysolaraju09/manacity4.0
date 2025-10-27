@@ -31,6 +31,45 @@ type ProductFormState = {
   stock: number;
 };
 
+type ProductFormErrors = Partial<Record<keyof ProductFormState, string>>;
+
+const validateProductForm = (form: ProductFormState): ProductFormErrors => {
+  const errors: ProductFormErrors = {};
+  if (!form.shopId.trim()) {
+    errors.shopId = 'Select a shop to continue';
+  }
+  if (form.name.trim().length < 3) {
+    errors.name = 'Name must be at least 3 characters';
+  }
+  if (form.description.trim().length < 10) {
+    errors.description = 'Description must be at least 10 characters';
+  }
+  if (!Number.isFinite(form.price) || form.price <= 0) {
+    errors.price = 'Enter a valid price greater than 0';
+  }
+  if (!Number.isFinite(form.mrp) || form.mrp <= 0) {
+    errors.mrp = 'Enter a valid MRP greater than 0';
+  }
+  if (
+    Number.isFinite(form.price) &&
+    Number.isFinite(form.mrp) &&
+    form.price > form.mrp
+  ) {
+    errors.price = 'Price cannot exceed MRP';
+    errors.mrp = 'MRP must be at least the price';
+  }
+  if (form.category.trim().length < 2) {
+    errors.category = 'Category must be at least 2 characters';
+  }
+  if (form.imageUrl && !/^https?:\/\//i.test(form.imageUrl.trim())) {
+    errors.imageUrl = 'Image URL must start with http or https';
+  }
+  if (!Number.isFinite(form.stock) || form.stock < 0) {
+    errors.stock = 'Stock must be zero or a positive number';
+  }
+  return errors;
+};
+
 type ShopSummary = {
   id?: string;
   _id?: string;
@@ -100,6 +139,8 @@ const ManageProducts = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [touched, setTouched] = useState<Partial<Record<keyof ProductFormState, boolean>>>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [shops, setShops] = useState<ShopSummary[]>([]);
   const [shopsLoading, setShopsLoading] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -157,12 +198,16 @@ const ManageProducts = () => {
     setForm((prev) => ({ ...emptyForm, shopId: prev.shopId || defaultShopId }));
     setEditId(null);
     setFormError(null);
+    setTouched({});
+    setSubmitAttempted(false);
   };
 
   const openNew = () => {
     setForm((prev) => ({ ...emptyForm, shopId: prev.shopId || defaultShopId }));
     setEditId(null);
     setFormError(null);
+    setTouched({});
+    setSubmitAttempted(false);
     setShowModal(true);
   };
 
@@ -179,34 +224,21 @@ const ManageProducts = () => {
       stock: typeof p.stock === 'number' ? p.stock : 0,
     });
     setFormError(null);
+    setTouched({});
+    setSubmitAttempted(false);
     setShowModal(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    if (!form.shopId) {
-      setFormError('Select a shop for this product');
-      return;
-    }
-    if (!form.name || !form.price || form.price <= 0) {
-      setFormError('Please provide a name and valid price');
-      return;
-    }
-    if (!form.mrp || form.mrp <= 0) {
-      setFormError('Please provide a valid MRP');
-      return;
-    }
-    if (form.price > form.mrp) {
-      setFormError('Price cannot exceed MRP');
+    setSubmitAttempted(true);
+    const validation = validateProductForm(form);
+    if (Object.keys(validation).length > 0) {
       return;
     }
     const pricePaise = Math.round(form.price * 100);
     const mrpPaise = Math.round(form.mrp * 100);
-    if (!Number.isInteger(pricePaise) || !Number.isInteger(mrpPaise)) {
-      showToast('Price and MRP must be valid amounts', 'error');
-      return;
-    }
     try {
       setSubmitting(true);
       const payloadBase = {
@@ -243,6 +275,19 @@ const ManageProducts = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const validation = validateProductForm(form);
+  const isFormValid = Object.keys(validation).length === 0;
+  const shouldShowError = (field: keyof ProductFormState) =>
+    Boolean((touched[field] || submitAttempted) && validation[field]);
+
+  const updateField = <K extends keyof ProductFormState>(field: K, value: ProductFormState[K]) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const markTouched = (field: keyof ProductFormState) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
   const handleDelete = async (id: string) => {
@@ -388,7 +433,8 @@ const ManageProducts = () => {
               Shop
               <select
                 value={form.shopId}
-                onChange={(e) => setForm((prev) => ({ ...prev, shopId: e.target.value }))}
+                onChange={(e) => updateField('shopId', e.target.value)}
+                onBlur={() => markTouched('shopId')}
                 disabled={shopsLoading || shops.length <= 1 || !!editId}
               >
                 <option value="">Select shop</option>
@@ -402,14 +448,31 @@ const ManageProducts = () => {
                   );
                 })}
               </select>
+              {shouldShowError('shopId') ? (
+                <span className={styles.fieldError}>{validation.shopId}</span>
+              ) : null}
             </label>
             <label>
               Name
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <input
+                value={form.name}
+                onChange={(e) => updateField('name', e.target.value)}
+                onBlur={() => markTouched('name')}
+              />
+              {shouldShowError('name') ? (
+                <span className={styles.fieldError}>{validation.name}</span>
+              ) : null}
             </label>
             <label>
               Description
-              <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <textarea
+                value={form.description}
+                onChange={(e) => updateField('description', e.target.value)}
+                onBlur={() => markTouched('description')}
+              />
+              {shouldShowError('description') ? (
+                <span className={styles.fieldError}>{validation.description}</span>
+              ) : null}
             </label>
             <label>
               Price
@@ -419,9 +482,13 @@ const ManageProducts = () => {
                 min="0"
                 step="0.01"
                 onChange={(e) =>
-                  setForm({ ...form, price: Number.isFinite(+e.target.value) ? Number(e.target.value) : 0 })
+                  updateField('price', Number.isFinite(+e.target.value) ? Number(e.target.value) : 0)
                 }
+                onBlur={() => markTouched('price')}
               />
+              {shouldShowError('price') ? (
+                <span className={styles.fieldError}>{validation.price}</span>
+              ) : null}
             </label>
             <label>
               MRP
@@ -431,17 +498,35 @@ const ManageProducts = () => {
                 min="0"
                 step="0.01"
                 onChange={(e) =>
-                  setForm({ ...form, mrp: Number.isFinite(+e.target.value) ? Number(e.target.value) : 0 })
+                  updateField('mrp', Number.isFinite(+e.target.value) ? Number(e.target.value) : 0)
                 }
+                onBlur={() => markTouched('mrp')}
               />
+              {shouldShowError('mrp') ? (
+                <span className={styles.fieldError}>{validation.mrp}</span>
+              ) : null}
             </label>
             <label>
               Category
-              <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+              <input
+                value={form.category}
+                onChange={(e) => updateField('category', e.target.value)}
+                onBlur={() => markTouched('category')}
+              />
+              {shouldShowError('category') ? (
+                <span className={styles.fieldError}>{validation.category}</span>
+              ) : null}
             </label>
             <label>
               Image URL
-              <input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} />
+              <input
+                value={form.imageUrl}
+                onChange={(e) => updateField('imageUrl', e.target.value)}
+                onBlur={() => markTouched('imageUrl')}
+              />
+              {shouldShowError('imageUrl') ? (
+                <span className={styles.fieldError}>{validation.imageUrl}</span>
+              ) : null}
             </label>
             <label>
               Stock
@@ -450,12 +535,16 @@ const ManageProducts = () => {
                 value={Number.isFinite(form.stock) ? form.stock : 0}
                 min="0"
                 onChange={(e) =>
-                  setForm({ ...form, stock: Number.isFinite(+e.target.value) ? Number(e.target.value) : 0 })
+                  updateField('stock', Number.isFinite(+e.target.value) ? Number(e.target.value) : 0)
                 }
+                onBlur={() => markTouched('stock')}
               />
+              {shouldShowError('stock') ? (
+                <span className={styles.fieldError}>{validation.stock}</span>
+              ) : null}
             </label>
             <div className={styles.actions}>
-              <button type="submit" disabled={submitting}>
+              <button type="submit" disabled={submitting || !isFormValid}>
                 {submitting ? <Loader /> : 'Save'}
               </button>
               <button type="button" onClick={() => { setShowModal(false); resetForm(); }} disabled={submitting}>

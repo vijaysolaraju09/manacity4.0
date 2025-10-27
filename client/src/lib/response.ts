@@ -48,11 +48,16 @@ const coerceMessage = (input: unknown): string | undefined => {
   if (!input) return undefined;
   if (typeof input === 'string') {
     const trimmed = input.trim();
-    return trimmed && trimmed !== '[object Object]' ? trimmed : undefined;
+    if (!trimmed || trimmed === '[object Object]') {
+      return undefined;
+    }
+    const firstLine = trimmed.split(/\r?\n/)[0]?.trim() ?? trimmed;
+    return firstLine.replace(/^error:\s*/i, '');
   }
   if (typeof input === 'object') {
     const value = input as Record<string, unknown>;
     const nested =
+      value.msg ||
       value.message ||
       value.reason ||
       value.error ||
@@ -65,6 +70,7 @@ const coerceMessage = (input: unknown): string | undefined => {
 
 export const toErrorMessage = (err: any): string => {
   return (
+    coerceMessage(err?.response?.data?.msg) ||
     coerceMessage(err?.response?.data?.error) ||
     coerceMessage(err?.response?.data?.message) ||
     coerceMessage(err?.message) ||

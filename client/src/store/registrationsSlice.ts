@@ -148,12 +148,12 @@ export const fetchEventForm = createAsyncThunk<
   EventFormResolved,
   string,
   { rejectValue: string }
->('registrations/fetchEventForm', async (eventId, { rejectWithValue }) => {
+>('registrations/fetchEventForm', async (eventId, thunkApi) => {
   try {
     const res = await http.get(`/events/${eventId}/form`);
     return normalizeEventForm(res?.data?.data ?? res?.data);
-  } catch (err) {
-    return rejectWithValue(toErrorMessage(err));
+  } catch (error) {
+    return thunkApi.rejectWithValue(toErrorMessage(error));
   }
 });
 
@@ -172,7 +172,7 @@ export const submitRegistration = createAsyncThunk<
   RegistrationResult,
   SubmitPayload,
   { rejectValue: string }
->('registrations/submit', async ({ eventId, data, payment }, { rejectWithValue }) => {
+>('registrations/submit', async ({ eventId, data, payment }, thunkApi) => {
   try {
     const body: Record<string, unknown> = { data };
     if (payment && Object.keys(payment).length > 0) {
@@ -187,47 +187,47 @@ export const submitRegistration = createAsyncThunk<
       status: String(record?.status ?? payload?.status ?? (payload as any)?.data?.status ?? 'submitted'),
       payment: record?.payment ?? payload?.payment,
     };
-  } catch (err) {
-    const fallback = toErrorMessage(err);
-    if (isAxiosError(err)) {
-      const status = err.response?.status;
+  } catch (error) {
+    const fallback = toErrorMessage(error);
+    if (isAxiosError(error)) {
+      const status = error.response?.status;
       const errorCode =
-        err.response?.data?.code ||
-        err.response?.data?.error?.code ||
-        err.response?.data?.error?.name ||
-        err.response?.data?.error?.type;
+        error.response?.data?.code ||
+        error.response?.data?.error?.code ||
+        error.response?.data?.error?.name ||
+        error.response?.data?.error?.type;
       const normalizedMessage = fallback.toLowerCase();
 
       if (status === 409 || errorCode === 'already_registered') {
-        return rejectWithValue('It looks like you are already registered for this event.');
+        return thunkApi.rejectWithValue('It looks like you are already registered for this event.');
       }
 
       if (status === 410 || errorCode === 'registration_closed') {
-        return rejectWithValue('Registrations for this event are closed at the moment.');
+        return thunkApi.rejectWithValue('Registrations for this event are closed at the moment.');
       }
 
       if (status === 403 || status === 422 || errorCode === 'capacity_full') {
-        return rejectWithValue('This event has reached its registration capacity.');
+        return thunkApi.rejectWithValue('This event has reached its registration capacity.');
       }
 
       if (status === 429 || errorCode === 'rate_limited' || normalizedMessage.includes('too many')) {
-        return rejectWithValue('You are submitting registrations too quickly. Please wait and try again.');
+        return thunkApi.rejectWithValue('You are submitting registrations too quickly. Please wait and try again.');
       }
 
       if (normalizedMessage.includes('duplicate')) {
-        return rejectWithValue('It looks like you are already registered for this event.');
+        return thunkApi.rejectWithValue('It looks like you are already registered for this event.');
       }
 
       if (normalizedMessage.includes('capacity') || normalizedMessage.includes('full')) {
-        return rejectWithValue('This event has reached its registration capacity.');
+        return thunkApi.rejectWithValue('This event has reached its registration capacity.');
       }
     }
 
-    return rejectWithValue(fallback);
+    return thunkApi.rejectWithValue(fallback);
   }
 });
 
-const registrationsSlice = createSlice({
+const registrationsSlice = createSlice<RegistrationState>({
   name: 'registrations',
   initialState,
   reducers: {

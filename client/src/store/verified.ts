@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { http } from "@/lib/http";
-import { toItems, toItem, toErrorMessage } from "@/lib/response";
-import type { VerifiedCard } from "@/types/verified";
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import { http } from '@/lib/http';
+import { toItems, toItem, toErrorMessage } from '@/lib/response';
+import type { VerifiedCard } from '@/types/verified';
 
 type St<T> = {
   items: T[];
@@ -12,7 +12,9 @@ type St<T> = {
   hasMore?: boolean;
 };
 
-const initial: St<VerifiedCard> = {
+type VerifiedState = St<VerifiedCard>;
+
+const initial: VerifiedState = {
   items: [],
   item: null,
   status: "idle",
@@ -21,65 +23,65 @@ const initial: St<VerifiedCard> = {
   hasMore: true,
 };
 
-const normalize = (data: any): VerifiedCard => data as VerifiedCard;
+const normalize = (data: unknown): VerifiedCard => data as VerifiedCard;
 
-export const fetchVerified = createAsyncThunk(
-  "verified/fetchAll",
-  async (
-    params: any | undefined,
-    { rejectWithValue }: { rejectWithValue: (value: any) => any }
-  ) => {
-    try {
-      const res = await http.get("/verified", { params });
-      return (toItems(res) as any[]).map(normalize);
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
-    }
+export const fetchVerified = createAsyncThunk<
+  VerifiedCard[],
+  Record<string, unknown> | undefined,
+  { rejectValue: string }
+>('verified/fetchAll', async (params, thunkApi) => {
+  try {
+    const res = await http.get('/verified', { params });
+    return (toItems(res) as unknown[]).map(normalize);
+  } catch (error) {
+    return thunkApi.rejectWithValue(toErrorMessage(error));
   }
-);
+});
 
-export const fetchVerifiedById = createAsyncThunk(
-  "verified/fetchById",
-  async (id: string, { rejectWithValue }) => {
-    try {
-      const res = await http.get(`/verified/${id}`);
-      return normalize(toItem(res));
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
-    }
+export const fetchVerifiedById = createAsyncThunk<
+  VerifiedCard,
+  string,
+  { rejectValue: string }
+>('verified/fetchById', async (id, thunkApi) => {
+  try {
+    const res = await http.get(`/verified/${id}`);
+    return normalize(toItem(res));
+  } catch (error) {
+    return thunkApi.rejectWithValue(toErrorMessage(error));
   }
-);
+});
 
-const verifiedSlice = createSlice({
-  name: "verified",
+const verifiedSlice = createSlice<VerifiedState>({
+  name: 'verified',
   initialState: initial,
   reducers: {},
-  extraReducers: (b) => {
-    b.addCase(fetchVerified.pending, (s) => {
-      s.status = "loading";
-      s.error = null;
-    });
-    b.addCase(fetchVerified.fulfilled, (s, a) => {
-      s.status = "succeeded";
-      s.items = a.payload as VerifiedCard[];
-    });
-    b.addCase(fetchVerified.rejected, (s, a) => {
-      s.status = "failed";
-      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
-    });
-    b.addCase(fetchVerifiedById.pending, (s) => {
-      s.status = "loading";
-      s.error = null;
-      s.item = null;
-    });
-    b.addCase(fetchVerifiedById.fulfilled, (s, a) => {
-      s.status = "succeeded";
-      s.item = a.payload as VerifiedCard;
-    });
-    b.addCase(fetchVerifiedById.rejected, (s, a) => {
-      s.status = "failed";
-      s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
-    });
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchVerified.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(fetchVerified.fulfilled, (state, action: PayloadAction<VerifiedCard[]>) => {
+        state.status = 'succeeded';
+        state.items = action.payload;
+      })
+      .addCase(fetchVerified.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload ?? action.error.message ?? 'Failed to load';
+      })
+      .addCase(fetchVerifiedById.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+        state.item = null;
+      })
+      .addCase(fetchVerifiedById.fulfilled, (state, action: PayloadAction<VerifiedCard>) => {
+        state.status = 'succeeded';
+        state.item = action.payload;
+      })
+      .addCase(fetchVerifiedById.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload ?? action.error.message ?? 'Failed to load';
+      });
   },
 });
 

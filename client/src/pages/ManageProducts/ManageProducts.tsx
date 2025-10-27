@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { http } from '@/lib/http';
 import { toItems, toItem, toErrorMessage } from '@/lib/response';
 import type { RootState, AppDispatch } from '../../store';
@@ -19,6 +20,8 @@ import ProductCard, {
 import showToast from '../../components/ui/Toast';
 import styles from './ManageProducts.module.scss';
 import { rupeesToPaise } from '@/utils/currency';
+import EmptyState from '@/components/ui/EmptyState';
+import { paths } from '@/routes/paths';
 
 type ProductFormState = {
   shopId: string;
@@ -134,6 +137,8 @@ const toCardProduct = (product: Product): ProductCardProduct => {
 const ManageProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { items, loading } = useSelector((s: RootState) => s.products);
+  const userRole = useSelector((s: RootState) => s.auth.user?.role);
+  const isPrivileged = userRole === 'business' || userRole === 'admin';
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<ProductFormState>(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
@@ -144,6 +149,20 @@ const ManageProducts = () => {
   const [shops, setShops] = useState<ShopSummary[]>([]);
   const [shopsLoading, setShopsLoading] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  if (!isPrivileged) {
+    return (
+      <div className={styles.guard}>
+        <EmptyState
+          title="Business access required"
+          message="Only approved business accounts can manage catalog products. Visit your profile to request or review business verification."
+          ctaLabel="Go to profile"
+          onCtaClick={() => navigate(paths.profile())}
+        />
+      </div>
+    );
+  }
 
   const defaultShopId = useMemo(() => {
     if (!shops.length) return '';

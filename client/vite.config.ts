@@ -1,10 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+
+const scssOptions: Record<string, unknown> = {
+  silenceDeprecations: ['all'],
+}
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react()],
   resolve: {
     alias: {
       '@': '/src',
@@ -12,11 +15,7 @@ export default defineConfig({
   },
   css: {
     preprocessorOptions: {
-      scss: {
-        // Silence Sass @import deprecation warnings
-        // @ts-expect-error: non-standard option
-        silenceDeprecations: ['all'],
-      },
+      scss: scssOptions,
     },
   },
   test: {

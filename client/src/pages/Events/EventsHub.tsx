@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AlertCircle, CheckCircle2, Clock, Loader2, RefreshCw, Trophy, Users } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -17,6 +17,8 @@ type TabKey = 'all' | 'events' | 'tournaments' | 'registrations';
 type ExtendedEventSummary = EventSummary;
 
 type EventStage = 'live' | 'upcoming' | 'completed';
+
+const PAGE_SIZE = 24;
 
 const determineStage = (event: EventSummary, now: number): EventStage => {
   const lifecycle = event.lifecycleStatus ?? 'upcoming';
@@ -83,6 +85,7 @@ const EventsHub = () => {
   const [activeTab, setActiveTab] = useState<TabKey>('all');
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 60000);
@@ -132,11 +135,22 @@ const EventsHub = () => {
     } satisfies Record<TabKey, ExtendedEventSummary[]>;
   }, [items, registeredItems, registeredIds]);
 
+  const activeList = useMemo(() => groupedItems[activeTab] ?? [], [groupedItems, activeTab]);
+
+  const paginatedList = useMemo(
+    () => (activeTab === 'registrations' ? activeList : activeList.slice(0, visibleCount)),
+    [activeList, activeTab, visibleCount],
+  );
+
+  const hasLocalMore = activeTab !== 'registrations' && activeList.length > paginatedList.length;
+  const canFetchMore = activeTab !== 'registrations' && Boolean(eventsState.hasMore);
+  const showLoadMoreButton = activeTab !== 'registrations' && (hasLocalMore || canFetchMore);
+
   const handleRefresh = () => {
     dispatch(fetchEvents({ ...queryParams }));
   };
 
-  const handleLoadMore = async () => {
+  const fetchMoreEvents = useCallback(async () => {
     if (busy || !eventsState.hasMore) return;
     const nextPage = (eventsState.page ?? 1) + 1;
     setBusy(true);
@@ -147,7 +161,29 @@ const EventsHub = () => {
     } finally {
       setBusy(false);
     }
-  };
+  }, [busy, dispatch, eventsState.hasMore, eventsState.page, queryParams]);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeTab]);
+
+  const handleShowMore = useCallback(async () => {
+    if (activeTab === 'registrations') return;
+    const nextVisible = visibleCount + PAGE_SIZE;
+    if (nextVisible <= activeList.length) {
+      setVisibleCount(nextVisible);
+      return;
+    }
+
+    if (!canFetchMore || busy) {
+      setVisibleCount(Math.min(nextVisible, activeList.length));
+      return;
+    }
+
+    setVisibleCount(activeList.length);
+    await fetchMoreEvents();
+    setVisibleCount((current) => current + PAGE_SIZE);
+  }, [activeTab, activeList.length, busy, canFetchMore, fetchMoreEvents, visibleCount]);
 
   const formatEntryFee = (event: EventSummary) => {
     const paise =
@@ -349,13 +385,16 @@ const EventsHub = () => {
     );
   };
 
-  const renderList = (list: ExtendedEventSummary[]) => {
+  const renderList = (
+    fullList: ExtendedEventSummary[],
+    paginated: ExtendedEventSummary[],
+  ) => {
     if (activeTab === 'registrations') {
-      return renderRegistrationList(list);
+      return renderRegistrationList(fullList);
     }
 
-    const gridEvents = list;
-    const stageSummary = gridEvents.reduce(
+    const gridEvents = paginated;
+    const stageSummary = fullList.reduce(
       (acc, event) => {
         const stage = determineStage(event, now);
         if (stage === 'live') {
@@ -371,7 +410,7 @@ const EventsHub = () => {
       { live: 0, upcoming: 0, completed: 0, totalRegistrations: 0 },
     );
 
-    if (loading && gridEvents.length === 0) {
+    if (loading && fullList.length === 0) {
       return (
         <div className={styles.skeletonGrid}>
           {Array.from({ length: 6 }).map((_, index) => (
@@ -381,7 +420,7 @@ const EventsHub = () => {
       );
     }
 
-    if (error && gridEvents.length === 0) {
+    if (error && fullList.length === 0) {
       return (
         <div className={styles.feedbackCard}>
           <h3>Unable to load events</h3>
@@ -390,7 +429,7 @@ const EventsHub = () => {
       );
     }
 
-    if (gridEvents.length === 0) {
+    if (fullList.length === 0) {
       return (
         <div className={styles.feedbackCard}>
           <h3>No events available yet</h3>
@@ -472,14 +511,14 @@ const EventsHub = () => {
             );
           })}
         </div>
-        {eventsState.hasMore && (
+        {showLoadMoreButton && (
           <button
             type="button"
             className={styles.loadMore}
-            onClick={handleLoadMore}
-            disabled={busy}
+            onClick={handleShowMore}
+            disabled={busy && !hasLocalMore}
           >
-            {busy ? <Loader2 size={16} className={styles.spin} /> : 'Load more events'}
+            {busy && !hasLocalMore ? <Loader2 size={16} className={styles.spin} /> : 'Load more events'}
           </button>
         )}
       </>
@@ -523,7 +562,7 @@ const EventsHub = () => {
       </nav>
 
       <section className={styles.tabContent} aria-live="polite">
-        {renderList(groupedItems[activeTab])}
+        {renderList(activeList, paginatedList)}
       </section>
     </div>
   );

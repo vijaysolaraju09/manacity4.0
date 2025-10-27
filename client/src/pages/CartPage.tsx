@@ -328,6 +328,7 @@ const CartPage = () => {
                       <img
                         src={imageSrc}
                         alt={item.name}
+                        loading="lazy"
                         className="h-full w-full object-cover"
                         onError={(event) => {
                           if (event.currentTarget.src !== fallbackImage) {

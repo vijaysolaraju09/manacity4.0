@@ -416,7 +416,7 @@ export const adminUpdateServiceRequest = createAsyncThunk<
   }
 );
 
-const serviceRequestsSlice = createSlice<ServiceRequestsState>({
+const serviceRequestsSlice = createSlice({
   name: 'serviceRequests',
   initialState,
   reducers: {},

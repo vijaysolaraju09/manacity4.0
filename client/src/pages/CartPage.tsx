@@ -63,7 +63,7 @@ const parseCart = (payload: any): CartData => {
   const rawItems: any[] = Array.isArray(raw.items) ? raw.items : [];
 
   const items: CartItem[] = rawItems
-    .map((item) => {
+    .map<CartItem | null>((item) => {
       if (!item) return null;
       const productId = String(item.productId ?? item.id ?? '');
       if (!productId) return null;
@@ -100,7 +100,7 @@ const parseCart = (payload: any): CartData => {
         maybeRupeesToPaise(product.mrp) ??
         maybeRupeesToPaise(product?.pricing?.mrp);
 
-      return {
+      const result: CartItem = {
         productId,
         name: typeof nameSource === 'string' && nameSource.trim() ? nameSource.trim() : 'Item',
         image: typeof imageSource === 'string' ? imageSource : null,
@@ -108,9 +108,11 @@ const parseCart = (payload: any): CartData => {
         unitPricePaise: resolvedUnitPrice,
         lineTotalPaise: Math.max(0, Math.round(subtotal)),
         mrpPaise: typeof mrpPaise === 'number' && mrpPaise > 0 ? mrpPaise : undefined,
-      } satisfies CartItem;
+      };
+
+      return result;
     })
-    .filter((value): value is CartItem => Boolean(value));
+    .filter((value): value is CartItem => value !== null);
 
   const computedSubtotal = items.reduce((total, item) => total + item.unitPricePaise * item.qty, 0);
   const rawSubtotal = maybePaise(raw.totals?.subtotalPaise ?? raw.subtotalPaise);

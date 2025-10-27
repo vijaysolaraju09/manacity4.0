@@ -227,7 +227,7 @@ export const submitRegistration = createAsyncThunk<
   }
 });
 
-const registrationsSlice = createSlice<RegistrationState>({
+const registrationsSlice = createSlice({
   name: 'registrations',
   initialState,
   reducers: {

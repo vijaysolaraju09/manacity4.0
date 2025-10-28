@@ -197,12 +197,16 @@ const toRequestJson = (doc, options = {}) => {
   };
 };
 
-const populateRequest = (query) =>
-  query
-    .populate('serviceId', 'name description icon')
-    .populate('assignedProviderId', 'name phone location address')
-    .populate('assignedProviderIds', 'name phone location address')
-    .populate('offers.providerId', 'name phone location address');
+const populateRequest = (query) => {
+  if (!query || typeof query.populate !== 'function') return query;
+  const paths = [
+    { path: 'serviceId', select: 'name description icon' },
+    { path: 'assignedProviderId', select: 'name phone location address' },
+    { path: 'assignedProviderIds', select: 'name phone location address' },
+    { path: 'offers.providerId', select: 'name phone location address' },
+  ];
+  return query.populate(paths);
+};
 
 const sendNotification = async (userIds, subType, message) => {
   const ids = (Array.isArray(userIds) ? userIds : [userIds])

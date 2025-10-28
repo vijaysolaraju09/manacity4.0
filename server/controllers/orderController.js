@@ -1,3 +1,4 @@
+const { Types } = require('mongoose');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Shop = require('../models/Shop');
@@ -98,15 +99,24 @@ const createShopOrder = async ({
     .lean();
   if (!shop) throw AppError.notFound('SHOP_NOT_FOUND', 'Shop not found');
 
-  const productIds = items.map((i) => i.productId);
+  const productIds = items.map((i) => {
+    const id = i?.productId ?? i?.product;
+    const trimmed = typeof id === 'string' ? id.trim() : '';
+    if (!Types.ObjectId.isValid(trimmed)) {
+      throw AppError.badRequest('INVALID_ORDER_ITEM', 'Invalid product selected');
+    }
+    return new Types.ObjectId(trimmed);
+  });
+
   const products = await Product.find({ _id: { $in: productIds }, shop: shopId }).lean();
   const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
   const orderItems = [];
   let itemsTotal = 0;
 
-  for (const i of items) {
-    const productId = String(i.productId);
+  for (let index = 0; index < items.length; index += 1) {
+    const productId = productIds[index].toString();
+    const i = items[index];
     const p = productMap.get(productId);
     if (!p) throw AppError.badRequest('PRODUCT_NOT_FOUND', 'Product not found');
 
@@ -358,15 +368,24 @@ exports.checkoutOrders = async (req, res, next) => {
       };
     });
 
-    const productIds = sanitizedItems.map((item) => item.productId);
+    const productIds = sanitizedItems.map((item) => {
+      if (!Types.ObjectId.isValid(item.productId)) {
+        throw AppError.badRequest('INVALID_ORDER_ITEM', 'Invalid product selected');
+      }
+      return new Types.ObjectId(item.productId);
+    });
+
     const catalog = await Product.find({ _id: { $in: productIds } })
       .select('_id shop')
       .lean();
-    const productToShop = new Map(catalog.map((product) => [product._id.toString(), product.shop?.toString()]));
+    const productToShop = new Map(
+      catalog.map((product) => [product._id.toString(), product.shop?.toString()]),
+    );
 
     const groups = new Map();
-    sanitizedItems.forEach((item) => {
-      const shopId = productToShop.get(item.productId);
+    sanitizedItems.forEach((item, index) => {
+      const productKey = productIds[index].toString();
+      const shopId = productToShop.get(productKey);
       if (!shopId) {
         throw AppError.badRequest('PRODUCT_NOT_FOUND', 'Product not found');
       }

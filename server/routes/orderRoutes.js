@@ -22,7 +22,7 @@ const objectId = z
 
 const orderItemSchema = z
   .object({
-    productId: objectId,
+    productId: z.string().trim().min(1),
     qty: z.coerce.number().int().min(1).max(999).optional(),
     quantity: z.coerce.number().int().min(1).max(999).optional(),
     options: z.record(z.unknown()).optional(),
@@ -123,6 +123,7 @@ const rateSchema = {
 router.post('/', protect, validate(createOrderSchema), createOrder);
 router.post('/checkout', protect, validate(checkoutOrderSchema), checkoutOrders);
 router.get('/mine', protect, validate(listQuerySchema), getMyOrders);
+router.get('/my', protect, validate(listQuerySchema), getMyOrders);
 router.get(
   '/received',
   protect,

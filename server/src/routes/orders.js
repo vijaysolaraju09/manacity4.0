@@ -9,6 +9,7 @@ const {
 } = require('../controllers/orders');
 
 router.post('/checkout', protect, checkoutOrders);
+router.get('/mine', protect, getMyOrders);
 router.get('/my', protect, getMyOrders);
 router.get('/received', protect, getReceivedOrders);
 router.patch('/:id/status', protect, updateOrderStatus);

@@ -299,7 +299,7 @@ export const fetchMyOrders = createAsyncThunk(
   'orders/fetchMine',
   async (_: void, { rejectWithValue }) => {
     try {
-      const res = await http.get('/api/orders/my');
+      const res = await http.get('/orders/mine');
       const data = toItems(res) as any[];
       return data.map(normalizeOrder);
     } catch (err) {

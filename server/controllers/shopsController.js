@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Shop = require('../models/Shop');
 const Product = require('../models/Product');
 const User = require('../models/User');
@@ -119,6 +120,20 @@ exports.getAllShops = async (req, res, next) => {
     } = req.query;
 
     const filter = {};
+    const excludeOwnerRaw = req.user?._id || req.user?.userId;
+    if (excludeOwnerRaw) {
+      const ownerId =
+        excludeOwnerRaw instanceof mongoose.Types.ObjectId
+          ? excludeOwnerRaw
+          : mongoose.Types.ObjectId.isValid(String(excludeOwnerRaw))
+          ? new mongoose.Types.ObjectId(String(excludeOwnerRaw))
+          : null;
+      if (ownerId) {
+        const existingOwnerFilter =
+          filter.owner && typeof filter.owner === 'object' ? filter.owner : {};
+        filter.owner = { ...existingOwnerFilter, $ne: ownerId };
+      }
+    }
     if (q) filter.name = { $regex: q, $options: 'i' };
     if (category) filter.category = category;
     if (location) filter.location = location;

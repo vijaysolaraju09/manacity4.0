@@ -10,6 +10,12 @@ const ordersClient = axios.create({
   timeout: 20000,
 });
 
+const normalizeObjectId = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return /^[a-f\d]{24}$/iu.test(trimmed) ? trimmed : undefined;
+};
+
 ordersClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -127,7 +133,8 @@ export const checkoutOrders = async (
     }),
   };
 
-  if (addressId) body.addressId = addressId;
+  const normalizedAddressId = normalizeObjectId(addressId);
+  if (normalizedAddressId) body.addressId = normalizedAddressId;
   if (shippingAddress) body.shippingAddress = shippingAddress;
   if (notes) body.notes = notes;
   if (fulfillmentType) body.fulfillmentType = fulfillmentType;

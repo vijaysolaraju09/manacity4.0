@@ -363,6 +363,26 @@ const CartPage = () => {
 
   const handlePlaceOrder = useCallback(
     async (address: Address) => {
+      const cartItems = Array.isArray(cart?.items) ? cart.items : [];
+      const items = cartItems
+        .map<{ productId: string; qty: number } | null>((item) => {
+          const trimmedId = typeof item.productId === 'string' ? item.productId.trim() : '';
+          if (!trimmedId) {
+            return null;
+          }
+
+          const rawQty = Number(item.qty);
+          const qty = Number.isFinite(rawQty) && rawQty > 0 ? Math.floor(rawQty) : 1;
+
+          return { productId: trimmedId, qty };
+        })
+        .filter((entry): entry is { productId: string; qty: number } => Boolean(entry));
+
+      if (items.length === 0) {
+        showToast('Your cart is empty', 'info');
+        return;
+      }
+
       setPlacingOrder(true);
       try {
         const shippingAddress = {
@@ -385,9 +405,10 @@ const CartPage = () => {
         } as const;
 
         const payload: Record<string, unknown> = {
+          items,
           shippingAddress,
           fulfillmentType: 'delivery',
-          paymentMethod: 'cod',
+          paymentMethod: 'COD',
         };
 
         const normalizedAddressId = normalizeObjectId(address.id);
@@ -421,7 +442,7 @@ const CartPage = () => {
         setPlacingOrder(false);
       }
     },
-    [navigate, syncStore],
+    [cart, navigate, syncStore],
   );
 
   const itemCount = useMemo(() => cart?.items.reduce((total, item) => total + item.qty, 0) ?? 0, [cart]);

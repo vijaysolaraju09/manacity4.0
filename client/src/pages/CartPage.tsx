@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { ArrowLeft, ShoppingCart, Trash2 } from 'lucide-react';
 
 import { http } from '@/lib/http';
@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import AddressSelectModal, { type Address } from '@/components/address/AddressSelectModal';
 import fallbackImage from '@/assets/no-image.svg';
 import { paths } from '@/routes/paths';
-import { hydrateCart, type CartItem as StoreCartItem } from '@/store/slices/cartSlice';
+import { hydrateCart, selectCartItems, type CartItem as StoreCartItem } from '@/store/slices/cartSlice';
 
 const maybeNumber = (value: unknown): number | undefined => {
   if (value === null || value === undefined) return undefined;
@@ -51,6 +51,49 @@ type CartData = {
   discountPaise: number;
   grandPaise: number;
   currency: string;
+};
+
+const buildCartFromStoreItems = (items: StoreCartItem[] | null | undefined): CartData | null => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
+
+  const normalizedItems: CartItem[] = items
+    .map<CartItem | null>((item) => {
+      if (!item || !item.productId) {
+        return null;
+      }
+
+      const quantity = Number.isFinite(item.qty) ? Math.floor(item.qty) : 0;
+      const qty = quantity > 0 ? quantity : 1;
+      const unitPrice = Number.isFinite(item.pricePaise) ? Math.round(item.pricePaise) : 0;
+      const unitPricePaise = unitPrice > 0 ? unitPrice : 0;
+
+      return {
+        productId: item.productId,
+        shopId: item.shopId ?? null,
+        name: item.name,
+        image: item.image ?? null,
+        qty,
+        unitPricePaise,
+        lineTotalPaise: unitPricePaise * qty,
+      };
+    })
+    .filter((item): item is CartItem => item !== null);
+
+  if (normalizedItems.length === 0) {
+    return null;
+  }
+
+  const subtotalPaise = normalizedItems.reduce((total, item) => total + item.lineTotalPaise, 0);
+
+  return {
+    items: normalizedItems,
+    subtotalPaise,
+    discountPaise: 0,
+    grandPaise: subtotalPaise,
+    currency: 'INR',
+  };
 };
 
 const extractCartPayload = (input: any) => {
@@ -170,12 +213,26 @@ const parseCart = (payload: any): CartData => {
 const CartPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const storeItems = useSelector(selectCartItems);
+  const storeItemsRef = useRef(storeItems);
+  useEffect(() => {
+    storeItemsRef.current = storeItems;
+  }, [storeItems]);
+
   const [cart, setCart] = useState<CartData | null>(null);
+  const [cartSource, setCartSource] = useState<'server' | 'store'>('server');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [addressModalOpen, setAddressModalOpen] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
+
+  useEffect(() => {
+    if (cartSource !== 'store') {
+      return;
+    }
+    setCart(buildCartFromStoreItems(storeItems) ?? null);
+  }, [cartSource, storeItems]);
 
   const markPending = useCallback((productId: string, isPending: boolean) => {
     setPendingIds((prev) => {
@@ -211,14 +268,32 @@ const CartPage = () => {
   const refreshCart = useCallback(async () => {
     setLoading(true);
     setError(null);
+    const fallback = buildCartFromStoreItems(storeItemsRef.current) ?? null;
     try {
       const response = await http.get('/api/cart');
       const parsed = parseCart(response);
-      setCart(parsed);
-      syncStore(parsed);
+      if (parsed.items.length > 0) {
+        setCart(parsed);
+        setCartSource('server');
+        syncStore(parsed);
+      } else if (fallback) {
+        setCart(fallback);
+        setCartSource('store');
+      } else {
+        setCart(parsed);
+        setCartSource('server');
+        syncStore(parsed);
+      }
     } catch (err) {
       const message = toErrorMessage(err);
-      setError(message);
+      if (fallback) {
+        setCart(fallback);
+        setCartSource('store');
+      } else {
+        setError(message);
+        setCartSource('server');
+        setCart(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -235,6 +310,7 @@ const CartPage = () => {
         const response = await http.delete(`/api/cart/${productId}`);
         const parsed = parseCart(response);
         setCart(parsed);
+        setCartSource('server');
         syncStore(parsed);
         showToast(`Removed ${itemName}`, 'success');
       } catch (err) {
@@ -258,6 +334,7 @@ const CartPage = () => {
         const response = await http.post('/api/cart', { productId, qty: nextQty });
         const parsed = parseCart(response);
         setCart(parsed);
+        setCartSource('server');
         syncStore(parsed);
         showToast(`Updated ${itemName} to ${nextQty}`, 'success');
       } catch (err) {
@@ -309,6 +386,7 @@ const CartPage = () => {
         });
         showToast('Order placed successfully', 'success');
         setAddressModalOpen(false);
+        setCartSource('server');
         setCart((prev) => {
           const next = prev
             ? { ...prev, items: [], subtotalPaise: 0, discountPaise: 0, grandPaise: 0 }

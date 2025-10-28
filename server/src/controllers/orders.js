@@ -1,3 +1,4 @@
+const { Types } = require('mongoose');
 const asyncHandler = require('../middleware/asyncHandler');
 const { success } = require('../utils/response');
 const AppError = require('../../utils/AppError');
@@ -134,15 +135,24 @@ const createShopOrder = async ({
     .lean();
   if (!shop) throw AppError.notFound('SHOP_NOT_FOUND', 'Shop not found');
 
-  const productIds = items.map((i) => i.productId);
+  const productIds = items.map((i) => {
+    const id = i?.productId ?? i?.product;
+    const trimmed = typeof id === 'string' ? id.trim() : '';
+    if (!Types.ObjectId.isValid(trimmed)) {
+      throw AppError.badRequest('INVALID_ORDER_ITEM', 'Invalid product selected');
+    }
+    return new Types.ObjectId(trimmed);
+  });
+
   const products = await Product.find({ _id: { $in: productIds }, shop: shopId }).lean();
   const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
   const orderItems = [];
   let itemsTotal = 0;
 
-  for (const item of items) {
-    const productId = String(item.productId);
+  for (let index = 0; index < items.length; index += 1) {
+    const productId = productIds[index].toString();
+    const item = items[index];
     const product = productMap.get(productId);
     if (!product) throw AppError.badRequest('PRODUCT_NOT_FOUND', 'Product not found');
 
@@ -340,7 +350,12 @@ const checkoutOrders = asyncHandler(async (req, res) => {
     };
   });
 
-  const productIds = sanitizedItems.map((item) => item.productId);
+  const productIds = sanitizedItems.map((item) => {
+    if (!Types.ObjectId.isValid(item.productId)) {
+      throw AppError.badRequest('INVALID_ORDER_ITEM', 'Invalid product selected');
+    }
+    return new Types.ObjectId(item.productId);
+  });
   const catalog = await Product.find({ _id: { $in: productIds } })
     .select('_id shop')
     .lean();
@@ -349,8 +364,9 @@ const checkoutOrders = asyncHandler(async (req, res) => {
   );
 
   const groups = new Map();
-  sanitizedItems.forEach((item) => {
-    const shopId = productToShop.get(item.productId);
+  sanitizedItems.forEach((item, index) => {
+    const productKey = productIds[index].toString();
+    const shopId = productToShop.get(productKey);
     if (!shopId) {
       throw AppError.badRequest('PRODUCT_NOT_FOUND', 'Product not found');
     }

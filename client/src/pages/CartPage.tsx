@@ -34,6 +34,12 @@ const maybeRupeesToPaise = (value: unknown): number | undefined => {
   return Number.isFinite(num) ? Math.round(num * 100) : undefined;
 };
 
+const normalizeObjectId = (value: string | null | undefined): string | undefined => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  return trimmed && /^[a-f\d]{24}$/iu.test(trimmed) ? trimmed : undefined;
+};
+
 type CartItem = {
   productId: string;
   shopId: string | null;
@@ -378,12 +384,18 @@ const CartPage = () => {
               : undefined,
         } as const;
 
-        await http.post('/api/orders/checkout', {
-          addressId: address.id,
+        const payload: Record<string, unknown> = {
           shippingAddress,
           fulfillmentType: 'delivery',
           paymentMethod: 'cod',
-        });
+        };
+
+        const normalizedAddressId = normalizeObjectId(address.id);
+        if (normalizedAddressId) {
+          payload.addressId = normalizedAddressId;
+        }
+
+        await http.post('/api/orders/checkout', payload);
         showToast('Order placed successfully', 'success');
         setAddressModalOpen(false);
         setCartSource('server');

@@ -69,6 +69,12 @@ type CheckoutResult = {
   orders: CheckoutSuccessOrder[];
 };
 
+const normalizeObjectId = (value: string | null | undefined): string | undefined => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  return trimmed && /^[a-f\d]{24}$/iu.test(trimmed) ? trimmed : undefined;
+};
+
 const toShippingAddress = (payload: AddressPayload | Address) => {
   const label = typeof payload.label === 'string' ? payload.label.trim() : '';
   const line1 = typeof payload.line1 === 'string' ? payload.line1.trim() : '';
@@ -362,12 +368,12 @@ const Checkout = () => {
         shouldCreateAddress = true;
         shippingAddressInput = toShippingAddress(addressPayload);
       } else {
-        orderAddressId = selectedAddressId;
         const selectedAddress = addresses.find((address) => address.id === selectedAddressId);
         if (!selectedAddress) {
           showToast('Selected address could not be found', 'error');
           return;
         }
+        orderAddressId = normalizeObjectId(selectedAddress.id);
         shippingAddressInput = toShippingAddress(selectedAddress);
       }
     } else {
@@ -387,7 +393,7 @@ const Checkout = () => {
     try {
       if (shouldCreateAddress && addressPayload) {
         const created = await createAddress(addressPayload);
-        orderAddressId = created.id;
+        orderAddressId = normalizeObjectId(created.id);
         shippingAddressInput = toShippingAddress(created);
         setAddresses((current) => [...current, created]);
         setSelectedAddressId(created.id);

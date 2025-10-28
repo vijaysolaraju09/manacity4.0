@@ -395,6 +395,10 @@ exports.listPublicServiceRequests = async (req, res, next) => {
     const skip = (pageNum - 1) * limit;
 
     const filter = { visibility: 'public' };
+    const currentUserId = toObjectId(req.user?._id || req.user?.userId);
+    if (currentUserId) {
+      filter.userId = { $ne: currentUserId };
+    }
     if (serviceId && Types.ObjectId.isValid(String(serviceId))) filter.serviceId = serviceId;
 
     if (q && sanitizeString(q)) {

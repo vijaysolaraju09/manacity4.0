@@ -1,8 +1,9 @@
 const r = require('express').Router();
 const ctrl = require('../controllers/shopsController');
 const auth = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 
-r.get('/', ctrl.getAllShops);
+r.get('/', optionalAuth, ctrl.getAllShops);
 r.get('/my', auth, ctrl.getMyShops);
 r.get('/:id', ctrl.getShopById);
 r.get('/:id/products', ctrl.getProductsByShop);

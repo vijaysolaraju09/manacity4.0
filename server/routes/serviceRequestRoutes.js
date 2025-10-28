@@ -9,10 +9,11 @@ const {
   reopenServiceRequest,
 } = require('../controllers/serviceRequestsController');
 const protect = require('../middleware/authMiddleware');
+const optionalAuth = require('../middleware/optionalAuth');
 
 const router = express.Router();
 
-router.get('/public', listPublicServiceRequests);
+router.get('/public', optionalAuth, listPublicServiceRequests);
 router.post('/', protect, createServiceRequest);
 router.get('/mine', protect, listMyServiceRequests);
 router.post('/:id/reopen', protect, reopenServiceRequest);

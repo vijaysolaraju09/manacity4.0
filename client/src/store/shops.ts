@@ -30,6 +30,7 @@ interface Product {
   pricePaise: number;
   image?: string;
   available?: boolean;
+  shopId?: string;
 }
 
 type St<T> = {
@@ -40,6 +41,8 @@ type St<T> = {
   page?: number;
   hasMore?: boolean;
   products?: Product[];
+  productsByShop: Record<string, Product[]>;
+  currentProductsShopId: string | null;
 };
 
 const initial: St<Shop> = {
@@ -50,6 +53,8 @@ const initial: St<Shop> = {
   page: 1,
   hasMore: true,
   products: [],
+  productsByShop: {},
+  currentProductsShopId: null,
 };
 
 const sanitizePaise = (value: unknown): number => {
@@ -61,7 +66,16 @@ const sanitizePaise = (value: unknown): number => {
   return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : 0;
 };
 
-const normalizeShopProduct = (input: any): Product => {
+const toIdString = (value: unknown): string | undefined => {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  return undefined;
+};
+
+const normalizeShopProduct = (
+  input: any,
+  context?: { shopId?: string; shopName?: string },
+): Product => {
   if (!input) {
     throw new Error("Invalid shop product");
   }
@@ -75,6 +89,17 @@ const normalizeShopProduct = (input: any): Product => {
     ) ?? rupeesToPaise(typeof input.price === "number" ? input.price : 0),
   );
 
+  const rawShop = input.shop as unknown;
+  const rawShopId =
+    toIdString(input.shopId) ||
+    toIdString((input as Record<string, unknown> | undefined)?.shop_id) ||
+    (typeof rawShop === "string"
+      ? rawShop
+      : toIdString((rawShop as Record<string, unknown> | undefined)?._id) ||
+        toIdString((rawShop as Record<string, unknown> | undefined)?.id));
+
+  const resolvedShopId = rawShopId || context?.shopId;
+
   const normalized: Product & Record<string, unknown> = {
     ...input,
     _id: String(input._id ?? input.id ?? ""),
@@ -82,6 +107,7 @@ const normalizeShopProduct = (input: any): Product => {
     pricePaise,
     image: typeof input.image === "string" ? input.image : undefined,
     available: typeof input.available === "boolean" ? input.available : undefined,
+    shopId: resolvedShopId,
   };
 
   ["price", "pricePaise", "priceInPaise", "price_in_paise"].forEach((key) => {
@@ -89,6 +115,24 @@ const normalizeShopProduct = (input: any): Product => {
   });
 
   normalized.pricePaise = pricePaise;
+
+  if (!normalized.shop && resolvedShopId) {
+    normalized.shop = {
+      ...(typeof rawShop === "object" && rawShop ? (rawShop as Record<string, unknown>) : {}),
+      id: resolvedShopId,
+      _id: resolvedShopId,
+      name:
+        (typeof rawShop === "object" && rawShop && "name" in (rawShop as Record<string, unknown>)
+          ? String((rawShop as { name?: unknown }).name ?? "")
+          : undefined) ||
+        context?.shopName ||
+        undefined,
+    };
+  }
+
+  if (!normalized.shopId && resolvedShopId) {
+    normalized.shopId = resolvedShopId;
+  }
 
   return normalized;
 };
@@ -98,15 +142,23 @@ const normalizeShop = (input: any): Shop => {
     throw new Error("Invalid shop payload");
   }
 
+  const normalizedId = String(input._id ?? input.id ?? "");
+  const normalizedName = String(input.name ?? input.title ?? "Shop");
+
   const products = Array.isArray(input.products)
-    ? (input.products.map((product: any) => normalizeShopProduct(product)) as Product[])
+    ? (input.products.map((product: any) =>
+        normalizeShopProduct(product, {
+          shopId: normalizedId || undefined,
+          shopName: normalizedName,
+        }),
+      ) as Product[])
     : undefined;
 
   const normalized: Shop & Record<string, unknown> = {
     ...input,
-    _id: String(input._id ?? input.id ?? ""),
+    _id: normalizedId,
     id: String(input.id ?? input._id ?? ""),
-    name: String(input.name ?? input.title ?? "Shop"),
+    name: normalizedName,
     products,
   };
 
@@ -152,7 +204,10 @@ export const fetchProductsByShop = createAsyncThunk(
     try {
       const res = await http.get(`/shops/${id}/products`);
       const items = toItems(res) as any[];
-      return { id, items: items.map((product) => normalizeShopProduct(product)) };
+      return {
+        id,
+        items: items.map((product) => normalizeShopProduct(product, { shopId: id })),
+      };
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }
@@ -176,22 +231,47 @@ const shopsSlice = createSlice({
       s.status = "failed";
       s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
     });
-    b.addCase(fetchShopById.pending, (s) => {
+    b.addCase(fetchShopById.pending, (s, a) => {
       s.status = "loading";
       s.error = null;
       s.item = null;
+      const requestedId = typeof a.meta.arg === "string" ? a.meta.arg : null;
+      s.currentProductsShopId = requestedId;
+      if (requestedId && s.productsByShop[requestedId]) {
+        s.products = s.productsByShop[requestedId];
+      } else {
+        s.products = [];
+      }
     });
     b.addCase(fetchShopById.fulfilled, (s, a) => {
       s.status = "succeeded";
       s.item = a.payload as Shop;
+      const shopId = s.item?._id || s.item?.id || null;
+      s.currentProductsShopId = shopId ?? null;
+      if (shopId && s.productsByShop[shopId]) {
+        s.products = s.productsByShop[shopId];
+      }
     });
     b.addCase(fetchShopById.rejected, (s, a) => {
       s.status = "failed";
       s.error = (a.payload as string) || (a.error as any)?.message || "Failed to load";
     });
+    b.addCase(fetchProductsByShop.pending, (s, a) => {
+      const id = typeof a.meta.arg === "string" ? a.meta.arg : null;
+      if (!id) return;
+      s.currentProductsShopId = id;
+      if (s.productsByShop[id]) {
+        s.products = s.productsByShop[id];
+      } else {
+        s.products = [];
+      }
+    });
     b.addCase(fetchProductsByShop.fulfilled, (s, a) => {
-      if ((s.item && s.item._id === a.payload.id) || !s.products) {
-        s.products = a.payload.items as Product[];
+      const { id, items } = a.payload as { id: string; items: Product[] };
+      s.productsByShop[id] = items;
+
+      if (s.currentProductsShopId === id) {
+        s.products = items;
       }
     });
     b.addCase(fetchProductsByShop.rejected, (s, a) => {

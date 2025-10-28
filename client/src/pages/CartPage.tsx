@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { ShoppingCart, Trash2 } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Trash2 } from 'lucide-react';
 
 import { http } from '@/lib/http';
 import { toErrorMessage } from '@/lib/response';
@@ -356,8 +356,20 @@ const CartPage = () => {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">My Cart</h1>
+      <header className="flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            className="h-10 w-10 rounded-full border border-slate-200 text-slate-600 transition hover:border-blue-600/40 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-slate-700 dark:text-slate-200"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only">Go back</span>
+          </Button>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">My Cart</h1>
+        </div>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Review your items and adjust quantities before checking out.
         </p>

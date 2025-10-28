@@ -232,33 +232,72 @@ const OrderDetail = () => {
               <div className="space-y-6">
                 <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-xl shadow-slate-200/60 dark:border-slate-800/70 dark:bg-slate-900/70">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Items</h3>
-                  <Table className="mt-4">
-                    <TableHeader>
-                      <TableRow className="border-none">
-                        <TableHead>Product</TableHead>
-                        <TableHead>Qty</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead className="text-right">Subtotal</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orderItems.map((item) => (
-                        <TableRow key={item.id} className="border-none">
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <img src={item.image || fallbackImage} alt={item.title} className="h-14 w-14 rounded-2xl border border-slate-200/70 object-cover shadow-md dark:border-slate-700/70" loading="lazy" />
-                              <span className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>{item.qty}</TableCell>
-                          <TableCell>{formatINR(item.unitPricePaise)}</TableCell>
-                          <TableCell className="text-right font-semibold text-slate-900 dark:text-white">
-                            {formatINR(item.subtotalPaise)}
-                          </TableCell>
+                  <div className="mt-4 hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-none">
+                          <TableHead>Product</TableHead>
+                          <TableHead>Qty</TableHead>
+                          <TableHead>Price</TableHead>
+                          <TableHead className="text-right">Subtotal</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {orderItems.map((item) => (
+                          <TableRow key={item.id} className="border-none">
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={item.image || fallbackImage}
+                                  alt={item.title}
+                                  className="h-14 w-14 rounded-2xl border border-slate-200/70 object-cover shadow-md dark:border-slate-700/70"
+                                  loading="lazy"
+                                />
+                                <span className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>{item.qty}</TableCell>
+                            <TableCell>{formatINR(item.unitPricePaise)}</TableCell>
+                            <TableCell className="text-right font-semibold text-slate-900 dark:text-white">
+                              {formatINR(item.subtotalPaise)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="mt-4 space-y-4 md:hidden">
+                    {orderItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex flex-col gap-3 rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-sm shadow-slate-200/60 dark:border-slate-800/70 dark:bg-slate-900/80"
+                      >
+                        <div className="flex items-start gap-3">
+                          <img
+                            src={item.image || fallbackImage}
+                            alt={item.title}
+                            className="h-16 w-16 rounded-2xl border border-slate-200/70 object-cover shadow-md dark:border-slate-700/70"
+                            loading="lazy"
+                          />
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
+                            <p className="text-xs uppercase tracking-[0.3em] text-indigo-500 dark:text-indigo-300">
+                              Qty {item.qty}
+                            </p>
+                          </div>
+                          <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                            {formatINR(item.subtotalPaise)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+                          <span>Unit price</span>
+                          <span className="font-medium text-slate-900 dark:text-white">
+                            {formatINR(item.unitPricePaise)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-xl shadow-slate-200/60 dark:border-slate-800/70 dark:bg-slate-900/70">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Timeline</h3>

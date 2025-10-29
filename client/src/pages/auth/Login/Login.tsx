@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { Eye, EyeOff } from 'lucide-react';
 import './Login.scss';
 import logo from '../../../assets/logo.png';
 import fallbackImage from '../../../assets/no-image.svg';
@@ -20,6 +21,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,14 +83,28 @@ const Login = () => {
 
           <div className="control">
             <label htmlFor="login-password">Password</label>
-            <input
-              id="login-password"
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="password-field">
+              <input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className="toggle"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? (
+                  <EyeOff aria-hidden="true" className="h-4 w-4" />
+                ) : (
+                  <Eye aria-hidden="true" className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
 
           {error && <div className="error">{error}</div>}
@@ -107,6 +123,9 @@ const Login = () => {
 
         <div className="links">
           <span onClick={() => navigate(paths.auth.signup())}>Create Account</span>
+          <span onClick={() => navigate(paths.auth.forgot())} className="forgot-link">
+            Forgot password?
+          </span>
         </div>
 
         <div className="back" onClick={() => navigate(paths.landing())}>← Back to Landing</div>

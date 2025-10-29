@@ -22,6 +22,7 @@ vi.mock('@/lib/http', () => ({
 
 type CartItem = {
   productId: string;
+  variantId?: string | null;
   name: string;
   image: string | null;
   qty: number;
@@ -113,7 +114,7 @@ describe('CartPage', () => {
     const group = await screen.findByRole('group', { name: /quantity for artisan bread/i });
     await userEvent.click(within(group).getByRole('button', { name: /increase quantity/i }));
 
-    await waitFor(() => expect(postMock).toHaveBeenCalledWith('/api/cart', { productId: 'prod-1', qty: 3 }));
+    await waitFor(() => expect(postMock).toHaveBeenCalledWith('/api/cart', { productId: 'prod-1', quantity: 3 }));
     await waitFor(() => expect(within(group).getByText('3')).toBeInTheDocument());
   });
 

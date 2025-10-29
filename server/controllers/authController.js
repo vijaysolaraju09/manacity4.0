@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const AppError = require("../utils/AppError");
+const authService = require("../services/authService");
 
 const normalizeDigits = (value) => String(value ?? "").replace(/\D/g, "");
 const isValidPhone = (value) => /^\d{10,14}$/.test(value);
@@ -161,6 +162,37 @@ exports.login = async (req, res, next) => {
     return res
       .status(200)
       .json({ ok: true, data: { token, user: user.toProfileJSON() }, traceId: req.traceId });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const rawPhone = req.body?.phone;
+    const normalizedPhone = normalizeDigits(rawPhone);
+
+    if (!normalizedPhone || !isValidPhone(normalizedPhone)) {
+      throw AppError.badRequest("INVALID_PHONE", "Enter a valid phone number");
+    }
+
+    try {
+      await authService.issueResetTokenForPhone(normalizedPhone);
+    } catch (err) {
+      if (!err || typeof err !== "object" || err.status !== 404) {
+        throw err;
+      }
+      // Swallow not found errors to avoid leaking which phone numbers exist
+    }
+
+    return res.json({
+      ok: true,
+      data: {
+        message:
+          "If an account exists for that number, you will receive password reset instructions shortly.",
+      },
+      traceId: req.traceId,
+    });
   } catch (err) {
     return next(err);
   }

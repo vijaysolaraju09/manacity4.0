@@ -26,12 +26,16 @@ import styles from './ReceivedOrders.module.scss';
 
 const statusOptions: (OrderStatus | 'all')[] = [
   'all',
+  'pending',
   'placed',
+  'confirmed',
   'accepted',
-  'rejected',
+  'preparing',
+  'ready',
   'out_for_delivery',
   'delivered',
   'cancelled',
+  'rejected',
 ];
 
 const statusDisplay: Record<OrderStatus | 'all', string> = {

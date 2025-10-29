@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
+import { Eye, EyeOff } from 'lucide-react';
 import './Signup.scss';
 import logo from '../../../assets/logo.png';
 import fallbackImage from '../../../assets/no-image.svg';
@@ -124,8 +125,17 @@ const Signup = () => {
                 value={form.password}
                 onChange={handleChange}
               />
-              <button type="button" className="toggle" onClick={() => setShowPassword((s) => !s)}>
-                {showPassword ? 'Hide' : 'Show'}
+              <button
+                type="button"
+                className="toggle"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword((s) => !s)}
+              >
+                {showPassword ? (
+                  <EyeOff aria-hidden="true" className="h-4 w-4" />
+                ) : (
+                  <Eye aria-hidden="true" className="h-4 w-4" />
+                )}
               </button>
             </div>
             {errors.password && <div className="error">{errors.password}</div>}

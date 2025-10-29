@@ -26,6 +26,7 @@ import styles from '@/styles/PageShell.module.scss';
 
 const statusOptions: (OrderStatus | 'all')[] = [
   'all',
+  'pending',
   'placed',
   'confirmed',
   'out_for_delivery',

@@ -2,7 +2,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
-import { Bell, CalendarDays, Gift, Home, Settings, ShoppingCart, Store, UserRound, Users } from "lucide-react";
+import { Bell, CalendarDays, Gift, Home, Package, Settings, ShoppingCart, Store, UserRound, Users } from "lucide-react";
 import NavItem from "@/components/navigation/NavItem";
 import type { RootState, AppDispatch } from "../store";
 import { fetchNotifs } from "@/store/notifs";
@@ -16,6 +16,7 @@ const TabLayout = () => {
   const unread = useSelector((state: RootState) => state.notifs.unread);
   const notifStatus = useSelector((state: RootState) => state.notifs.status);
   const isAuthenticated = useSelector((state: RootState) => Boolean(state.auth.token));
+  const isBusinessUser = useSelector((state: RootState) => state.auth.user?.role === 'business');
   const cartItemCount = useSelector(selectItemCount);
   const dispatch = useDispatch<AppDispatch>();
 
@@ -71,6 +72,7 @@ const TabLayout = () => {
       path: paths.services.catalog(),
     },
     { name: "Events", icon: CalendarDays, path: paths.events.list() },
+    ...(isBusinessUser ? [{ name: "Manage", icon: Package, path: paths.manageProducts() }] : []),
   ];
 
   useEffect(() => {

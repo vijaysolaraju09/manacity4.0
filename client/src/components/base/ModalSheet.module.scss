@@ -15,8 +15,12 @@
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
   padding: var(--spacing-md);
-  max-height: 80vh;
+  max-height: min(90vh, 720px);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
 }

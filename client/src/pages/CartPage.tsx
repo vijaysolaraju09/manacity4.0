@@ -23,6 +23,30 @@ const maybeNumber = (value: unknown): number | undefined => {
   return num;
 };
 
+const extractObjectId = (value: unknown): string | undefined => {
+  if (!value) return undefined;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    const candidate = (value as { _id?: unknown; id?: unknown })._id ?? (value as { id?: unknown }).id;
+    if (typeof candidate === 'string') {
+      return candidate;
+    }
+    if (candidate && typeof candidate === 'object' && typeof (candidate as { toString?: () => string }).toString === 'function') {
+      const stringified = (candidate as { toString: () => string }).toString();
+      if (typeof stringified === 'string') {
+        return stringified;
+      }
+    }
+    if (typeof (value as { toString?: () => string }).toString === 'function') {
+      const fallback = (value as { toString: () => string }).toString();
+      if (typeof fallback === 'string') {
+        return fallback;
+      }
+    }
+  }
+  return undefined;
+};
+
 const maybePaise = (value: unknown): number | undefined => {
   const num = maybeNumber(value);
   return num === undefined ? undefined : Math.round(num);
@@ -42,6 +66,7 @@ const normalizeObjectId = (value: string | null | undefined): string | undefined
 
 type CartItem = {
   productId: string;
+  variantId?: string | null;
   shopId: string | null;
   name: string;
   image: string | null;
@@ -77,6 +102,7 @@ const buildCartFromStoreItems = (items: StoreCartItem[] | null | undefined): Car
 
       return {
         productId: item.productId,
+        variantId: null,
         shopId: item.shopId ?? null,
         name: item.name,
         image: item.image ?? null,
@@ -159,6 +185,8 @@ const parseCart = (payload: any): CartData => {
       const resolvedUnitPrice = typeof unitPricePaise === 'number' && unitPricePaise > 0 ? unitPricePaise : 0;
       const subtotal = maybePaise(item.subtotalPaise) ?? resolvedUnitPrice * qty;
 
+      const variantId = normalizeObjectId(extractObjectId(item.variantId ?? item.variant));
+
       const nameSource = [item.name, product.name, product.title].find(
         (value) => typeof value === 'string' && value.trim(),
       );
@@ -181,6 +209,7 @@ const parseCart = (payload: any): CartData => {
         unitPricePaise: resolvedUnitPrice,
         lineTotalPaise: Math.max(0, Math.round(subtotal)),
         mrpPaise: typeof mrpPaise === 'number' && mrpPaise > 0 ? mrpPaise : undefined,
+        variantId: variantId ?? null,
       };
 
       return result;
@@ -240,13 +269,19 @@ const CartPage = () => {
     setCart(buildCartFromStoreItems(storeItems) ?? null);
   }, [cartSource, storeItems]);
 
-  const markPending = useCallback((productId: string, isPending: boolean) => {
+  const buildItemKey = useCallback((productId: string, variantId?: string | null) => {
+    const trimmedProduct = typeof productId === 'string' ? productId.trim() : '';
+    const trimmedVariant = typeof variantId === 'string' ? variantId.trim() : '';
+    return trimmedVariant ? `${trimmedProduct}::${trimmedVariant}` : trimmedProduct;
+  }, []);
+
+  const markPending = useCallback((key: string, isPending: boolean) => {
     setPendingIds((prev) => {
       const next = new Set(prev);
       if (isPending) {
-        next.add(productId);
+        next.add(key);
       } else {
-        next.delete(productId);
+        next.delete(key);
       }
       return next;
     });
@@ -310,10 +345,16 @@ const CartPage = () => {
   }, [refreshCart]);
 
   const handleRemove = useCallback(
-    async (productId: string, itemName: string) => {
-      markPending(productId, true);
+    async (productId: string, itemName: string, variantId?: string | null) => {
+      const key = buildItemKey(productId, variantId ?? undefined);
+      markPending(key, true);
       try {
-        const response = await http.delete(`/api/cart/${productId}`);
+        const normalizedVariant = normalizeObjectId(variantId ?? undefined);
+        const encodedProduct = encodeURIComponent(productId);
+        const url = normalizedVariant
+          ? `/api/cart/${encodedProduct}?variantId=${encodeURIComponent(normalizedVariant)}`
+          : `/api/cart/${encodedProduct}`;
+        const response = await http.delete(url);
         const parsed = parseCart(response);
         setCart(parsed);
         setCartSource('server');
@@ -323,21 +364,27 @@ const CartPage = () => {
         const message = toErrorMessage(err);
         showToast(message, 'error');
       } finally {
-        markPending(productId, false);
+        markPending(key, false);
       }
     },
-    [markPending, syncStore],
+    [buildItemKey, markPending, syncStore],
   );
 
   const handleQuantityChange = useCallback(
-    async (productId: string, nextQty: number, itemName: string) => {
+    async (productId: string, nextQty: number, itemName: string, variantId?: string | null) => {
       if (nextQty <= 0) {
-        await handleRemove(productId, itemName);
+        await handleRemove(productId, itemName, variantId);
         return;
       }
-      markPending(productId, true);
+      const key = buildItemKey(productId, variantId ?? undefined);
+      markPending(key, true);
       try {
-        const response = await http.post('/api/cart', { productId, qty: nextQty });
+        const payload: Record<string, unknown> = { productId, quantity: nextQty };
+        const normalizedVariant = normalizeObjectId(variantId ?? undefined);
+        if (normalizedVariant) {
+          payload.variantId = normalizedVariant;
+        }
+        const response = await http.post('/api/cart', payload);
         const parsed = parseCart(response);
         setCart(parsed);
         setCartSource('server');
@@ -347,10 +394,10 @@ const CartPage = () => {
         const message = toErrorMessage(err);
         showToast(message, 'error');
       } finally {
-        markPending(productId, false);
+        markPending(key, false);
       }
     },
-    [handleRemove, markPending, syncStore],
+    [buildItemKey, handleRemove, markPending, syncStore],
   );
 
   const handleProceedToCheckout = () => {
@@ -365,7 +412,7 @@ const CartPage = () => {
     async (address: Address) => {
       const cartItems = Array.isArray(cart?.items) ? cart.items : [];
       const items = cartItems
-        .map<{ productId: string; qty: number } | null>((item) => {
+        .map<{ productId: string; qty: number; variantId?: string } | null>((item) => {
           const trimmedId = typeof item.productId === 'string' ? item.productId.trim() : '';
           if (!trimmedId) {
             return null;
@@ -374,9 +421,13 @@ const CartPage = () => {
           const rawQty = Number(item.qty);
           const qty = Number.isFinite(rawQty) && rawQty > 0 ? Math.floor(rawQty) : 1;
 
-          return { productId: trimmedId, qty };
+          const normalizedVariant = normalizeObjectId(item.variantId ?? undefined);
+
+          return normalizedVariant
+            ? { productId: trimmedId, qty, variantId: normalizedVariant }
+            : { productId: trimmedId, qty };
         })
-        .filter((entry): entry is { productId: string; qty: number } => Boolean(entry));
+        .filter((entry): entry is { productId: string; qty: number; variantId?: string } => Boolean(entry));
 
       if (items.length === 0) {
         showToast('Your cart is empty', 'info');
@@ -517,7 +568,8 @@ const CartPage = () => {
         <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <section aria-label="Cart items" className="space-y-4">
             {cart?.items.map((item) => {
-              const pending = pendingIds.has(item.productId);
+              const itemKey = buildItemKey(item.productId, item.variantId ?? undefined);
+              const pending = pendingIds.has(itemKey);
               const imageSrc = item.image || fallbackImage;
               const priceLabel = formatINR(item.unitPricePaise);
               const lineTotalLabel = formatINR(item.lineTotalPaise);
@@ -525,7 +577,7 @@ const CartPage = () => {
               const mrpLabel = hasDiscount ? formatINR(item.mrpPaise ?? 0) : null;
               return (
                 <article
-                  key={item.productId}
+                  key={itemKey}
                   className="flex flex-col gap-4 rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-800/60 dark:bg-slate-900/80 lg:flex-row"
                 >
                   <div className="flex w-full flex-col gap-4 sm:flex-row">
@@ -562,7 +614,9 @@ const CartPage = () => {
                       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <QuantityStepper
                           value={item.qty}
-                          onChange={(value) => handleQuantityChange(item.productId, value, item.name)}
+                          onChange={(value) =>
+                            handleQuantityChange(item.productId, value, item.name, item.variantId ?? undefined)
+                          }
                           disabled={pending}
                           ariaLabel={`Quantity for ${item.name}`}
                         />
@@ -574,7 +628,7 @@ const CartPage = () => {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleRemove(item.productId, item.name)}
+                            onClick={() => handleRemove(item.productId, item.name, item.variantId ?? undefined)}
                             disabled={pending}
                             className="flex items-center gap-2 text-sm text-rose-600 hover:text-rose-700 dark:text-rose-300"
                           >

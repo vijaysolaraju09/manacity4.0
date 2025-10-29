@@ -42,6 +42,7 @@ export const paths = {
   auth: {
     login: () => '/login',
     signup: () => '/signup',
+    forgot: () => '/forgot',
   },
   admin: {
     root: () => '/admin',

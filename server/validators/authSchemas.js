@@ -20,4 +20,10 @@ const loginSchema = {
   }),
 };
 
-module.exports = { signupSchema, loginSchema };
+const forgotPasswordSchema = {
+  body: z.object({
+    phone: phoneSchema,
+  }),
+};
+
+module.exports = { signupSchema, loginSchema, forgotPasswordSchema };

@@ -32,6 +32,7 @@ const withSuspense = <P extends object>(
 const Landing = lazy(() => import('@/pages/Landing/Landing'));
 const Login = lazy(() => import('@/pages/auth/Login/Login'));
 const Signup = lazy(() => import('@/pages/auth/Signup/Signup'));
+const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword/ForgotPassword'));
 const Profile = lazy(() => import('@/pages/Profile/Profile'));
 const Home = lazy(() => import('@/pages/Home/Home'));
 const Shops = lazy(() => import('@/pages/Shops/Shops'));
@@ -103,6 +104,7 @@ const AppRoutes = () => (
       <Route key="landing" path="/" element={<Landing />} />
       <Route key="login" path="/login" element={<Login />} />
       <Route key="signup" path="/signup" element={<Signup />} />
+      <Route key="forgot" path="/forgot" element={<ForgotPassword />} />
       <Route key="admin-login" path="/admin/login" element={<AdminLogin />} />
 
       <Route key="admin-guard" element={<AdminProtectedRoute />}>

@@ -100,17 +100,12 @@ cartSchema.statics.removeItem = async function (userId, productId, variantId) {
   const cart = await this.findOne({ userId });
   if (!cart) return null;
 
-  const index = cart.items.findIndex((item) => {
-    if (!item.productId || !item.productId.equals(productId)) {
-      return false;
-    }
-
-    if (!variantId) {
-      return true;
-    }
-
-    return Boolean(item.variantId) && item.variantId.equals(variantId);
-  });
+  const index = cart.items.findIndex(
+    (item) =>
+      Boolean(item.productId) &&
+      item.productId.equals(productId) &&
+      (!variantId || (item.variantId && item.variantId.equals(variantId)))
+  );
 
   if (index < 0) {
     return { cart, removed: false };

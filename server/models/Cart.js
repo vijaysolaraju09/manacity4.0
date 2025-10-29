@@ -99,17 +99,27 @@ cartSchema.statics.upsertItem = async function (userId, item) {
 cartSchema.statics.removeItem = async function (userId, productId, variantId) {
   const cart = await this.findOne({ userId });
   if (!cart) return null;
-  const initialLength = cart.items.length;
-  cart.items = cart.items.filter(
-    (i) =>
-      !(
-        i.productId.equals(productId) &&
-        (variantId ? i.variantId && i.variantId.equals(variantId) : !i.variantId)
-      )
-  );
-  const removed = cart.items.length !== initialLength;
+
+  const index = cart.items.findIndex((item) => {
+    if (!item.productId || !item.productId.equals(productId)) {
+      return false;
+    }
+
+    if (!variantId) {
+      return true;
+    }
+
+    return Boolean(item.variantId) && item.variantId.equals(variantId);
+  });
+
+  if (index < 0) {
+    return { cart, removed: false };
+  }
+
+  cart.items.splice(index, 1);
   await cart.save();
-  return { cart, removed };
+
+  return { cart, removed: true };
 };
 
 cartSchema.index({ userId: 1 });

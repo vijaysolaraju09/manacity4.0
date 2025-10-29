@@ -64,6 +64,48 @@ describe('Cart schema', () => {
     expect(result?.cart.grandTotal).toBe(0);
   });
 
+  it('removes variant items when variant id is not provided', async () => {
+    const userId = new mongoose.Types.ObjectId();
+    const productId = new mongoose.Types.ObjectId();
+    const variantId = new mongoose.Types.ObjectId();
+    const cart = new CartModel({
+      userId,
+      items: [
+        { productId, variantId, qty: 2, unitPrice: 7500 },
+        { productId: new mongoose.Types.ObjectId(), qty: 1, unitPrice: 3300 },
+      ],
+    });
+    await cart.validate();
+    jest.spyOn(CartModel, 'findOne').mockResolvedValueOnce(cart);
+
+    const result = await CartModel.removeItem(userId, productId);
+    expect(result?.removed).toBe(true);
+    expect(result?.cart.items).toHaveLength(1);
+    expect(result?.cart.items[0].variantId).toBeUndefined();
+    expect(result?.cart.subtotal).toBe(3300);
+    expect(result?.cart.grandTotal).toBe(3300);
+  });
+
+  it('does not remove when variant id does not match', async () => {
+    const userId = new mongoose.Types.ObjectId();
+    const productId = new mongoose.Types.ObjectId();
+    const variantId = new mongoose.Types.ObjectId();
+    const cart = new CartModel({
+      userId,
+      items: [{ productId, variantId, qty: 1, unitPrice: 5400 }],
+    });
+    await cart.validate();
+    jest.spyOn(CartModel, 'findOne').mockResolvedValueOnce(cart);
+
+    const result = await CartModel.removeItem(
+      userId,
+      productId,
+      new mongoose.Types.ObjectId(),
+    );
+    expect(result?.removed).toBe(false);
+    expect(result?.cart.items).toHaveLength(1);
+  });
+
   it('has userId index', () => {
     const indexes = CartModel.schema.indexes();
     const idx = indexes.find(([fields]) => fields.userId === 1);

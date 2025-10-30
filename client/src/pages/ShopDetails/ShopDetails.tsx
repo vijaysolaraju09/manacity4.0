@@ -5,7 +5,7 @@ import { FiPhone, FiArrowLeft, FiShare2, FiMinus, FiPlus, FiShoppingCart } from 
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '@/store';
 import { fetchShopById, fetchProductsByShop } from '@/store/shops';
-import { selectByShop, type CartItem } from '@/store/slices/cartSlice';
+import { selectByShop, selectItemCount, type CartItem } from '@/store/slices/cartSlice';
 import { useCartActions } from '@/hooks/useCartActions';
 import { paths } from '@/routes/paths';
 import Shimmer from '../../components/Shimmer';
@@ -33,6 +33,7 @@ const ShopDetails = () => {
   const [sort, setSort] = useState('relevance');
   const [tab, setTab] = useState<'all' | 'available'>('all');
   const { updateCartQuantity, removeFromCart } = useCartActions();
+  const cartCount = useSelector(selectItemCount);
 
   const shopId = shop?._id ?? '';
   const cartSelector = useMemo(() => (shopId ? selectByShop(shopId) : null), [shopId]);
@@ -41,7 +42,7 @@ const ShopDetails = () => {
   );
   const cartQuantities = useMemo(() => {
     return cartItems.reduce<Record<string, number>>((acc, item) => {
-      acc[item.productId] = item.qty;
+      acc[item.productId] = (acc[item.productId] ?? 0) + item.qty;
       return acc;
     }, {});
   }, [cartItems]);
@@ -97,6 +98,11 @@ const ShopDetails = () => {
   const displayGallery = galleryImages.filter((img: unknown) => typeof img === 'string' && img).slice(0, 3);
   const description = (shop as any)?.description || (shop as any)?.about;
 
+  const cartButtonAriaLabel =
+    cartCount > 0
+      ? `View cart (${cartCount === 1 ? '1 item' : `${cartCount} items`})`
+      : 'View cart';
+
   return (
     <div className="space-y-4 px-4 py-6 md:px-6 lg:px-8">
       <div className="flex items-center gap-3 text-gray-600">
@@ -134,11 +140,19 @@ const ShopDetails = () => {
         </button>
         <button
           type="button"
-          className="rounded-full border border-gray-200 p-2 hover:text-gray-800"
+          className="relative rounded-full border border-gray-200 p-2 hover:text-gray-800"
           onClick={() => navigate(paths.cart())}
-          aria-label="View cart"
+          aria-label={cartButtonAriaLabel}
         >
           <FiShoppingCart />
+          {cartCount > 0 ? (
+            <span
+              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-semibold text-white"
+              aria-label={cartCount === 1 ? '1 item in cart' : `${cartCount} items in cart`}
+            >
+              {cartCount}
+            </span>
+          ) : null}
         </button>
       </div>
 
@@ -243,17 +257,30 @@ const ShopDetails = () => {
           filtered.map((product) => {
             const cardProduct = buildCardProduct(product);
             const quantity = cartQuantities[cardProduct._id] ?? 0;
+            const variantId =
+              typeof (product as { variantId?: unknown }).variantId === 'string'
+                ? ((product as { variantId?: string }).variantId ?? '').trim() || undefined
+                : undefined;
+            const productShopId =
+              typeof (cardProduct as { shopId?: unknown }).shopId === 'string'
+                ? ((cardProduct as { shopId?: string }).shopId ?? '').trim() || undefined
+                : undefined;
+            const identifiers = {
+              productId: cardProduct._id,
+              shopId: productShopId ?? shopId,
+              variantId,
+            };
             const decrease = () => {
               const nextQty = quantity - 1;
               if (nextQty <= 0) {
-                removeFromCart(cardProduct._id);
+                removeFromCart(identifiers);
                 showToast('Removed from cart');
               } else {
-                updateCartQuantity(cardProduct._id, nextQty);
+                updateCartQuantity({ ...identifiers, qty: nextQty });
               }
             };
             const increase = () => {
-              updateCartQuantity(cardProduct._id, quantity + 1);
+              updateCartQuantity({ ...identifiers, qty: quantity + 1 });
             };
             const actions =
               quantity > 0 ? (

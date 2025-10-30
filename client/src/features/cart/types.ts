@@ -8,6 +8,7 @@ export type CartDisplayItem = {
   unitPricePaise: number;
   lineTotalPaise: number;
   mrpPaise?: number;
+  variantId?: string;
   variantLabels?: string[];
   productUrl?: string;
   shopUrl?: string;

@@ -70,4 +70,33 @@ describe('useCartActions', () => {
     expect(() => result.current.addToCart({ price: 99 })).toThrowError();
     expect(selectCartItems(store.getState() as RootState)).toHaveLength(0);
   });
+
+  it('updates and removes items using composite identifiers', () => {
+    const store = createStore();
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <Provider store={store}>{children}</Provider>
+    );
+
+    const { result } = renderHook(() => useCartActions(), { wrapper });
+
+    act(() => {
+      result.current.addToCart(baseProduct, 1);
+    });
+
+    act(() => {
+      result.current.updateCartQuantity({
+        productId: 'prod-1',
+        shopId: 'shop-1',
+        qty: 3,
+      });
+    });
+
+    expect(selectCartItems(store.getState() as RootState)[0].qty).toBe(3);
+
+    act(() => {
+      result.current.removeFromCart({ productId: 'prod-1', shopId: 'shop-1' });
+    });
+
+    expect(selectCartItems(store.getState() as RootState)).toHaveLength(0);
+  });
 });

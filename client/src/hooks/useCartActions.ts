@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import {
   addItem,
-  updateQty,
+  updateItemQty,
   removeItem,
   clearCart as clearCartAction,
   type CartItem,
@@ -33,15 +33,20 @@ export const useCartActions = () => {
   );
 
   const updateCartQuantity = useCallback(
-    (productId: string, qty: number) => {
-      dispatch(updateQty({ productId, qty }));
+    ({ productId, shopId, variantId, qty }: {
+      productId: string;
+      shopId: string;
+      qty: number;
+      variantId?: string;
+    }) => {
+      dispatch(updateItemQty({ productId, shopId, variantId, qty }));
     },
     [dispatch],
   );
 
   const removeFromCart = useCallback(
-    (productId: string) => {
-      dispatch(removeItem(productId));
+    ({ productId, shopId, variantId }: { productId: string; shopId: string; variantId?: string }) => {
+      dispatch(removeItem({ productId, shopId, variantId }));
     },
     [dispatch],
   );

@@ -20,6 +20,15 @@ import { formatINR } from '@/utils/currency';
 
 type FormattedCartItem = CartItem & { lineTotal: string };
 
+const normalizeVariantId = (value: string | null | undefined): string => {
+  if (!value) return '';
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : '';
+};
+
+const getCartItemKey = (item: Pick<CartItem, 'productId' | 'shopId' | 'variantId'>): string =>
+  [item.productId, item.shopId, normalizeVariantId(item.variantId)].join('::');
+
 type MiniCartProps = {
   className?: string;
   showLabel?: boolean;
@@ -97,7 +106,7 @@ const MiniCartPanel = ({
             <ul role="list" className="space-y-3">
               {items.map((item) => (
                 <li
-                  key={item.productId}
+                  key={getCartItemKey(item)}
                   className="group flex items-start justify-between gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-sm shadow-sm transition hover:border-blue-200 hover:bg-white hover:shadow-md dark:border-slate-700/80 dark:bg-slate-800/70 dark:hover:border-blue-500/40 dark:hover:bg-slate-800"
                   role="listitem"
                 >

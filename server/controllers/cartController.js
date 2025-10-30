@@ -208,13 +208,19 @@ exports.addToCart = async (req, res, next) => {
 
     const variantObjectId = parseObjectId(rawVariantId ?? undefined) ?? undefined;
 
-    const { cart, created } = await CartModel.upsertItem(req.user._id, {
-      productId: productObjectId,
-      product: productObjectId,
-      variantId: variantObjectId,
-      qty: quantityToAdd,
-      unitPrice: unitPricePaise,
-    });
+    const replaceQuantity = Boolean(req.body?.replaceQuantity);
+
+    const { cart, created } = await CartModel.upsertItem(
+      req.user._id,
+      {
+        productId: productObjectId,
+        product: productObjectId,
+        variantId: variantObjectId,
+        qty: quantityToAdd,
+        unitPrice: unitPricePaise,
+      },
+      { replaceQuantity },
+    );
 
     const cartResponse = await buildCartResponse(cart);
     const productIdString = productObjectId.toString();

@@ -44,6 +44,21 @@ describe('Cart schema', () => {
     expect(cart2.items[0].qty).toBe(3);
     expect(cart2.subtotal).toBe(38700);
     expect(cart2.grandTotal).toBe(36200);
+
+    findOne.mockResolvedValueOnce(cart2);
+    const { cart: cart3, created: created3 } = await CartModel.upsertItem(
+      userId,
+      {
+        productId,
+        qty: 4,
+        unitPrice: 12900,
+      },
+      { replaceQuantity: true },
+    );
+    expect(created3).toBe(false);
+    expect(cart3.items[0].qty).toBe(4);
+    expect(cart3.subtotal).toBe(51600);
+    expect(cart3.grandTotal).toBe(49100);
   });
 
   it('removes items and recomputes totals', async () => {

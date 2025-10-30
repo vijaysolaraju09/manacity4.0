@@ -58,7 +58,8 @@ cartSchema.pre('validate', function (next) {
   next();
 });
 
-cartSchema.statics.upsertItem = async function (userId, item) {
+cartSchema.statics.upsertItem = async function (userId, item, options = {}) {
+  const { replaceQuantity = false } = options;
   const cart = (await this.findOne({ userId })) || new this({ userId });
   const normalizedQty = Math.max(1, Math.floor(item.qty));
   const normalizedUnitPrice = Math.max(0, Math.round(item.unitPrice));
@@ -71,7 +72,9 @@ cartSchema.statics.upsertItem = async function (userId, item) {
   );
   let created = false;
   if (idx >= 0) {
-    cart.items[idx].qty += normalizedQty;
+    cart.items[idx].qty = replaceQuantity
+      ? normalizedQty
+      : cart.items[idx].qty + normalizedQty;
     cart.items[idx].unitPrice = normalizedUnitPrice;
     if (!cart.items[idx].product && cart.items[idx].productId) {
       cart.items[idx].product = cart.items[idx].productId;

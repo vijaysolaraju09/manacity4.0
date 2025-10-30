@@ -379,7 +379,11 @@ const CartPage = () => {
       const key = buildItemKey(productId, variantId ?? undefined);
       markPending(key, true);
       try {
-        const payload: Record<string, unknown> = { productId, quantity: nextQty };
+      const payload: Record<string, unknown> = {
+        productId,
+        quantity: nextQty,
+        replaceQuantity: true,
+      };
         const normalizedVariant = normalizeObjectId(variantId ?? undefined);
         if (normalizedVariant) {
           payload.variantId = normalizedVariant;

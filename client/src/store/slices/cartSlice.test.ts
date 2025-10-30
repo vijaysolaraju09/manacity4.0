@@ -7,7 +7,7 @@ import cartReducer, {
   selectByShop,
   selectItemCount,
   selectSubtotalPaise,
-  updateQty,
+  updateItemQty,
 } from './cartSlice';
 import type { CartItem, CartState } from './cartSlice';
 import type { RootState } from '@/store';
@@ -62,7 +62,7 @@ describe('cartSlice reducers', () => {
     );
   });
 
-  it('merges quantities and details when the product already exists', () => {
+  it('merges quantities and details when the product already exists in the same shop and variant', () => {
     let state = cartReducer(undefined, addItem(baseItem));
 
     const updatedState = cartReducer(
@@ -73,7 +73,6 @@ describe('cartSlice reducers', () => {
         name: 'Updated name',
         image: 'image.png',
         pricePaise: 4000,
-        shopId: 's-2',
       }),
     );
 
@@ -83,17 +82,46 @@ describe('cartSlice reducers', () => {
       name: 'Updated name',
       image: 'image.png',
       pricePaise: 4000,
-      shopId: 's-2',
+      shopId: 's-1',
     });
+  });
+
+  it('keeps separate line items for different shops or variants', () => {
+    const variantItem: CartItem = {
+      ...baseItem,
+      variantId: 'v-1',
+      qty: 2,
+    };
+
+    const stateWithVariants = [
+      addItem(baseItem),
+      addItem({ ...baseItem, shopId: 's-2' }),
+      addItem(variantItem),
+    ].reduce(cartReducer, undefined as unknown as CartState);
+
+    expect(stateWithVariants.items).toHaveLength(3);
+    expect(stateWithVariants.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ productId: 'p-1', shopId: 's-1', variantId: undefined, qty: 1 }),
+        expect.objectContaining({ productId: 'p-1', shopId: 's-2', variantId: undefined, qty: 1 }),
+        expect.objectContaining({ productId: 'p-1', shopId: 's-1', variantId: 'v-1', qty: 2 }),
+      ]),
+    );
   });
 
   it('updates quantity and removes the item when the qty becomes invalid', () => {
     let state = cartReducer(undefined, addItem(baseItem));
 
-    const increased = cartReducer(state, updateQty({ productId: 'p-1', qty: 5.2 }));
+    const increased = cartReducer(
+      state,
+      updateItemQty({ productId: 'p-1', shopId: 's-1', qty: 5.2 }),
+    );
     expect(selectCartItems(getState(increased))[0].qty).toBe(5);
 
-    const removed = cartReducer(increased, updateQty({ productId: 'p-1', qty: 0 }));
+    const removed = cartReducer(
+      increased,
+      updateItemQty({ productId: 'p-1', shopId: 's-1', qty: 0 }),
+    );
     expect(removed.items).toHaveLength(0);
   });
 
@@ -103,7 +131,10 @@ describe('cartSlice reducers', () => {
       addItem({ ...baseItem, productId: 'p-2', shopId: 's-2' }),
     ].reduce(cartReducer, undefined as unknown as CartState);
 
-    const afterRemoval = cartReducer(stateWithItems, removeItem('p-1'));
+    const afterRemoval = cartReducer(
+      stateWithItems,
+      removeItem({ productId: 'p-1', shopId: 's-1' }),
+    );
     expect(afterRemoval.items).toHaveLength(1);
     expect(afterRemoval.items[0].productId).toBe('p-2');
 
@@ -127,7 +158,7 @@ describe('cartSlice reducers', () => {
     const actions = [
       addItem(baseItem),
       addItem({ ...baseItem, productId: 'p-2', shopId: 's-2', pricePaise: 1500, qty: 2 }),
-      updateQty({ productId: 'p-1', qty: 4 }),
+      updateItemQty({ productId: 'p-1', shopId: 's-1', qty: 4 }),
     ];
 
     const finalState = actions.reduce(

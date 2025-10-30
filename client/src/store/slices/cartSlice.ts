@@ -8,6 +8,7 @@ export type CartItem = {
   image?: string;
   pricePaise: number;
   qty: number;
+  variantId?: string;
 };
 
 export type CartState = {
@@ -24,6 +25,12 @@ const sanitizeQty = (value: number): number => {
   return qty < 1 ? 1 : qty;
 };
 
+const normalizeVariantId = (variantId: string | null | undefined): string | undefined => {
+  if (variantId === null || variantId === undefined) return undefined;
+  const value = String(variantId).trim();
+  return value.length > 0 ? value : undefined;
+};
+
 const sanitizeItem = (item: CartItem): CartItem => {
   return {
     productId: String(item.productId),
@@ -34,6 +41,7 @@ const sanitizeItem = (item: CartItem): CartItem => {
       ? Math.max(0, Math.round(item.pricePaise))
       : 0,
     qty: sanitizeQty(item.qty),
+    variantId: normalizeVariantId(item.variantId),
   };
 };
 
@@ -60,6 +68,13 @@ const loadCartItems = (): CartItem[] => {
           return undefined;
         }
 
+        const rawVariant =
+          typeof candidate.variantId === 'string' || typeof candidate.variantId === 'number'
+            ? candidate.variantId
+            : undefined;
+        const variantId =
+          rawVariant === undefined ? undefined : String(rawVariant);
+
         return sanitizeItem({
           productId,
           shopId,
@@ -67,6 +82,7 @@ const loadCartItems = (): CartItem[] => {
           image: typeof candidate.image === 'string' ? candidate.image : undefined,
           pricePaise,
           qty,
+          variantId,
         });
       })
       .filter((item): item is CartItem => Boolean(item));
@@ -114,7 +130,12 @@ const cartSlice = createSlice({
   reducers: {
     addItem(state, action: PayloadAction<CartItem>) {
       const incoming = sanitizeItem(action.payload);
-      const existing = state.items.find((item) => item.productId === incoming.productId);
+      const existing = state.items.find(
+        (item) =>
+          item.productId === incoming.productId &&
+          item.shopId === incoming.shopId &&
+          (item.variantId ?? '') === (incoming.variantId ?? ''),
+      );
 
       if (existing) {
         existing.qty = sanitizeQty(existing.qty + incoming.qty);
@@ -122,28 +143,62 @@ const cartSlice = createSlice({
         existing.image = incoming.image;
         existing.pricePaise = incoming.pricePaise;
         existing.shopId = incoming.shopId;
+        existing.variantId = incoming.variantId;
       } else {
         state.items.push(incoming);
       }
 
       touch(state);
     },
-    updateQty(state, action: PayloadAction<{ productId: string; qty: number }>) {
-      const { productId, qty } = action.payload;
-      const item = state.items.find((entry) => entry.productId === productId);
+    updateItemQty(
+      state,
+      action: PayloadAction<{
+        productId: string;
+        shopId: string;
+        qty: number;
+        variantId?: string;
+      }>,
+    ) {
+      const { productId, shopId, qty, variantId } = action.payload;
+      const normalizedVariant = normalizeVariantId(variantId);
+      const item = state.items.find(
+        (entry) =>
+          entry.productId === productId &&
+          entry.shopId === shopId &&
+          (entry.variantId ?? '') === (normalizedVariant ?? ''),
+      );
       if (!item) return;
 
       const sanitizedQty = Math.floor(qty);
       if (!Number.isFinite(sanitizedQty) || sanitizedQty <= 0) {
-        state.items = state.items.filter((entry) => entry.productId !== productId);
+        state.items = state.items.filter(
+          (entry) =>
+            !(
+              entry.productId === productId &&
+              entry.shopId === shopId &&
+              (entry.variantId ?? '') === (normalizedVariant ?? '')
+            ),
+        );
       } else {
         item.qty = sanitizedQty;
       }
 
       touch(state);
     },
-    removeItem(state, action: PayloadAction<string>) {
-      state.items = state.items.filter((item) => item.productId !== action.payload);
+    removeItem(
+      state,
+      action: PayloadAction<{ productId: string; shopId: string; variantId?: string }>,
+    ) {
+      const { productId, shopId, variantId } = action.payload;
+      const normalizedVariant = normalizeVariantId(variantId);
+      state.items = state.items.filter(
+        (item) =>
+          !(
+            item.productId === productId &&
+            item.shopId === shopId &&
+            (item.variantId ?? '') === (normalizedVariant ?? '')
+          ),
+      );
       touch(state);
     },
     clearCart(state) {
@@ -162,7 +217,7 @@ const cartSlice = createSlice({
   },
 });
 
-export const { addItem, updateQty, removeItem, clearCart, clearShop, hydrateCart } =
+export const { addItem, updateItemQty, removeItem, clearCart, clearShop, hydrateCart } =
   cartSlice.actions;
 
 export const selectCartState = (state: RootState) => state.cart;

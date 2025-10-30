@@ -18,6 +18,10 @@ interface ProductLike {
   shopId?: MaybeString;
   shopMeta?: { id?: MaybeString; name?: string; image?: string | null };
   shopName?: string;
+  variantId?: MaybeString;
+  variant?: { _id?: MaybeString; id?: MaybeString } | null;
+  selectedVariantId?: MaybeString;
+  selectedVariant?: { _id?: MaybeString; id?: MaybeString } | null;
 }
 
 interface ShopLike {
@@ -40,6 +44,8 @@ interface CartResponseLike {
   unitPrice?: number;
   image?: string;
   product?: ProductLike;
+  variantId?: MaybeString;
+  variant?: { _id?: MaybeString; id?: MaybeString } | string | null;
 }
 
 const toIdString = (value: MaybeString): string | undefined => {
@@ -139,6 +145,34 @@ const extractImage = (
   return responseItem?.image || undefined;
 };
 
+const extractVariantId = (
+  product: ProductLike,
+  responseItem?: CartResponseLike,
+): string | undefined => {
+  const candidates: (MaybeString | { _id?: MaybeString; id?: MaybeString } | string | null | undefined)[] = [
+    product.variantId,
+    product.selectedVariantId,
+    product.variant,
+    product.selectedVariant,
+    responseItem?.variantId,
+    responseItem?.variant,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' || typeof candidate === 'number') {
+      const id = toIdString(candidate);
+      if (id) return id;
+      continue;
+    }
+    if (candidate && typeof candidate === 'object') {
+      const id = toIdString((candidate as { _id?: MaybeString })._id) ?? toIdString((candidate as { id?: MaybeString }).id);
+      if (id) return id;
+    }
+  }
+
+  return undefined;
+};
+
 const mergeProductShape = (
   product: ProductLike,
   responseItem?: CartResponseLike,
@@ -184,6 +218,7 @@ export const toCartItem = (
     pricePaise: Math.max(0, Math.round(pricePaise)),
     qty: sanitizeQuantity(qty),
     image: extractImage(mergedProduct, responseItem),
+    variantId: extractVariantId(mergedProduct, responseItem),
   };
 };
 

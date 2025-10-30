@@ -30,6 +30,20 @@ describe('cart helpers', () => {
     });
   });
 
+  it('preserves variant identifiers when present', () => {
+    const product = {
+      id: 'prod-1',
+      shopId: 'shop-1',
+      price: 50,
+      name: 'Variant product',
+      variantId: 'var-99',
+    };
+
+    const item = toCartItem(product, 1);
+
+    expect(item.variantId).toBe('var-99');
+  });
+
   describe('buildCartItemPayload', () => {
     let consoleSpy: MockInstance<
       Parameters<typeof console.error>,

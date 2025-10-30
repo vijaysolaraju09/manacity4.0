@@ -21,24 +21,46 @@ import { cn } from '@/lib/utils';
 import styles from '@/styles/PageShell.module.scss';
 import cartStyles from './Cart.module.scss';
 import { selectCartItems } from '@/store/slices/cartSlice';
+import type { CartItem as StoreCartItem } from '@/store/slices/cartSlice';
 import { useCartActions } from '@/hooks/useCartActions';
 
 const FREE_SHIPPING_THRESHOLD_PAISE = 49900;
 
 type LoadState = 'loading' | 'ready' | 'error';
 
+type CartItemIdentifiers = {
+  productId: string;
+  shopId: string;
+  variantId?: string;
+};
+
+type DisplayCartItem = CartDisplayItem & {
+  key: string;
+  identifiers: CartItemIdentifiers;
+};
+
 type ConfirmState =
   | {
       type: 'remove-single';
-      productIds: string[];
+      itemKeys: string[];
       message: string;
     }
   | {
       type: 'remove-bulk';
-      productIds: string[];
+      itemKeys: string[];
       message: string;
     }
   | null;
+
+const normalizeVariantId = (value: string | null | undefined): string | undefined => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const buildItemKey = ({ productId, shopId, variantId }: CartItemIdentifiers): string => {
+  return [productId, shopId, normalizeVariantId(variantId) ?? ''].join('::');
+};
 
 const sectionMotion = {
   initial: { opacity: 0, y: 24 },
@@ -58,7 +80,7 @@ const Cart = () => {
   const { updateCartQuantity, removeFromCart, clearCart: clearEntireCart } = useCartActions();
 
   const [status, setStatus] = useState<LoadState>('loading');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [couponCode, setCouponCode] = useState('');
   const [couponState, setCouponState] = useState<'idle' | 'loading' | 'applied' | 'error'>('idle');
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -72,7 +94,7 @@ const Cart = () => {
     setStatus('ready');
   }, [rawItems]);
 
-  const items: CartDisplayItem[] = useMemo(() => {
+  const items = useMemo<DisplayCartItem[]>(() => {
     if (!Array.isArray(rawItems)) return [];
     return rawItems.map((item) => {
       const qty = Number.isFinite(item.qty) && item.qty > 0 ? Math.floor(item.qty) : 1;
@@ -80,6 +102,12 @@ const Cart = () => {
       const lineTotal = unitPrice * qty;
       const mrpInput = (item as { mrpPaise?: number }).mrpPaise;
       const mrpPaise = Number.isFinite(mrpInput) ? Math.max(unitPrice, Math.round(mrpInput as number)) : undefined;
+      const variantId = normalizeVariantId(item.variantId ?? undefined);
+      const identifiers: CartItemIdentifiers = {
+        productId: item.productId,
+        shopId: item.shopId,
+        variantId,
+      };
 
       return {
         productId: item.productId,
@@ -94,16 +122,41 @@ const Cart = () => {
         availabilityLabel: 'In stock',
         deliveryMessage: 'Delivery by Tue, Oct 21 • Free above ₹499',
         shippingNote: 'Free above ₹499',
-      } satisfies CartDisplayItem;
+        variantId,
+        key: buildItemKey(identifiers),
+        identifiers,
+      } satisfies DisplayCartItem;
     });
   }, [rawItems]);
 
+  const displayLookup = useMemo(() => {
+    const map = new Map<string, DisplayCartItem>();
+    items.forEach((item) => {
+      map.set(item.key, item);
+    });
+    return map;
+  }, [items]);
+
+  const itemLookup = useMemo(() => {
+    const map = new Map<string, StoreCartItem>();
+    if (!Array.isArray(rawItems)) return map;
+    rawItems.forEach((item) => {
+      const key = buildItemKey({
+        productId: item.productId,
+        shopId: item.shopId,
+        variantId: normalizeVariantId(item.variantId ?? undefined),
+      });
+      map.set(key, item);
+    });
+    return map;
+  }, [rawItems]);
+
   useEffect(() => {
-    setSelectedIds((prev) => {
+    setSelectedKeys((prev) => {
       const next = new Set<string>();
       items.forEach((item) => {
-        if (prev.size === 0 || prev.has(item.productId)) {
-          next.add(item.productId);
+        if (prev.size === 0 || prev.has(item.key)) {
+          next.add(item.key);
         }
       });
       return next;
@@ -111,8 +164,8 @@ const Cart = () => {
   }, [items]);
 
   const selectedItems = useMemo(
-    () => items.filter((item) => selectedIds.has(item.productId)),
-    [items, selectedIds],
+    () => items.filter((item) => selectedKeys.has(item.key)),
+    [items, selectedKeys],
   );
 
   const subtotalPaise = useMemo(
@@ -125,55 +178,54 @@ const Cart = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(new Set(items.map((item) => item.productId)));
+      setSelectedKeys(new Set(items.map((item) => item.key)));
     } else {
-      setSelectedIds(new Set());
+      setSelectedKeys(new Set());
     }
   };
 
-  const handleSelectItem = (productId: string, checked: boolean) => {
-    setSelectedIds((current) => {
+  const handleSelectItem = (key: string, checked: boolean) => {
+    setSelectedKeys((current) => {
       const next = new Set(current);
       if (checked) {
-        next.add(productId);
+        next.add(key);
       } else {
-        next.delete(productId);
+        next.delete(key);
       }
       return next;
     });
   };
 
   const handleQtyChange = useCallback(
-    (productId: string, qty: number, name: string) => {
+    (item: DisplayCartItem, qty: number) => {
       const sanitizedQty = Number.isFinite(qty) ? Math.max(1, Math.floor(qty)) : 1;
-      const currentQty = Array.isArray(rawItems)
-        ? rawItems.find((entry) => entry.productId === productId)?.qty
-        : undefined;
+      const key = item.key;
+      const currentQty = itemLookup.get(key)?.qty;
 
       if (currentQty === sanitizedQty) {
         return;
       }
 
-      updateCartQuantity(productId, sanitizedQty);
-      showToast(`Updated ${name} to ${sanitizedQty}`, 'success');
+      updateCartQuantity({ ...item.identifiers, qty: sanitizedQty });
+      showToast(`Updated ${item.name} to ${sanitizedQty}`, 'success');
     },
-    [rawItems, updateCartQuantity],
+    [itemLookup, updateCartQuantity],
   );
 
-  const handleRemove = (productId: string, name: string) => {
+  const handleRemove = (item: DisplayCartItem) => {
     setConfirmState({
       type: 'remove-single',
-      productIds: [productId],
-      message: `Remove ${name} from your cart?`,
+      itemKeys: [item.key],
+      message: `Remove ${item.name} from your cart?`,
     });
   };
 
   const handleBulkRemove = () => {
-    if (selectedIds.size === 0) return;
+    if (selectedKeys.size === 0) return;
     setConfirmState({
       type: 'remove-bulk',
-      productIds: Array.from(selectedIds),
-      message: `Remove ${selectedIds.size} selected item${selectedIds.size === 1 ? '' : 's'}?`,
+      itemKeys: Array.from(selectedKeys),
+      message: `Remove ${selectedKeys.size} selected item${selectedKeys.size === 1 ? '' : 's'}?`,
     });
   };
 
@@ -181,7 +233,7 @@ const Cart = () => {
     if (items.length === 0) return;
     setConfirmState({
       type: 'remove-bulk',
-      productIds: items.map((item) => item.productId),
+      itemKeys: items.map((item) => item.key),
       message: 'Clear all items from your cart?',
     });
   };
@@ -245,15 +297,26 @@ const Cart = () => {
 
   const executeRemoval = () => {
     if (!confirmState) return;
-    if (confirmState.productIds.length === items.length) {
+    const keys = confirmState.itemKeys;
+    if (keys.length === 0) {
+      setConfirmState(null);
+      return;
+    }
+
+    if (keys.length === items.length) {
       clearEntireCart();
-      setSelectedIds(new Set());
+      setSelectedKeys(new Set());
       showToast('Cart cleared', 'success');
     } else {
-      confirmState.productIds.forEach((productId) => removeFromCart(productId));
-      setSelectedIds((prev) => {
+      keys.forEach((key) => {
+        const item = displayLookup.get(key);
+        if (item) {
+          removeFromCart(item.identifiers);
+        }
+      });
+      setSelectedKeys((prev) => {
         const next = new Set(prev);
-        confirmState.productIds.forEach((id) => next.delete(id));
+        keys.forEach((id) => next.delete(id));
         return next;
       });
       showToast('Item removed', 'info');
@@ -306,7 +369,7 @@ const Cart = () => {
     );
   }
 
-  const allSelected = selectedIds.size === items.length && items.length > 0;
+  const allSelected = selectedKeys.size === items.length && items.length > 0;
   return (
     <main className={cartContainerClasses}>
       <div className={cn(styles.pageShell__inner, 'mx-auto max-w-7xl px-4 pb-32 pt-12 sm:px-6 lg:px-8')}>
@@ -426,12 +489,12 @@ const Cart = () => {
                 </div>
                 <AnimatePresence initial={false} mode="popLayout">
                   {items.map((item) => {
-                    const selected = selectedIds.has(item.productId);
+                    const selected = selectedKeys.has(item.key);
                     const savingsPaise = item.mrpPaise ? Math.max(0, item.mrpPaise - item.unitPricePaise) : 0;
 
                     return (
                       <motion.li
-                        key={item.productId}
+                        key={item.key}
                         layout
                         variants={itemMotion}
                         initial="initial"
@@ -447,7 +510,7 @@ const Cart = () => {
                                 type="checkbox"
                                 className="h-5 w-5 rounded-md border border-[var(--border)] text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                                 checked={selected}
-                                onChange={(event) => handleSelectItem(item.productId, event.target.checked)}
+                                onChange={(event) => handleSelectItem(item.key, event.target.checked)}
                                 aria-label={`Select ${item.name}`}
                               />
                             </label>
@@ -495,7 +558,7 @@ const Cart = () => {
                                 <QuantityStepper
                                   value={item.qty}
                                   min={1}
-                                  onChange={(value) => handleQtyChange(item.productId, value, item.name)}
+                                  onChange={(value) => handleQtyChange(item, value)}
                                   ariaLabel={`Quantity for ${item.name}`}
                                 />
                               </div>
@@ -509,7 +572,7 @@ const Cart = () => {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleRemove(item.productId, item.name)}
+                                  onClick={() => handleRemove(item)}
                                   className="rounded-full px-3 py-1 text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2"
                                 >
                                   Remove

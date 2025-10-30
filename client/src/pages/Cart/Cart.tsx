@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, ShoppingCart, Trash2 } from 'lucide-react';
 
@@ -12,6 +12,7 @@ import type { CartDisplayItem } from '@/features/cart/types';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import ErrorCard from '@/components/ui/ErrorCard';
 import { Button } from '@/components/ui/button';
+import QuantityStepper from '@/components/ui/QuantityStepper/QuantityStepper';
 import { formatINR } from '@/utils/currency';
 import showToast from '@/components/ui/Toast';
 import fallbackImage from '@/assets/no-image.svg';
@@ -19,12 +20,8 @@ import { paths } from '@/routes/paths';
 import { cn } from '@/lib/utils';
 import styles from '@/styles/PageShell.module.scss';
 import cartStyles from './Cart.module.scss';
-import {
-  clearCart,
-  removeItem,
-  selectCartItems,
-  updateQty,
-} from '@/store/slices/cartSlice';
+import { selectCartItems } from '@/store/slices/cartSlice';
+import { useCartActions } from '@/hooks/useCartActions';
 
 const FREE_SHIPPING_THRESHOLD_PAISE = 49900;
 
@@ -56,9 +53,9 @@ const itemMotion = {
 };
 
 const Cart = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const rawItems = useSelector(selectCartItems);
+  const { updateCartQuantity, removeFromCart, clearCart: clearEntireCart } = useCartActions();
 
   const [status, setStatus] = useState<LoadState>('loading');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -146,10 +143,22 @@ const Cart = () => {
     });
   };
 
-  const handleQtyChange = (productId: string, qty: number, name: string) => {
-    dispatch(updateQty({ productId, qty }));
-    showToast(`Updated ${name} to ${qty}`, 'success');
-  };
+  const handleQtyChange = useCallback(
+    (productId: string, qty: number, name: string) => {
+      const sanitizedQty = Number.isFinite(qty) ? Math.max(1, Math.floor(qty)) : 1;
+      const currentQty = Array.isArray(rawItems)
+        ? rawItems.find((entry) => entry.productId === productId)?.qty
+        : undefined;
+
+      if (currentQty === sanitizedQty) {
+        return;
+      }
+
+      updateCartQuantity(productId, sanitizedQty);
+      showToast(`Updated ${name} to ${sanitizedQty}`, 'success');
+    },
+    [rawItems, updateCartQuantity],
+  );
 
   const handleRemove = (productId: string, name: string) => {
     setConfirmState({
@@ -237,11 +246,11 @@ const Cart = () => {
   const executeRemoval = () => {
     if (!confirmState) return;
     if (confirmState.productIds.length === items.length) {
-      dispatch(clearCart());
+      clearEntireCart();
       setSelectedIds(new Set());
       showToast('Cart cleared', 'success');
     } else {
-      confirmState.productIds.forEach((productId) => dispatch(removeItem(productId)));
+      confirmState.productIds.forEach((productId) => removeFromCart(productId));
       setSelectedIds((prev) => {
         const next = new Set(prev);
         confirmState.productIds.forEach((id) => next.delete(id));
@@ -298,9 +307,6 @@ const Cart = () => {
   }
 
   const allSelected = selectedIds.size === items.length && items.length > 0;
-  const stepperButtonClasses =
-    'flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-slate-900 transition hover:border-blue-600 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-40';
-
   return (
     <main className={cartContainerClasses}>
       <div className={cn(styles.pageShell__inner, 'mx-auto max-w-7xl px-4 pb-32 pt-12 sm:px-6 lg:px-8')}>
@@ -486,28 +492,12 @@ const Cart = () => {
                             <div className="flex flex-wrap items-center gap-3">
                               <div className="flex items-center gap-2" role="group" aria-label={`Update quantity for ${item.name}`}>
                                 <span className="text-xs font-semibold uppercase text-slate-600">Qty</span>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    className={stepperButtonClasses}
-                                    onClick={() => handleQtyChange(item.productId, Math.max(1, item.qty - 1), item.name)}
-                                    aria-label={`Decrease quantity for ${item.name}`}
-                                    disabled={item.qty <= 1}
-                                  >
-                                    −
-                                  </button>
-                                  <span className="min-w-[2.5rem] text-center text-sm font-semibold" aria-live="polite">
-                                    {item.qty}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    className={stepperButtonClasses}
-                                    onClick={() => handleQtyChange(item.productId, item.qty + 1, item.name)}
-                                    aria-label={`Increase quantity for ${item.name}`}
-                                  >
-                                    +
-                                  </button>
-                                </div>
+                                <QuantityStepper
+                                  value={item.qty}
+                                  min={1}
+                                  onChange={(value) => handleQtyChange(item.productId, value, item.name)}
+                                  ariaLabel={`Quantity for ${item.name}`}
+                                />
                               </div>
                               <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
                                 <button

@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { AiFillStar } from 'react-icons/ai';
-import { FiPhone, FiArrowLeft, FiShare2, FiMinus, FiPlus } from 'react-icons/fi';
+import { FiPhone, FiArrowLeft, FiShare2, FiMinus, FiPlus, FiShoppingCart } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '@/store';
 import { fetchShopById, fetchProductsByShop } from '@/store/shops';
 import { selectByShop, type CartItem } from '@/store/slices/cartSlice';
 import { useCartActions } from '@/hooks/useCartActions';
+import { paths } from '@/routes/paths';
 import Shimmer from '../../components/Shimmer';
 import ProductCard, {
   type Product as ProductCardProduct,
@@ -20,6 +21,7 @@ import fallbackImage from '../../assets/no-image.svg';
 
 const ShopDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const {
     item: shop,
@@ -129,6 +131,14 @@ const ShopDetails = () => {
           aria-label="Share"
         >
           <FiShare2 />
+        </button>
+        <button
+          type="button"
+          className="rounded-full border border-gray-200 p-2 hover:text-gray-800"
+          onClick={() => navigate(paths.cart())}
+          aria-label="View cart"
+        >
+          <FiShoppingCart />
         </button>
       </div>
 

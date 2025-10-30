@@ -22,6 +22,8 @@ const ServicesCatalog = () => {
   }, [servicesState.status, dispatch]);
 
   const items = Array.isArray(servicesState.items) ? servicesState.items : [];
+  const activeCount = items.filter((service) => service.isActive !== false).length;
+  const upcomingCount = Math.max(0, items.length - activeCount);
 
   const handleRetry = () => {
     dispatch(fetchServices(undefined));
@@ -31,8 +33,27 @@ const ServicesCatalog = () => {
     navigate(paths.services.request());
   };
 
+  const subtitle = items.length
+    ? `Browse ${items.length} curated services from local experts in your community.`
+    : 'Browse curated services from local experts in your community.';
+
   return (
     <div className={styles.page}>
+      <div className={styles.header}>
+        <div className={styles.headerText}>
+          <h2 className={styles.title}>Service catalog</h2>
+          <p className={styles.subtitle}>{subtitle}</p>
+        </div>
+        <div className={styles.headerActions}>
+          <Button size="sm" onClick={handleRequestService}>
+            Request a Service
+          </Button>
+          <Button size="sm" variant="secondary" onClick={handleRetry}>
+            Refresh
+          </Button>
+        </div>
+      </div>
+
       {servicesState.status === 'loading' ? (
         <SkeletonList count={6} />
       ) : servicesState.status === 'failed' ? (
@@ -48,15 +69,29 @@ const ServicesCatalog = () => {
           </div>
         </div>
       ) : (
-        <div className={styles.grid}>
-          {items.map((service) => (
-            <ServiceCard
-              key={service._id}
-              service={service}
-              onClick={() => navigate(paths.services.detail(service._id))}
-            />
-          ))}
-        </div>
+        <>
+          <div className={styles.stats} role="list">
+            <div className={styles.statCard} role="listitem">
+              <span className={styles.statLabel}>Active services</span>
+              <span className={styles.statValue}>{activeCount}</span>
+              <span className={styles.statHint}>Ready to request today</span>
+            </div>
+            <div className={styles.statCard} role="listitem">
+              <span className={styles.statLabel}>Coming soon</span>
+              <span className={styles.statValue}>{upcomingCount}</span>
+              <span className={styles.statHint}>We&apos;re onboarding more providers</span>
+            </div>
+          </div>
+          <div className={styles.grid}>
+            {items.map((service) => (
+              <ServiceCard
+                key={service._id}
+                service={service}
+                onClick={() => navigate(paths.services.detail(service._id))}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

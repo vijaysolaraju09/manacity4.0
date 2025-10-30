@@ -204,9 +204,21 @@
 }
 
 .tabs {
-  display: inline-flex;
-  flex-wrap: wrap;
+  display: flex;
   gap: 0.65rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 0 0.35rem 0.35rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tabs::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
 }
 
 .tab {
@@ -218,6 +230,8 @@
   text-decoration: none;
   font-weight: 600;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .tabActive {

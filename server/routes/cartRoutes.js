@@ -19,6 +19,7 @@ const addItemSchema = {
     .object({
       productId: objectId,
       quantity: z.coerce.number().int().min(1).max(50).optional(),
+      replaceQuantity: z.boolean().optional(),
       variantId: objectId.optional(),
     })
     .strict(),

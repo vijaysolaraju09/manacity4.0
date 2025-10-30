@@ -87,6 +87,7 @@ describe('cartController', () => {
         qty: 2,
         unitPrice: 19950,
       }),
+      { replaceQuantity: false },
     );
 
     expect(res.status).toHaveBeenCalledWith(201);

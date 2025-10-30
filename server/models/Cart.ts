@@ -54,10 +54,15 @@ export interface CartDoc extends Document, CartAttrs {
   computeTotals(): void;
 }
 
+interface UpsertOptions {
+  replaceQuantity?: boolean;
+}
+
 interface CartModel extends Model<CartDoc> {
   upsertItem(
     userId: Types.ObjectId,
     item: CartItem,
+    options?: UpsertOptions,
   ): Promise<{ cart: CartDoc; created: boolean }>;
   removeItem(
     userId: Types.ObjectId,
@@ -99,11 +104,12 @@ cartSchema.pre('validate', function (next) {
   next();
 });
 
-cartSchema.statics.upsertItem = async function (userId, item) {
+cartSchema.statics.upsertItem = async function (userId, item, options = {}) {
   const Cart = this as CartModel;
   const cart = (await Cart.findOne({ userId })) || new Cart({ userId });
   const normalizedQty = Math.max(1, Math.floor(item.qty));
   const normalizedUnitPrice = Math.max(0, Math.round(item.unitPrice));
+  const { replaceQuantity = false } = options as UpsertOptions;
   const idx = cart.items.findIndex(
     (i) =>
       i.productId.equals(item.productId) &&
@@ -113,7 +119,9 @@ cartSchema.statics.upsertItem = async function (userId, item) {
   );
   let created = false;
   if (idx >= 0) {
-    cart.items[idx].qty += normalizedQty;
+    cart.items[idx].qty = replaceQuantity
+      ? normalizedQty
+      : cart.items[idx].qty + normalizedQty;
     cart.items[idx].unitPrice = normalizedUnitPrice;
     if (!cart.items[idx].product && cart.items[idx].productId) {
       cart.items[idx].product = cart.items[idx].productId;

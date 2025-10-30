@@ -114,7 +114,13 @@ describe('CartPage', () => {
     const group = await screen.findByRole('group', { name: /quantity for artisan bread/i });
     await userEvent.click(within(group).getByRole('button', { name: /increase quantity/i }));
 
-    await waitFor(() => expect(postMock).toHaveBeenCalledWith('/api/cart', { productId: 'prod-1', quantity: 3 }));
+    await waitFor(() =>
+      expect(postMock).toHaveBeenCalledWith('/api/cart', {
+        productId: 'prod-1',
+        quantity: 3,
+        replaceQuantity: true,
+      }),
+    );
     await waitFor(() => expect(within(group).getByText('3')).toBeInTheDocument());
   });
 

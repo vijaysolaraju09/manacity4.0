@@ -6,6 +6,7 @@ Copy `.env.example` to `.env` and set:
 
 ```
 VITE_API_URL=https://manacity4-0.onrender.com/api
+VITE_FIREBASE_DISABLE_APP_VERIFICATION=true # optional: skip phone auth reCAPTCHA locally
 ```
 
 ## Auth flow

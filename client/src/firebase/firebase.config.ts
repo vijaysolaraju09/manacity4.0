@@ -13,3 +13,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
+
+const disableAppVerification =
+  typeof window !== 'undefined' &&
+  (import.meta.env.VITE_FIREBASE_DISABLE_APP_VERIFICATION === 'true' || import.meta.env.DEV);
+
+if (disableAppVerification) {
+  auth.settings.appVerificationDisabledForTesting = true;
+}

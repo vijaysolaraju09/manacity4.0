@@ -37,9 +37,27 @@ const OTPPhoneFirebase: React.FC<OTPPhoneFirebaseProps> = ({ phone, onVerifySucc
         setConfirmationResult(result);
         showToast(`OTP sent to ${phone}`, 'success');
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         console.error('OTP send error', err);
-        const message = err?.message ?? 'Failed to send OTP. Please try again.';
+        let message = 'Failed to send OTP. Please try again.';
+        let hasCustomMessage = false;
+        if (typeof err === 'object' && err && 'code' in err) {
+          const { code } = err as { code?: string };
+          if (code === 'auth/billing-not-enabled') {
+            message =
+              'Phone verification is not configured for this environment. Please contact support to finish setting up phone authentication.';
+            hasCustomMessage = true;
+          }
+        }
+        if (
+          !hasCustomMessage &&
+          typeof err === 'object' &&
+          err &&
+          'message' in err &&
+          typeof (err as { message?: string }).message === 'string'
+        ) {
+          message = (err as { message: string }).message || message;
+        }
         setError(message);
         showToast(message, 'error');
       })

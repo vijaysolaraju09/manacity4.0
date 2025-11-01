@@ -5,18 +5,21 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import './VerifyOtp.scss';
 import logo from '@/assets/logo.png';
 import fallbackImage from '@/assets/no-image.svg';
-import Loader from '@/components/Loader';
 import showToast from '@/components/ui/Toast';
 import { http } from '@/lib/http';
 import { toErrorMessage } from '@/lib/response';
 import { paths } from '@/routes/paths';
 import { setToken, setUser } from '@/store/slices/authSlice';
 import type { AppDispatch } from '@/store';
+import OTPPhoneFirebase, { type FirebaseVerificationResult } from '@/components/forms/OTPPhoneFirebase';
+import { normalizePhoneDigits } from '@/utils/phone';
 
 interface LocationState {
   phone?: string;
   message?: string;
 }
+
+const defaultCountryCode = '+91';
 
 const VerifyOtp = () => {
   const navigate = useNavigate();
@@ -26,9 +29,7 @@ const VerifyOtp = () => {
   const phone = state?.phone ?? '';
   const infoMessage = state?.message;
 
-  const [code, setCode] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!phone) {
@@ -46,23 +47,22 @@ const VerifyOtp = () => {
     return null;
   }
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleOtpSuccess = async ({ idToken, phoneNumber }: FirebaseVerificationResult) => {
     if (!phone) {
       showToast('Verification session expired. Please sign up again.', 'error');
       navigate(paths.auth.signup(), { replace: true });
       return;
     }
 
-    if (!code || !/^\d{6}$/.test(code)) {
-      setError('Enter the 6-digit OTP sent to your phone.');
+    const verifiedDigits = normalizePhoneDigits(phoneNumber);
+    if (!verifiedDigits || !verifiedDigits.endsWith(phone)) {
+      showToast('Verified phone does not match this account. Please try again.', 'error');
       return;
     }
 
     try {
-      setLoading(true);
-      setError('');
-      const res = await http.post('/auth/verify-phone', { phone, code });
+      setSubmitting(true);
+      const res = await http.post('/auth/verify-phone', { phone, firebaseIdToken: idToken });
       const data = res.data?.data;
       if (!data?.token || !data?.user) {
         throw new Error('Invalid response');
@@ -73,10 +73,9 @@ const VerifyOtp = () => {
       navigate(paths.home());
     } catch (err) {
       const message = toErrorMessage(err) || 'Verification failed. Please try again.';
-      setError(message);
       showToast(message, 'error');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -102,42 +101,10 @@ const VerifyOtp = () => {
           {maskedPhone && <span className="phone"> Code sent to {maskedPhone}.</span>}
         </p>
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="control">
-            <label htmlFor="verify-otp">OTP Code</label>
-            <input
-              id="verify-otp"
-              type="tel"
-              inputMode="numeric"
-              pattern="\d*"
-              maxLength={6}
-              value={code}
-              onChange={(event) => {
-                const next = event.target.value.replace(/[^\d]/g, '');
-                setCode(next);
-                if (error) {
-                  setError('');
-                }
-              }}
-              placeholder="Enter 6-digit code"
-              required
-              autoComplete="one-time-code"
-            />
-          </div>
-
-          {error && <div className="error">{error}</div>}
-
-          <div className="actions">
-            <motion.button
-              type="submit"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              disabled={loading}
-            >
-              {loading ? <Loader /> : 'Verify'}
-            </motion.button>
-          </div>
-        </form>
+        <div className="otp-wrapper">
+          <OTPPhoneFirebase phone={`${defaultCountryCode}${phone}`} onVerifySuccess={handleOtpSuccess} />
+          {submitting && <div className="otp-overlay">Processing...</div>}
+        </div>
 
         <div className="links">
           <span onClick={() => navigate(paths.auth.signup())}>Use a different number</span>

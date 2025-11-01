@@ -12,7 +12,7 @@ import { normalizePhoneDigits } from '@/utils/phone';
 import { createZodResolver } from '@/lib/createZodResolver';
 import { useForm } from '@/components/ui/form';
 import * as z from 'zod';
-import OTPPhoneFirebase from '@/components/forms/OTPPhoneFirebase';
+import OTPPhoneFirebase, { type FirebaseVerificationResult } from '@/components/forms/OTPPhoneFirebase';
 import { useDispatch } from 'react-redux';
 import { setToken, setUser } from '@/store/slices/authSlice';
 import type { AppDispatch } from '@/store';
@@ -59,13 +59,20 @@ const Signup = () => {
     setOtpStep(true);
   };
 
-  const handleOtpVerified = async () => {
+  const handleOtpVerified = async ({ idToken, phoneNumber }: FirebaseVerificationResult) => {
     if (!signupData) {
       return;
     }
 
     try {
-      const result = await signupApi(signupData);
+      const normalizedVerified = normalizePhoneDigits(phoneNumber);
+      if (!normalizedVerified || !normalizedVerified.endsWith(signupData.phone)) {
+        showToast('Verified phone does not match the signup number. Please try again.', 'error');
+        setOtpStep(false);
+        return;
+      }
+
+      const result = await signupApi({ ...signupData, firebaseIdToken: idToken });
 
       if (result?.token && result?.user) {
         dispatch(setToken(result.token));
@@ -75,8 +82,7 @@ const Signup = () => {
         return;
       }
 
-      const message = result?.message || 'Phone verified. You can now log in with your password.';
-      showToast(message, 'success');
+      showToast('Phone verified. You can now log in with your password.', 'success');
       navigate(paths.auth.login());
     } catch (error) {
       const message = toErrorMessage(error) || 'Signup failed. Please try again.';

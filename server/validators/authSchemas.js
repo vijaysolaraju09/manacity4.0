@@ -10,6 +10,7 @@ const signupSchema = {
     location: z.string().min(2).optional(),
     role: z.enum(['customer', 'business']).optional(),
     email: z.string().email().optional().or(z.literal('')),
+    firebaseIdToken: z.string().min(10, 'Firebase verification token is required'),
   }),
 };
 
@@ -29,15 +30,15 @@ const forgotPasswordSchema = {
 const verifyPhoneSchema = {
   body: z.object({
     phone: phoneSchema,
-    code: z.string().regex(/^\d{6}$/, 'OTP must be 6 digits'),
+    firebaseIdToken: z.string().min(10, 'Firebase verification token is required'),
   }),
 };
 
 const resetPasswordSchema = {
   body: z.object({
     phone: phoneSchema,
-    code: z.string().regex(/^\d{6}$/, 'OTP must be 6 digits'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
+    firebaseIdToken: z.string().min(10, 'Firebase verification token is required'),
   }),
 };
 

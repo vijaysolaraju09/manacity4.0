@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const AppError = require("../utils/AppError");
-const otpService = require("../services/otpService");
+const firebaseAuthService = require("../services/firebaseAuthService");
 
 const normalizeDigits = (value) => String(value ?? "").replace(/\D/g, "");
 const isValidPhone = (value) => /^\d{10,14}$/.test(value);
@@ -84,7 +84,7 @@ const ensureAdminAccount = async (email, password) => {
 
 exports.signup = async (req, res, next) => {
   try {
-    const { name, phone, password, location, role, email } = req.body;
+    const { name, phone, password, location, role, email, firebaseIdToken } = req.body;
 
     if (!phone) {
       throw AppError.badRequest('MISSING_CONTACT', 'Phone is required');
@@ -107,6 +107,17 @@ exports.signup = async (req, res, next) => {
       }
     }
 
+    const decodedToken = await firebaseAuthService.verifyIdToken(firebaseIdToken);
+    const verifiedPhoneDigits = normalizeDigits(decodedToken?.phone_number);
+
+    if (!verifiedPhoneDigits) {
+      throw AppError.badRequest('OTP_PHONE_MISSING', 'Verified phone number not found in Firebase token');
+    }
+
+    if (!verifiedPhoneDigits.endsWith(normalizedPhone)) {
+      throw AppError.badRequest('PHONE_MISMATCH', 'Verified phone number does not match signup phone');
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
@@ -116,21 +127,22 @@ exports.signup = async (req, res, next) => {
       role,
       email,
       address: '',
-      isVerified: false,
-      verificationStatus: 'pending',
+      isVerified: true,
+      verificationStatus: 'approved',
     });
 
-    try {
-      await otpService.sendVerificationCode(normalizedPhone);
-    } catch (err) {
-      await User.deleteOne({ _id: user._id });
-      throw err;
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
     }
+
+    const token = jwt.sign({ userId: user._id, role: user.role }, jwtSecret, { expiresIn: '7d' });
 
     res.status(201).json({
       ok: true,
       data: {
-        message: `OTP sent to ${user.phone}. Please verify to complete signup.`,
+        token,
+        user: user.toProfileJSON(),
       },
       traceId: req.traceId,
     });
@@ -188,17 +200,6 @@ exports.forgotPassword = async (req, res, next) => {
       throw AppError.badRequest("INVALID_PHONE", "Enter a valid phone number");
     }
 
-    try {
-      const user = await User.findOne({ phone: normalizedPhone });
-      if (user) {
-        await otpService.sendVerificationCode(normalizedPhone);
-      }
-    } catch (err) {
-      if (err instanceof AppError && err.statusCode >= 500) {
-        throw err;
-      }
-    }
-
     return res.json({
       ok: true,
       data: {
@@ -213,16 +214,22 @@ exports.forgotPassword = async (req, res, next) => {
 
 exports.verifyPhone = async (req, res, next) => {
   try {
-    const { phone, code } = req.body;
+    const { phone, firebaseIdToken } = req.body;
     const normalizedPhone = normalizeDigits(phone);
 
     if (!normalizedPhone || !isValidPhone(normalizedPhone)) {
       throw AppError.badRequest('INVALID_PHONE', 'Enter a valid phone number');
     }
 
-    const result = await otpService.verifyCode(normalizedPhone, code);
-    if (!result || result.status !== 'approved') {
-      throw AppError.badRequest('INVALID_OTP', 'Invalid or expired OTP');
+    const decodedToken = await firebaseAuthService.verifyIdToken(firebaseIdToken);
+    const verifiedPhoneDigits = normalizeDigits(decodedToken?.phone_number);
+
+    if (!verifiedPhoneDigits) {
+      throw AppError.badRequest('OTP_PHONE_MISSING', 'Verified phone number not found in Firebase token');
+    }
+
+    if (!verifiedPhoneDigits.endsWith(normalizedPhone)) {
+      throw AppError.badRequest('PHONE_MISMATCH', 'Verified phone number does not match request');
     }
 
     const user = await User.findOneAndUpdate(
@@ -254,16 +261,22 @@ exports.verifyPhone = async (req, res, next) => {
 
 exports.resetPassword = async (req, res, next) => {
   try {
-    const { phone, code, password } = req.body;
+    const { phone, password, firebaseIdToken } = req.body;
     const normalizedPhone = normalizeDigits(phone);
 
     if (!normalizedPhone || !isValidPhone(normalizedPhone)) {
       throw AppError.badRequest('INVALID_PHONE', 'Enter a valid phone number');
     }
 
-    const result = await otpService.verifyCode(normalizedPhone, code);
-    if (!result || result.status !== 'approved') {
-      throw AppError.badRequest('INVALID_OTP', 'Invalid or expired OTP');
+    const decodedToken = await firebaseAuthService.verifyIdToken(firebaseIdToken);
+    const verifiedPhoneDigits = normalizeDigits(decodedToken?.phone_number);
+
+    if (!verifiedPhoneDigits) {
+      throw AppError.badRequest('OTP_PHONE_MISSING', 'Verified phone number not found in Firebase token');
+    }
+
+    if (!verifiedPhoneDigits.endsWith(normalizedPhone)) {
+      throw AppError.badRequest('PHONE_MISMATCH', 'Verified phone number does not match request');
     }
 
     const user = await User.findOne({ phone: normalizedPhone }).select('+password');

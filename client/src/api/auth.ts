@@ -7,7 +7,9 @@ export interface Credentials {
   password: string;
 }
 
-export async function signup(data: SignupDraft) {
+export type SignupPayload = SignupDraft & { firebaseIdToken: string };
+
+export async function signup(data: SignupPayload) {
   const res = await http.post('/auth/signup', data);
   return res.data.data as { user?: User; token?: string; message?: string };
 }
@@ -26,7 +28,7 @@ export async function logoutApi() {
   await http.post('/auth/logout');
 }
 
-export async function resetPassword(phone: string, password: string) {
-  const res = await http.post('/auth/reset-password', { phone, password });
+export async function resetPassword(phone: string, password: string, firebaseIdToken: string) {
+  const res = await http.post('/auth/reset', { phone, password, firebaseIdToken });
   return res.data.data;
 }

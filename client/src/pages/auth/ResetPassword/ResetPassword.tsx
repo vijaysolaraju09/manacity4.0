@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -7,13 +7,25 @@ import logo from '@/assets/logo.png';
 import fallbackImage from '@/assets/no-image.svg';
 import Loader from '@/components/Loader';
 import showToast from '@/components/ui/Toast';
-import { http } from '@/lib/http';
-import { toErrorMessage } from '@/lib/response';
 import { paths } from '@/routes/paths';
+import OTPPhoneFirebase from '@/components/forms/OTPPhoneFirebase';
+import { createZodResolver } from '@/lib/createZodResolver';
+import { useForm } from '@/components/ui/form';
+import * as z from 'zod';
+import { resetPassword as resetPasswordApi } from '@/api/auth';
+import { toErrorMessage } from '@/lib/response';
 
 interface LocationState {
   phone?: string;
 }
+
+const ResetPasswordSchema = z.object({
+  password: z.string().min(6, 'New password must be at least 6 characters long'),
+});
+
+const defaultCountryCode = '+91';
+
+type ResetPasswordFormValues = z.infer<typeof ResetPasswordSchema>;
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -21,11 +33,17 @@ const ResetPassword = () => {
   const state = location.state as LocationState | null;
   const phone = state?.phone ?? '';
 
-  const [otp, setOtp] = useState('');
-  const [password, setPassword] = useState('');
+  const [otpVerified, setOtpVerified] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ otp?: string; password?: string; general?: string }>({});
-  const [loading, setLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ResetPasswordFormValues>({
+    resolver: createZodResolver(ResetPasswordSchema),
+    mode: 'onChange',
+  });
 
   useEffect(() => {
     if (!phone) {
@@ -33,51 +51,28 @@ const ResetPassword = () => {
     }
   }, [phone, navigate]);
 
-  const maskedPhone = useMemo(() => {
-    if (!phone) return '';
-    const visible = phone.slice(-4);
-    return `••••••${visible}`;
-  }, [phone]);
+  const maskedPhone = phone ? `••••••${phone.slice(-4)}` : '';
 
-  if (!phone) {
-    return null;
-  }
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmitNewPassword = async (data: ResetPasswordFormValues) => {
     if (!phone) {
       showToast('Reset session expired. Please request a new code.', 'error');
       navigate(paths.auth.forgot(), { replace: true });
       return;
     }
 
-    const fieldErrors: { otp?: string; password?: string } = {};
-    if (!/^\d{6}$/.test(otp)) {
-      fieldErrors.otp = 'Enter the 6-digit OTP sent to your phone.';
-    }
-    if (password.length < 6) {
-      fieldErrors.password = 'New password must be at least 6 characters long.';
-    }
-
-    if (Object.keys(fieldErrors).length > 0) {
-      setErrors(fieldErrors);
-      return;
-    }
-
     try {
-      setLoading(true);
-      setErrors({});
-      await http.post('/auth/reset', { phone, code: otp, password });
+      await resetPasswordApi(phone, data.password);
       showToast('Password reset successful! Please log in with your new password.', 'success');
       navigate(paths.auth.login(), { replace: true });
-    } catch (err) {
-      const message = toErrorMessage(err) || 'Unable to reset password. Please try again.';
-      setErrors({ general: message });
+    } catch (error) {
+      const message = toErrorMessage(error) || 'Unable to reset password. Please try again.';
       showToast(message, 'error');
-    } finally {
-      setLoading(false);
     }
   };
+
+  if (!phone) {
+    return null;
+  }
 
   return (
     <div className="reset-page">
@@ -97,77 +92,50 @@ const ResetPassword = () => {
         />
         <h2 className="title">Reset your password</h2>
         <p className="hint">
-          Enter the OTP we sent to your phone to set a new password.
-          {maskedPhone && <span className="phone"> Code sent to {maskedPhone}.</span>}
+          {!otpVerified ? (
+            <>
+              Enter the OTP we sent to your phone to set a new password.
+              {maskedPhone && <span className="phone"> Code sent to {maskedPhone}.</span>}
+            </>
+          ) : (
+            'Enter a new password for your account.'
+          )}
         </p>
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="control">
-            <label htmlFor="reset-otp">OTP Code</label>
-            <input
-              id="reset-otp"
-              type="tel"
-              inputMode="numeric"
-              pattern="\d*"
-              maxLength={6}
-              value={otp}
-              onChange={(event) => {
-                const next = event.target.value.replace(/[^\d]/g, '');
-                setOtp(next);
-                if (errors.otp || errors.general) {
-                  setErrors((prev) => ({ ...prev, otp: undefined, general: undefined }));
-                }
-              }}
-              placeholder="Enter 6-digit code"
-              required
-              autoComplete="one-time-code"
-            />
-            {errors.otp && <div className="error">{errors.otp}</div>}
-          </div>
+        {!otpVerified && (
+          <OTPPhoneFirebase phone={`${defaultCountryCode}${phone}`} onVerifySuccess={() => setOtpVerified(true)} />
+        )}
 
-          <div className="control">
-            <label htmlFor="reset-password">New Password</label>
-            <div className="password-field">
-              <input
-                id="reset-password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(event) => {
-                  setPassword(event.target.value);
-                  if (errors.password || errors.general) {
-                    setErrors((prev) => ({ ...prev, password: undefined, general: undefined }));
-                  }
-                }}
-                placeholder="Enter new password"
-                minLength={6}
-                required
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                className="toggle"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                onClick={() => setShowPassword((prev) => !prev)}
-              >
-                {showPassword ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
-              </button>
+        {otpVerified && (
+          <form onSubmit={handleSubmit(onSubmitNewPassword)} noValidate>
+            <div className="control">
+              <label htmlFor="reset-password">New Password</label>
+              <div className="password-field">
+                <input
+                  id="reset-password"
+                  type={showPassword ? 'text' : 'password'}
+                  {...register('password')}
+                  placeholder="Enter new password"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="toggle"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.password && <div className="error">{errors.password.message}</div>}
             </div>
-          </div>
-
-          {errors.password && <div className="error">{errors.password}</div>}
-          {errors.general && <div className="error">{errors.general}</div>}
-
-          <div className="actions">
-            <motion.button
-              type="submit"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              disabled={loading}
-            >
-              {loading ? <Loader /> : 'Reset password'}
-            </motion.button>
-          </div>
-        </form>
+            <div className="actions">
+              <motion.button type="submit" whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} disabled={isSubmitting}>
+                {isSubmitting ? <Loader /> : 'Reset password'}
+              </motion.button>
+            </div>
+          </form>
+        )}
 
         <div className="links">
           <span onClick={() => navigate(paths.auth.login())}>Back to login</span>

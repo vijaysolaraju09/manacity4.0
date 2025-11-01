@@ -43,6 +43,8 @@ export const paths = {
     login: () => '/login',
     signup: () => '/signup',
     forgot: () => '/forgot',
+    verifyOtp: () => '/verify-otp',
+    reset: () => '/reset',
   },
   admin: {
     root: () => '/admin',

@@ -26,4 +26,25 @@ const forgotPasswordSchema = {
   }),
 };
 
-module.exports = { signupSchema, loginSchema, forgotPasswordSchema };
+const verifyPhoneSchema = {
+  body: z.object({
+    phone: phoneSchema,
+    code: z.string().regex(/^\d{6}$/, 'OTP must be 6 digits'),
+  }),
+};
+
+const resetPasswordSchema = {
+  body: z.object({
+    phone: phoneSchema,
+    code: z.string().regex(/^\d{6}$/, 'OTP must be 6 digits'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+  }),
+};
+
+module.exports = {
+  signupSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  verifyPhoneSchema,
+  resetPasswordSchema,
+};

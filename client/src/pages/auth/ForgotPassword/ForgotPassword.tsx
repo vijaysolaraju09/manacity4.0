@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import './ForgotPassword.scss';
@@ -12,23 +12,13 @@ import { normalizePhoneDigits } from '@/utils/phone';
 import { paths } from '@/routes/paths';
 
 const SUCCESS_MESSAGE =
-  'If an account exists for that number, you will receive password reset instructions shortly.';
+  'If an account exists for that number, you will receive an OTP to reset your password shortly.';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
-  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
-  const redirectTimer = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (redirectTimer.current) {
-        window.clearTimeout(redirectTimer.current);
-      }
-    };
-  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -36,20 +26,15 @@ const ForgotPassword = () => {
     const normalizedPhone = normalizePhoneDigits(phone);
     if (!normalizedPhone) {
       setError('Enter a valid phone number (10-14 digits).');
-      setInfo('');
       return;
     }
 
     try {
       setLoading(true);
       setError('');
-      setInfo('');
       await http.post('/auth/forgot', { phone: normalizedPhone });
-      setInfo(SUCCESS_MESSAGE);
       showToast(SUCCESS_MESSAGE, 'success');
-      redirectTimer.current = window.setTimeout(() => {
-        navigate(paths.auth.login());
-      }, 2400);
+      navigate(paths.auth.reset(), { state: { phone: normalizedPhone } });
     } catch (err) {
       const message = toErrorMessage(err) || 'Unable to process your request right now.';
       setError(message);
@@ -75,7 +60,7 @@ const ForgotPassword = () => {
         <img src={logo} alt="Manacity Logo" className="logo" onError={(e) => (e.currentTarget.src = fallbackImage)} />
 
         <h2 className="title">Reset your password</h2>
-        <p className="hint">We&apos;ll send you a link to create a new password.</p>
+        <p className="hint">We&apos;ll send you an OTP to create a new password.</p>
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="control">
@@ -86,13 +71,20 @@ const ForgotPassword = () => {
               name="phone"
               placeholder="Enter phone number"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                if (error) {
+                  setError('');
+                }
+              }}
               autoComplete="tel"
+              required
+              inputMode="tel"
+              pattern="\d{10,14}"
             />
           </div>
 
           {error && <div className="error">{error}</div>}
-          {info && <div className="success" role="status">{info}</div>}
 
           <div className="actions">
             <motion.button
@@ -101,7 +93,7 @@ const ForgotPassword = () => {
               whileTap={{ scale: 0.96 }}
               disabled={loading}
             >
-              {loading ? <Loader /> : 'Send reset link'}
+              {loading ? <Loader /> : 'Send OTP'}
             </motion.button>
           </div>
         </form>

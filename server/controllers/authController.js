@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const AppError = require("../utils/AppError");
-const authService = require("../services/authService");
+const otpService = require("../services/otpService");
 
 const normalizeDigits = (value) => String(value ?? "").replace(/\D/g, "");
 const isValidPhone = (value) => /^\d{10,14}$/.test(value);
@@ -90,7 +90,12 @@ exports.signup = async (req, res, next) => {
       throw AppError.badRequest('MISSING_CONTACT', 'Phone is required');
     }
 
-    const existingPhone = await User.findOne({ phone });
+    const normalizedPhone = normalizeDigits(phone);
+    if (!isValidPhone(normalizedPhone)) {
+      throw AppError.badRequest('INVALID_PHONE', 'Enter a valid phone number');
+    }
+
+    const existingPhone = await User.findOne({ phone: normalizedPhone });
     if (existingPhone) {
       throw AppError.conflict('USER_EXISTS', 'Phone already registered');
     }
@@ -105,29 +110,28 @@ exports.signup = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
-      phone,
+      phone: normalizedPhone,
       password: hashedPassword,
       location,
       role,
       email,
       address: '',
       isVerified: false,
-      verificationStatus: 'none',
+      verificationStatus: 'pending',
     });
 
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
+    try {
+      await otpService.sendVerificationCode(normalizedPhone);
+    } catch (err) {
+      await User.deleteOne({ _id: user._id });
+      throw err;
     }
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      jwtSecret,
-      { expiresIn: '7d' }
-    );
 
     res.status(201).json({
       ok: true,
-      data: { user: user.toProfileJSON(), token },
+      data: {
+        message: `OTP sent to ${user.phone}. Please verify to complete signup.`,
+      },
       traceId: req.traceId,
     });
   } catch (err) {
@@ -139,13 +143,21 @@ exports.login = async (req, res, next) => {
   try {
     const { phone, password } = req.body;
 
-    // 1) Pull password (likely select:false in schema)
-    const user = await User.findOne({ phone }).select('+password');
+    const normalizedPhone = normalizeDigits(phone);
+    if (!normalizedPhone || !isValidPhone(normalizedPhone)) {
+      throw AppError.badRequest('INVALID_PHONE', 'Enter a valid phone number');
+    }
+
+    const user = await User.findOne({ phone: normalizedPhone }).select('+password');
     if (!user) return next(AppError.notFound('USER_NOT_FOUND', 'User not found'));
 
     // 2) Guard accounts without password (e.g., OTP-only accounts)
     if (!user.password) {
       return next(AppError.badRequest('PASSWORD_LOGIN_NOT_AVAILABLE', 'This account uses OTP login'));
+    }
+
+    if (!user.isVerified) {
+      return next(AppError.forbidden('PHONE_NOT_VERIFIED', 'Please verify your phone to continue.'));
     }
 
     // 3) Compare
@@ -177,20 +189,98 @@ exports.forgotPassword = async (req, res, next) => {
     }
 
     try {
-      await authService.issueResetTokenForPhone(normalizedPhone);
+      const user = await User.findOne({ phone: normalizedPhone });
+      if (user) {
+        await otpService.sendVerificationCode(normalizedPhone);
+      }
     } catch (err) {
-      if (!err || typeof err !== "object" || err.status !== 404) {
+      if (err instanceof AppError && err.statusCode >= 500) {
         throw err;
       }
-      // Swallow not found errors to avoid leaking which phone numbers exist
     }
 
     return res.json({
       ok: true,
       data: {
-        message:
-          "If an account exists for that number, you will receive password reset instructions shortly.",
+        message: "If an account exists for that number, you will receive an OTP shortly.",
       },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.verifyPhone = async (req, res, next) => {
+  try {
+    const { phone, code } = req.body;
+    const normalizedPhone = normalizeDigits(phone);
+
+    if (!normalizedPhone || !isValidPhone(normalizedPhone)) {
+      throw AppError.badRequest('INVALID_PHONE', 'Enter a valid phone number');
+    }
+
+    const result = await otpService.verifyCode(normalizedPhone, code);
+    if (!result || result.status !== 'approved') {
+      throw AppError.badRequest('INVALID_OTP', 'Invalid or expired OTP');
+    }
+
+    const user = await User.findOneAndUpdate(
+      { phone: normalizedPhone },
+      { isVerified: true, verificationStatus: 'approved' },
+      { new: true }
+    );
+
+    if (!user) {
+      throw AppError.notFound('USER_NOT_FOUND', 'User not found');
+    }
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
+    }
+
+    const token = jwt.sign({ userId: user._id, role: user.role }, jwtSecret, { expiresIn: '7d' });
+
+    return res.json({
+      ok: true,
+      data: { token, user: user.toProfileJSON() },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { phone, code, password } = req.body;
+    const normalizedPhone = normalizeDigits(phone);
+
+    if (!normalizedPhone || !isValidPhone(normalizedPhone)) {
+      throw AppError.badRequest('INVALID_PHONE', 'Enter a valid phone number');
+    }
+
+    const result = await otpService.verifyCode(normalizedPhone, code);
+    if (!result || result.status !== 'approved') {
+      throw AppError.badRequest('INVALID_OTP', 'Invalid or expired OTP');
+    }
+
+    const user = await User.findOne({ phone: normalizedPhone }).select('+password');
+    if (!user) {
+      throw AppError.badRequest('INVALID_OTP', 'Invalid or expired OTP');
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    if (!user.isVerified) {
+      user.isVerified = true;
+      user.verificationStatus = 'approved';
+    }
+    await user.save();
+
+    return res.json({
+      ok: true,
+      data: { message: 'Password reset successful. You can now log in with your new password.' },
       traceId: req.traceId,
     });
   } catch (err) {

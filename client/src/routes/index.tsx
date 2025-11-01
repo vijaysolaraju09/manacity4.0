@@ -33,7 +33,6 @@ const Landing = lazy(() => import('@/pages/Landing/Landing'));
 const Login = lazy(() => import('@/pages/auth/Login/Login'));
 const Signup = lazy(() => import('@/pages/auth/Signup/Signup'));
 const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword/ForgotPassword'));
-const VerifyOtp = lazy(() => import('@/pages/auth/VerifyOtp/VerifyOtp'));
 const ResetPassword = lazy(() => import('@/pages/auth/ResetPassword/ResetPassword'));
 const Profile = lazy(() => import('@/pages/Profile/Profile'));
 const Home = lazy(() => import('@/pages/Home/Home'));
@@ -107,7 +106,6 @@ const AppRoutes = () => (
       <Route key="login" path="/login" element={<Login />} />
       <Route key="signup" path="/signup" element={<Signup />} />
       <Route key="forgot" path="/forgot" element={<ForgotPassword />} />
-      <Route key="verify-otp" path="/verify-otp" element={<VerifyOtp />} />
       <Route key="reset" path="/reset" element={<ResetPassword />} />
       <Route key="admin-login" path="/admin/login" element={<AdminLogin />} />
 

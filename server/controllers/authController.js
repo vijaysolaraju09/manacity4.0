@@ -2,7 +2,6 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const AppError = require("../utils/AppError");
-const firebaseAuthService = require("../services/firebaseAuthService");
 
 const normalizeDigits = (value) => String(value ?? "").replace(/\D/g, "");
 const isValidPhone = (value) => /^\d{10,14}$/.test(value);
@@ -84,7 +83,7 @@ const ensureAdminAccount = async (email, password) => {
 
 exports.signup = async (req, res, next) => {
   try {
-    const { name, phone, password, location, role, email, firebaseIdToken } = req.body;
+    const { name, phone, password, location, role, email } = req.body;
 
     if (!phone) {
       throw AppError.badRequest('MISSING_CONTACT', 'Phone is required');
@@ -105,17 +104,6 @@ exports.signup = async (req, res, next) => {
       if (existingEmail) {
         throw AppError.conflict('EMAIL_EXISTS', 'Email already registered');
       }
-    }
-
-    const decodedToken = await firebaseAuthService.verifyIdToken(firebaseIdToken);
-    const verifiedPhoneDigits = normalizeDigits(decodedToken?.phone_number);
-
-    if (!verifiedPhoneDigits) {
-      throw AppError.badRequest('OTP_PHONE_MISSING', 'Verified phone number not found in Firebase token');
-    }
-
-    if (!verifiedPhoneDigits.endsWith(normalizedPhone)) {
-      throw AppError.badRequest('PHONE_MISMATCH', 'Verified phone number does not match signup phone');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -163,9 +151,9 @@ exports.login = async (req, res, next) => {
     const user = await User.findOne({ phone: normalizedPhone }).select('+password');
     if (!user) return next(AppError.notFound('USER_NOT_FOUND', 'User not found'));
 
-    // 2) Guard accounts without password (e.g., OTP-only accounts)
+    // Guard accounts without password credentials
     if (!user.password) {
-      return next(AppError.badRequest('PASSWORD_LOGIN_NOT_AVAILABLE', 'This account uses OTP login'));
+      return next(AppError.badRequest('PASSWORD_LOGIN_NOT_AVAILABLE', 'This account is not configured for password login.'));
     }
 
     if (!user.isVerified) {
@@ -203,55 +191,8 @@ exports.forgotPassword = async (req, res, next) => {
     return res.json({
       ok: true,
       data: {
-        message: "If an account exists for that number, you will receive an OTP shortly.",
+        message: 'If an account exists for that number, you can reset your password shortly.',
       },
-      traceId: req.traceId,
-    });
-  } catch (err) {
-    return next(err);
-  }
-};
-
-exports.verifyPhone = async (req, res, next) => {
-  try {
-    const { phone, firebaseIdToken } = req.body;
-    const normalizedPhone = normalizeDigits(phone);
-
-    if (!normalizedPhone || !isValidPhone(normalizedPhone)) {
-      throw AppError.badRequest('INVALID_PHONE', 'Enter a valid phone number');
-    }
-
-    const decodedToken = await firebaseAuthService.verifyIdToken(firebaseIdToken);
-    const verifiedPhoneDigits = normalizeDigits(decodedToken?.phone_number);
-
-    if (!verifiedPhoneDigits) {
-      throw AppError.badRequest('OTP_PHONE_MISSING', 'Verified phone number not found in Firebase token');
-    }
-
-    if (!verifiedPhoneDigits.endsWith(normalizedPhone)) {
-      throw AppError.badRequest('PHONE_MISMATCH', 'Verified phone number does not match request');
-    }
-
-    const user = await User.findOneAndUpdate(
-      { phone: normalizedPhone },
-      { isVerified: true, verificationStatus: 'approved' },
-      { new: true }
-    );
-
-    if (!user) {
-      throw AppError.notFound('USER_NOT_FOUND', 'User not found');
-    }
-
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      throw AppError.internal('JWT_SECRET_NOT_SET', 'JWT secret not configured');
-    }
-
-    const token = jwt.sign({ userId: user._id, role: user.role }, jwtSecret, { expiresIn: '7d' });
-
-    return res.json({
-      ok: true,
-      data: { token, user: user.toProfileJSON() },
       traceId: req.traceId,
     });
   } catch (err) {
@@ -261,27 +202,16 @@ exports.verifyPhone = async (req, res, next) => {
 
 exports.resetPassword = async (req, res, next) => {
   try {
-    const { phone, password, firebaseIdToken } = req.body;
+    const { phone, password } = req.body;
     const normalizedPhone = normalizeDigits(phone);
 
     if (!normalizedPhone || !isValidPhone(normalizedPhone)) {
       throw AppError.badRequest('INVALID_PHONE', 'Enter a valid phone number');
     }
 
-    const decodedToken = await firebaseAuthService.verifyIdToken(firebaseIdToken);
-    const verifiedPhoneDigits = normalizeDigits(decodedToken?.phone_number);
-
-    if (!verifiedPhoneDigits) {
-      throw AppError.badRequest('OTP_PHONE_MISSING', 'Verified phone number not found in Firebase token');
-    }
-
-    if (!verifiedPhoneDigits.endsWith(normalizedPhone)) {
-      throw AppError.badRequest('PHONE_MISMATCH', 'Verified phone number does not match request');
-    }
-
     const user = await User.findOne({ phone: normalizedPhone }).select('+password');
     if (!user) {
-      throw AppError.badRequest('INVALID_OTP', 'Invalid or expired OTP');
+      throw AppError.badRequest('USER_NOT_FOUND', 'User not found');
     }
 
     user.password = await bcrypt.hash(password, 10);

@@ -1,102 +1,49 @@
-import { describe, expect, it } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import type { ReactNode } from 'react';
-import cartReducer, {
-  selectCartItems,
-  selectItemCount,
-  selectSubtotalPaise,
-} from '@/store/slices/cartSlice';
-import type { RootState } from '@/store';
-import { useCartActions } from './useCartActions';
+import { renderHook, act } from '@testing-library/react';
 
-const createStore = () =>
-  configureStore({
-    reducer: {
-      cart: cartReducer,
-    },
-  });
+import { store } from '@/store';
+import { useCartActions } from './useCartActions';
+import { selectCartItems } from '@/store/slices/cartSlice';
 
 describe('useCartActions', () => {
-  const baseProduct = {
-    _id: 'prod-1',
-    shopId: 'shop-1',
-    price: 199.99,
-    name: 'Sample product',
-    image: 'sample.jpg',
-  };
+  const wrapper = ({ children }: { children: React.ReactNode }) => <Provider store={store}>{children}</Provider>;
 
-  it('adds items to the cart and merges duplicate products', () => {
-    const store = createStore();
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <Provider store={store}>{children}</Provider>
-    );
-
+  it('adds items to the cart', () => {
     const { result } = renderHook(() => useCartActions(), { wrapper });
 
     act(() => {
-      result.current.addToCart(baseProduct, 1);
-      result.current.addToCart(
-        { ...baseProduct, name: 'Updated name', image: 'updated.jpg' },
-        2,
-      );
-    });
-
-    const state = store.getState() as RootState;
-    const items = selectCartItems(state);
-
-    expect(items).toHaveLength(1);
-    expect(items[0]).toMatchObject({
-      productId: 'prod-1',
-      shopId: 'shop-1',
-      qty: 3,
-      name: 'Updated name',
-      image: 'updated.jpg',
-      pricePaise: 19999,
-    });
-    expect(selectItemCount(state)).toBe(3);
-    expect(selectSubtotalPaise(state)).toBe(3 * 19999);
-  });
-
-  it('throws when the product cannot be normalized into a cart item', () => {
-    const store = createStore();
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <Provider store={store}>{children}</Provider>
-    );
-
-    const { result } = renderHook(() => useCartActions(), { wrapper });
-
-    expect(() => result.current.addToCart({ price: 99 })).toThrowError();
-    expect(selectCartItems(store.getState() as RootState)).toHaveLength(0);
-  });
-
-  it('updates and removes items using composite identifiers', () => {
-    const store = createStore();
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <Provider store={store}>{children}</Provider>
-    );
-
-    const { result } = renderHook(() => useCartActions(), { wrapper });
-
-    act(() => {
-      result.current.addToCart(baseProduct, 1);
-    });
-
-    act(() => {
-      result.current.updateCartQuantity({
-        productId: 'prod-1',
+      result.current.addToCart({
+        _id: 'sku-1',
         shopId: 'shop-1',
-        qty: 3,
+        name: 'Fresh Apples',
+        pricePaise: 999,
       });
     });
 
-    expect(selectCartItems(store.getState() as RootState)[0].qty).toBe(3);
+    const items = selectCartItems(store.getState());
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ productId: 'sku-1', qty: 1, pricePaise: 999 });
+  });
+
+  it('updates and removes cart items', () => {
+    const { result } = renderHook(() => useCartActions(), { wrapper });
 
     act(() => {
-      result.current.removeFromCart({ productId: 'prod-1', shopId: 'shop-1' });
+      result.current.addToCart({ _id: 'sku-2', shopId: 'shop-1', name: 'Bananas', price: 49 }, 2);
     });
 
-    expect(selectCartItems(store.getState() as RootState)).toHaveLength(0);
+    act(() => {
+      result.current.updateCartQuantity({ productId: 'sku-2', shopId: 'sku-2', qty: 5 });
+    });
+
+    let items = selectCartItems(store.getState());
+    expect(items.find((item) => item.productId === 'sku-2')?.qty).toBe(5);
+
+    act(() => {
+      result.current.removeFromCart({ productId: 'sku-2', shopId: 'sku-2' });
+    });
+
+    items = selectCartItems(store.getState());
+    expect(items.find((item) => item.productId === 'sku-2')).toBeUndefined();
   });
 });

@@ -1,12 +1,11 @@
 import { useState, type ReactNode } from 'react';
 import { toErrorMessage } from '@/lib/response';
 import { useCartActions } from '@/hooks/useCartActions';
+import { type ProductInput } from '@/lib/cartItem';
 import showToast from './Toast';
 
-type ProductShape = Record<PropertyKey, unknown>;
-
 type AddToCartButtonProps = {
-  product: ProductShape | null | undefined;
+  product: ProductInput;
   qty?: number;
   className?: string;
   children?: ReactNode;
@@ -31,29 +30,21 @@ const AddToCartButton = ({
   const { addToCart } = useCartActions();
   const [pending, setPending] = useState(false);
 
-  const productRecord: ProductShape = (product ?? {}) as ProductShape;
+  const productRecord: ProductInput = product;
 
-  const hasStockProp = Object.prototype.hasOwnProperty.call(productRecord, 'stock');
-  const rawStock = productRecord.stock as unknown;
+  const rawStock = (productRecord as Record<string, unknown> | null)?.stock as unknown;
   let outOfStock = false;
-  if (hasStockProp) {
-    if (typeof rawStock === 'number') {
-      outOfStock = rawStock <= 0;
-    } else if (typeof rawStock === 'string') {
-      const parsed = Number(rawStock);
-      outOfStock = Number.isFinite(parsed) ? parsed <= 0 : true;
-    } else if (rawStock === null || rawStock === undefined) {
-      outOfStock = true;
-    }
+  if (typeof rawStock === 'number') {
+    outOfStock = rawStock <= 0;
+  } else if (typeof rawStock === 'string') {
+    const parsed = Number(rawStock);
+    outOfStock = Number.isFinite(parsed) ? parsed <= 0 : false;
   }
 
-  const rawIsActive = productRecord.isActive as unknown;
-  const rawIsDeleted = productRecord.isDeleted as unknown;
+  const rawIsActive = (productRecord as Record<string, unknown> | null)?.isActive as unknown;
+  const rawIsDeleted = (productRecord as Record<string, unknown> | null)?.isDeleted as unknown;
 
-  const isInactive =
-    Object.prototype.hasOwnProperty.call(productRecord, 'isActive') &&
-    typeof rawIsActive === 'boolean' &&
-    !rawIsActive;
+  const isInactive = typeof rawIsActive === 'boolean' && !rawIsActive;
   const isDeleted = typeof rawIsDeleted === 'boolean' && rawIsDeleted;
 
   const computedDisabled = disabledProp || pending || isInactive || isDeleted || outOfStock;

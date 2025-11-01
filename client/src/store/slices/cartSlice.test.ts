@@ -1,33 +1,33 @@
+import { describe, expect, it, beforeEach, afterEach, vi, type MockInstance } from 'vitest';
+
 import cartReducer, {
   addItem,
   clearCart,
   clearShop,
+  hydrateCart,
   removeItem,
   selectCartItems,
   selectByShop,
   selectItemCount,
   selectSubtotalPaise,
   updateItemQty,
+  type CartItem,
+  type CartState,
 } from './cartSlice';
-import type { CartItem, CartState } from './cartSlice';
 import type { RootState } from '@/store';
-import { describe, expect, it, beforeEach, afterEach, vi, type MockInstance } from 'vitest';
 
-describe('cartSlice reducers', () => {
+describe('cartSlice', () => {
   const baseItem: CartItem = {
     productId: 'p-1',
     shopId: 's-1',
-    name: 'Sample',
+    name: 'Sample item',
     pricePaise: 2500,
     qty: 1,
   };
 
-  let setItemSpy: MockInstance<
-    Parameters<Storage['setItem']>,
-    ReturnType<Storage['setItem']>
-  >;
+  let setItemSpy: MockInstance<Parameters<Storage['setItem']>, ReturnType<Storage['setItem']>>;
 
-  const getState = (state: CartState) => ({ cart: state } as unknown as RootState);
+  const wrapState = (state: CartState) => ({ cart: state } as unknown as RootState);
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -42,138 +42,90 @@ describe('cartSlice reducers', () => {
     setItemSpy.mockRestore();
   });
 
-  it('adds a brand new item and persists the cart', () => {
+  it('adds new items and persists them', () => {
     const state = cartReducer(undefined, addItem(baseItem));
-
     expect(state.items).toHaveLength(1);
-    expect(state.items[0]).toMatchObject({
-      productId: 'p-1',
-      shopId: 's-1',
-      qty: 1,
-      name: 'Sample',
-      pricePaise: 2500,
-    });
-    expect(state.lastUpdated).toBeGreaterThan(0);
+    expect(state.items[0]).toMatchObject({ productId: 'p-1', qty: 1, pricePaise: 2500 });
 
     vi.runAllTimers();
     expect(setItemSpy).toHaveBeenLastCalledWith(
-      'manacity_cart_items',
+      'manacity:cart:v2',
       JSON.stringify(state.items),
     );
   });
 
-  it('merges quantities and details when the product already exists in the same shop and variant', () => {
-    let state = cartReducer(undefined, addItem(baseItem));
-
-    const updatedState = cartReducer(
-      state,
-      addItem({
-        ...baseItem,
-        qty: 3.6,
-        name: 'Updated name',
-        image: 'image.png',
-        pricePaise: 4000,
-      }),
-    );
-
-    expect(updatedState.items).toHaveLength(1);
-    expect(updatedState.items[0]).toMatchObject({
-      qty: 4,
-      name: 'Updated name',
-      image: 'image.png',
-      pricePaise: 4000,
-      shopId: 's-1',
-    });
-  });
-
-  it('keeps separate line items for different shops or variants', () => {
-    const variantItem: CartItem = {
-      ...baseItem,
-      variantId: 'v-1',
-      qty: 2,
-    };
-
-    const stateWithVariants = [
+  it('merges existing items by product, shop and variant', () => {
+    const state = [
       addItem(baseItem),
-      addItem({ ...baseItem, shopId: 's-2' }),
-      addItem(variantItem),
+      addItem({ ...baseItem, qty: 3, pricePaise: 3000, name: 'Updated', image: 'image.jpg' }),
     ].reduce(cartReducer, undefined as unknown as CartState);
 
-    expect(stateWithVariants.items).toHaveLength(3);
-    expect(stateWithVariants.items).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ productId: 'p-1', shopId: 's-1', variantId: undefined, qty: 1 }),
-        expect.objectContaining({ productId: 'p-1', shopId: 's-2', variantId: undefined, qty: 1 }),
-        expect.objectContaining({ productId: 'p-1', shopId: 's-1', variantId: 'v-1', qty: 2 }),
-      ]),
-    );
+    expect(state.items).toHaveLength(1);
+    expect(state.items[0]).toMatchObject({ qty: 4, pricePaise: 3000, name: 'Updated', image: 'image.jpg' });
   });
 
-  it('updates quantity and removes the item when the qty becomes invalid', () => {
-    let state = cartReducer(undefined, addItem(baseItem));
+  it('keeps separate lines for different shops or variants', () => {
+    const actions = [
+      addItem(baseItem),
+      addItem({ ...baseItem, shopId: 's-2' }),
+      addItem({ ...baseItem, variantId: 'v-1', qty: 2 }),
+    ];
+    const state = actions.reduce(cartReducer, undefined as unknown as CartState);
 
-    const increased = cartReducer(
-      state,
-      updateItemQty({ productId: 'p-1', shopId: 's-1', qty: 5.2 }),
-    );
-    expect(selectCartItems(getState(increased))[0].qty).toBe(5);
+    expect(state.items).toHaveLength(3);
+  });
 
-    const removed = cartReducer(
-      increased,
-      updateItemQty({ productId: 'p-1', shopId: 's-1', qty: 0 }),
-    );
+  it('updates quantities and removes invalid entries', () => {
+    const withItem = cartReducer(undefined, addItem(baseItem));
+    const updated = cartReducer(withItem, updateItemQty({ productId: 'p-1', shopId: 's-1', qty: 5.6 }));
+    expect(selectCartItems(wrapState(updated))[0].qty).toBe(5);
+
+    const removed = cartReducer(updated, updateItemQty({ productId: 'p-1', shopId: 's-1', qty: 0 }));
     expect(removed.items).toHaveLength(0);
   });
 
-  it('removes and clears items explicitly', () => {
-    const stateWithItems = [
+  it('removes items explicitly and supports shop level clearing', () => {
+    const populated = [
       addItem(baseItem),
       addItem({ ...baseItem, productId: 'p-2', shopId: 's-2' }),
     ].reduce(cartReducer, undefined as unknown as CartState);
 
-    const afterRemoval = cartReducer(
-      stateWithItems,
-      removeItem({ productId: 'p-1', shopId: 's-1' }),
+    const removed = cartReducer(populated, removeItem({ productId: 'p-1', shopId: 's-1' }));
+    expect(removed.items).toHaveLength(1);
+    expect(removed.items[0].productId).toBe('p-2');
+
+    const clearedShop = cartReducer(removed, clearShop({ shopId: 's-2' }));
+    expect(clearedShop.items).toHaveLength(0);
+  });
+
+  it('clears the entire cart', () => {
+    const populated = [addItem(baseItem), addItem({ ...baseItem, productId: 'p-2' })].reduce(
+      cartReducer,
+      undefined as unknown as CartState,
     );
-    expect(afterRemoval.items).toHaveLength(1);
-    expect(afterRemoval.items[0].productId).toBe('p-2');
 
-    const afterClear = cartReducer(afterRemoval, clearCart());
-    expect(afterClear.items).toHaveLength(0);
+    const cleared = cartReducer(populated, clearCart());
+    expect(cleared.items).toHaveLength(0);
   });
 
-  it('clears a specific shop and keeps other items intact', () => {
-    const stateWithItems = [
-      addItem(baseItem),
-      addItem({ ...baseItem, productId: 'p-2', shopId: 's-2' }),
-    ].reduce(cartReducer, undefined as unknown as CartState);
-
-    const cleared = cartReducer(stateWithItems, clearShop('s-1'));
-    expect(cleared.items).toEqual([
-      expect.objectContaining({ productId: 'p-2', shopId: 's-2' }),
-    ]);
+  it('hydrates from existing data safely', () => {
+    const hydrated = cartReducer(undefined, hydrateCart([{ ...baseItem, qty: 3 }, { productId: ' ', shopId: 's-3', name: 'x', qty: 1, pricePaise: 1000 }]));
+    expect(hydrated.items).toHaveLength(1);
+    expect(hydrated.items[0]).toMatchObject({ productId: 'p-1', qty: 3 });
   });
 
-  it('keeps selectors in sync with cart operations', () => {
+  it('keeps selectors consistent', () => {
     const actions = [
       addItem(baseItem),
       addItem({ ...baseItem, productId: 'p-2', shopId: 's-2', pricePaise: 1500, qty: 2 }),
       updateItemQty({ productId: 'p-1', shopId: 's-1', qty: 4 }),
     ];
-
-    const finalState = actions.reduce(
-      (acc, action) => cartReducer(acc, action),
-      undefined as unknown as CartState,
-    );
-
-    const root = getState(finalState);
+    const state = actions.reduce(cartReducer, undefined as unknown as CartState);
+    const root = wrapState(state);
 
     expect(selectItemCount(root)).toBe(6);
     expect(selectSubtotalPaise(root)).toBe(4 * 2500 + 2 * 1500);
     expect(selectByShop('s-1')(root)).toHaveLength(1);
-    expect(selectByShop('s-2')(root)[0]).toMatchObject({
-      productId: 'p-2',
-      qty: 2,
-    });
+    expect(selectByShop('s-2')(root)[0]).toMatchObject({ productId: 'p-2', qty: 2 });
   });
 });

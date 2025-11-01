@@ -8,12 +8,13 @@ import fallbackImage from '@/assets/no-image.svg';
 import Loader from '@/components/Loader';
 import showToast from '@/components/ui/Toast';
 import { paths } from '@/routes/paths';
-import OTPPhoneFirebase from '@/components/forms/OTPPhoneFirebase';
+import OTPPhoneFirebase, { type FirebaseVerificationResult } from '@/components/forms/OTPPhoneFirebase';
 import { createZodResolver } from '@/lib/createZodResolver';
 import { useForm } from '@/components/ui/form';
 import * as z from 'zod';
 import { resetPassword as resetPasswordApi } from '@/api/auth';
 import { toErrorMessage } from '@/lib/response';
+import { normalizePhoneDigits } from '@/utils/phone';
 
 interface LocationState {
   phone?: string;
@@ -34,6 +35,7 @@ const ResetPassword = () => {
   const phone = state?.phone ?? '';
 
   const [otpVerified, setOtpVerified] = useState(false);
+  const [verification, setVerification] = useState<FirebaseVerificationResult | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -60,8 +62,21 @@ const ResetPassword = () => {
       return;
     }
 
+    if (!verification?.idToken) {
+      showToast('Please verify the OTP before resetting your password.', 'error');
+      return;
+    }
+
+    const verifiedDigits = normalizePhoneDigits(verification.phoneNumber);
+    if (!verifiedDigits || !verifiedDigits.endsWith(phone)) {
+      showToast('Verified phone does not match this reset request. Please try again.', 'error');
+      setOtpVerified(false);
+      setVerification(null);
+      return;
+    }
+
     try {
-      await resetPasswordApi(phone, data.password);
+      await resetPasswordApi(phone, data.password, verification.idToken);
       showToast('Password reset successful! Please log in with your new password.', 'success');
       navigate(paths.auth.login(), { replace: true });
     } catch (error) {
@@ -103,7 +118,13 @@ const ResetPassword = () => {
         </p>
 
         {!otpVerified && (
-          <OTPPhoneFirebase phone={`${defaultCountryCode}${phone}`} onVerifySuccess={() => setOtpVerified(true)} />
+          <OTPPhoneFirebase
+            phone={`${defaultCountryCode}${phone}`}
+            onVerifySuccess={(result) => {
+              setVerification(result);
+              setOtpVerified(true);
+            }}
+          />
         )}
 
         {otpVerified && (

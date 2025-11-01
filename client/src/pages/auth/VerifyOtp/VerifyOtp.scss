@@ -117,3 +117,20 @@ form {
 .back:hover {
   color: #1d4ed8;
 }
+
+.otp-wrapper {
+  margin-top: 1rem;
+  position: relative;
+}
+
+.otp-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 0.75rem;
+  font-weight: 600;
+  color: #1f2937;
+}

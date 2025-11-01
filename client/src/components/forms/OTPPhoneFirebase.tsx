@@ -5,9 +5,14 @@ import { auth } from '@/firebase/firebase.config';
 import Loader from '@/components/Loader';
 import showToast from '@/components/ui/Toast';
 
+export interface FirebaseVerificationResult {
+  idToken: string;
+  phoneNumber: string;
+}
+
 interface OTPPhoneFirebaseProps {
   phone: string;
-  onVerifySuccess: () => void;
+  onVerifySuccess: (result: FirebaseVerificationResult) => void;
 }
 
 const OTPPhoneFirebase: React.FC<OTPPhoneFirebaseProps> = ({ phone, onVerifySuccess }) => {
@@ -71,15 +76,23 @@ const OTPPhoneFirebase: React.FC<OTPPhoneFirebaseProps> = ({ phone, onVerifySucc
 
     try {
       setLoading(true);
-      await confirmationResult.confirm(code);
+      const credential = await confirmationResult.confirm(code);
+      const firebaseUser = credential.user;
+      const idToken = await firebaseUser.getIdToken();
+      const phoneNumber = firebaseUser.phoneNumber || phone;
       await signOut(auth);
       showToast('Phone number verified successfully.', 'success');
-      onVerifySuccess();
+      onVerifySuccess({ idToken, phoneNumber });
     } catch (err) {
       console.error('OTP verification error', err);
       const message = 'Invalid or expired OTP. Please try again.';
       setError(message);
       showToast(message, 'error');
+      try {
+        await signOut(auth);
+      } catch (signOutError) {
+        console.warn('Failed to sign out after OTP error', signOutError);
+      }
     } finally {
       setLoading(false);
     }

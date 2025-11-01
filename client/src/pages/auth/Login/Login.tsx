@@ -19,31 +19,41 @@ const Login = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState<{ phone?: string; password?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone || !password) {
-      setError('Enter your credentials');
+    const normalizedPhone = normalizePhoneDigits(phone);
+    const fieldErrors: { phone?: string; password?: string } = {};
+
+    if (!phone.trim()) {
+      fieldErrors.phone = 'Phone number is required';
+    } else if (!normalizedPhone) {
+      fieldErrors.phone = 'Enter a valid phone number (10-14 digits).';
+    }
+
+    if (!password) {
+      fieldErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      fieldErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      setErrors(fieldErrors);
       return;
     }
 
-    const normalizedPhone = normalizePhoneDigits(phone);
-    if (!normalizedPhone) {
-      setError('Enter a valid phone number (10-14 digits).');
-      return;
-    }
     try {
       setLoading(true);
-      setError('');
+      setErrors({});
       await dispatch(loginThunk({ phone: normalizedPhone, password })).unwrap();
       navigate(paths.home());
       showToast('Logged in successfully', 'success');
     } catch (err: any) {
       const message = toErrorMessage(err);
-      setError(message);
+      setErrors({ general: message });
       showToast(message, 'error');
     } finally {
       setLoading(false);
@@ -73,12 +83,22 @@ const Login = () => {
             <label htmlFor="login-phone">Phone Number</label>
             <input
               id="login-phone"
-              type="text"
+              type="tel"
               name="phone"
               placeholder="Enter phone number"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                if (errors.phone || errors.general) {
+                  setErrors((prev) => ({ ...prev, phone: undefined, general: undefined }));
+                }
+              }}
+              required
+              inputMode="tel"
+              pattern="\d{10,14}"
+              autoComplete="tel"
             />
+            {errors.phone && <div className="error">{errors.phone}</div>}
           </div>
 
           <div className="control">
@@ -90,7 +110,15 @@ const Login = () => {
                 name="password"
                 placeholder="Enter your password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password || errors.general) {
+                    setErrors((prev) => ({ ...prev, password: undefined, general: undefined }));
+                  }
+                }}
+                required
+                minLength={6}
+                autoComplete="current-password"
               />
               <button
                 type="button"
@@ -107,7 +135,8 @@ const Login = () => {
             </div>
           </div>
 
-          {error && <div className="error">{error}</div>}
+          {errors.password && <div className="error">{errors.password}</div>}
+          {errors.general && <div className="error">{errors.general}</div>}
 
           <div className="actions">
             <motion.button

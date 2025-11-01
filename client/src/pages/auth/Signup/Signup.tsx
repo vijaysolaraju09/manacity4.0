@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 import './Signup.scss';
@@ -8,16 +7,14 @@ import logo from '../../../assets/logo.png';
 import fallbackImage from '../../../assets/no-image.svg';
 import Loader from '../../../components/Loader';
 import showToast from '../../../components/ui/Toast';
-import type { SignupDraft } from '../../../store/slices/authSlice';
-import { signup as signupThunk } from '../../../store/slices/authSlice';
-import type { AppDispatch } from '../../../store';
 import { normalizePhoneDigits } from '@/utils/phone';
 import { paths } from '@/routes/paths';
 import { toErrorMessage } from '@/lib/response';
+import { http } from '@/lib/http';
+import type { SignupDraft } from '../../../store/slices/authSlice';
 
 const Signup = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
   const [form, setForm] = useState<SignupDraft>({
     name: '',
     phone: '',
@@ -40,7 +37,18 @@ const Signup = () => {
     normalizePhoneDigits(phone);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+
+    const clearableFields: Array<keyof typeof errors> = ['name', 'phone', 'password', 'location', 'email'];
+    if (clearableFields.includes(name as keyof typeof errors)) {
+      const field = name as keyof typeof errors;
+      if (errors[field] || errors.general) {
+        setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }));
+      }
+    } else if (errors.general) {
+      setErrors((prev) => ({ ...prev, general: undefined }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,14 +74,20 @@ const Signup = () => {
 
     try {
       setLoading(true);
+      setErrors({});
       const payload = {
         ...form,
         phone: normalizedPhone!,
         email: form.email || undefined,
       };
-      await dispatch(signupThunk(payload)).unwrap();
-      showToast('Account created.', 'success');
-      navigate(paths.home());
+      const response = await http.post('/auth/signup', payload);
+      const message =
+        response.data?.data?.message || 'OTP sent to your phone. Please verify to finish signing up.';
+      showToast(message, 'success');
+      navigate(paths.auth.verifyOtp(), {
+        state: { phone: normalizedPhone, message },
+        replace: false,
+      });
     } catch (err: any) {
       const message = toErrorMessage(err);
       setErrors({ general: message });
@@ -104,7 +118,18 @@ const Signup = () => {
 
           <div className="control">
             <label htmlFor="signup-phone">Phone Number</label>
-            <input type="tel" id="signup-phone" name="phone" value={form.phone} onChange={handleChange} />
+            <input
+              type="tel"
+              id="signup-phone"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              required
+              inputMode="tel"
+              pattern="\d{10,14}"
+              placeholder="Enter phone number"
+              autoComplete="tel"
+            />
             {errors.phone && <div className="error">{errors.phone}</div>}
           </div>
 

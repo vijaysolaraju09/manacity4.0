@@ -9,7 +9,7 @@ import showToast from '@/components/ui/Toast';
 import { normalizePhoneDigits } from '@/utils/phone';
 import { paths } from '@/routes/paths';
 
-const SUCCESS_MESSAGE = 'If an account exists for that number, you will receive an OTP shortly.';
+const SUCCESS_MESSAGE = 'If an account exists for that number, you can now reset the password.';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -53,7 +53,7 @@ const ForgotPassword = () => {
         <img src={logo} alt="Manacity Logo" className="logo" onError={(event) => (event.currentTarget.src = fallbackImage)} />
 
         <h2 className="title">Reset your password</h2>
-        <p className="hint">We&apos;ll send you an OTP to create a new password.</p>
+        <p className="hint">We&apos;ll take you to the reset screen to create a new password.</p>
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="control">
@@ -81,7 +81,7 @@ const ForgotPassword = () => {
 
           <div className="actions">
             <motion.button type="submit" whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} disabled={loading}>
-              {loading ? <Loader /> : 'Send OTP'}
+              {loading ? <Loader /> : 'Continue'}
             </motion.button>
           </div>
         </form>

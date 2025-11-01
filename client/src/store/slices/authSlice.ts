@@ -11,7 +11,6 @@ export interface SignupDraft {
   location?: string;
   role?: 'customer' | 'business';
   email?: string;
-  firebaseIdToken?: string;
 }
 
 interface AuthResponse {

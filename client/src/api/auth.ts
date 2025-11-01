@@ -9,7 +9,7 @@ export interface Credentials {
 
 export async function signup(data: SignupDraft) {
   const res = await http.post('/auth/signup', data);
-  return res.data.data as { user: User; token: string };
+  return res.data.data as { user?: User; token?: string; message?: string };
 }
 
 export async function login(creds: Credentials) {
@@ -26,3 +26,7 @@ export async function logoutApi() {
   await http.post('/auth/logout');
 }
 
+export async function resetPassword(phone: string, password: string) {
+  const res = await http.post('/auth/reset-password', { phone, password });
+  return res.data.data;
+}

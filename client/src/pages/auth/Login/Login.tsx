@@ -45,6 +45,10 @@ const Login = () => {
       return;
     }
 
+    if (!normalizedPhone) {
+      return;
+    }
+
     try {
       setLoading(true);
       setErrors({});

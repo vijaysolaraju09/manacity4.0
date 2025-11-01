@@ -20,11 +20,11 @@ const OTPPhoneFirebase: React.FC<OTPPhoneFirebaseProps> = ({ phone, onVerifySucc
   useEffect(() => {
     setLoading(true);
     const verifier = new RecaptchaVerifier(
+      auth,
       recaptchaContainerId.current,
       {
         size: 'invisible',
       },
-      auth,
     );
 
     signInWithPhoneNumber(auth, phone, verifier)

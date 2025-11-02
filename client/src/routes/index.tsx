@@ -1,5 +1,5 @@
 import { Suspense, lazy, type LazyExoticComponent, type ComponentType, type ReactNode } from 'react';
-import { Routes, Route, Outlet } from 'react-router-dom';
+import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 import TabLayout from '@/layouts/TabLayout';
@@ -30,9 +30,9 @@ const withSuspense = <P extends object>(
 );
 
 const Landing = lazy(() => import('@/pages/Landing/Landing'));
-const Login = lazy(() => import('@/pages/auth/Login/Login'));
-const Signup = lazy(() => import('@/pages/auth/Signup/Signup'));
-const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword/ForgotPassword'));
+const Login = lazy(() => import('@/pages/auth/Login'));
+const Signup = lazy(() => import('@/pages/auth/Signup'));
+const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('@/pages/auth/ResetPassword/ResetPassword'));
 const Profile = lazy(() => import('@/pages/Profile/Profile'));
 const Home = lazy(() => import('@/pages/Home/Home'));
@@ -103,9 +103,12 @@ const AppRoutes = () => (
   <Routes>
     <Route key="root" element={<RootLayout />}>
       <Route key="landing" path="/" element={<Landing />} />
-      <Route key="login" path="/login" element={<Login />} />
-      <Route key="signup" path="/signup" element={<Signup />} />
-      <Route key="forgot" path="/forgot" element={<ForgotPassword />} />
+      <Route key="login" path="/login" element={<Navigate to="/auth/login" replace />} />
+      <Route key="signup" path="/signup" element={<Navigate to="/auth/signup" replace />} />
+      <Route key="forgot" path="/forgot" element={<Navigate to="/auth/forgot" replace />} />
+      <Route key="auth-login" path="/auth/login" element={<Login />} />
+      <Route key="auth-signup" path="/auth/signup" element={<Signup />} />
+      <Route key="auth-forgot" path="/auth/forgot" element={<ForgotPassword />} />
       <Route key="reset" path="/reset" element={<ResetPassword />} />
       <Route key="admin-login" path="/admin/login" element={<AdminLogin />} />
 

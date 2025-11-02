@@ -3,19 +3,19 @@ import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import { Spinner } from './Spinner';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-type ButtonTone = 'default' | 'success';
+type AuthButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+type AuthButtonTone = 'default' | 'success';
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: ButtonVariant;
-  tone?: ButtonTone;
+type AuthButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: AuthButtonVariant;
+  tone?: AuthButtonTone;
   loading?: boolean;
 };
 
 const baseStyles =
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-60';
 
-const variantStyles: Record<ButtonVariant, string> = {
+const variantStyles: Record<AuthButtonVariant, string> = {
   primary:
     'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 focus-visible:outline-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400',
   secondary:
@@ -28,12 +28,12 @@ const variantStyles: Record<ButtonVariant, string> = {
     'bg-rose-600 text-white shadow-lg shadow-rose-600/30 hover:bg-rose-500 focus-visible:outline-rose-500 dark:bg-rose-500 dark:hover:bg-rose-400',
 };
 
-const toneStyles: Record<ButtonTone, string> = {
+const toneStyles: Record<AuthButtonTone, string> = {
   default: '',
   success: 'bg-emerald-600 hover:bg-emerald-500 focus-visible:outline-emerald-500 text-white',
 };
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+const AuthButton = forwardRef<HTMLButtonElement, AuthButtonProps>(
   (
     { className, children, variant = 'primary', tone = 'default', loading = false, type = 'button', disabled, ...props },
     ref,
@@ -56,8 +56,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   },
 );
 
-Button.displayName = 'Button';
+AuthButton.displayName = 'AuthButton';
 
-export type { ButtonProps };
+export type { AuthButtonProps };
 
-export default Button;
+export { AuthButton };
+
+export default AuthButton;

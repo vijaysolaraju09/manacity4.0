@@ -5,8 +5,8 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { PhoneAuthProvider } from 'firebase/auth';
 import showToast from '@/components/ui/Toast';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { AuthButton as Button } from '@/components/ui/AuthButton';
+import { LabeledInput as Input } from '@/components/ui/LabeledInput';
 import { Spinner } from '@/components/ui/Spinner';
 import { ErrorAlert, SuccessAlert } from '@/components/Alerts';
 import { createZodResolver } from '@/lib/createZodResolver';
@@ -108,6 +108,7 @@ const Signup = () => {
     formState: { errors, isValid, isSubmitting },
     setError,
     getValues,
+    watch,
   } = useForm<SignupSchema>({
     resolver: createZodResolver(signupSchema),
     mode: 'onChange',

@@ -256,3 +256,31 @@
     line-height: 1.25rem;
   }
 }
+
+.dark .tab-layout {
+  background-color: var(--surface-2);
+  color: var(--ink-900);
+}
+
+.dark .top-header {
+  background-color: color-mix(in srgb, var(--surface) 80%, transparent);
+  border-bottom-color: var(--border);
+}
+
+.dark .tab-bar {
+  background-color: color-mix(in srgb, var(--surface) 78%, transparent);
+  border-top-color: var(--border);
+}
+
+.top-header .logo {
+  color: var(--ink-900);
+}
+
+.dark .top-header .logo {
+  color: var(--ink-900);
+}
+
+.tab-bar .tab svg,
+.tab-bar .tab span {
+  color: inherit;
+}

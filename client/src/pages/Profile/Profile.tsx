@@ -7,6 +7,7 @@ import {
   BadgeCheck,
   BriefcaseBusiness,
   Home,
+  LogOut,
   Mail,
   MapPin,
   Phone,
@@ -44,7 +45,7 @@ import { createZodResolver } from '@/lib/createZodResolver';
 import { toErrorMessage } from '@/lib/response';
 import { cn } from '@/lib/utils';
 import type { AppDispatch, RootState } from '@/store';
-import { setUser } from '@/store/slices/authSlice';
+import { logoutUser, setUser } from '@/store/slices/authSlice';
 import { paths } from '@/routes/paths';
 import type { User } from '@/types/user';
 
@@ -79,7 +80,7 @@ const editProfileSchema = z.object({
     .refine((value) => !value || /^https?:\/\//i.test(value), {
       message: 'Enter a valid URL',
     }),
-  theme: z.enum(['light', 'dark', 'colored']),
+  theme: z.enum(['light', 'dark', 'system']),
 });
 
 const verificationSchema = z.object({
@@ -137,7 +138,7 @@ interface InfoRowProps {
 
 const InfoRow = ({ icon: Icon, label, value, emptyLabel = 'Not provided' }: InfoRowProps) => (
   <div className="flex items-start gap-3 rounded-xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-white/40">
-    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-300">
+    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 bg-[color:var(--brand-400)]/15 text-blue-600 text-[var(--brand-600)] dark:bg-blue-400/10 dark:bg-[color:var(--brand-500)]/20 dark:text-blue-300 dark:text-[var(--accent-400)]">
       <Icon className="h-5 w-5" aria-hidden="true" />
     </span>
     <div className="space-y-1">
@@ -322,6 +323,12 @@ const Profile = () => {
       showToast(toErrorMessage(err), 'error');
     }
   }, [dispatch]);
+
+  const handleLogout = () => {
+    void dispatch(logoutUser()).finally(() => {
+      navigate(paths.auth.login(), { replace: true });
+    });
+  };
 
   const handleEditSubmit: SubmitHandler<EditProfileFormValues> = async (values) => {
     try {
@@ -551,35 +558,46 @@ const Profile = () => {
               className={cn(styles.card, 'relative overflow-hidden p-6 sm:p-8')}
             >
               <div
-                className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/10 via-transparent to-transparent"
+                className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/10 from-[color:var(--brand-500)]/15 via-transparent to-transparent"
                 aria-hidden="true"
               />
               <div className="relative space-y-6">
-                <div className={styles.cardHeader}>
-                  <div className={styles.avatarWrap}>
-                    {user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt={`${user.name}'s avatar`}
-                        className="h-20 w-20 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-500/10 text-lg font-semibold text-blue-600 dark:bg-blue-400/10 dark:text-blue-200">
-                        <span aria-hidden="true">{initials}</span>
-                        <span className="sr-only">{user.name} avatar</span>
-                      </span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-blue-500 dark:text-blue-300">
-                      <UserRoundCog className="h-4 w-4" aria-hidden="true" />
-                      Profile overview
-                    </p>
-                    <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{user.name}</h1>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                      Manage how your information appears across Manacity.
-                    </p>
-                  </div>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className={styles.cardHeader}>
+                    <div className={styles.avatarWrap}>
+                      {user.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl}
+                          alt={`${user.name}'s avatar`}
+                          className="h-20 w-20 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-500/10 bg-[color:var(--brand-500)]/15 text-lg font-semibold text-blue-600 text-[var(--brand-600)] dark:bg-blue-400/10 dark:text-blue-200 dark:text-[var(--ink-900)]">
+                          <span aria-hidden="true">{initials}</span>
+                          <span className="sr-only">{user.name} avatar</span>
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-blue-500 text-[var(--brand-500)] dark:text-blue-300 dark:text-[var(--accent-400)]">
+                        <UserRoundCog className="h-4 w-4" aria-hidden="true" />
+                        Profile overview
+                      </p>
+                      <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{user.name}</h1>
+                      <p className="text-sm text-slate-600 dark:text-slate-300">
+                        Manage how your information appears across Manacity.
+                      </p>
+                    </div>
+                </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-w-[140px] justify-center text-[var(--brand-600)] hover:shadow-brand w-full sm:w-auto"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4" aria-hidden="true" />
+                    Logout
+                  </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <StatusBadge>
@@ -609,7 +627,7 @@ const Profile = () => {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="rounded-lg border-slate-200/80 bg-white/80 text-slate-700 transition hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:bg-white/40 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:text-blue-300"
+                            className="rounded-lg border-slate-200/80 bg-white/80 text-slate-700 transition hover:border-blue-400 hover:border-[color:var(--brand-400)] hover:text-blue-600 hover:text-[var(--brand-600)] dark:border-slate-700 dark:bg-white/40 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:border-[color:var(--accent-500)] dark:hover:text-blue-300 dark:hover:text-[var(--accent-400)]"
                             onClick={() => navigate(action.path)}
                           >
                             {action.label}
@@ -795,7 +813,7 @@ const Profile = () => {
                       <Select id="edit-theme" {...field}>
                         <option value="light">Light</option>
                         <option value="dark">Dark</option>
-                        <option value="colored">Colored</option>
+                        <option value="system">System</option>
                       </Select>
                     </FormControl>
                     {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}

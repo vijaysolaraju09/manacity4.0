@@ -16,7 +16,7 @@ export interface UpdateProfileData {
   profession?: string;
   bio?: string;
   avatarUrl?: string;
-  preferences?: { theme?: 'light' | 'dark' | 'colored' };
+  preferences?: { theme?: 'light' | 'dark' | 'system' };
 }
 
 export interface BusinessRequest {

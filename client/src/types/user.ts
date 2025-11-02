@@ -12,6 +12,6 @@ export interface User {
   bio?: string;
   avatar?: string | null;
   avatarUrl?: string | null;
-  preferences?: { theme: 'light' | 'dark' | 'colored' };
+  preferences?: { theme: 'light' | 'dark' | 'system' };
   businessStatus?: 'none' | 'pending' | 'approved' | 'rejected';
 }

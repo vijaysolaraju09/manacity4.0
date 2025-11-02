@@ -2,12 +2,13 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
-import { Bell, CalendarDays, Gift, Home, Package, Settings, ShoppingCart, Store, UserRound, Users } from "lucide-react";
+import { Bell, CalendarDays, Gift, Home, LogOut, Package, ShoppingCart, Store, UserRound, Users } from "lucide-react";
 import NavItem from "@/components/navigation/NavItem";
 import type { RootState, AppDispatch } from "../store";
 import { fetchNotifs } from "@/store/notifs";
 import { selectItemCount } from "@/store/slices/cartSlice";
 import { paths } from "@/routes/paths";
+import { logoutUser } from "@/store/slices/authSlice";
 import "./TabLayout.scss";
 
 const TabLayout = () => {
@@ -79,6 +80,12 @@ const TabLayout = () => {
     if (location.pathname === paths.root()) navigate(paths.home());
   }, [location.pathname, navigate]);
 
+  const handleLogout = () => {
+    void dispatch(logoutUser()).finally(() => {
+      navigate(paths.auth.login(), { replace: true });
+    });
+  };
+
   return (
     <div className="tab-layout">
       <motion.header
@@ -103,7 +110,10 @@ const TabLayout = () => {
             badge={unread > 0 ? (unread > 99 ? "99+" : unread) : undefined}
           />
           <NavItem to={paths.profile()} icon={UserRound} label="Profile" ariaLabel="Profile" />
-          <NavItem to={paths.settings()} icon={Settings} label="Settings" ariaLabel="Settings" />
+          <button type="button" className="logout-action" onClick={handleLogout}>
+            <LogOut className="logout-action__icon" aria-hidden="true" />
+            <span className="logout-action__label">Logout</span>
+          </button>
         </div>
       </motion.header>
       <main className="tab-content">
@@ -158,13 +168,10 @@ const TabLayout = () => {
                 ariaLabel="Profile"
                 variant="default"
               />
-              <NavItem
-                to={paths.settings()}
-                icon={Settings}
-                label="Settings"
-                ariaLabel="Settings"
-                variant="default"
-              />
+              <button type="button" className="logout-action logout-action--sidebar" onClick={handleLogout}>
+                <LogOut className="logout-action__icon" aria-hidden="true" />
+                <span className="logout-action__label">Logout</span>
+              </button>
             </div>
           </nav>
         </div>

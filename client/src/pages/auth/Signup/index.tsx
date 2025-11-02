@@ -1,289 +1,195 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { useDispatch } from 'react-redux';
-import showToast from '@/components/ui/Toast';
-import { AuthButton as Button } from '@/components/ui/AuthButton';
-import { LabeledInput as Input } from '@/components/ui/LabeledInput';
-import { ErrorAlert } from '@/components/Alerts';
-import { createZodResolver } from '@/lib/createZodResolver';
-import { toErrorMessage } from '@/lib/response';
-import { signup as signupApi } from '@/api/auth';
-import { setToken, setUser, type SignupDraft } from '@/store/slices/authSlice';
+import { Eye, EyeOff } from 'lucide-react';
+import './Signup.scss';
 import logo from '@/assets/logo.png';
 import fallbackImage from '@/assets/no-image.svg';
+import Loader from '@/components/Loader';
+import showToast from '@/components/ui/Toast';
 import { paths } from '@/routes/paths';
+import { normalizePhoneDigits } from '@/utils/phone';
+import { createZodResolver } from '@/lib/createZodResolver';
+import { useForm } from '@/components/ui/form';
+import * as z from 'zod';
+import OTPPhoneFirebase from '@/components/forms/OTPPhoneFirebase';
+import { useDispatch } from 'react-redux';
+import { setToken, setUser } from '@/store/slices/authSlice';
+import type { AppDispatch } from '@/store';
+import { signup as signupApi } from '@/api/auth';
+import { toErrorMessage } from '@/lib/response';
 
-const signupSchema = z.object({
-  name: z
-    .string({ required_error: 'Full name is required.' })
-    .trim()
-    .min(2, 'Name must be at least 2 characters long.')
-    .max(80, 'Name must be under 80 characters.'),
-  phone: z
-    .string({ required_error: 'Phone number is required.' })
-    .trim()
-    .min(10, 'Enter a valid phone number.')
-    .max(14, 'Phone number seems too long.')
-    .regex(/^[0-9()+\s-]+$/, 'Only digits and basic separators are allowed.'),
-  password: z
-    .string({ required_error: 'Create a password to continue.' })
-    .min(6, 'Password must be at least 6 characters long.'),
-  email: z
-    .union([
-      z
-        .string()
-        .trim()
-        .email('Enter a valid email address.'),
-      z.literal(''),
-      z.undefined(),
-    ])
-    .transform((value) => (value === '' ? undefined : value)),
-  location: z
-    .union([
-      z
-        .string()
-        .trim()
-        .min(2, 'Location must be at least 2 characters long.')
-        .max(120, 'Location must be under 120 characters.'),
-      z.literal(''),
-      z.undefined(),
-    ])
-    .transform((value) => (value === '' ? undefined : value)),
-  role: z.enum(['customer', 'business']).default('customer'),
+const SignupSchema = z.object({
+  name: z.string().min(5, 'Name must be at least 5 characters long'),
+  phone: z.string().regex(/^\d{10}$/, 'Phone number must be 10 digits'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  location: z.string().min(1, 'Location is required'),
+  email: z.string().email('Invalid email').optional().or(z.literal('')),
 });
 
-const normalizePhone = (value: string) => value.replace(/\D/g, '');
+const defaultCountryCode = '+91';
 
-type SignupForm = z.infer<typeof signupSchema>;
+type SignupFormValues = z.infer<typeof SignupSchema>;
 
 const Signup = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const firstFieldRef = useRef<HTMLInputElement | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const [showPassword, setShowPassword] = useState(false);
+  const [otpStep, setOtpStep] = useState(false);
+  const [signupData, setSignupData] = useState<SignupFormValues | null>(null);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<SignupForm>({
-    resolver: createZodResolver(signupSchema),
-    mode: 'onSubmit',
-    defaultValues: {
-      role: 'customer',
-    },
+    formState: { errors, isValid, isSubmitting },
+  } = useForm<SignupFormValues>({
+    resolver: createZodResolver(SignupSchema),
+    mode: 'onChange',
   });
 
-  useEffect(() => {
-    firstFieldRef.current?.focus();
-  }, []);
+  const onSubmit = (data: SignupFormValues) => {
+    const normalizedPhone = normalizePhoneDigits(data.phone);
+    if (!normalizedPhone) {
+      setOtpStep(false);
+      showToast('Enter a valid phone number.', 'error');
+      return;
+    }
 
-  const onSubmit = handleSubmit(async ({ name, phone, password, email, location, role }) => {
-    setErrorMessage(null);
+    setSignupData({ ...data, phone: normalizedPhone });
+    setOtpStep(true);
+  };
+
+  const handleOtpVerified = async () => {
+    if (!signupData) {
+      return;
+    }
+
     try {
-      const payload: SignupDraft = {
-        name,
-        phone: normalizePhone(phone),
-        password,
-        email,
-        location,
-        role,
-      };
+      const result = await signupApi(signupData);
 
-      const response = await signupApi(payload);
-      const token = response.token;
-      const user = response.user;
-
-      if (!token || !user) {
-        throw new Error('Unexpected response from the server.');
+      if (result?.token && result?.user) {
+        dispatch(setToken(result.token));
+        dispatch(setUser(result.user));
+        showToast('Signup successful!', 'success');
+        navigate(paths.home());
+        return;
       }
 
-      dispatch(setToken(token));
-      dispatch(setUser(user));
-
-      showToast('Account created successfully. Welcome to Manacity!', 'success');
-      navigate('/', { replace: true });
+      const message = result?.message || 'Phone verified. You can now log in with your password.';
+      showToast(message, 'success');
+      navigate(paths.auth.login());
     } catch (error) {
-      const message =
-        toErrorMessage(error) || 'We could not create your account. Please try again.';
-      setErrorMessage(message);
+      const message = toErrorMessage(error) || 'Signup failed. Please try again.';
       showToast(message, 'error');
+      setOtpStep(false);
     }
-  });
-
-  const nameField = register('name');
-  const phoneField = register('phone');
-
-  const roleOptions = useMemo(
-    () => [
-      { value: 'customer' as const, label: 'Customer' },
-      { value: 'business' as const, label: 'Business' },
-    ],
-    [],
-  );
-
-  const handleLoginRedirect = useCallback(() => {
-    navigate(paths.auth.login());
-  }, [navigate]);
+  };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-slate-950/70 px-4 py-12">
-      <div
-        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center opacity-20"
-        aria-hidden
-      />
-      <div className="relative z-10 flex w-full max-w-5xl flex-col gap-10 lg:flex-row">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="hidden w-full max-w-sm flex-col justify-between rounded-3xl bg-slate-900/80 p-10 text-white shadow-2xl backdrop-blur lg:flex"
-        >
-          <div>
-            <img
-              src={logo}
-              onError={(event) => {
-                event.currentTarget.src = fallbackImage;
-              }}
-              alt="Manacity"
-              className="h-12 w-auto"
-            />
-            <h1 className="mt-10 text-3xl font-bold leading-tight">Your city, curated.</h1>
-            <p className="mt-4 text-sm text-slate-200/80">
-              Discover hyperlocal experiences, verified services, and trusted shops around you. Join the
-              community in just a few steps.
-            </p>
-          </div>
-          <div className="rounded-2xl bg-white/10 p-6 text-sm">
-            <p className="font-semibold text-slate-100">Already have an account?</p>
-            <p className="mt-1 text-slate-200/80">Sign in to continue where you left off.</p>
-            <Button variant="ghost" className="mt-4 text-white hover:text-white" onClick={handleLoginRedirect}>
-              Go to login
-            </Button>
-          </div>
-        </motion.div>
+    <div className="signup-page">
+      <motion.div
+        className="panel"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+      >
+        <img src={logo} alt="Manacity Logo" className="logo" onError={(event) => (event.currentTarget.src = fallbackImage)} />
 
-        <div className="w-full">
-          <motion.form
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="rounded-3xl bg-white/95 p-6 shadow-2xl shadow-slate-900/10 ring-1 ring-slate-200/60 backdrop-blur dark:bg-slate-900/95 dark:ring-slate-700/60"
-            noValidate
-            onSubmit={onSubmit}
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Create your account</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                  Join Manacity to explore trusted local services, events, and stores curated for you.
-                </p>
+        {!otpStep && (
+          <>
+            <h2 className="title">Create Your Account</h2>
+            <p className="hint">Sign up to discover shops, events, and verified services nearby.</p>
+
+            <form onSubmit={handleSubmit(onSubmit)} noValidate>
+              <div className="control">
+                <label htmlFor="signup-name">Name</label>
+                <input type="text" id="signup-name" {...register('name')} />
+                {errors.name && <div className="error">{errors.name.message}</div>}
               </div>
-              <img src={logo} alt="Manacity" className="hidden h-10 w-auto sm:block" />
-            </div>
 
-            {errorMessage ? <ErrorAlert title="Could not create account" description={errorMessage} /> : null}
+              <div className="control">
+                <label htmlFor="signup-phone">Phone Number</label>
+                <input
+                  type="tel"
+                  id="signup-phone"
+                  {...register('phone')}
+                  inputMode="tel"
+                  pattern="\d{10}"
+                  placeholder="Enter phone number"
+                  autoComplete="tel"
+                />
+                {errors.phone && <div className="error">{errors.phone.message}</div>}
+              </div>
 
-            <div className="mt-8 space-y-5">
-              <Input
-                label="Full name"
-                placeholder="Jane Doe"
-                {...nameField}
-                error={errors.name?.message}
-                ref={(node) => {
-                  nameField.ref(node);
-                  firstFieldRef.current = node;
-                }}
-              />
+              <div className="control">
+                <label htmlFor="signup-email">Email (optional)</label>
+                <input type="email" id="signup-email" {...register('email')} />
+                {errors.email && <div className="error">{errors.email.message}</div>}
+              </div>
 
-              <Input
-                label="Phone number"
-                placeholder="98765 43210"
-                inputMode="tel"
-                autoComplete="tel"
-                {...phoneField}
-                error={errors.phone?.message}
-              />
-
-              <Input
-                label="Password"
-                type="password"
-                autoComplete="new-password"
-                placeholder="Create a secure password"
-                helperText="Minimum 6 characters. Use a mix of letters and numbers for better security."
-                {...register('password')}
-                error={errors.password?.message}
-              />
-
-              <Input
-                label="Email (optional)"
-                type="email"
-                placeholder="jane@example.com"
-                autoComplete="email"
-                {...register('email')}
-                error={errors.email?.message}
-              />
-
-              <Input
-                label="Location (optional)"
-                placeholder="Bengaluru, India"
-                {...register('location')}
-                error={errors.location?.message}
-              />
-
-              <div>
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Account type</p>
-                <div className="mt-3 flex flex-wrap gap-3">
-                  {roleOptions.map((option) => (
-                    <label
-                      key={option.value}
-                      className="flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:text-slate-200"
-                    >
-                      <input
-                        type="radio"
-                        value={option.value}
-                        className="h-4 w-4 border-slate-300 text-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-                        {...register('role')}
-                      />
-                      {option.label}
-                    </label>
-                  ))}
+              <div className="control">
+                <label htmlFor="signup-password">Password</label>
+                <div className="password-field">
+                  <input id="signup-password" type={showPassword ? 'text' : 'password'} {...register('password')} />
+                  <button
+                    type="button"
+                    className="toggle"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
+                  </button>
                 </div>
-                {errors.role?.message ? (
-                  <p className="mt-2 text-sm text-rose-600" role="alert">
-                    {errors.role.message}
-                  </p>
-                ) : null}
+                {errors.password && <div className="error">{errors.password.message}</div>}
               </div>
 
-              <div className="rounded-2xl bg-blue-50/70 px-5 py-4 text-sm text-blue-900 ring-1 ring-blue-100 dark:bg-blue-500/10 dark:text-blue-100 dark:ring-blue-500/40">
-                <p className="font-semibold">Why share your phone number?</p>
-                <p className="text-sm opacity-80">
-                  It helps us secure your account, send important updates, and support password recovery when needed.
-                </p>
+              <div className="control">
+                <label htmlFor="signup-location">Location</label>
+                <select id="signup-location" {...register('location')}>
+                  <option value="">Select Area</option>
+                  <option value="Town Center">Town Center</option>
+                  <option value="Main Road">Main Road</option>
+                  <option value="North Market">North Market</option>
+                  <option value="Old Street">Old Street</option>
+                </select>
+                {errors.location && <div className="error">{errors.location.message}</div>}
               </div>
 
-              <Button type="submit" className="w-full" loading={isSubmitting}>
-                Create account
-              </Button>
+              <div className="actions">
+                <motion.button type="submit" whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} disabled={!isValid || isSubmitting}>
+                  {isSubmitting ? <Loader /> : 'Continue'}
+                </motion.button>
+              </div>
+            </form>
 
-              <p className="text-center text-sm text-slate-600 dark:text-slate-300">
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  className="font-semibold text-blue-600 hover:text-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-                  onClick={handleLoginRedirect}
-                >
-                  Sign in here
-                </button>
-              </p>
+            <div className="links">
+              <span onClick={() => navigate(paths.auth.login())}>Already have an account?</span>
             </div>
-          </motion.form>
-        </div>
-      </div>
+            <div className="back" onClick={() => navigate(paths.landing())}>← Back to Landing</div>
+          </>
+        )}
+
+        {otpStep && signupData && (
+          <>
+            <h2 className="title">Verify your phone</h2>
+            <p className="hint">
+              Enter the OTP sent via SMS to confirm your account.
+              <span className="phone"> Code sent to {`••••••${signupData.phone.slice(-4)}`}</span>
+            </p>
+            <OTPPhoneFirebase phone={`${defaultCountryCode}${signupData.phone}`} onVerifySuccess={handleOtpVerified} />
+            <div className="links">
+              <span
+                onClick={() => {
+                  setOtpStep(false);
+                }}
+              >
+                Use a different number
+              </span>
+            </div>
+            <div className="back" onClick={() => navigate(paths.auth.login())}>← Back to Login</div>
+          </>
+        )}
+      </motion.div>
     </div>
   );
 };

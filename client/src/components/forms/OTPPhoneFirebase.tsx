@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { RecaptchaVerifier, signInWithPhoneNumber, signOut, type ConfirmationResult } from 'firebase/auth';
 import { motion } from 'framer-motion';
 import { auth } from '@/firebase/init';
@@ -10,6 +10,8 @@ interface OTPPhoneFirebaseProps {
   onVerifySuccess: () => void;
 }
 
+type RecaptchaMode = 'invisible' | 'normal';
+
 const RECAPTCHA_CONTAINER_ID = 'recaptcha-container';
 
 const OTPPhoneFirebase = ({ phone, onVerifySuccess }: OTPPhoneFirebaseProps) => {
@@ -17,54 +19,135 @@ const OTPPhoneFirebase = ({ phone, onVerifySuccess }: OTPPhoneFirebaseProps) => 
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [recaptchaMode, setRecaptchaMode] = useState<RecaptchaMode>('invisible');
+  const recaptchaContainerRef = useRef<HTMLDivElement | null>(null);
+  const verifierRef = useRef<RecaptchaVerifier | null>(null);
+  const isMountedRef = useRef(true);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    setConfirmationResult(null);
-    setCode('');
-    setError('');
-    setLoading(true);
-    const containerId = RECAPTCHA_CONTAINER_ID;
-    if (!document.getElementById(containerId)) {
-      const container = document.createElement('div');
-      container.id = containerId;
-      container.style.display = 'none';
-      document.body.appendChild(container);
-    }
-    const verifier = new RecaptchaVerifier(auth, containerId, { size: 'invisible' });
-
-    signInWithPhoneNumber(auth, phone, verifier)
-      .then((result) => {
-        setConfirmationResult(result);
-        showToast(`OTP sent to ${phone}`, 'success');
-      })
-      .catch((err) => {
-        console.error('OTP send error', err);
-        let message = err?.message ?? 'Failed to send OTP. Please try again.';
-        const code = (err as { code?: string })?.code;
-        if (code === 'auth/billing-not-enabled' || code === 'auth/quota-exceeded') {
-          message = 'SMS verification is temporarily unavailable. Please try again shortly or contact support.';
-        } else if (code === 'auth/too-many-requests') {
-          message = 'Too many attempts. Please wait a moment before trying again.';
-        }
-        setError(message);
-        showToast(message, 'error');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-
-    return () => {
+  const resetVerifier = useCallback(async () => {
+    const current = verifierRef.current;
+    verifierRef.current = null;
+    if (current) {
       try {
-        verifier.clear();
+        await current.clear();
       } catch (err) {
         console.warn('Failed to clear Recaptcha verifier', err);
       }
-    };
+    }
+  }, []);
+
+  const sendOtp = useCallback(
+    async (mode: RecaptchaMode) => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      const container = recaptchaContainerRef.current;
+      if (!container) {
+        console.warn('reCAPTCHA container element is missing.');
+        return;
+      }
+
+      await resetVerifier();
+
+      container.innerHTML = '';
+      container.style.display = mode === 'normal' ? 'block' : 'none';
+      container.style.marginTop = mode === 'normal' ? '12px' : '0';
+      container.style.transform = mode === 'normal' ? 'scale(0.94)' : '';
+      container.style.transformOrigin = 'top left';
+
+      let verifier: RecaptchaVerifier;
+      try {
+        verifier = new RecaptchaVerifier(auth, container, {
+          size: mode,
+        });
+      } catch (err) {
+        console.error('Failed to initialize reCAPTCHA verifier', err);
+        const message = 'Unable to set up phone verification at the moment. Please try again later.';
+        setError(message);
+        showToast(message, 'error');
+        return;
+      }
+
+      verifierRef.current = verifier;
+
+      setLoading(true);
+      setConfirmationResult(null);
+      setCode('');
+      setError('');
+
+      try {
+        const result = await signInWithPhoneNumber(auth, phone, verifier);
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        setConfirmationResult(result);
+        showToast(`OTP sent to ${phone}`, 'success');
+      } catch (err) {
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        console.error('OTP send error', err);
+        let message = (err as { message?: string })?.message ?? 'Failed to send OTP. Please try again.';
+        const code = (err as { code?: string })?.code;
+
+        if (code === 'auth/billing-not-enabled' && mode === 'invisible') {
+          const advisory =
+            'We need to double-check you are not a bot. Complete the reCAPTCHA challenge below and we will resend the code.';
+          setError(advisory);
+          showToast('Please complete the reCAPTCHA challenge to continue.', 'warning');
+          setRecaptchaMode('normal');
+          return;
+        }
+
+        if (code === 'auth/billing-not-enabled' || code === 'auth/quota-exceeded') {
+          message =
+            'SMS verification is temporarily unavailable. Please try again shortly or contact support if the issue persists.';
+        } else if (code === 'auth/too-many-requests') {
+          message = 'Too many attempts. Please wait a moment before trying again.';
+        }
+
+        setError(message);
+        showToast(message, 'error');
+      } finally {
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
+      }
+    },
+    [phone, resetVerifier]
+  );
+
+  useEffect(() => {
+    setRecaptchaMode('invisible');
   }, [phone]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!phone) {
+      return;
+    }
+
+    if (!recaptchaContainerRef.current) {
+      return;
+    }
+
+    void sendOtp(recaptchaMode);
+  }, [phone, recaptchaMode, sendOtp]);
+
+  useEffect(() => {
+    return () => {
+      void resetVerifier();
+    };
+  }, [resetVerifier]);
 
   const handleVerifyCode = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -125,6 +208,12 @@ const OTPPhoneFirebase = ({ phone, onVerifySuccess }: OTPPhoneFirebaseProps) => 
           />
         </div>
         {error && <div className="error">{error}</div>}
+        <div
+          id={RECAPTCHA_CONTAINER_ID}
+          ref={recaptchaContainerRef}
+          aria-hidden={recaptchaMode === 'invisible'}
+          style={{ display: recaptchaMode === 'normal' ? 'block' : 'none' }}
+        />
         <div className="actions">
           <motion.button
             type="submit"

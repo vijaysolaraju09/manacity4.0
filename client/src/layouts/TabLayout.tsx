@@ -113,7 +113,7 @@ const TabLayout = () => {
 
       <motion.button
         type="button"
-        className="special-shop-btn"
+        className="special-shop-btn fab"
         onClick={() => navigate(paths.specialShop())}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -123,10 +123,11 @@ const TabLayout = () => {
       </motion.button>
 
       <motion.nav
-        className="tab-bar tabs"
+        className="tab-bar tabs bottom-nav"
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
+        aria-label="Primary navigation"
       >
         <div className="desktop-extras">
           <h1 className="sidebar-logo" onClick={() => navigate(paths.home())}>
@@ -173,7 +174,11 @@ const TabLayout = () => {
             <button
               key={tab.name}
               type="button"
-              className={location.pathname === tab.path ? 'tab active' : 'tab'}
+              className={
+                location.pathname === tab.path
+                  ? 'tab active bottom-nav__item bottom-nav__item--active'
+                  : 'tab bottom-nav__item'
+              }
               onClick={() => navigate(tab.path)}
               aria-label={tab.name}
             >

@@ -37,10 +37,10 @@ const NavItem = ({
     title={typeof label === 'string' ? label : undefined}
     className={({ isActive }) =>
       cn(
-        'group relative inline-flex items-center gap-2 rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white dark:focus-visible:outline-blue-400',
+        'group relative inline-flex items-center gap-2 rounded-xl text-ink-500 transition-colors hover:bg-brand-500/10 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:text-ink-300 dark:hover:bg-slate-800 dark:hover:text-white dark:focus-visible:outline-accent-500',
         variantClasses[variant],
         isActive &&
-          'bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-500/15 dark:text-blue-200 dark:ring-blue-400/30',
+          'bg-brand-500/15 text-brand-600 ring-1 ring-brand-300 dark:bg-brand-500/20 dark:text-brand-300 dark:ring-brand-400/30',
         className,
       )
     }

@@ -12,6 +12,7 @@ import { emailSchema } from '@/utils/validation';
 import { useAuth } from '@/auth/AuthProvider';
 import logo from '@/assets/logo.png';
 import fallbackImage from '@/assets/no-image.svg';
+import { paths } from '@/routes/paths';
 
 const forgotSchema = z.object({
   email: emailSchema,
@@ -114,14 +115,14 @@ const ForgotPassword = () => {
           <button
             type="button"
             className="font-semibold text-blue-600 hover:text-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-            onClick={() => navigate('/auth/login')}
+            onClick={() => navigate(paths.auth.login())}
           >
             Back to login
           </button>
           <button
             type="button"
             className="font-semibold text-slate-500 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
-            onClick={() => navigate('/auth/signup')}
+            onClick={() => navigate(paths.auth.signup())}
           >
             Create an account
           </button>

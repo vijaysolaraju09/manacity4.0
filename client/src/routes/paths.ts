@@ -40,8 +40,8 @@ export const paths = {
     detail: (orderId: string = ':id') => `/orders/${orderId}`,
   },
   auth: {
-    login: () => '/auth/login',
-    signup: () => '/auth/signup',
+    login: () => '/login',
+    signup: () => '/signup',
     forgot: () => '/auth/forgot',
     reset: () => '/reset',
   },

@@ -15,6 +15,7 @@ import { sendOtp, confirmOtp } from '@/firebase/otp';
 import { useAuth } from '@/auth/AuthProvider';
 import { signupSchema, phoneE164, type SignupSchema } from '@/utils/validation';
 import { auth } from '@/firebase/init';
+import { paths } from '@/routes/paths';
 import logo from '@/assets/logo.png';
 import fallbackImage from '@/assets/no-image.svg';
 
@@ -512,7 +513,7 @@ const Signup = () => {
               <Button
                 variant="outline"
                 className="font-semibold"
-                onClick={() => navigate('/auth/login')}
+                onClick={() => navigate(paths.auth.login())}
               >
                 Sign in instead
               </Button>

@@ -103,11 +103,11 @@ const AppRoutes = () => (
   <Routes>
     <Route key="root" element={<RootLayout />}>
       <Route key="landing" path="/" element={<Landing />} />
-      <Route key="login" path="/login" element={<Navigate to="/auth/login" replace />} />
-      <Route key="signup" path="/signup" element={<Navigate to="/auth/signup" replace />} />
+      <Route key="login" path="/login" element={<Login />} />
+      <Route key="signup" path="/signup" element={<Signup />} />
       <Route key="forgot" path="/forgot" element={<Navigate to="/auth/forgot" replace />} />
-      <Route key="auth-login" path="/auth/login" element={<Login />} />
-      <Route key="auth-signup" path="/auth/signup" element={<Signup />} />
+      <Route key="auth-login" path="/auth/login" element={<Navigate to="/login" replace />} />
+      <Route key="auth-signup" path="/auth/signup" element={<Navigate to="/signup" replace />} />
       <Route key="auth-forgot" path="/auth/forgot" element={<ForgotPassword />} />
       <Route key="reset" path="/reset" element={<ResetPassword />} />
       <Route key="admin-login" path="/admin/login" element={<AdminLogin />} />

@@ -1,199 +1,158 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import showToast from '@/components/ui/Toast';
-import { AuthButton as Button } from '@/components/ui/AuthButton';
-import { LabeledInput as Input } from '@/components/ui/LabeledInput';
-import { ErrorAlert } from '@/components/Alerts';
-import { createZodResolver } from '@/lib/createZodResolver';
-import { toErrorMessage } from '@/lib/response';
-import { login as loginApi } from '@/api/auth';
-import { setToken, setUser } from '@/store/slices/authSlice';
+import { Eye, EyeOff } from 'lucide-react';
+import './Login.scss';
 import logo from '@/assets/logo.png';
 import fallbackImage from '@/assets/no-image.svg';
+import Loader from '@/components/Loader';
+import showToast from '@/components/ui/Toast';
+import { login as loginThunk } from '@/store/slices/authSlice';
+import type { AppDispatch } from '@/store';
+import { normalizePhoneDigits } from '@/utils/phone';
 import { paths } from '@/routes/paths';
-
-const loginSchema = z.object({
-  phone: z
-    .string({ required_error: 'Phone number is required.' })
-    .trim()
-    .min(10, 'Enter a valid phone number.')
-    .max(14, 'Phone number seems too long.')
-    .regex(/^[0-9()+\s-]+$/, 'Only digits and basic separators are allowed.'),
-  password: z
-    .string({ required_error: 'Password is required.' })
-    .min(6, 'Password must be at least 6 characters long.'),
-  remember: z.boolean().default(false),
-});
-
-type LoginSchema = z.infer<typeof loginSchema>;
+import { toErrorMessage } from '@/lib/response';
 
 const Login = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const dispatch = useDispatch();
-  const phoneRef = useRef<HTMLInputElement | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<{ phone?: string; password?: string; general?: string }>({});
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const rememberedPhone = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    return window.localStorage.getItem('manacity:remembered-phone') ?? '';
-  }, []);
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const normalizedPhone = normalizePhoneDigits(phone);
+    const fieldErrors: { phone?: string; password?: string } = {};
 
-  const rememberedFlag = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    return window.localStorage.getItem('manacity:remembered-flag') === 'true';
-  }, []);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginSchema>({
-    resolver: createZodResolver(loginSchema),
-    mode: 'onSubmit',
-    defaultValues: {
-      phone: rememberedPhone,
-      remember: rememberedFlag,
-    },
-  });
-
-  useEffect(() => {
-    phoneRef.current?.focus();
-  }, []);
-
-  const normalizePhone = useCallback((value: string) => value.replace(/\D/g, ''), []);
-
-  const onSubmit = handleSubmit(async ({ phone, password, remember }) => {
-    setErrorMessage(null);
-    try {
-      const normalizedPhone = normalizePhone(phone);
-      const result = await loginApi({ phone: normalizedPhone, password });
-      dispatch(setToken(result.token));
-      dispatch(setUser(result.user));
-
-      if (typeof window !== 'undefined') {
-        if (remember) {
-          window.localStorage.setItem('manacity:remembered-phone', phone);
-          window.localStorage.setItem('manacity:remembered-flag', 'true');
-        } else {
-          window.localStorage.removeItem('manacity:remembered-phone');
-          window.localStorage.removeItem('manacity:remembered-flag');
-        }
-      }
-
-      const redirectState = location.state as { from?: { pathname?: string } } | undefined;
-      const destination = redirectState?.from?.pathname ?? '/';
-      showToast('Welcome back!', 'success');
-      navigate(destination, { replace: true });
-    } catch (error) {
-      const message =
-        toErrorMessage(error) || 'Unable to sign in with those credentials. Please try again.';
-      setErrorMessage(message);
-      showToast(message, 'error');
+    if (!phone.trim()) {
+      fieldErrors.phone = 'Phone number is required';
+    } else if (!normalizedPhone) {
+      fieldErrors.phone = 'Enter a valid phone number (10-14 digits).';
     }
-  });
 
-  const phoneField = register('phone');
-  const passwordField = register('password');
-  const rememberField = register('remember');
+    if (!password) {
+      fieldErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      fieldErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      setErrors(fieldErrors);
+      return;
+    }
+
+    if (!normalizedPhone) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setErrors({});
+      await dispatch(loginThunk({ phone: normalizedPhone, password })).unwrap();
+      navigate(paths.home());
+      showToast('Logged in successfully', 'success');
+    } catch (err) {
+      const message = toErrorMessage(err);
+      setErrors({ general: message });
+      showToast(message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950/80 px-4 py-12">
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-blue-900 opacity-80" aria-hidden />
+    <div className="login-page">
+      <div className="info-panel">
+        <img src={logo} alt="Manacity Logo" onError={(event) => (event.currentTarget.src = fallbackImage)} />
+        <h1>Welcome back!</h1>
+        <p>Sign in to continue exploring your city.</p>
+      </div>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        className="panel"
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="relative z-10 grid w-full max-w-4xl gap-10 rounded-3xl bg-white/95 p-10 shadow-2xl shadow-blue-900/30 ring-1 ring-slate-200/70 backdrop-blur dark:bg-slate-900/95 dark:ring-slate-700/60 lg:grid-cols-[1.1fr_0.9fr]"
+        transition={{ duration: 0.7, ease: 'easeOut' }}
       >
-        <div className="flex flex-col justify-between rounded-2xl bg-slate-900/90 p-8 text-white">
-          <div>
-            <img
-              src={logo}
-              alt="Manacity"
-              className="h-10 w-auto"
-              onError={(event) => {
-                event.currentTarget.src = fallbackImage;
-              }}
-            />
-            <h1 className="mt-10 text-3xl font-bold leading-tight">Welcome back.</h1>
-            <p className="mt-4 text-sm text-slate-200/80">
-              Pick up where you left off. Track orders, manage services, and explore what’s new in your neighbourhood.
-            </p>
-          </div>
-          <div className="rounded-2xl bg-white/10 p-6 text-sm">
-            <p className="font-semibold text-slate-100">New to Manacity?</p>
-            <p className="mt-2 text-slate-200/80">
-              Verify your phone in minutes, set a password, and unlock exclusive local experiences tailored to you.
-            </p>
-            <Button
-              variant="ghost"
-              className="mt-4 text-white hover:text-white"
-              onClick={() => navigate(paths.auth.signup())}
-            >
-              Create an account
-            </Button>
-          </div>
-        </div>
+        <img src={logo} alt="Manacity Logo" className="logo" onError={(event) => (event.currentTarget.src = fallbackImage)} />
 
-        <div className="flex flex-col justify-center">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Sign in to your account</h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Enter your credentials to continue to your personalised dashboard.
-          </p>
+        <h2 className="title">Login</h2>
+        <p className="hint">Enter your credentials to continue exploring your city.</p>
 
-          <form onSubmit={onSubmit} noValidate className="mt-6 space-y-6">
-            {errorMessage ? <ErrorAlert title="Sign-in failed" description={errorMessage} /> : null}
-
-            <Input
-              label="Phone number"
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="control">
+            <label htmlFor="login-phone">Phone Number</label>
+            <input
+              id="login-phone"
               type="tel"
-              placeholder="9876543210"
-              autoComplete="tel"
-              {...phoneField}
-              error={errors.phone?.message}
-              ref={(node) => {
-                phoneField.ref(node);
-                phoneRef.current = node;
+              name="phone"
+              placeholder="Enter phone number"
+              value={phone}
+              onChange={(event) => {
+                setPhone(event.target.value);
+                if (errors.phone || errors.general) {
+                  setErrors((prev) => ({ ...prev, phone: undefined, general: undefined }));
+                }
               }}
+              required
+              inputMode="tel"
+              pattern="\d{10,14}"
+              autoComplete="tel"
             />
+            {errors.phone && <div className="error">{errors.phone}</div>}
+          </div>
 
-            <Input
-              label="Password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Enter your password"
-              {...passwordField}
-              error={errors.password?.message}
-            />
-
-            <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-                  {...rememberField}
-                />
-                <span>Remember me on this device</span>
-              </label>
+          <div className="control">
+            <label htmlFor="login-password">Password</label>
+            <div className="password-field">
+              <input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  if (errors.password || errors.general) {
+                    setErrors((prev) => ({ ...prev, password: undefined, general: undefined }));
+                  }
+                }}
+                required
+                minLength={6}
+                autoComplete="current-password"
+              />
               <button
                 type="button"
-                className="font-semibold text-blue-600 hover:text-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-                onClick={() => navigate('/auth/forgot')}
+                className="toggle"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword((prev) => !prev)}
               >
-                Forgot password?
+                {showPassword ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
               </button>
             </div>
+          </div>
 
-            <Button type="submit" className="w-full" loading={isSubmitting}>
-              Sign in
-            </Button>
-          </form>
+          {errors.password && <div className="error">{errors.password}</div>}
+          {errors.general && <div className="error">{errors.general}</div>}
+
+          <div className="actions">
+            <motion.button type="submit" whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} disabled={loading}>
+              {loading ? <Loader /> : 'Login'}
+            </motion.button>
+          </div>
+        </form>
+
+        <div className="links">
+          <span onClick={() => navigate(paths.auth.signup())}>Create Account</span>
+          <span onClick={() => navigate(paths.auth.forgot())} className="forgot-link">
+            Forgot password?
+          </span>
         </div>
+
+        <div className="back" onClick={() => navigate(paths.landing())}>← Back to Landing</div>
       </motion.div>
     </div>
   );

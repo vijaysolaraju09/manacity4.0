@@ -1,12 +1,13 @@
+@import './tokens.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :focus-visible {
-  outline: 2px solid theme('colors.blue.500');
+  outline: 2px solid theme('colors.brand.500');
   outline-offset: 2px;
 }
 
 [data-theme='dark'] :focus-visible {
-  outline-color: theme('colors.sky.300');
+  outline-color: theme('colors.accent.500');
 }

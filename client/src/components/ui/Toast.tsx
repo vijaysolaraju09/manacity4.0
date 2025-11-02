@@ -1,4 +1,4 @@
-export type ToastType = 'success' | 'error' | 'info';
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 const ensureContainer = () => {
   let container = document.getElementById('app-toast-container');
@@ -19,12 +19,15 @@ const variantClasses: Record<ToastType, string> = {
     'border-red-500/40 bg-red-600 text-white ring-red-400/40 dark:border-red-500/50 dark:bg-red-500',
   info:
     'border-slate-700/60 bg-slate-900 text-slate-100 ring-slate-700/50 dark:border-slate-700/60 dark:bg-slate-900',
+  warning:
+    'border-amber-400/60 bg-amber-500 text-white ring-amber-300/50 dark:border-amber-400/70 dark:bg-amber-500',
 };
 
 const labelMap: Record<ToastType, string> = {
   success: 'Success',
   error: 'Error',
   info: 'Notice',
+  warning: 'Warning',
 };
 
 const showToast = (message: string, type: ToastType = 'info') => {

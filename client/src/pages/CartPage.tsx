@@ -46,10 +46,10 @@ const CartPage = () => {
   if (items.length === 0) {
     return (
       <section className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-6 px-4 py-16 text-center">
-        <ShoppingCart className="h-16 w-16 text-slate-400" aria-hidden />
+        <ShoppingCart className="h-16 w-16 text-ink-400" aria-hidden />
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Your cart is empty</h1>
-          <p className="text-slate-600 dark:text-slate-400">
+          <h1 className="text-3xl font-semibold text-ink-900 dark:text-ink-900">Your cart is empty</h1>
+          <p className="text-ink-500 dark:text-ink-500">
             Discover fresh arrivals and add them to your cart to see them here.
           </p>
         </div>
@@ -71,8 +71,8 @@ const CartPage = () => {
             Back to shops
           </Button>
           <div>
-            <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Shopping cart</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <h1 className="text-3xl font-semibold text-ink-900 dark:text-ink-900">Shopping cart</h1>
+            <p className="text-sm text-ink-500 dark:text-ink-500">
               {totalItems} item{totalItems === 1 ? '' : 's'} ready for checkout
             </p>
           </div>
@@ -87,7 +87,7 @@ const CartPage = () => {
           {items.map((item) => (
             <li
               key={[item.productId, item.shopId, item.variantId ?? ''].join('::')}
-              className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm shadow-mobile dark:border-slate-700 dark:bg-slate-900"
+              className="flex flex-col gap-4 rounded-lg border border-[color:var(--border-subtle)] bg-[var(--surface-card)] p-4 shadow-sm shadow-mobile dark:border-[color:var(--border-subtle)]/60 dark:bg-[var(--surface-card)]"
             >
               <div className="flex items-start gap-4">
                 {item.image ? (
@@ -98,17 +98,17 @@ const CartPage = () => {
                     loading="lazy"
                   />
                 ) : (
-                  <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400 dark:bg-slate-800">
+                  <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--surface-card)_85%,transparent)] text-ink-400 dark:bg-[color-mix(in_srgb,var(--surface-card)_60%,transparent)]">
                     <ShoppingCart className="h-10 w-10" aria-hidden />
                   </div>
                 )}
                 <div className="flex flex-1 flex-col gap-2">
                   <div>
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{item.name}</h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">SKU: {item.productId}</p>
+                    <h2 className="text-lg font-semibold text-ink-900 dark:text-ink-900">{item.name}</h2>
+                    <p className="text-sm text-ink-500 dark:text-ink-500">SKU: {item.productId}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-4">
-                    <span className="text-base font-medium text-slate-900 dark:text-slate-100">
+                    <span className="text-base font-medium text-ink-900 dark:text-ink-900">
                       {formatINR(item.pricePaise)}
                     </span>
                     <QuantityStepper
@@ -120,7 +120,7 @@ const CartPage = () => {
                     <Button
                       variant="ghost"
                       onClick={() => handleRemove(item.productId, item.shopId, item.variantId)}
-                      className="text-slate-500 hover:text-red-600"
+                      className="text-ink-500 hover:text-[var(--danger-500)]"
                     >
                       Remove
                     </Button>
@@ -131,9 +131,9 @@ const CartPage = () => {
           ))}
         </ul>
 
-        <aside className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm shadow-mobile dark:border-slate-700 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Order summary</h2>
-          <dl className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+        <aside className="space-y-4 rounded-lg border border-[color:var(--border-subtle)] bg-[var(--surface-card)] p-6 shadow-sm shadow-mobile dark:border-[color:var(--border-subtle)]/60 dark:bg-[var(--surface-card)]">
+          <h2 className="text-lg font-semibold text-ink-900 dark:text-ink-900">Order summary</h2>
+          <dl className="space-y-2 text-sm text-ink-500 dark:text-ink-500">
             <div className="flex items-center justify-between">
               <dt>Subtotal</dt>
               <dd>{subtotalLabel}</dd>
@@ -143,7 +143,7 @@ const CartPage = () => {
               <dd>Calculated at checkout</dd>
             </div>
           </dl>
-          <div className="flex items-center justify-between border-t border-slate-200 pt-4 text-base font-semibold text-slate-900 dark:border-slate-700 dark:text-slate-100">
+          <div className="flex items-center justify-between border-t border-[color:var(--border-subtle)] pt-4 text-base font-semibold text-ink-900 dark:border-[color:var(--border-subtle)]/60 dark:text-ink-900">
             <span>Total due</span>
             <span>{subtotalLabel}</span>
           </div>

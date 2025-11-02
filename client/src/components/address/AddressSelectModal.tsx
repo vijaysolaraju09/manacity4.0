@@ -265,7 +265,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
     if (!addresses.length) {
       return (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-          <MapPin className="mx-auto mb-3 h-6 w-6 text-blue-500" aria-hidden="true" />
+          <MapPin className="mx-auto mb-3 h-6 w-6 text-[color:var(--brand-500)]" aria-hidden="true" />
           <p>No saved addresses yet. Add one below to continue with checkout.</p>
         </div>
       );
@@ -281,8 +281,8 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
               type="button"
               onClick={() => setSelectedId(address.id)}
               className={cn(
-                'flex w-full cursor-pointer items-start gap-4 rounded-2xl border bg-white p-4 text-left transition hover:border-blue-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/80 dark:hover:border-blue-500',
-                isSelected ? 'border-blue-500 shadow-md' : 'border-slate-200',
+                'flex w-full cursor-pointer items-start gap-4 rounded-2xl border bg-white p-4 text-left transition hover:border-[color:var(--brand-400)] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand-500)] dark:border-slate-700 dark:bg-slate-900/80 dark:hover:border-[color:var(--brand-400)]',
+                isSelected ? 'border-[color:var(--brand-500)] shadow-brand' : 'border-slate-200',
               )}
             >
               <input
@@ -290,7 +290,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
                 name="delivery-address"
                 checked={isSelected}
                 onChange={() => setSelectedId(address.id)}
-                className="mt-1 h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
+                className="mt-1 h-4 w-4 border-slate-300 text-[color:var(--brand-600)] focus:ring-[color:var(--brand-500)]"
                 aria-label={`Select ${address.label}`}
               />
               <div className="flex flex-1 flex-col gap-2">
@@ -326,7 +326,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
                         handleSetDefault(address.id);
                       }}
                       disabled={defaultUpdatingId === address.id || isSubmitting}
-                      className="rounded-full px-3 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300"
+                      className="rounded-full px-3 text-xs font-semibold text-[color:var(--brand-600)] hover:text-[color:var(--brand-700)] dark:text-[color:var(--brand-300)]"
                     >
                       {defaultUpdatingId === address.id ? 'Updating…' : 'Make default'}
                     </Button>

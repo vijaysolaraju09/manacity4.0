@@ -47,7 +47,7 @@ const OrderPaymentCard = ({ totals, paymentMethod, paymentStatus }: OrderPayment
           <span>{formatINR(totals.grandPaise)}</span>
         </div>
         <div className="flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-slate-50/70 px-4 py-3 text-xs text-slate-600 dark:border-slate-700/70 dark:bg-slate-800/70 dark:text-slate-300">
-          <CreditCard className="h-4 w-4 text-blue-500" aria-hidden="true" />
+          <CreditCard className="h-4 w-4 text-[color:var(--brand-500)]" aria-hidden="true" />
           <span>{paymentMethod ? `Paid via ${paymentMethod}` : 'Paid using saved method'}</span>
         </div>
       </CardContent>

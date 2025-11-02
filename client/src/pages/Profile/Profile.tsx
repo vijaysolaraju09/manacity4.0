@@ -138,7 +138,7 @@ interface InfoRowProps {
 
 const InfoRow = ({ icon: Icon, label, value, emptyLabel = 'Not provided' }: InfoRowProps) => (
   <div className="flex items-start gap-3 rounded-xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-white/40">
-    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 bg-[color:var(--brand-400)]/15 text-blue-600 text-[var(--brand-600)] dark:bg-blue-400/10 dark:bg-[color:var(--brand-500)]/20 dark:text-blue-300 dark:text-[var(--accent-400)]">
+    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color:var(--brand-400)]/15 text-[var(--brand-600)] dark:bg-[color:var(--brand-500)]/20 dark:text-[var(--accent-400)]">
       <Icon className="h-5 w-5" aria-hidden="true" />
     </span>
     <div className="space-y-1">
@@ -449,7 +449,7 @@ const Profile = () => {
               <InfoRow icon={Sparkles} label="Theme preference" value={themeLabel} />
             </div>
             <div className="rounded-xl border border-slate-200/70 bg-white/80 p-4 text-sm leading-relaxed text-slate-700 shadow-sm dark:border-slate-700 dark:bg-white/40 dark:text-slate-200">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-500 dark:text-blue-300">Bio</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-500)] dark:text-[color:var(--accent-400)]">Bio</p>
               <p className="mt-2">
                 {user?.bio || 'Tell customers more about you by adding a short bio.'}
               </p>
@@ -558,7 +558,7 @@ const Profile = () => {
               className={cn(styles.card, 'relative overflow-hidden p-6 sm:p-8')}
             >
               <div
-                className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/10 from-[color:var(--brand-500)]/15 via-transparent to-transparent"
+                className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-[color:var(--brand-500)]/15 via-transparent to-transparent"
                 aria-hidden="true"
               />
               <div className="relative space-y-6">
@@ -572,14 +572,14 @@ const Profile = () => {
                           className="h-20 w-20 rounded-full object-cover"
                         />
                       ) : (
-                        <span className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-500/10 bg-[color:var(--brand-500)]/15 text-lg font-semibold text-blue-600 text-[var(--brand-600)] dark:bg-blue-400/10 dark:text-blue-200 dark:text-[var(--ink-900)]">
+                        <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[color:var(--brand-500)]/15 text-lg font-semibold text-[var(--brand-600)] dark:bg-[color:var(--brand-500)]/20 dark:text-[color:var(--ink-900)]">
                           <span aria-hidden="true">{initials}</span>
                           <span className="sr-only">{user.name} avatar</span>
                         </span>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-blue-500 text-[var(--brand-500)] dark:text-blue-300 dark:text-[var(--accent-400)]">
+                      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-500)] dark:text-[color:var(--accent-400)]">
                         <UserRoundCog className="h-4 w-4" aria-hidden="true" />
                         Profile overview
                       </p>
@@ -627,7 +627,7 @@ const Profile = () => {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="rounded-lg border-slate-200/80 bg-white/80 text-slate-700 transition hover:border-blue-400 hover:border-[color:var(--brand-400)] hover:text-blue-600 hover:text-[var(--brand-600)] dark:border-slate-700 dark:bg-white/40 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:border-[color:var(--accent-500)] dark:hover:text-blue-300 dark:hover:text-[var(--accent-400)]"
+                            className="rounded-lg border-slate-200/80 bg-white/80 text-slate-700 transition hover:border-[color:var(--brand-400)] hover:text-[color:var(--brand-600)] dark:border-slate-700 dark:bg-white/40 dark:text-slate-200 dark:hover:border-[color:var(--accent-500)] dark:hover:text-[color:var(--accent-400)]"
                             onClick={() => navigate(action.path)}
                           >
                             {action.label}

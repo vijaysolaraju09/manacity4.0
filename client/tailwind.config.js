@@ -4,46 +4,54 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: 'rgb(var(--color-bg-rgb) / <alpha-value>)',
-        foreground: 'rgb(var(--color-text-rgb) / <alpha-value>)',
-        primary: {
-          DEFAULT: 'rgb(var(--color-primary-rgb) / <alpha-value>)',
-          foreground: 'rgb(var(--color-primary-contrast-rgb) / <alpha-value>)'
+        background: 'var(--surface)',
+        foreground: 'var(--ink-900)',
+        border: 'var(--border-subtle)',
+        surface: {
+          DEFAULT: 'var(--surface)',
+          card: 'var(--surface-card)',
+          glass: 'var(--surface-glass)'
         },
-        muted: {
-          DEFAULT: 'rgb(var(--color-muted-rgb) / <alpha-value>)',
-          foreground: 'rgb(var(--color-muted-foreground-rgb) / <alpha-value>)'
-        },
-        surface: 'rgb(var(--color-surface-rgb) / <alpha-value>)',
-        danger: {
-          DEFAULT: 'rgb(var(--color-danger-rgb) / <alpha-value>)',
-          foreground: 'rgb(var(--color-danger-contrast-rgb) / <alpha-value>)',
-          500: 'var(--color-danger-500)'
-        },
-        border: 'rgb(var(--color-border-rgb) / <alpha-value>)',
         brand: {
-          700: 'var(--brand-700)',
-          600: 'var(--brand-600)',
+          900: 'var(--brand-800)',
+          800: 'var(--brand-700)',
+          700: 'var(--brand-600)',
+          600: 'var(--brand-500)',
           500: 'var(--brand-500)',
           400: 'var(--brand-400)',
-          300: 'var(--brand-300)'
+          300: 'var(--brand-300)',
+          200: 'var(--brand-200)',
+          100: 'var(--brand-100)',
+          50: 'var(--brand-050)'
         },
         accent: {
+          700: 'var(--accent-700)',
           600: 'var(--accent-600)',
           500: 'var(--accent-500)',
-          400: 'var(--accent-400)'
+          400: 'var(--accent-400)',
+          300: 'var(--accent-300)'
         },
         success: {
-          500: 'var(--color-success-500)'
+          600: 'var(--success-600)',
+          500: 'var(--success-500)'
         },
         warning: {
-          500: 'var(--color-warning-500)'
+          600: 'var(--warning-600)',
+          500: 'var(--warning-500)'
+        },
+        danger: {
+          600: 'var(--danger-600)',
+          500: 'var(--danger-500)'
         },
         ink: {
           900: 'var(--ink-900)',
+          800: 'var(--ink-800)',
           700: 'var(--ink-700)',
+          600: 'var(--ink-600)',
           500: 'var(--ink-500)',
+          400: 'var(--ink-400)',
           300: 'var(--ink-300)',
+          200: 'var(--ink-200)',
           100: 'var(--ink-100)'
         }
       },

@@ -1,5 +1,6 @@
+
 .hero {
-  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+  background: linear-gradient(180deg, var(--surface) 0%, color-mix(in srgb, var(--surface-card) 85%, transparent) 100%);
   padding: 2rem 0;
 }
 
@@ -8,15 +9,16 @@
 }
 
 .card {
-  background-color: #ffffff;
+  background: var(--surface-card);
   border-radius: 1rem;
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
-  border: 1px solid #e5e7eb;
-  transition: transform 0.15s ease;
+  box-shadow: var(--shadow-md);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 70%, transparent);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .card:hover {
   transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .sectionHeader {
@@ -43,13 +45,14 @@
 .sectionHeader a {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #4b5563;
+  color: var(--brand-500);
   transition: color 0.2s ease;
 }
 
 .sectionHeader a:hover {
-  color: #1f2937;
+  color: var(--brand-600);
 }
+
 
 .grid {
   display: grid;

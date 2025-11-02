@@ -1,34 +1,11 @@
 /**
  * Global design tokens and theme definitions.
- * Tokens for typography, spacing, radii and shadows live on :root
- * so that they apply to every theme. Colour tokens are namespaced
- * under data-theme attributes.
+ * Typography, spacing and other primitives live alongside colour aliases
+ * so legacy styles continue to resolve correctly while the app moves to
+ * CSS custom properties.
  */
 
 :root {
-  /* Blue scale */
-  --blue-900: #0B3C8A;
-  --blue-800: #1149A6;
-  --blue-700: #1657C2;
-  --blue-600: #1B63D9;
-  --blue-500: #2A75E8;
-  --blue-400: #5B95F0;
-  --blue-300: #8AB2F6;
-  --blue-200: #BDD1FA;
-  --blue-100: #E7F0FE;
-  --blue-050: #F3F8FF;
-
-  --blue: var(--blue-600);
-  /* Neutrals */
-  --gray-900: #111827;
-  --gray-700: #374151;
-  --gray-600: #4B5563;
-  --gray-500: #6B7280;
-  --gray-300: #D1D5DB;
-  --gray-200: #E5E7EB;
-  --gray-100: #F3F4F6;
-  --white: #FFFFFF;
-
   /* Typography scale */
   --font-family-sans: 'Inter', 'DM Sans', sans-serif;
   --font-size-xs: 0.75rem;
@@ -36,16 +13,6 @@
   --font-size-md: 1rem;
   --font-size-lg: 1.25rem;
   --font-size-xl: 1.5rem;
-
-  /* Radii */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
 
   /* Spacing scale (4px – 32px) */
   --space-1: 4px;
@@ -62,186 +29,134 @@
   --spacing-lg: var(--space-5);
   --spacing-xl: var(--space-6);
 
-  /* Default (Blue Light) colours */
-  --color-bg: var(--white);
-  --color-surface: var(--white);
-  --color-surface-alt: var(--white);
-  --color-text: var(--gray-900);
-  --color-muted: var(--gray-600);
-  --color-primary: var(--blue-600);
-  --color-primary-hover: var(--blue-700);
-  --color-primary-contrast: var(--white);
+  /* Radius aliases */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Default colour assignments */
+  --color-bg: var(--surface);
+  --color-background: var(--surface);
+  --color-surface: var(--surface-card);
+  --color-surface-alt: var(--surface);
+  --color-card: var(--surface-card);
+  --color-text: var(--ink-900);
+  --color-text-secondary: var(--ink-500);
+  --color-muted: var(--ink-500);
+  --color-primary: var(--brand-500);
+  --color-primary-hover: var(--brand-600);
+  --color-primary-contrast: #ffffff;
   --color-on-primary: var(--color-primary-contrast);
-  --color-border: var(--blue-200);
-  --color-focus-ring: var(--blue-500);
-  --color-success: #16A34A;
-  --color-warning: #D97706;
-  --color-danger: #DC2626;
+  --color-border: var(--border-subtle);
+  --color-focus-ring: var(--brand-400);
+  --color-success: var(--success-500);
+  --color-warning: var(--warning-500);
+  --color-danger: var(--danger-500);
   --color-error: var(--color-danger);
-  --color-info: var(--blue-600);
-  --color-text-secondary: var(--color-muted);
-  --overlay-bg: rgba(0, 0, 0, 0.4);
+  --color-info: var(--brand-500);
+  --overlay-bg: rgba(15, 23, 42, 0.48);
 
-  /* RGB tokens for Tailwind colour utilities */
+  /* RGB helpers */
   --color-bg-rgb: 255 255 255;
-  --color-text-rgb: 17 24 39;
-  --color-border-rgb: 189 209 250;
-  --color-muted-rgb: 75 85 99;
-  --color-muted-foreground-rgb: 75 85 99;
-  --color-primary-rgb: 27 99 217;
+  --color-text-rgb: 14 19 32;
+  --color-border-rgb: 229 231 235;
+  --color-muted-rgb: 107 114 128;
+  --color-muted-foreground-rgb: 107 114 128;
+  --color-primary-rgb: 52 163 167;
   --color-primary-contrast-rgb: 255 255 255;
-  --color-surface-rgb: 255 255 255;
-  --color-danger-rgb: 220 38 38;
+  --color-surface-rgb: 248 250 252;
+  --color-danger-rgb: 239 68 68;
   --color-danger-contrast-rgb: 255 255 255;
-  /* Modern surface tokens */
-  --background: #f8fafc;
-  --muted: #e2e8f0;
-  --primary: var(--color-primary);
-  --border: var(--color-border);
-  --background-dark: #020817;
-  --muted-dark: #0f172a;
+  --color-warning-rgb: 245 158 11;
 
-  /* Legacy colour aliases */
-  --color-card: var(--color-surface);
+  --background: var(--surface);
+  --muted: var(--ink-200);
 }
 
-/* Blue Light theme (explicit) */
 [data-theme='light'] {
-  /* Blue scale */
-  --blue-900: #0B3C8A;
-  --blue-800: #1149A6;
-  --blue-700: #1657C2;
-  --blue-600: #1B63D9;
-  --blue-500: #2A75E8;
-  --blue-400: #5B95F0;
-  --blue-300: #8AB2F6;
-  --blue-200: #BDD1FA;
-  --blue-100: #E7F0FE;
-  --blue-050: #F3F8FF;
-
-  /* Neutrals */
-  --gray-900: #111827;
-  --gray-700: #374151;
-  --gray-600: #4B5563;
-  --gray-500: #6B7280;
-  --gray-300: #D1D5DB;
-  --gray-200: #E5E7EB;
-  --gray-100: #F3F4F6;
-  --white: #FFFFFF;
-
-  --color-bg: var(--white);
-  --color-surface: var(--white);
-  --color-surface-alt: var(--white);
-  --color-text: var(--gray-900);
-  --color-muted: var(--gray-600);
-  --color-primary: var(--blue-600);
-  --color-primary-hover: var(--blue-700);
-  --color-primary-contrast: var(--white);
-  --color-on-primary: var(--color-primary-contrast);
-  --color-border: var(--blue-200);
-  --color-focus-ring: var(--blue-500);
-  --color-success: #16A34A;
-  --color-warning: #D97706;
-  --color-danger: #DC2626;
-  --color-error: var(--color-danger);
-  --color-info: var(--blue-600);
-  --color-text-secondary: var(--color-muted);
-
-  /* Legacy colour aliases */
-  --color-card: var(--color-surface);
-  --overlay-bg: rgba(0, 0, 0, 0.4);
-
+  --color-bg: var(--surface);
+  --color-background: var(--surface);
+  --color-surface: var(--surface-card);
+  --color-text: var(--ink-900);
+  --color-text-secondary: var(--ink-500);
+  --color-muted: var(--ink-500);
+  --color-border: var(--border-subtle);
+  --color-primary: var(--brand-500);
+  --color-primary-hover: var(--brand-600);
+  --color-info: var(--brand-500);
+  --overlay-bg: rgba(15, 23, 42, 0.48);
+  --background: var(--surface);
+  --muted: var(--ink-200);
   --color-bg-rgb: 255 255 255;
-  --color-text-rgb: 17 24 39;
-  --color-border-rgb: 189 209 250;
-  --color-muted-rgb: 75 85 99;
-  --color-muted-foreground-rgb: 75 85 99;
-  --color-primary-rgb: 27 99 217;
-  --color-primary-contrast-rgb: 255 255 255;
-  --color-surface-rgb: 255 255 255;
-  --color-danger-rgb: 220 38 38;
+  --color-text-rgb: 14 19 32;
+  --color-border-rgb: 229 231 235;
+  --color-primary-rgb: 52 163 167;
+  --color-surface-rgb: 248 250 252;
+  --color-danger-rgb: 239 68 68;
   --color-danger-contrast-rgb: 255 255 255;
-  --background: #f8fafc;
-  --muted: #e2e8f0;
+  --color-warning-rgb: 245 158 11;
 }
 
-/* Dark theme */
+:root.dark,
 [data-theme='dark'] {
-  --color-bg: var(--white);
-  --color-surface: var(--white);
-  --color-surface-alt: var(--white);
-  --color-text: #f5f5f5;
-  --color-muted: #9ca3af;
-  --color-primary: #ff3e6c;
-  --color-primary-hover: #ff6b81;
-  --color-primary-contrast: #ffffff;
-  --color-on-primary: var(--color-primary-contrast);
-  --color-border: #3f3f46;
-  --color-focus-ring: var(--blue-500);
-  --color-success: #16A34A;
-  --color-warning: #D97706;
-  --color-danger: #DC2626;
-  --color-error: var(--color-danger);
-  --color-info: var(--blue-600);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.7);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.8);
-
-  --color-card: var(--color-surface);
-  --overlay-bg: rgba(0, 0, 0, 0.6);
-  --color-text-secondary: var(--color-muted);
-
-  --color-bg-rgb: 15 23 42;
-  --color-text-rgb: 226 232 240;
-  --color-border-rgb: 63 63 70;
-  --color-muted-rgb: 148 163 184;
-  --color-muted-foreground-rgb: 203 213 225;
-  --color-primary-rgb: 236 72 153;
-  --color-primary-contrast-rgb: 255 255 255;
-  --color-surface-rgb: 30 41 59;
-  --color-danger-rgb: 248 113 113;
-  --color-danger-contrast-rgb: 17 24 39;
-  --background: var(--background-dark);
-  --muted: var(--muted-dark);
+  --color-bg: var(--surface);
+  --color-background: var(--surface);
+  --color-surface: var(--surface-card);
+  --color-surface-alt: var(--surface-card);
+  --color-card: var(--surface-card);
+  --color-text: var(--ink-900);
+  --color-text-secondary: var(--ink-600);
+  --color-muted: var(--ink-500);
+  --color-border: var(--border-subtle);
+  --color-primary: var(--brand-500);
+  --color-primary-hover: var(--brand-400);
+  --color-primary-contrast: #0b0f17;
+  --color-on-primary: #0b0f17;
+  --color-info: var(--brand-400);
+  --overlay-bg: rgba(2, 6, 23, 0.7);
+  --background: var(--surface);
+  --muted: color-mix(in srgb, var(--ink-500) 28%, transparent);
+  --color-bg-rgb: 11 15 23;
+  --color-text-rgb: 243 244 246;
+  --color-border-rgb: 31 41 55;
+  --color-primary-rgb: 88 188 192;
+  --color-surface-rgb: 17 24 39;
+  --color-danger-rgb: 220 38 38;
+  --color-danger-contrast-rgb: 243 244 246;
+  --color-warning-rgb: 217 119 6;
 }
 
-.dark {
-  --background: var(--background-dark);
-  --muted: var(--muted-dark);
-}
-
-/* Colourful theme with brand accents */
+/* Optional colourful theme retains existing accent usage */
 [data-theme='colorful'] {
-  --color-bg: var(--white);
-  --color-surface: var(--white);
-  --color-surface-alt: var(--white);
+  --color-bg: var(--surface);
+  --color-surface: var(--surface-card);
   --color-text: #222222;
-  --color-muted: #6b7280;
-  --color-primary: #ff9800;
-  --color-primary-hover: #ffb74d;
+  --color-muted: var(--ink-500);
+  --color-primary: var(--accent-500);
+  --color-primary-hover: var(--accent-600);
   --color-primary-contrast: #ffffff;
   --color-on-primary: var(--color-primary-contrast);
-  --color-border: var(--gray-200);
-  --color-focus-ring: var(--blue-500);
-  --color-success: #16A34A;
-  --color-warning: #D97706;
-  --color-danger: #DC2626;
-  --color-error: var(--color-danger);
-  --color-info: var(--blue-600);
-
-  --color-card: var(--color-surface);
-  --overlay-bg: rgba(0, 0, 0, 0.4);
-  --color-text-secondary: var(--color-muted);
-
+  --color-border: var(--border-subtle);
+  --color-focus-ring: var(--accent-500);
+  --color-success: var(--success-500);
+  --color-warning: var(--warning-500);
+  --color-danger: var(--danger-500);
+  --color-info: var(--accent-500);
+  --overlay-bg: rgba(15, 23, 42, 0.48);
   --color-bg-rgb: 255 255 255;
   --color-text-rgb: 34 34 34;
   --color-border-rgb: 229 231 235;
   --color-muted-rgb: 107 114 128;
   --color-muted-foreground-rgb: 107 114 128;
-  --color-primary-rgb: 255 152 0;
+  --color-primary-rgb: 139 92 246;
   --color-primary-contrast-rgb: 255 255 255;
-  --color-surface-rgb: 255 255 255;
-  --color-danger-rgb: 220 38 38;
+  --color-surface-rgb: 248 250 252;
+  --color-danger-rgb: 239 68 68;
   --color-danger-contrast-rgb: 255 255 255;
+  --color-warning-rgb: 245 158 11;
 }
 
+.dark {
+  --background: var(--surface);
+  --muted: color-mix(in srgb, var(--ink-500) 28%, transparent);
+}

@@ -9,13 +9,13 @@
 .title {
   font-size: var(--font-size-lg);
   font-weight: 600;
-  border-left: 4px solid var(--blue-600);
+  border-left: 4px solid var(--brand-500);
   padding-left: var(--space-2);
 }
 
 .link {
   font-size: var(--font-size-sm);
-  color: var(--blue-600);
+  color: var(--brand-500);
 }
 
 @media (min-width: 768px) {

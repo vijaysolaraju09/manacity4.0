@@ -26,7 +26,7 @@
 .backButton:hover,
 .backButton:focus-visible {
   background: #eef2ff;
-  color: #1d4ed8;
+  color: var(--brand-600);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
@@ -61,7 +61,7 @@
   border: none;
   background: none;
   padding: 0;
-  color: #2563eb;
+  color: var(--brand-500);
   cursor: pointer;
   text-align: left;
   font-size: 0.9rem;

@@ -14,13 +14,13 @@ const ensureContainer = () => {
 
 const variantClasses: Record<ToastType, string> = {
   success:
-    'border-emerald-500/40 bg-emerald-600 text-white ring-emerald-400/40 dark:border-emerald-400/50 dark:bg-emerald-500',
+    'border-[color:var(--success-500)]/45 bg-[color-mix(in_srgb,var(--success-500)_22%,transparent)] text-[var(--success-500)]',
   error:
-    'border-red-500/40 bg-red-600 text-white ring-red-400/40 dark:border-red-500/50 dark:bg-red-500',
+    'border-[color:var(--danger-500)]/45 bg-[color-mix(in_srgb,var(--danger-500)_22%,transparent)] text-[var(--danger-500)]',
   info:
-    'border-slate-700/60 bg-slate-900 text-slate-100 ring-slate-700/50 dark:border-slate-700/60 dark:bg-slate-900',
+    'border-[color:var(--brand-500)]/40 bg-[color-mix(in_srgb,var(--brand-500)_20%,transparent)] text-[var(--brand-600)] dark:text-[var(--brand-500)]',
   warning:
-    'border-amber-400/60 bg-amber-500 text-white ring-amber-300/50 dark:border-amber-400/70 dark:bg-amber-500',
+    'border-[color:var(--warning-500)]/45 bg-[color-mix(in_srgb,var(--warning-500)_22%,transparent)] text-[var(--warning-500)]',
 };
 
 const labelMap: Record<ToastType, string> = {
@@ -45,7 +45,7 @@ const showToast = (message: string, type: ToastType = 'info') => {
   inner.className = 'flex items-start gap-3';
 
   const marker = document.createElement('span');
-  marker.className = 'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/20 text-sm font-semibold uppercase tracking-wide text-white/90';
+  marker.className = 'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)]/40 text-sm font-semibold uppercase tracking-wide text-[var(--ink-900)]';
   marker.textContent = labelMap[type][0] ?? 'i';
   marker.setAttribute('aria-hidden', 'true');
 
@@ -53,11 +53,11 @@ const showToast = (message: string, type: ToastType = 'info') => {
   content.className = 'flex-1 text-sm font-medium';
 
   const heading = document.createElement('p');
-  heading.className = 'text-xs font-semibold uppercase tracking-wide text-white/80';
+  heading.className = 'text-xs font-semibold uppercase tracking-wide text-[var(--ink-900)]';
   heading.textContent = labelMap[type];
 
   const body = document.createElement('p');
-  body.className = 'mt-1 text-sm text-white/95';
+  body.className = 'mt-1 text-sm text-[var(--ink-700)]';
   body.textContent = message;
 
   const dismiss = () => {
@@ -75,7 +75,7 @@ const showToast = (message: string, type: ToastType = 'info') => {
   const dismissButton = document.createElement('button');
   dismissButton.type = 'button';
   dismissButton.className =
-    'ml-3 inline-flex items-center rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/90 transition hover:border-white hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white';
+    'ml-3 inline-flex items-center rounded-full border border-[color:var(--brand-400)]/50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-600)] transition hover:border-[color:var(--brand-500)] hover:text-[var(--brand-600)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-400)]';
   dismissButton.textContent = 'Dismiss';
 
   let timeout = window.setTimeout(dismiss, 3400);

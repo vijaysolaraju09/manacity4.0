@@ -1,22 +1,8 @@
 .page {
   display: flex;
   flex-direction: column;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-}
-
-.page > * + * {
-  margin-top: 1.5rem;
-}
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-  justify-content: space-between;
+  padding: 1.5rem 1rem;
+  gap: 1.5rem;
 }
 
 @media (min-width: 768px) {
@@ -33,13 +19,19 @@
   }
 }
 
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: #e5e7eb;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 70%, transparent);
   padding-bottom: 1rem;
 }
 
@@ -48,18 +40,28 @@
 }
 
 .filterButton {
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  padding-top: 0.375rem;
-  padding-bottom: 0.375rem;
+  padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #4b5563;
+  color: var(--ink-500);
   border-radius: 9999px;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #e5e7eb;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 70%, transparent);
+  background: transparent;
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.filterButton:hover {
+  color: var(--brand-600);
+  background: color-mix(in srgb, var(--brand-500) 12%, transparent);
+  border-color: color-mix(in srgb, var(--brand-300) 60%, transparent);
+}
+
+.filterButton.active,
+.filterButton[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--brand-500) 20%, transparent);
+  color: var(--brand-600);
+  border-color: transparent;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
 .markAllButton {
@@ -67,53 +69,52 @@
   font-size: 0.875rem;
   line-height: 1.25rem;
   border-radius: 9999px;
-  background-color: #1d4ed8;
+  background: var(--grad-brand);
   color: #ffffff;
   border: none;
-  box-shadow: 0 10px 15px -3px rgba(29, 78, 216, 0.35);
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.markAllButton:disabled {
-  background-color: rgba(29, 78, 216, 0.5);
-  box-shadow: none;
-  cursor: not-allowed;
+  box-shadow: var(--shadow-brand);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .markAllButton:not(:disabled):hover {
-  background-color: #2563eb;
-  box-shadow: 0 20px 25px -15px rgba(37, 99, 235, 0.45);
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: var(--shadow-lg);
 }
 
-.active {
-  background-color: #3b82f6;
-  color: #ffffff;
-  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
-  border-color: transparent;
+.markAllButton:disabled {
+  background: color-mix(in srgb, var(--brand-500) 45%, transparent);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .group {
   display: flex;
   flex-direction: column;
-}
-
-.group > * + * {
-  margin-top: 1rem;
+  gap: 1rem;
 }
 
 .title {
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--ink-700);
 }
 
 .card {
-  background-color: #ffffff;
+  background: var(--surface-card);
   border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -2px rgba(0,0,0,0.10);
-  border: 1px solid #e5e7eb;
+  box-shadow: var(--shadow-md);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 70%, transparent);
   padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--brand-300) 50%, transparent);
 }
 
 .content {
@@ -125,7 +126,7 @@
 .meta {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #4b5563;
+  color: var(--ink-500);
 }
 
 .actions {
@@ -145,22 +146,22 @@
 .paginationButton {
   padding: 0.4rem 0.9rem;
   border-radius: 9999px;
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  background-color: rgba(59, 130, 246, 0.12);
-  color: #1d4ed8;
+  border: 1px solid color-mix(in srgb, var(--brand-500) 35%, transparent);
+  background: color-mix(in srgb, var(--brand-500) 12%, transparent);
+  color: var(--brand-600);
   font-size: 0.875rem;
   line-height: 1.25rem;
   transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .paginationButton:hover:not(:disabled) {
-  background-color: #2563eb;
+  background: color-mix(in srgb, var(--brand-500) 20%, transparent);
   color: #ffffff;
-  box-shadow: 0 12px 20px -10px rgba(37, 99, 235, 0.45);
+  box-shadow: var(--shadow-brand);
 }
 
 .paginationButton:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -168,64 +169,41 @@
 .paginationInfo {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #4b5563;
+  color: var(--ink-500);
 }
 
 .actionButton {
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  padding-top: 0.375rem;
-  padding-bottom: 0.375rem;
+  padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  border-width: 1px;
-  border-style: solid;
   border-radius: 9999px;
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  border: 1px solid transparent;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
 }
 
 .markReadButton {
-  color: #1d4ed8;
-  border-color: rgba(59, 130, 246, 0.4);
-  background-color: rgba(59, 130, 246, 0.08);
+  color: var(--brand-600);
+  border-color: color-mix(in srgb, var(--brand-500) 40%, transparent);
+  background: color-mix(in srgb, var(--brand-500) 10%, transparent);
 }
 
 .markReadButton:hover {
   color: #ffffff;
-  background-color: #3b82f6;
-  border-color: #2563eb;
-  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.25);
+  background: color-mix(in srgb, var(--brand-500) 28%, transparent);
+  border-color: color-mix(in srgb, var(--brand-400) 60%, transparent);
 }
 
-.deleteButton {
-  color: #b91c1c;
-  border-color: rgba(239, 68, 68, 0.35);
-  background-color: rgba(239, 68, 68, 0.08);
+.clearButton {
+  color: var(--ink-500);
+  border-color: color-mix(in srgb, var(--ink-400) 35%, transparent);
+  background: transparent;
 }
 
-.deleteButton:hover {
-  color: #ffffff;
-  background-color: #ef4444;
-  border-color: #dc2626;
-  box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.25);
-}
-
-@media (min-width: 768px) {
-  .card {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .content {
-    flex: 1 1 0%;
-  }
-
-  .actions {
-    justify-content: flex-end;
-  }
+.clearButton:hover {
+  color: var(--danger-500);
+  border-color: color-mix(in srgb, var(--danger-500) 35%, transparent);
+  background: color-mix(in srgb, var(--danger-500) 12%, transparent);
 }

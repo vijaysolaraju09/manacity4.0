@@ -200,7 +200,7 @@
 }
 
 .primaryBtn {
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  background: linear-gradient(135deg, var(--brand-500), var(--accent-600));
   color: #fff;
   box-shadow: 0 24px 44px rgba(37, 99, 235, 0.45);
 }

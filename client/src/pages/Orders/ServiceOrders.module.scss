@@ -35,8 +35,8 @@
 
 .notice {
   border-radius: var(--radius-lg);
-  border: 1px solid var(--blue-200);
-  background: var(--blue-050);
+  border: 1px solid color-mix(in srgb, var(--brand-500) 26%, transparent);
+  background: color-mix(in srgb, var(--brand-500) 10%, transparent);
   color: var(--gray-700);
   padding: 1rem 1.25rem;
   font-size: 0.95rem;

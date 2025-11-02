@@ -90,8 +90,8 @@ const AdminTable = <T extends Record<string, unknown>>({
                         type="button"
                         onClick={() => handleSort(column.key)}
                         className={cn(
-                          'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 transition hover:text-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 dark:text-slate-300 dark:hover:text-blue-300',
-                          isActive && 'text-blue-600 dark:text-blue-300',
+                          'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 transition hover:text-[color:var(--brand-600)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--brand-500)] dark:text-slate-300 dark:hover:text-[color:var(--brand-300)]',
+                          isActive && 'text-[color:var(--brand-600)] dark:text-[color:var(--brand-300)]',
                         )}
                         aria-label={`Sort by ${String(column.header)}`}
                       >

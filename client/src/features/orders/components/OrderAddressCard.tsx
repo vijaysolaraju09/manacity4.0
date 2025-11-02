@@ -15,11 +15,11 @@ const OrderAddressCard = ({ address, fulfillment }: OrderAddressCardProps) => {
     .join(', ');
 
   return (
-    <Card className="rounded-3xl border border-slate-200/80 bg-white/90 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70">
+    <Card className="rounded-3xl border border-[color:var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface-card)_92%,transparent)] shadow-sm dark:border-[color:var(--border-subtle)]/60 dark:bg-[color-mix(in_srgb,var(--surface-card)_70%,transparent)]">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Delivery details</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+      <CardContent className="space-y-3 text-sm text-ink-500 dark:text-ink-500">
         <div className="flex items-center gap-2">
           <User className="h-4 w-4" aria-hidden="true" />
           <span>{address?.name ?? 'Recipient'}</span>
@@ -27,7 +27,7 @@ const OrderAddressCard = ({ address, fulfillment }: OrderAddressCardProps) => {
         {address?.phone ? (
           <div className="flex items-center gap-2">
             <Phone className="h-4 w-4" aria-hidden="true" />
-            <a href={`tel:${address.phone}`} className="text-blue-600 hover:underline dark:text-blue-300">
+            <a href={`tel:${address.phone}`} className="text-[var(--brand-600)] hover:underline dark:text-[var(--brand-400)]">
               {address.phone}
             </a>
           </div>
@@ -36,7 +36,7 @@ const OrderAddressCard = ({ address, fulfillment }: OrderAddressCardProps) => {
           <MapPin className="mt-0.5 h-4 w-4" aria-hidden="true" />
           <span>{lines || 'Address details will be shared closer to delivery.'}</span>
         </div>
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-xs text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200">
+        <div className="rounded-2xl border border-[color:var(--brand-200)] bg-[color-mix(in_srgb,var(--brand-500)_12%,transparent)] px-4 py-3 text-xs text-[var(--brand-600)] dark:border-[color:var(--brand-400)]/40 dark:bg-[color-mix(in_srgb,var(--brand-500)_18%,transparent)] dark:text-[var(--brand-400)]">
           {fulfillment.type === 'pickup'
             ? 'Pickup from shop counter when you receive confirmation.'
             : 'Doorstep delivery with live tracking and OTP confirmation.'}

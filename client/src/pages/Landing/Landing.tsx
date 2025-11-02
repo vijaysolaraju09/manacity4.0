@@ -28,14 +28,14 @@ const Landing = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <motion.h1 className="text-3xl font-semibold text-gray-900" layout>
+        <motion.h1 className="text-3xl font-semibold text-ink-900" layout>
           Discover Your City
         </motion.h1>
-        <motion.p className="text-sm text-gray-600" layout>
+        <motion.p className="text-sm text-ink-500" layout>
           Shops, events and services all in one place.
         </motion.p>
         <motion.button
-          className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm"
+          className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-brand hover:bg-brand-600"
           onClick={() => navigate(paths.auth.signup())}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
@@ -51,8 +51,8 @@ const Landing = () => {
         transition={{ delay: 0.2, duration: 0.5 }}
       >
         <div className={styles.ctaBandContent}>
-          <p className="text-sm text-gray-600">Already have an account?</p>
-          <Link className="text-sm font-semibold text-blue-600 hover:text-blue-700" to={paths.auth.login()}>
+          <p className="text-sm text-ink-500">Already have an account?</p>
+          <Link className="text-sm font-semibold text-brand-600 hover:text-brand-500" to={paths.auth.login()}>
             Login to continue
           </Link>
         </div>

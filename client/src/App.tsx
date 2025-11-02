@@ -1,6 +1,7 @@
 import { BrowserRouter } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { AuthProvider } from '@/auth/AuthProvider';
 import { setToken, fetchMe } from './store/slices/authSlice';
 import { setAdminToken } from './store/slices/adminSlice';
 import type { AppDispatch } from './store';
@@ -24,7 +25,9 @@ function App() {
 
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

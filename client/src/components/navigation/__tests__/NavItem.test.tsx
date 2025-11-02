@@ -25,7 +25,7 @@ describe('NavItem', () => {
     );
 
     const link = screen.getByRole('link', { name: /orders/i });
-    expect(link.className).toContain('bg-blue-50');
+    expect(link.className).toContain('bg-brand-500/15');
   });
 
   it('renders badge content when provided', () => {

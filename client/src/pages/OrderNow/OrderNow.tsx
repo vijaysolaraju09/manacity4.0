@@ -221,7 +221,7 @@ const OrderNow = () => {
           <button
             onClick={placeOrder}
             disabled={placing}
-            className="w-full rounded-xl bg-blue-500 px-4 py-2.5 text-white shadow-md transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full rounded-xl bg-[var(--brand-500)] px-4 py-2.5 text-white shadow-brand transition hover:bg-[var(--brand-600)] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {placing ? <Loader /> : 'Place Order'}
           </button>

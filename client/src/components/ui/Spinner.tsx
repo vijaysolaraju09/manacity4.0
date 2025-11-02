@@ -23,7 +23,7 @@ export const Spinner = ({ className, size = 'md', ariaLabel = 'Loading' }: Spinn
   >
     <span
       className={cn(
-        'block animate-spin rounded-full border-current border-t-transparent text-blue-600 dark:text-blue-400',
+    'block animate-spin rounded-full border-current border-t-transparent text-brand-500 dark:text-brand-400',
         sizeClasses[size],
       )}
     />

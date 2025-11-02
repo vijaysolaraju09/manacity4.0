@@ -107,12 +107,12 @@ const MiniCartPanel = ({
               {items.map((item) => (
                 <li
                   key={getCartItemKey(item)}
-                  className="group flex items-start justify-between gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-sm shadow-sm transition hover:border-blue-200 hover:bg-white hover:shadow-md dark:border-slate-700/80 dark:bg-slate-800/70 dark:hover:border-blue-500/40 dark:hover:bg-slate-800"
+                  className="group flex items-start justify-between gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-sm shadow-sm transition hover:border-[color:var(--brand-200)] hover:bg-white hover:shadow-md dark:border-slate-700/80 dark:bg-slate-800/70 dark:hover:border-[color:var(--brand-400)]/40 dark:hover:bg-slate-800"
                   role="listitem"
                 >
                   <div className="min-w-0">
                     <p
-                      className="truncate font-medium text-slate-900 transition-colors group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-300"
+                      className="truncate font-medium text-slate-900 transition-colors group-hover:text-[var(--brand-600)] dark:text-slate-100 dark:group-hover:text-[var(--brand-400)]"
                       title={item.name}
                     >
                       {item.name}
@@ -276,7 +276,7 @@ const MiniCart = ({ className, showLabel = false, align = 'end', triggerClassNam
         </span>
       ) : null}
       <span
-        className="pointer-events-none absolute right-0 top-0 z-10 flex min-h-[1.25rem] min-w-[1.25rem] -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-blue-600 px-1 text-xs font-semibold text-white shadow ring-2 ring-white transition dark:bg-blue-500 dark:ring-slate-900"
+        className="pointer-events-none absolute right-0 top-0 z-10 flex min-h-[1.25rem] min-w-[1.25rem] -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-brand-500 px-1 text-xs font-semibold text-white shadow ring-2 ring-[var(--surface)] transition dark:bg-brand-400 dark:ring-[color:var(--surface-card)]"
         aria-hidden="true"
       >
         {count}
@@ -288,7 +288,7 @@ const MiniCart = ({ className, showLabel = false, align = 'end', triggerClassNam
   );
 
   const triggerClasses = cn(
-    'group relative inline-flex items-center justify-center font-medium text-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-slate-200 dark:hover:text-white dark:focus-visible:ring-offset-slate-900',
+  'group relative inline-flex items-center justify-center font-medium text-ink-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand-400)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] dark:text-ink-500 dark:hover:text-ink-900 dark:focus-visible:ring-offset-[var(--surface-card)]',
     showLabel
       ? 'h-10 min-w-[3rem] gap-2 rounded-full bg-slate-100 px-4 py-2 shadow-sm transition-transform duration-150 hover:-translate-y-0.5 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700'
       : 'h-10 w-10 rounded-full bg-transparent transition-transform duration-150 hover:-translate-y-0.5 hover:bg-slate-100 dark:hover:bg-slate-800',

@@ -68,7 +68,7 @@
 }
 
 .thumbnailActive {
-  border-color: #1d4ed8;
+  border-color: var(--brand-600);
 }
 
 .title {
@@ -123,14 +123,14 @@
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
   border-radius: 0.5rem;
-  background-color: #2563eb;
+  background-color: var(--brand-500);
   color: #ffffff;
   border: none;
   transition: background-color 0.2s ease;
 }
 
 .actions button:hover {
-  background-color: #1d4ed8;
+  background-color: var(--brand-600);
 }
 
 .quantityWrapper {

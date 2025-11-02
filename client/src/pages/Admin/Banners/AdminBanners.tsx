@@ -254,7 +254,7 @@ const AdminBanners = () => {
           <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-slate-300 text-[color:var(--brand-600)] focus:ring-[color:var(--brand-500)]"
               checked={form.active}
               onChange={(event) => handleInputChange('active', event.target.checked)}
             />

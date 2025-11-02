@@ -202,7 +202,7 @@ const Shops = () => {
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
-                className="rounded-full border border-blue-200 bg-white px-6 py-2 text-sm font-semibold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                className="rounded-full border border-[color:var(--brand-200)] bg-[var(--surface)] px-6 py-2 text-sm font-semibold text-[var(--brand-600)] shadow-sm transition hover:border-[color:var(--brand-300)] hover:bg-[color-mix(in_srgb,var(--brand-500)_12%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand-400)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
                 onClick={handleLoadMore}
               >
                 Load more shops

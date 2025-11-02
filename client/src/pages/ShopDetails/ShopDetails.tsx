@@ -236,12 +236,12 @@ const ShopDetails = () => {
             placeholder="Search products"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 md:max-w-md"
+            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-500)] md:max-w-md"
           />
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-48"
+            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-500)] md:w-48"
           >
             <option value="relevance">Sort: Relevance</option>
             <option value="priceAsc">Price: Low to High</option>

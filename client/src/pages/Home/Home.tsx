@@ -169,12 +169,12 @@ const Home = () => {
                   }}
                 />
               ) : (
-                <div className="h-40 w-full bg-gradient-to-br from-blue-500/20 via-indigo-500/20 to-purple-500/10 md:h-full" />
+                <div className="h-40 w-full bg-gradient-to-br from-[color:var(--brand-500)]/18 via-[color:var(--accent-500)]/18 to-purple-500/10 md:h-full" />
               )}
             </div>
             <div className="flex flex-1 flex-col justify-center gap-4 p-6">
               <div className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--brand-600)]">
                   Announcement
                 </span>
                 <h2 className="text-2xl font-semibold text-slate-900">{announcement.title}</h2>

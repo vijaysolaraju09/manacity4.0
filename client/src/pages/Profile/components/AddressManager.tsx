@@ -272,13 +272,13 @@ const AddressManager = () => {
                 className={cn(
                   'relative flex flex-col gap-3 rounded-2xl border bg-white/90 p-5 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70',
                   address.isDefault
-                    ? 'border-blue-400/60 shadow-blue-200/40 dark:border-blue-400/40'
+                    ? 'border-[color:var(--brand-400)] shadow-brand dark:border-[color:var(--brand-400)]'
                     : 'border-slate-200/70',
                 )}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-blue-500" aria-hidden="true" />
+                    <MapPin className="h-5 w-5 text-[color:var(--brand-500)]" aria-hidden="true" />
                     <p className="text-base font-semibold text-slate-900 dark:text-white">{address.label}</p>
                   </div>
                   {address.isDefault ? (

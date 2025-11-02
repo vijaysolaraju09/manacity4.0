@@ -163,7 +163,7 @@ const AdminUsers = () => {
         cellClassName: styles.td,
         render: (user) => (
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10 text-sm font-semibold uppercase text-blue-600 dark:bg-blue-500/20 dark:text-blue-200">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--brand-500)]/12 text-sm font-semibold uppercase text-[color:var(--brand-600)] dark:bg-[color:var(--brand-500)]/20 dark:text-[color:var(--brand-200)]">
               {user.name?.[0]?.toUpperCase() ?? 'U'}
             </span>
             <div className="space-y-1">
@@ -251,7 +251,7 @@ const AdminUsers = () => {
               type="button"
               variant="outline"
               size="sm"
-              className="rounded-full border-slate-200 text-xs text-slate-600 hover:border-blue-200 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-200"
+              className="rounded-full border-slate-200 text-xs text-slate-600 hover:border-[color:var(--brand-200)] hover:text-[color:var(--brand-600)] dark:border-slate-700 dark:text-slate-300 dark:hover:border-[color:var(--brand-400)] dark:hover:text-[color:var(--brand-200)]"
               onClick={() => handleToggleActive(user)}
             >
               {user.isActive ? (

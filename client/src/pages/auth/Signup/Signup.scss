@@ -92,7 +92,7 @@ form {
 .actions button {
   width: 100%;
   border-radius: 0.5rem;
-  background-color: #2563eb;
+  background-color: var(--brand-500);
   color: #ffffff;
   padding-left: 1rem;
   padding-right: 1rem;
@@ -103,7 +103,7 @@ form {
 }
 
 .actions button:hover {
-  background-color: #1d4ed8;
+  background-color: var(--brand-600);
 }
 
 .links {
@@ -111,7 +111,7 @@ form {
   text-align: center;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #2563eb;
+  color: var(--brand-500);
 }
 
 .back {
@@ -125,7 +125,7 @@ form {
 }
 
 .back:hover {
-  color: #1d4ed8;
+  color: var(--brand-600);
 }
 
 .password-field {
@@ -158,6 +158,6 @@ form {
 }
 
 .password-field .toggle:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--brand-500);
   outline-offset: 2px;
 }

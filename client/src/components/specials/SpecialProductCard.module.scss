@@ -85,7 +85,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   text-align: center;
-  background: #2563eb;
+  background: var(--brand-500);
   color: #ffffff;
   transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
   text-decoration: none;
@@ -94,7 +94,7 @@
 
 .button:hover,
 .button:focus-visible {
-  background: #1d4ed8;
+  background: var(--brand-600);
   box-shadow: 0 15px 25px -12px rgba(37, 99, 235, 0.55);
 }
 

@@ -29,8 +29,8 @@
 }
 
 .role {
-  background: var(--blue-100);
-  color: var(--blue-700);
+  background: color-mix(in srgb, var(--brand-500) 12%, transparent);
+  color: var(--brand-600);
   padding: 0 var(--spacing-xs);
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
@@ -70,9 +70,9 @@
 }
 
 .actions button + button {
-  background: var(--blue-100);
-  color: var(--blue-700);
-  border-color: var(--blue-100);
+  background: color-mix(in srgb, var(--brand-500) 14%, transparent);
+  color: var(--brand-600);
+  border-color: color-mix(in srgb, var(--brand-500) 22%, transparent);
 }
 
 .nameRow h3 {

@@ -34,7 +34,7 @@
   padding: 0.5rem 1.25rem;
   border-radius: 999px;
   border: none;
-  background: var(--color-primary, #2563eb);
+  background: var(--color-primary, var(--brand-500));
   color: var(--color-on-primary, #ffffff);
   font-weight: 600;
   cursor: pointer;

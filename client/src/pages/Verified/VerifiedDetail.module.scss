@@ -69,13 +69,13 @@
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
   border-radius: 0.5rem;
-  background-color: #2563eb;
+  background-color: var(--brand-500);
   color: #ffffff;
   transition: background-color 0.2s ease;
 }
 
 .contactButtons button:hover {
-  background-color: #1d4ed8;
+  background-color: var(--brand-600);
 }
 
 .meta {
@@ -85,5 +85,5 @@
 }
 
 .badge {
-  color: #2563eb;
+  color: var(--brand-500);
 }

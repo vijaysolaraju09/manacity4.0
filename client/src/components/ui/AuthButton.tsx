@@ -13,24 +13,24 @@ type AuthButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const baseStyles =
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-60';
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-60 focus-visible:outline-[color:var(--brand-400)]';
 
 const variantStyles: Record<AuthButtonVariant, string> = {
   primary:
-    'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 focus-visible:outline-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400',
+    'bg-brand-500 text-white shadow-brand hover:bg-brand-600 dark:bg-brand-500 dark:hover:bg-brand-400',
   secondary:
     'bg-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-700 focus-visible:outline-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700',
   outline:
-    'border border-slate-300 bg-white text-slate-800 hover:border-slate-400 hover:bg-slate-100 focus-visible:outline-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800',
+    'border border-[color:var(--border-subtle)] bg-[var(--surface)] text-ink-700 hover:border-[color:var(--brand-300)] hover:bg-[var(--surface-card)] dark:border-[color:var(--border-subtle)] dark:bg-[var(--surface-card)] dark:text-ink-500',
   ghost:
-    'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-blue-500 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white',
+    'bg-transparent text-ink-600 hover:bg-[color-mix(in_srgb,var(--ink-300)_20%,transparent)] hover:text-ink-900 dark:text-ink-500 dark:hover:bg-[color-mix(in_srgb,var(--ink-500)_20%,transparent)] dark:hover:text-ink-900',
   danger:
-    'bg-rose-600 text-white shadow-lg shadow-rose-600/30 hover:bg-rose-500 focus-visible:outline-rose-500 dark:bg-rose-500 dark:hover:bg-rose-400',
+    'bg-[var(--danger-500)] text-white shadow-lg shadow-[rgba(220,38,38,0.32)] hover:bg-[var(--danger-600)] dark:bg-[var(--danger-500)] dark:hover:bg-[var(--danger-600)]',
 };
 
 const toneStyles: Record<AuthButtonTone, string> = {
   default: '',
-  success: 'bg-emerald-600 hover:bg-emerald-500 focus-visible:outline-emerald-500 text-white',
+  success: 'bg-[var(--success-500)] hover:bg-[var(--success-600)] text-white',
 };
 
 const AuthButton = forwardRef<HTMLButtonElement, AuthButtonProps>(

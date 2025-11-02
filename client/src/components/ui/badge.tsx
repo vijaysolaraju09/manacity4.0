@@ -1,27 +1,24 @@
 import type { HTMLAttributes } from 'react';
+
 import { cn } from '@/lib/utils';
 
-const badgeBase =
-  'inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 shadow-sm dark:border-blue-400/40 dark:bg-blue-500/15 dark:text-blue-100';
+export type BadgeVariant = 'default' | 'secondary' | 'outline' | 'success' | 'warning' | 'danger';
 
 export type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
-  variant?: 'default' | 'secondary' | 'outline' | 'success' | 'warning';
+  variant?: BadgeVariant;
 };
 
-const variantClass: Record<NonNullable<BadgeProps['variant']>, string> = {
-  default: badgeBase,
-  secondary:
-    'inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 shadow-sm dark:border-slate-700/40 dark:bg-slate-800/40 dark:text-slate-100',
-  outline:
-    'inline-flex items-center rounded-full border border-slate-300 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:text-slate-200',
-  success:
-    'inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 shadow-sm dark:border-emerald-400/50 dark:bg-emerald-500/15 dark:text-emerald-100',
-  warning:
-    'inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 shadow-sm dark:border-amber-400/50 dark:bg-amber-500/15 dark:text-amber-100',
+const variantClass: Record<BadgeVariant, string> = {
+  default: 'badge--brand',
+  secondary: 'badge--muted',
+  outline: 'badge--outline',
+  success: 'badge--success',
+  warning: 'badge--warning',
+  danger: 'badge--danger',
 };
 
 const Badge = ({ className, variant = 'default', ...props }: BadgeProps) => (
-  <span className={cn(variantClass[variant], className)} {...props} />
+  <span className={cn('chip', variantClass[variant], className)} {...props} />
 );
 
 export default Badge;

@@ -648,7 +648,7 @@ const VoiceOrder = () => {
                     type="button"
                     onClick={() => handleExampleInsert(example)}
                     className={cn(
-                      'transition-colors hover:bg-slate-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600',
+                      'transition-colors hover:bg-slate-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand-500)]',
                       voiceStyles.chip,
                     )}
                   >
@@ -745,7 +745,7 @@ const VoiceOrder = () => {
                 </Button>
                 {recordingUrl ? (
                   <a
-                    className="inline-flex items-center gap-2 text-xs font-medium text-blue-600 underline-offset-4 hover:underline"
+                    className="inline-flex items-center gap-2 text-xs font-medium text-[color:var(--brand-600)] underline-offset-4 hover:underline"
                     href={recordingUrl}
                     target="_blank"
                     rel="noreferrer"

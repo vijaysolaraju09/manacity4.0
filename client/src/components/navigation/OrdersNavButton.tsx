@@ -62,7 +62,7 @@ const OrdersNavButton = ({
       aria-label="Cart"
       onClick={handleClick}
       className={cn(
-        'group relative inline-flex items-center justify-center text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-slate-200 dark:hover:bg-slate-800/70 dark:hover:text-white dark:focus-visible:ring-offset-slate-900',
+        'group relative inline-flex items-center justify-center text-sm font-medium text-ink-600 transition-colors hover:bg-[var(--surface-card)] hover:text-ink-900 focus-visible:ring-2 focus-visible:ring-[color:var(--brand-400)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] dark:text-ink-500 dark:hover:bg-[color-mix(in_srgb,var(--ink-500)_20%,transparent)] dark:hover:text-ink-900 dark:focus-visible:ring-offset-[var(--surface-card)]',
         showLabel ? 'gap-2 rounded-xl px-4 py-2' : 'h-10 w-10 rounded-xl',
         className,
       )}
@@ -72,7 +72,7 @@ const OrdersNavButton = ({
       {showLabel ? <span className="text-sm font-medium">{label}</span> : null}
       {pendingCount > 0 ? (
         <span
-          className="absolute right-0 top-0 flex min-h-[1.1rem] min-w-[1.1rem] -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-blue-600 px-1 text-[0.65rem] font-semibold text-white shadow ring-2 ring-white dark:bg-blue-500 dark:ring-slate-900"
+          className="absolute right-0 top-0 flex min-h-[1.1rem] min-w-[1.1rem] -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-brand-500 px-1 text-[0.65rem] font-semibold text-white shadow ring-2 ring-[var(--surface)] dark:bg-brand-400 dark:ring-[color:var(--surface-card)]"
           aria-hidden="true"
         >
           {badgeLabel}

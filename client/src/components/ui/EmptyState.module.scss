@@ -32,7 +32,7 @@
 
 .cta {
   padding: 0.6rem 1.5rem;
-  background: var(--color-primary, #2563eb);
+  background: var(--color-primary, var(--brand-500));
   color: var(--color-on-primary, #ffffff);
   border: none;
   border-radius: 999px;

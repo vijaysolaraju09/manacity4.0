@@ -57,29 +57,29 @@ const OrderTimeline = ({ status, timeline }: OrderTimelineProps) => {
 
   return (
     <ol className="relative space-y-6 pl-6">
-      <div className="absolute left-3 top-2 bottom-2 w-px bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
+      <div className="absolute left-3 top-2 bottom-2 w-px bg-[color:var(--border-subtle)]/70 dark:bg-[color:var(--border-subtle)]/40" aria-hidden="true" />
       {steps.map((step) => {
         const Icon = step.icon;
         return (
           <li key={step.key} className="relative flex flex-col gap-1">
             <div
               className={cn(
-                'absolute -left-[22px] flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-200 bg-white text-slate-400 shadow-sm dark:border-slate-700 dark:bg-slate-900',
-                step.state === 'done' && 'border-emerald-200 bg-emerald-500/10 text-emerald-600 dark:border-emerald-500/40 dark:text-emerald-300',
-                step.state === 'current' && 'border-blue-200 bg-blue-500/10 text-blue-600 dark:border-blue-500/40 dark:text-blue-300',
-                step.state === 'cancelled' && 'border-rose-200 bg-rose-500/10 text-rose-600 dark:border-rose-500/40 dark:text-rose-300',
+                'absolute -left-[22px] flex h-10 w-10 items-center justify-center rounded-full border-2 border-[color:var(--border-subtle)] bg-[var(--surface)] text-ink-400 shadow-sm dark:border-[color:var(--border-subtle)]/50 dark:bg-[var(--surface-card)]',
+                step.state === 'done' && 'border-[color:var(--success-500)]/40 bg-[color-mix(in_srgb,var(--success-500)_18%,transparent)] text-[var(--success-500)] dark:text-[var(--success-500)]',
+                step.state === 'current' && 'border-[color:var(--brand-400)] bg-[color-mix(in_srgb,var(--brand-500)_18%,transparent)] text-[var(--brand-600)] dark:text-[var(--brand-400)]',
+                step.state === 'cancelled' && 'border-[color:var(--danger-500)]/40 bg-[color-mix(in_srgb,var(--danger-500)_18%,transparent)] text-[var(--danger-500)] dark:text-[var(--danger-500)]',
               )}
             >
               <Icon className="h-5 w-5" aria-hidden="true" />
             </div>
-            <div className="ml-3 flex flex-col gap-1 rounded-2xl bg-slate-50/60 px-5 py-3 text-sm text-slate-600 shadow-sm dark:bg-slate-800/60 dark:text-slate-200">
-              <p className="font-semibold text-slate-900 dark:text-white">{step.label}</p>
+            <div className="ml-3 flex flex-col gap-1 rounded-2xl bg-[color-mix(in_srgb,var(--surface-card)_88%,transparent)] px-5 py-3 text-sm text-ink-500 shadow-sm dark:bg-[color-mix(in_srgb,var(--surface-card)_62%,transparent)] dark:text-ink-500">
+              <p className="font-semibold text-ink-900 dark:text-ink-900">{step.label}</p>
               {step.at ? (
-                <span className="text-xs text-slate-500 dark:text-slate-300">
+                <span className="text-xs text-ink-400 dark:text-ink-500">
                   {new Date(step.at).toLocaleString()}
                 </span>
               ) : null}
-              {step.note ? <p className="text-xs text-slate-500 dark:text-slate-300">{step.note}</p> : null}
+              {step.note ? <p className="text-xs text-ink-400 dark:text-ink-500">{step.note}</p> : null}
             </div>
           </li>
         );

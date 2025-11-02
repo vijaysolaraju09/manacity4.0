@@ -51,8 +51,6 @@ const LabeledInput = forwardRef<HTMLInputElement, LabeledInputProps>(
 
 LabeledInput.displayName = 'LabeledInput';
 
-export type { LabeledInputProps };
-
 export { LabeledInput };
 
 export default LabeledInput;

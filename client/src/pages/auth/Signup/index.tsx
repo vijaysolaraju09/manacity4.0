@@ -193,8 +193,8 @@ const Signup = () => {
       const { name, email, password } = getValues();
       await signUpWithEmailPasswordAndLinkPhone({
         name,
-        email,
-        password,
+        email: email ?? null,
+        password: password ?? null,
         phoneCredential: credential,
       });
 
@@ -321,7 +321,7 @@ const Signup = () => {
                   })()}
 
                   <Input
-                    label="Email"
+                    label="Email (optional)"
                     type="email"
                     placeholder="jane@example.com"
                     autoComplete="email"
@@ -334,7 +334,7 @@ const Signup = () => {
                     type="password"
                     autoComplete="new-password"
                     placeholder="Create a strong password"
-                    helperText="At least 8 characters with uppercase, lowercase, number, and symbol."
+                    helperText="At least 8 characters with uppercase, lowercase, number, and symbol. Required only when providing an email."
                     {...register('password')}
                     error={errors.password?.message}
                   />

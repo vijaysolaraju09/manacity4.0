@@ -142,7 +142,24 @@ const Signup = () => {
   const buildE164 = useCallback(
     (country: CountryOption, phone: string) => {
       const sanitizedDial = normalizeDigits(country.dialCode);
-      const digits = normalizeDigits(phone);
+      let digits = normalizeDigits(phone);
+      let includesExplicitPrefix = false;
+
+      if (digits.startsWith('00')) {
+        digits = digits.slice(2);
+        includesExplicitPrefix = true;
+      }
+
+      if (phone.trim().startsWith('+')) {
+        includesExplicitPrefix = true;
+      }
+
+      if (includesExplicitPrefix && digits.startsWith(sanitizedDial)) {
+        digits = digits.slice(sanitizedDial.length);
+      }
+
+      digits = digits.replace(/^0+/, '');
+
       return `+${sanitizedDial}${digits}`;
     },
     [],

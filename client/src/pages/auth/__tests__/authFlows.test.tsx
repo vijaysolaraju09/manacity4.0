@@ -72,8 +72,26 @@ describe('Auth flows', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /send verification code/i }));
 
-    await waitFor(() => expect(sendOtpMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(sendOtpMock).toHaveBeenCalledWith('+919876543210'));
     expect(await screen.findByText(/verification code/i)).toBeInTheDocument();
+  });
+
+  it('normalizes phone numbers that already include country code or prefixes', async () => {
+    render(
+      <MemoryRouter>
+        <Signup />
+      </MemoryRouter>,
+    );
+
+    await userEvent.type(screen.getByLabelText(/full name/i), 'Jane Example');
+    await userEvent.type(screen.getByLabelText(/^email/i), 'jane@example.com');
+    await userEvent.type(screen.getByLabelText(/^password/i), 'Password1!');
+    await userEvent.clear(screen.getByLabelText(/phone number/i));
+    await userEvent.type(screen.getByLabelText(/phone number/i), '+91 09876 543210');
+
+    await userEvent.click(screen.getByRole('button', { name: /send verification code/i }));
+
+    await waitFor(() => expect(sendOtpMock).toHaveBeenCalledWith('+919876543210'));
   });
 
   it('calls setRemember when logging in with remember me selected', async () => {

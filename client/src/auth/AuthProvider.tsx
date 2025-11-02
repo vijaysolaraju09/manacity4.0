@@ -10,13 +10,12 @@ import {
 import {
   browserLocalPersistence,
   browserSessionPersistence,
-  createUserWithEmailAndPassword,
-  deleteUser,
   EmailAuthProvider,
   linkWithCredential,
   onAuthStateChanged,
   sendPasswordResetEmail,
   setPersistence,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
@@ -36,8 +35,8 @@ type SignInArgs = {
 
 type SignUpArgs = {
   name: string;
-  email: string;
-  password: string;
+  email?: string | null;
+  password?: string | null;
   phoneCredential?: PhoneAuthCredential | null;
 };
 
@@ -102,13 +101,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
 
-      const currentUser = auth.currentUser;
-      const hasPhoneProvider = currentUser?.providerData.some((provider) => provider.providerId === 'phone');
+      let currentUser = auth.currentUser;
+      let credentialResult: UserCredential | null = null;
 
-      if (currentUser) {
-        if (phoneCredential && !hasPhoneProvider) {
+      if (phoneCredential) {
+        const hasPhoneProvider = currentUser?.providerData.some((provider) => provider.providerId === 'phone');
+
+        if (!currentUser) {
+          credentialResult = await signInWithCredential(auth, phoneCredential);
+          currentUser = credentialResult.user;
+        } else if (!hasPhoneProvider) {
           try {
-            await linkWithCredential(currentUser, phoneCredential);
+            credentialResult = await linkWithCredential(currentUser, phoneCredential);
+            currentUser = credentialResult.user;
           } catch (error) {
             const code = (error as FirebaseError).code;
             if (code !== 'auth/provider-already-linked') {
@@ -116,36 +121,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         }
+      }
 
-        if (hasPhoneProvider) {
-          const emailCredential = EmailAuthProvider.credential(email, password);
-          const linkedCredential = await linkWithCredential(currentUser, emailCredential);
-          if (name && currentUser.displayName !== name) {
-            await updateProfile(linkedCredential.user, { displayName: name });
-          }
-          return linkedCredential;
+      if (!currentUser) {
+        throw new Error('Unable to create account without a verified phone number.');
+      }
+
+      const normalizedEmail = email?.trim() ?? '';
+      const hasEmail = normalizedEmail.length > 0;
+      const hasPassword = Boolean(password && password.length > 0);
+
+      if (hasEmail && !hasPassword) {
+        throw new Error('Password is required when email is provided.');
+      }
+
+      if (hasEmail) {
+        const emailCredential = EmailAuthProvider.credential(normalizedEmail, password!);
+        const linkedCredential = await linkWithCredential(currentUser, emailCredential);
+        if (name && linkedCredential.user.displayName !== name) {
+          await updateProfile(linkedCredential.user, { displayName: name });
         }
+        return linkedCredential;
       }
 
-      const createdCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-      if (name) {
-        await updateProfile(createdCredential.user, { displayName: name });
+      if (name && currentUser.displayName !== name) {
+        await updateProfile(currentUser, { displayName: name });
       }
 
-      if (phoneCredential) {
-        try {
-          await linkWithCredential(createdCredential.user, phoneCredential);
-        } catch (error) {
-          const code = (error as FirebaseError).code;
-          if (code === 'auth/credential-already-in-use') {
-            await deleteUser(createdCredential.user);
-          }
-          throw error;
-        }
+      if (credentialResult) {
+        return credentialResult;
       }
 
-      return createdCredential;
+      return {
+        user: currentUser,
+        providerId: currentUser.providerId ?? null,
+        operationType: 'signIn',
+      } as UserCredential;
     },
     [rememberMe],
   );

@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation, type Location } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { Spinner } from '@/components/ui/Spinner';
+import { paths } from '@/routes/paths';
 
 const LoadingScreen = ({ label }: { label: string }) => (
   <div className="flex min-h-screen items-center justify-center bg-slate-900/70 p-6">
@@ -24,7 +25,7 @@ export const ProtectedRoute = () => {
   }
 
   if (!user) {
-    return <Navigate to="/auth/login" replace state={{ from: location }} />;
+    return <Navigate to={paths.auth.login()} replace state={{ from: location }} />;
   }
 
   return <Outlet />;

@@ -12,6 +12,7 @@ import { emailSchema, passwordSchema } from '@/utils/validation';
 import { useAuth } from '@/auth/AuthProvider';
 import logo from '@/assets/logo.png';
 import fallbackImage from '@/assets/no-image.svg';
+import { paths } from '@/routes/paths';
 
 const loginSchema = z.object({
   email: emailSchema,
@@ -109,7 +110,7 @@ const Login = () => {
             <Button
               variant="ghost"
               className="mt-4 text-white hover:text-white"
-              onClick={() => navigate('/auth/signup')}
+              onClick={() => navigate(paths.auth.signup())}
             >
               Create an account
             </Button>

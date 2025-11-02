@@ -24,8 +24,10 @@ const AppRouter = () => (
       <Suspense fallback={<FullscreenLoader />}>
         <Routes>
           <Route element={<PublicOnlyRoute />}>
-            <Route path="/auth/signup" element={<Signup />} />
-            <Route path="/auth/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/auth/signup" element={<Navigate to="/signup" replace />} />
+            <Route path="/auth/login" element={<Navigate to="/login" replace />} />
             <Route path="/auth/forgot" element={<ForgotPassword />} />
           </Route>
 
@@ -33,7 +35,7 @@ const AppRouter = () => (
             <Route path="/" element={<Dashboard />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/auth/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Suspense>
     </AuthProvider>

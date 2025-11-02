@@ -2,10 +2,10 @@
 @import "../../../styles/variables";
 
 .card {
-  background: var(--color-card);
-  border-radius: 12px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   cursor: pointer;
   transition: transform 0.2s ease;
 
@@ -16,7 +16,7 @@
   }
 
   .info {
-    padding: 0.75rem;
+    padding: var(--space-4);
 
     h3 {
       margin: 0 0 0.25rem;
@@ -25,7 +25,6 @@
 
     .category {
       margin: 0;
-      color: var(--color-muted);
     }
 
     .location {
@@ -45,47 +44,18 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
-      margin-top: 0.5rem;
+      margin-top: 0.75rem;
       font-size: 0.85rem;
       align-items: center;
     }
 
-    .rating {
-      color: $primary-color;
-    }
-
-    .distance {
-      color: var(--color-muted);
-    }
-
-    .status {
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      &.open {
-        background: var(--color-success);
-        color: var(--color-on-primary);
-      }
-      &.closed {
-        background: var(--color-danger);
-        color: var(--color-on-primary);
-      }
-    }
-
     .cta {
-      margin-top: 0.75rem;
-      padding: 0.5rem 0.75rem;
-      border-radius: 6px;
-      border: none;
-      background: $primary-color;
-      color: var(--color-on-primary);
+      margin-top: var(--space-4);
       font-weight: 600;
-      cursor: pointer;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
 
       &:hover {
         transform: translateY(-1px);
-        box-shadow: var(--shadow-sm);
       }
     }
   }

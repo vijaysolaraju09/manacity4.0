@@ -5,9 +5,9 @@
   display: flex;
   flex-direction: column;
   background: var(--color-surface);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   cursor: pointer;
   border: 1px solid transparent;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -45,26 +45,7 @@
 }
 
 .badge {
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: rgba(0, 0, 0, 0.5);
-  color: #fff;
   text-transform: capitalize;
-  backdrop-filter: blur(6px);
-
-  &.tournament {
-    background: rgba(118, 74, 241, 0.8);
-  }
-
-  &.activity {
-    background: rgba(76, 175, 80, 0.8);
-  }
-
-  &.status {
-    background: rgba(33, 150, 243, 0.8);
-  }
 }
 
 .content {

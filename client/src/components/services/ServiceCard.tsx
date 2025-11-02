@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import styles from './ServiceCard.module.scss';
 import type { Service } from '@/types/services';
+import { cn } from '@/lib/utils';
 
 interface ServiceCardProps {
   service: Service;
@@ -28,7 +29,7 @@ const ServiceCard = ({ service, onClick, footer }: ServiceCardProps) => {
     <div
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      className={styles.card}
+      className={cn('card', styles.card)}
       onClick={onClick}
       onKeyDown={(event) => {
         if (!onClick) return;
@@ -50,7 +51,14 @@ const ServiceCard = ({ service, onClick, footer }: ServiceCardProps) => {
         <div className={styles.headerText}>
           <div className={styles.titleRow}>
             <div className={styles.title}>{service.name}</div>
-            <span className={`${styles.badge} ${isActive ? styles.badgeActive : styles.badgeInactive}`}>
+            <span
+              className={cn(
+                'chip',
+                isActive ? 'chip--success' : 'chip--danger',
+                styles.badge,
+                isActive ? styles.badgeActive : styles.badgeInactive,
+              )}
+            >
               {isActive ? 'Active' : 'Unavailable'}
             </span>
           </div>

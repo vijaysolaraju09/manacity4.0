@@ -1,23 +1,32 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useDispatch } from 'react-redux';
 import showToast from '@/components/ui/Toast';
 import { AuthButton as Button } from '@/components/ui/AuthButton';
 import { LabeledInput as Input } from '@/components/ui/LabeledInput';
 import { ErrorAlert } from '@/components/Alerts';
 import { createZodResolver } from '@/lib/createZodResolver';
-import { emailSchema, passwordSchema } from '@/utils/validation';
-import { useAuth } from '@/auth/AuthProvider';
+import { toErrorMessage } from '@/lib/response';
+import { login as loginApi } from '@/api/auth';
+import { setToken, setUser } from '@/store/slices/authSlice';
 import logo from '@/assets/logo.png';
 import fallbackImage from '@/assets/no-image.svg';
 import { paths } from '@/routes/paths';
 
 const loginSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
-  remember: z.boolean().default(true),
+  phone: z
+    .string({ required_error: 'Phone number is required.' })
+    .trim()
+    .min(10, 'Enter a valid phone number.')
+    .max(14, 'Phone number seems too long.')
+    .regex(/^[0-9()+\s-]+$/, 'Only digits and basic separators are allowed.'),
+  password: z
+    .string({ required_error: 'Password is required.' })
+    .min(6, 'Password must be at least 6 characters long.'),
+  remember: z.boolean().default(false),
 });
 
 type LoginSchema = z.infer<typeof loginSchema>;
@@ -25,56 +34,70 @@ type LoginSchema = z.infer<typeof loginSchema>;
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const emailRef = useRef<HTMLInputElement | null>(null);
-  const { signIn, setRemember, rememberMe } = useAuth();
+  const dispatch = useDispatch();
+  const phoneRef = useRef<HTMLInputElement | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const rememberedPhone = useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    return window.localStorage.getItem('manacity:remembered-phone') ?? '';
+  }, []);
+
+  const rememberedFlag = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('manacity:remembered-flag') === 'true';
+  }, []);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setValue,
   } = useForm<LoginSchema>({
     resolver: createZodResolver(loginSchema),
     mode: 'onSubmit',
     defaultValues: {
-      remember: rememberMe,
+      phone: rememberedPhone,
+      remember: rememberedFlag,
     },
   });
 
   useEffect(() => {
-    setValue('remember', rememberMe);
-  }, [rememberMe, setValue]);
-
-  useEffect(() => {
-    emailRef.current?.focus();
+    phoneRef.current?.focus();
   }, []);
 
-  const onSubmit = handleSubmit(async ({ email, password, remember }) => {
+  const normalizePhone = useCallback((value: string) => value.replace(/\D/g, ''), []);
+
+  const onSubmit = handleSubmit(async ({ phone, password, remember }) => {
     setErrorMessage(null);
     try {
-      await setRemember(remember);
-      await signIn({ email, password });
+      const normalizedPhone = normalizePhone(phone);
+      const result = await loginApi({ phone: normalizedPhone, password });
+      dispatch(setToken(result.token));
+      dispatch(setUser(result.user));
+
+      if (typeof window !== 'undefined') {
+        if (remember) {
+          window.localStorage.setItem('manacity:remembered-phone', phone);
+          window.localStorage.setItem('manacity:remembered-flag', 'true');
+        } else {
+          window.localStorage.removeItem('manacity:remembered-phone');
+          window.localStorage.removeItem('manacity:remembered-flag');
+        }
+      }
+
       const redirectState = location.state as { from?: { pathname?: string } } | undefined;
       const destination = redirectState?.from?.pathname ?? '/';
       showToast('Welcome back!', 'success');
       navigate(destination, { replace: true });
     } catch (error) {
-      const code = (error as { code?: string })?.code ?? 'auth/unknown-error';
-      let message = 'Unable to sign in with those credentials.';
-      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
-        message = 'Incorrect email or password. Try again.';
-      } else if (code === 'auth/user-not-found') {
-        message = 'No account found for that email. Create one to continue.';
-      } else if (code === 'auth/too-many-requests') {
-        message = 'Too many attempts. Please wait a few minutes and try again.';
-      }
+      const message =
+        toErrorMessage(error) || 'Unable to sign in with those credentials. Please try again.';
       setErrorMessage(message);
       showToast(message, 'error');
     }
   });
 
-  const emailField = register('email');
+  const phoneField = register('phone');
   const passwordField = register('password');
   const rememberField = register('remember');
 
@@ -127,15 +150,15 @@ const Login = () => {
             {errorMessage ? <ErrorAlert title="Sign-in failed" description={errorMessage} /> : null}
 
             <Input
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
-              autoComplete="email"
-              {...emailField}
-              error={errors.email?.message}
+              label="Phone number"
+              type="tel"
+              placeholder="9876543210"
+              autoComplete="tel"
+              {...phoneField}
+              error={errors.phone?.message}
               ref={(node) => {
-                emailField.ref(node);
-                emailRef.current = node;
+                phoneField.ref(node);
+                phoneRef.current = node;
               }}
             />
 

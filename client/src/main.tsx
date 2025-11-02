@@ -10,9 +10,12 @@ import './styles/globals.scss'
 import App from './App.tsx'
 import { store } from './store'
 import ThemeProvider from './theme/ThemeProvider'
+import { initTheme } from './theme/theme'
 
-document.body.classList.add('bg-slate-50', 'text-slate-900', 'antialiased')
-document.body.classList.add('transition-colors', 'duration-200', 'ease-out')
+initTheme()
+
+document.body.classList.remove('bg-slate-50', 'text-slate-900')
+document.body.classList.add('antialiased', 'transition-colors', 'duration-200', 'ease-out')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

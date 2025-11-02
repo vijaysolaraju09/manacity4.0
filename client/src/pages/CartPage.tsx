@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Trash2, ShoppingCart } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import QuantityStepper from '@/components/ui/QuantityStepper/QuantityStepper';
@@ -60,12 +60,22 @@ const CartPage = () => {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-10">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Shopping cart</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {totalItems} item{totalItems === 1 ? '' : 's'} ready for checkout
-          </p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3">
+          <Button
+            variant="outline"
+            onClick={() => navigate(paths.shops())}
+            className="btn--ghost w-full justify-center text-[var(--brand-600)] shadow-sm hover:shadow-brand sm:w-auto"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Back to shops
+          </Button>
+          <div>
+            <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Shopping cart</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {totalItems} item{totalItems === 1 ? '' : 's'} ready for checkout
+            </p>
+          </div>
         </div>
         <Button variant="destructive" onClick={handleClear} className="w-full sm:w-auto">
           <Trash2 className="mr-2 h-4 w-4" aria-hidden /> Clear cart
@@ -77,7 +87,7 @@ const CartPage = () => {
           {items.map((item) => (
             <li
               key={[item.productId, item.shopId, item.variantId ?? ''].join('::')}
-              className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+              className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm shadow-mobile dark:border-slate-700 dark:bg-slate-900"
             >
               <div className="flex items-start gap-4">
                 {item.image ? (
@@ -121,7 +131,7 @@ const CartPage = () => {
           ))}
         </ul>
 
-        <aside className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <aside className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm shadow-mobile dark:border-slate-700 dark:bg-slate-900">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Order summary</h2>
           <dl className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
             <div className="flex items-center justify-between">
@@ -137,7 +147,7 @@ const CartPage = () => {
             <span>Total due</span>
             <span>{subtotalLabel}</span>
           </div>
-          <Button className="w-full" onClick={handleCheckout}>
+          <Button className="w-full shadow-brand" onClick={handleCheckout}>
             Proceed to checkout
           </Button>
         </aside>

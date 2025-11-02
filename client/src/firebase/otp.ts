@@ -33,11 +33,11 @@ export const getOrCreateInvisibleRecaptcha = (firebaseAuth: Auth = auth) => {
   }
 
   verifier = new RecaptchaVerifier(
+    firebaseAuth,
     RECAPTCHA_CONTAINER_ID,
     {
       size: 'invisible',
     },
-    firebaseAuth,
   );
 
   return verifier;

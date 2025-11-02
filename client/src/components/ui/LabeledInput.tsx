@@ -2,13 +2,13 @@ import { forwardRef, useId } from 'react';
 import type { InputHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
-export type InputProps = InputHTMLAttributes<HTMLInputElement> & {
+export type LabeledInputProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   helperText?: string;
   error?: string;
 };
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
+const LabeledInput = forwardRef<HTMLInputElement, LabeledInputProps>(
   ({ className, label, helperText, error, id, type = 'text', ...props }, ref) => {
     const generatedId = useId();
     const inputId = id ?? generatedId;
@@ -49,6 +49,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   },
 );
 
-Input.displayName = 'Input';
+LabeledInput.displayName = 'LabeledInput';
 
-export default Input;
+export type { LabeledInputProps };
+
+export { LabeledInput };
+
+export default LabeledInput;

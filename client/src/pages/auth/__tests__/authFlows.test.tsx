@@ -41,7 +41,7 @@ describe('Auth flows', () => {
     sendOtpMock.mockResolvedValue({ verificationId: 'test-verification' });
     confirmOtpMock.mockResolvedValue({ user: { uid: 'abc' } });
     signInMock.mockResolvedValue({ user: { uid: '123' } });
-    setRememberMock.mockResolvedValue();
+    setRememberMock.mockResolvedValue(undefined);
     signUpMock.mockResolvedValue({ user: { uid: 'xyz' } });
     sendPasswordResetMock.mockResolvedValue(undefined);
     vi.clearAllMocks();

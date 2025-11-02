@@ -35,7 +35,7 @@ const ResetPassword = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
   } = useForm<ResetPasswordFormValues>({
     resolver: createZodResolver(ResetPasswordSchema),
     mode: 'onChange',
@@ -110,7 +110,12 @@ const ResetPassword = () => {
             {errors.password && <div className="error">{errors.password.message}</div>}
           </div>
           <div className="actions">
-            <motion.button type="submit" whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} disabled={isSubmitting}>
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              disabled={!isValid || isSubmitting}
+            >
               {isSubmitting ? <Loader /> : 'Reset password'}
             </motion.button>
           </div>

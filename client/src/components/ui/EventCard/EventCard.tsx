@@ -4,6 +4,7 @@ import fallbackImage from '@/assets/no-image.svg';
 import type { EventSummary } from '@/types/events';
 import { formatDateTime, formatDate } from '@/utils/date';
 import styles from './EventCard.module.scss';
+import { cn } from '@/lib/utils';
 
 interface Props {
   event: EventSummary;
@@ -28,15 +29,17 @@ const EventCard = ({ event }: Props) => {
   return (
     <button
       type="button"
-      className={styles.card}
+      className={cn('card', styles.card)}
       onClick={() => navigate(`/events/${event._id}`)}
     >
       <div className={styles.media}>
         <img src={banner} alt={event.title} onError={(e) => (e.currentTarget.src = fallbackImage)} />
         <div className={styles.labels}>
-          <span className={`${styles.badge} ${styles[event.type]}`}>{toLabel(event.type)}</span>
-          <span className={styles.badge}>{toLabel(event.category)}</span>
-          <span className={`${styles.badge} ${styles.status}`}>
+          <span className={cn('chip chip--brand', styles.badge, styles[event.type])}>
+            {toLabel(event.type)}
+          </span>
+          <span className={cn('chip', styles.badge)}>{toLabel(event.category)}</span>
+          <span className={cn('chip', styles.badge, styles.status)}>
             {toLabel(event.lifecycleStatus || event.status)}
           </span>
         </div>

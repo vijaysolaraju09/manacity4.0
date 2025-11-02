@@ -34,7 +34,7 @@ const NotificationCard = ({
 
   return (
     <div
-      className={cn(styles.card, read ? styles.read : styles.unread)}
+      className={cn('card', styles.card, read ? styles.read : styles.unread)}
       onClick={onClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}

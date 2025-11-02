@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import styles from './ProviderCard.module.scss';
 import getImageOrPlaceholder from '@/utils/getImageOrPlaceholder';
 import type { ServiceProvider } from '@/types/services';
+import { cn } from '@/lib/utils';
 
 interface ProviderCardProps {
   provider: ServiceProvider;
@@ -24,7 +25,7 @@ const ProviderCard = ({ provider, actions }: ProviderCardProps) => {
   );
 
   return (
-    <div className={styles.card}>
+    <div className={cn('card', styles.card)}>
       <img
         src={avatarUrl}
         alt={name}
@@ -49,12 +50,14 @@ const ProviderCard = ({ provider, actions }: ProviderCardProps) => {
           {phone ? <div>{phone}</div> : null}
         </div>
         <div className={styles.actions}>
-          <span className={styles.badge}>
+          <span className={cn('chip chip--brand', styles.badge)}>
             <AiFillStar aria-hidden="true" />
             {typeof ratingAvg === 'number' ? ratingAvg.toFixed(1) : 'Not rated'}
             {typeof ratingCount === 'number' && ratingCount > 0 ? ` (${ratingCount})` : ''}
           </span>
-          {provider.source ? <span className={styles.badge}>Source: {provider.source}</span> : null}
+          {provider.source ? (
+            <span className={cn('chip', styles.badge)}>Source: {provider.source}</span>
+          ) : null}
         </div>
         {actions ? <div className={styles.actions}>{actions}</div> : null}
       </div>

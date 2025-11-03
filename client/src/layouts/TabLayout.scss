@@ -284,3 +284,13 @@
 .tab-bar .tab span {
   color: inherit;
 }
+
+@media (min-width: 768px) {
+  .tab-layout .tab-bar.bottom-nav {
+    display: none;
+  }
+
+  .tab-content {
+    padding-bottom: 0;
+  }
+}

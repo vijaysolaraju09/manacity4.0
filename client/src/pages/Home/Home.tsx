@@ -134,13 +134,13 @@ const Home = () => {
     <div className="space-y-12">
       {announcementStatus === 'loading' ? (
         <section className="px-4 md:px-6 lg:px-8">
-          <div className="animate-pulse overflow-hidden rounded-2xl border border-slate-200 bg-white shadow">
+          <div className="animate-pulse overflow-hidden surface-2">
             <div className="h-44 bg-slate-200 md:h-56" />
           </div>
         </section>
       ) : announcementStatus === 'failed' ? (
         <section className="px-4 md:px-6 lg:px-8">
-          <div className="flex flex-col gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 md:flex-row md:items-center md:justify-between">
+          <div className="surface-2 flex flex-col gap-3 px-4 py-3 text-sm text-md md:flex-row md:items-center md:justify-between">
             <span>{announcementError || 'Failed to load announcement.'}</span>
             <Button
               variant="outline"
@@ -155,7 +155,7 @@ const Home = () => {
         </section>
       ) : announcement ? (
         <section className="px-4 md:px-6 lg:px-8">
-          <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg md:flex-row">
+          <div className="card flex flex-col overflow-hidden md:flex-row">
             <div className="md:w-2/5">
               {announcement.image ? (
                 <img
@@ -172,13 +172,13 @@ const Home = () => {
                 <div className="h-40 w-full bg-gradient-to-br from-[color:var(--brand-500)]/18 via-[color:var(--accent-500)]/18 to-purple-500/10 md:h-full" />
               )}
             </div>
-            <div className="flex flex-1 flex-col justify-center gap-4 p-6">
+            <div className="flex flex-1 flex-col justify-center gap-4 p-6 text-hi">
               <div className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--brand-600)]">
+                <span className="text-xs font-semibold uppercase tracking-wide text-brand-500">
                   Announcement
                 </span>
-                <h2 className="text-2xl font-semibold text-slate-900">{announcement.title}</h2>
-                <p className="text-sm text-slate-600">{announcement.text}</p>
+                <h2 className="text-2xl font-extrabold text-hi">{announcement.title}</h2>
+                <p className="text-sm text-md">{announcement.text}</p>
               </div>
               {announcement.ctaText && announcement.ctaLink ? (
                 <div>
@@ -195,24 +195,24 @@ const Home = () => {
       <section className={`${styles.hero}`}>
         <div className="space-y-8 px-4 md:px-6 lg:px-8">
           <motion.div
-            className={`${styles.card} overflow-hidden px-4 py-6 md:px-6 lg:px-8`}
+            className={`card overflow-hidden px-4 py-6 text-hi shadow-elev2 md:px-6 lg:px-8`}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-col gap-3">
-                <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                  <Mic className="h-4 w-4" aria-hidden="true" /> Voice Order
+                <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-md">
+                  <Mic className="icon h-4 w-4 text-brand-500" aria-hidden="true" /> Voice Order
                 </span>
-                <h2 className="text-2xl font-semibold text-gray-900">Speak groceries into your cart</h2>
-                <p className="max-w-2xl text-sm text-gray-600">
+                <h2 className="text-2xl font-extrabold text-hi">Speak groceries into your cart</h2>
+                <p className="max-w-2xl text-sm text-md">
                   Talk to Manacity in Telugu, Hindi or English. We instantly parse your request, surface matching products across neighbourhood shops and let you checkout from one place.
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Button className="gap-2" size="lg" onClick={() => navigate(paths.voiceOrder())}>
-                  <Mic className="h-4 w-4" aria-hidden="true" /> Try Voice Order
+                  <Mic className="icon h-4 w-4" aria-hidden="true" /> Try Voice Order
                 </Button>
                 <Button
                   variant="secondary"
@@ -223,10 +223,10 @@ const Home = () => {
                 </Button>
               </div>
             </div>
-            <ul className="mt-6 flex flex-wrap gap-3 text-xs text-gray-600">
-              <li className="rounded-full border border-gray-200 bg-gray-100 px-3 py-1">“oka kilo tomatolu”</li>
-              <li className="rounded-full border border-gray-200 bg-gray-100 px-3 py-1">“2 kg bendakayalu”</li>
-              <li className="rounded-full border border-gray-200 bg-gray-100 px-3 py-1">“tomato one kilo”</li>
+            <ul className="mt-6 flex flex-wrap gap-3 text-xs text-md">
+              <li className="chip">“oka kilo tomatolu”</li>
+              <li className="chip">“2 kg bendakayalu”</li>
+              <li className="chip">“tomato one kilo”</li>
             </ul>
           </motion.div>
         </div>
@@ -425,7 +425,7 @@ const Section = ({
           return (
             <motion.div
               key={eventId}
-              className={`${styles.card} overflow-hidden`}
+              className={`card overflow-hidden text-hi`}
               whileHover={{ scale: 1.01 }}
               onClick={() => navigate(paths.events.detail(eventId))}
             >
@@ -437,11 +437,11 @@ const Section = ({
                 onError={(e) => (e.currentTarget.src = fallbackImage)}
               />
               <div className="px-4 py-3">
-                <h4 className="text-base font-semibold text-gray-900">
+                <h4 className="text-base font-semibold text-hi">
                   {item.title || item.name}
                 </h4>
                 {type === 'event' && (
-                  <p className="mt-1 text-sm text-gray-600">{formatDateTime(item.startAt)}</p>
+                  <p className="mt-1 text-sm text-md">{formatDateTime(item.startAt)}</p>
                 )}
               </div>
             </motion.div>

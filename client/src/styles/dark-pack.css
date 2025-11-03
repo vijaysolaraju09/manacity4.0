@@ -1,0 +1,154 @@
+/* Dark-mode polish pack — consistent surfaces, elevations, chips, tabs, appbar, bottom nav */
+
+@layer base {
+  :root {
+    /* If these already exist in tokens.css, we’re just reaffirming usage */
+    --surface-0: #0b0f16; /* page */
+    --surface-1: #0f1520; /* cards base */
+    --surface-2: #151b26; /* raised panels */
+    --surface-3: #1a2130; /* high elevation */
+    --ink-hi: #E6EAF3;     /* main text */
+    --ink-md: #B6C2D1;     /* secondary */
+    --ink-lo: #71809A;     /* muted */
+    --border-subtle: #263244;
+
+    --brand-500:#34a3a7; --brand-600:#2f7d80; --brand-700:#235e61;
+    --accent-500:#8b5cf6; --accent-600:#7c3aed;
+    --grad-brand: linear-gradient(135deg, var(--brand-600), var(--accent-600));
+
+    /* Shadow/glow tuned for AMOLED */
+    --elev-1: 0 1px 2px rgba(0,0,0,.55);
+    --elev-2: 0 10px 24px rgba(2,6,12,.65), 0 2px 6px rgba(2,6,12,.6);
+    --elev-brand: 0 12px 28px rgba(52,163,167,.33);
+    --radius-md: 14px; --radius-lg: 18px; --radius-pill: 999px;
+  }
+
+  :root.dark, [data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0:#0b0f16; --surface-1:#0f1520; --surface-2:#151b26; --surface-3:#1a2130;
+  }
+
+  body.dark, .dark body, [data-theme="dark"] body {
+    background: var(--surface-0);
+    color: var(--ink-hi);
+  }
+
+  /* App bar (match Notifications look) */
+  .appbar {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 96%, transparent), var(--surface-1));
+    border-bottom: 1px solid var(--border-subtle);
+    backdrop-filter: blur(12px);
+  }
+
+  /* Surfaces */
+  .surface-1 { background: var(--surface-1); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); box-shadow: var(--elev-1); }
+  .surface-2 { background: var(--surface-2); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); box-shadow: var(--elev-2); }
+  .surface-3 { background: var(--surface-3); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); box-shadow: var(--elev-2), var(--elev-brand); }
+
+  /* Buttons */
+  .btn { min-height: 48px; padding: 0 18px; border-radius: var(--radius-pill); font-weight: 700; border: 1px solid transparent; transition: transform .15s, filter .2s, box-shadow .2s; }
+  .btn:active { transform: scale(.98); }
+  .btn-primary { background: var(--grad-brand); color: #fff; box-shadow: var(--elev-brand); }
+  .btn-ghost { background: transparent; color: var(--ink-hi); border-color: var(--border-subtle); }
+  .btn-muted { background: #2a3344; color: var(--ink-md); }
+
+  /* Inputs */
+  .input {
+    background: #111826;
+    border: 1px solid var(--border-subtle);
+    color: var(--ink-hi);
+    border-radius: var(--radius-md);
+    min-height: 46px; padding: 0 14px;
+  }
+  .input::placeholder { color: var(--ink-lo); }
+  .input:focus { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 28%, transparent); border-color: var(--brand-500); }
+
+  /* Chips / Pills (match Notifications page) */
+  .chip { padding: 8px 14px; border-radius: var(--radius-pill); border: 1px solid var(--border-subtle); color: var(--ink-md); background: #101826; }
+  .chip.active { color: #c8f3f1; border-color: color-mix(in srgb, var(--brand-500) 50%, transparent); background: color-mix(in srgb, var(--brand-600) 22%, transparent); box-shadow: var(--elev-brand); }
+
+  /* Tabs underline (Services/Events) */
+  .tabs { position: relative; display: grid; grid-auto-flow: column; gap: 10px; }
+  .tabs .tab { @apply chip; }
+  .tabs .tab[aria-selected="true"] { @apply chip active; }
+  .tabs__bar { position:absolute; left:0; right:0; bottom:-8px; height:4px; border-radius:999px; background: color-mix(in srgb, var(--brand-500) 36%, transparent); }
+
+  /* Cards (shops, services, events) */
+  .card { @apply surface-2; padding: 16px; }
+  .card-header { color: var(--ink-hi); font-weight: 800; }
+  .card-subtle { color: var(--ink-md); }
+  .card-ghost { background: transparent; border-color: var(--border-subtle); }
+
+  /* Badges */
+  .badge { padding: 4px 10px; border-radius: var(--radius-pill); font-weight: 700; font-size: 12px; }
+  .badge-brand { background: color-mix(in srgb, var(--brand-600) 28%, transparent); color: #dff8f7; border: 1px solid color-mix(in srgb, var(--brand-500) 50%, transparent); }
+
+  /* Bottom Nav (match glass look) */
+  .bottom-glass {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 80%, transparent), var(--surface-1));
+    backdrop-filter: blur(18px);
+    border-top: 1px solid var(--border-subtle);
+    box-shadow: 0 -10px 30px rgba(0,0,0,.35);
+  }
+
+  /* SVG safety: ensure icons adopt currentColor */
+  svg, .icon { color: currentColor; fill: currentColor; stroke: currentColor; }
+
+  /* Legacy utility harmonisation */
+  .dark .bg-white,
+  [data-theme="dark"] .bg-white,
+  .dark .bg-gray-100,
+  [data-theme="dark"] .bg-gray-100,
+  .dark .bg-slate-50,
+  [data-theme="dark"] .bg-slate-50 {
+    background-color: var(--surface-1) !important;
+  }
+
+  .dark .bg-white\/80,
+  [data-theme="dark"] .bg-white\/80,
+  .dark .bg-white\/90,
+  [data-theme="dark"] .bg-white\/90,
+  .dark .bg-white\/95,
+  [data-theme="dark"] .bg-white\/95,
+  .dark .bg-slate-50\/80,
+  [data-theme="dark"] .bg-slate-50\/80 {
+    background-color: color-mix(in srgb, var(--surface-2) 88%, transparent) !important;
+  }
+
+  .dark .border-slate-200,
+  [data-theme="dark"] .border-slate-200,
+  .dark .border-slate-200\/70,
+  [data-theme="dark"] .border-slate-200\/70,
+  .dark .border-gray-200,
+  [data-theme="dark"] .border-gray-200 {
+    border-color: var(--border-subtle) !important;
+  }
+
+  .dark .text-gray-900,
+  [data-theme="dark"] .text-gray-900,
+  .dark .text-slate-900,
+  [data-theme="dark"] .text-slate-900 {
+    color: var(--ink-hi) !important;
+  }
+
+  .dark .text-gray-600,
+  [data-theme="dark"] .text-gray-600,
+  .dark .text-slate-600,
+  [data-theme="dark"] .text-slate-600 {
+    color: var(--ink-md) !important;
+  }
+
+  .dark .text-gray-500,
+  [data-theme="dark"] .text-gray-500,
+  .dark .text-slate-500,
+  [data-theme="dark"] .text-slate-500 {
+    color: var(--ink-lo) !important;
+  }
+}
+
+@layer utilities {
+  .text-hi { color: var(--ink-hi); }
+  .text-md { color: var(--ink-md); }
+  .text-lo { color: var(--ink-lo); }
+  .divider-subtle { border-color: var(--border-subtle); }
+}

@@ -11,11 +11,11 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  default: 'btn--brand',
-  secondary: 'btn--ghost btn--ghost-muted',
-  outline: 'btn--ghost',
-  ghost: 'btn--ghost btn--ghost-plain',
-  destructive: 'btn--danger',
+  default: 'btn--brand btn-primary shadow-elevBrand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+  secondary: 'btn--ghost btn--ghost-muted btn-ghost focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+  outline: 'btn--ghost btn-ghost focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+  ghost: 'btn--ghost btn--ghost-plain btn-ghost focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+  destructive: 'btn--danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

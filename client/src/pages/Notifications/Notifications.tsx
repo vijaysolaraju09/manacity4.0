@@ -182,7 +182,7 @@ const Notifications = () => {
         <>
           {grouped.map(([date, dayItems]) => (
             <div key={date} className={styles.group}>
-              <h4 className={cn(styles.title, 'text-gray-700')}>{date}</h4>
+              <h4 className={cn(styles.title, 'text-text-secondary')}>{date}</h4>
               {dayItems.map((notif) => (
                 <div key={notif._id} className={styles.card}>
                   <div className={styles.content}>

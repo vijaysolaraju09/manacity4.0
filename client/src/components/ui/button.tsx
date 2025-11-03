@@ -45,4 +45,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
+export function PrimaryButton({ className, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button {...props} className={cn('btn btn-gradient', className)} />;
+}
+
+export function SoftButton({ className, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      {...props}
+      className={cn(
+        'rounded-xl px-4 py-2 bg-surface-2 text-text-primary border border-borderc/30 hover:border-borderc/60 shadow-elev-1 transition-all',
+        className,
+      )}
+    />
+  );
+}
+
 export default Button;

@@ -168,8 +168,8 @@ const BusinessRequests = () => {
   return (
     <div className={`${styles.page} space-y-6 px-4`}>
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-gray-900">Business Requests</h1>
-        <p className="text-sm text-gray-600">
+        <h1 className="text-2xl font-semibold text-text-primary">Business Requests</h1>
+        <p className="text-sm text-text-secondary">
           Review new shop submissions and approve or reject requests with a single click.
         </p>
       </div>
@@ -179,7 +179,7 @@ const BusinessRequests = () => {
           <select
             value={status}
             onChange={(e) => updateParam('status', e.target.value)}
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+            className="rounded-lg border border-borderc/40 bg-surface-1 px-3 py-2 text-sm text-text-secondary"
           >
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
@@ -191,17 +191,17 @@ const BusinessRequests = () => {
             placeholder="Category"
             value={category}
             onChange={(e) => updateParam('category', e.target.value)}
-            className="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
+            className="w-40 rounded-lg border border-borderc/40 px-3 py-2 text-sm text-text-secondary"
           />
           <input
             type="text"
             placeholder="Location"
             value={location}
             onChange={(e) => updateParam('location', e.target.value)}
-            className="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
+            className="w-40 rounded-lg border border-borderc/40 px-3 py-2 text-sm text-text-secondary"
           />
         </div>
-        <span className="text-sm text-gray-500">Total requests: {total}</span>
+        <span className="text-sm text-text-muted">Total requests: {total}</span>
       </div>
 
       <DataTable<RequestRow>

@@ -72,13 +72,13 @@ const VerifiedDetails = () => {
           onError={(e) => (e.currentTarget.src = fallbackImage)}
         />
         <div className={styles.heroInfo}>
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-1">
+          <h2 className="text-xl font-semibold text-text-primary flex items-center gap-1">
             {verified.user.name} <AiFillCheckCircle className={styles.badge} />
           </h2>
           <p className={styles.meta}>{verified.profession}</p>
           <p className={styles.meta}>{verified.user.location || 'Location not provided'}</p>
           {verified.ratingAvg && (
-            <div className="flex items-center gap-1 text-sm text-gray-600">
+            <div className="flex items-center gap-1 text-sm text-text-secondary">
               <AiFillStar className="text-yellow-500" />
               <span>{verified.ratingAvg.toFixed(1)}</span>
             </div>
@@ -88,7 +88,7 @@ const VerifiedDetails = () => {
 
       {portfolioImages.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Portfolio</h3>
+          <h3 className="text-lg font-semibold text-text-primary">Portfolio</h3>
           <div className={styles.portfolio}>
             {portfolioImages.map((image, index) => (
               <img
@@ -105,8 +105,8 @@ const VerifiedDetails = () => {
 
       {verified.bio && (
         <div className={styles.bio}>
-          <h4 className="text-lg font-semibold text-gray-900 mb-2">About</h4>
-          <p className="text-sm text-gray-700 leading-relaxed">{verified.bio}</p>
+          <h4 className="text-lg font-semibold text-text-primary mb-2">About</h4>
+          <p className="text-sm text-text-secondary leading-relaxed">{verified.bio}</p>
         </div>
       )}
 

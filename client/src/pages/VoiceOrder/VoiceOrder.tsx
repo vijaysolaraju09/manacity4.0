@@ -544,7 +544,7 @@ const VoiceOrder = () => {
 
   return (
     <motion.main
-      className={cn(styles.pageShell, 'bg-white text-slate-900')}
+      className={cn(styles.pageShell, 'bg-surface-1 text-text-primary')}
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -567,14 +567,14 @@ const VoiceOrder = () => {
                 Flagship
               </Badge>
               <h1 className="text-3xl font-semibold tracking-tight">Voice order</h1>
-              <p className="max-w-2xl text-sm text-slate-600">
+              <p className="max-w-2xl text-sm text-text-secondary">
                 Speak naturally and we line up matching inventory across Manacity. Mix languages, refine the transcript and push matches directly to your cart.
               </p>
             </div>
-            <div className="rounded-2xl border border-[var(--border)] bg-white/70 p-4 text-right shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-slate-600">Cart snapshot</p>
+            <div className="rounded-2xl border border-[var(--border)] bg-surface-1/70 p-4 text-right shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-text-secondary">Cart snapshot</p>
               <p className="mt-1 text-lg font-semibold">{subtotalDisplay}</p>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-text-secondary">
                 {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'}
               </p>
             </div>
@@ -592,7 +592,7 @@ const VoiceOrder = () => {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold">Voice console</h2>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-text-secondary">
                     Tap the mic, speak freely and watch Manacity transcribe in real time.
                   </p>
                 </div>
@@ -625,7 +625,7 @@ const VoiceOrder = () => {
                   <p className="text-sm font-medium">
                     {isListening ? 'Listening…' : isTranscribing ? 'Transcribing…' : 'Ready when you are'}
                   </p>
-                  <p className="text-xs text-slate-600">
+                  <p className="text-xs text-text-secondary">
                     {supportsSpeechRecognition
                       ? 'Auto-stops on silence. You can edit the transcript before asking us to understand it.'
                       : 'Browser speech recognition unavailable. Use recording or manual entry instead.'}
@@ -634,11 +634,11 @@ const VoiceOrder = () => {
               </div>
               <div className={voiceStyles.transcript} aria-live="polite">
                 {interimTranscript ? (
-                  <span className="text-slate-600">{interimTranscript}</span>
+                  <span className="text-text-secondary">{interimTranscript}</span>
                 ) : transcript ? (
                   <span>{transcript}</span>
                 ) : (
-                  <span className="text-slate-600">Tap the mic or try one of the sample prompts below.</span>
+                  <span className="text-text-secondary">Tap the mic or try one of the sample prompts below.</span>
                 )}
               </div>
               <div className={voiceStyles.examples}>
@@ -648,7 +648,7 @@ const VoiceOrder = () => {
                     type="button"
                     onClick={() => handleExampleInsert(example)}
                     className={cn(
-                      'transition-colors hover:bg-slate-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand-500)]',
+                      'transition-colors hover:bg-surface-10/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand-500)]',
                       voiceStyles.chip,
                     )}
                   >
@@ -690,7 +690,7 @@ const VoiceOrder = () => {
               <div className="flex flex-col gap-3">
                 <div>
                   <h2 className="text-lg font-semibold">Fine tune</h2>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-text-secondary">
                     Type, correct or manually search for products to add alongside voice results.
                   </p>
                 </div>
@@ -705,7 +705,7 @@ const VoiceOrder = () => {
                     <Wand2 className="h-4 w-4" aria-hidden="true" /> Parse text
                   </Button>
                   {!supportsSpeechRecognition ? (
-                    <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-surface-2 px-3 py-1 text-xs text-text-secondary">
                       <Headphones className="h-4 w-4" aria-hidden="true" />
                       Speech recognition coming soon
                     </div>
@@ -713,7 +713,7 @@ const VoiceOrder = () => {
                 </div>
               </div>
               <div className="mt-5 space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <label className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
                   Manual marketplace search
                 </label>
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -729,7 +729,7 @@ const VoiceOrder = () => {
                   </Button>
                 </div>
               </div>
-              <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+              <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-text-secondary">
                 <Button onClick={handleRecordingToggle} variant={isRecording ? 'destructive' : 'ghost'} className="gap-2">
                   {isRecording ? (
                     <>
@@ -755,7 +755,7 @@ const VoiceOrder = () => {
                   </a>
                 ) : null}
                 {ENABLE_STT_UPLOAD ? (
-                  <span className="text-xs text-slate-600">Upload support enabled for long orders.</span>
+                  <span className="text-xs text-text-secondary">Upload support enabled for long orders.</span>
                 ) : null}
               </div>
             </motion.section>
@@ -768,25 +768,25 @@ const VoiceOrder = () => {
               <div className="mb-3 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold">Recent attempts</h2>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-text-secondary">
                     We keep a short trail so you can retry or give quick feedback.
                   </p>
                 </div>
               </div>
               <div className="space-y-3">
                 {entries.length === 0 ? (
-                  <p className="text-sm text-slate-600">Speak or type to see recent transcripts here.</p>
+                  <p className="text-sm text-text-secondary">Speak or type to see recent transcripts here.</p>
                 ) : (
                   entries.slice(0, 5).map((entry) => (
                     <motion.div
                       key={entry.id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="rounded-xl border border-[rgba(var(--color-border-rgb),0.7)] bg-slate-500/20 p-4 text-sm shadow-sm"
+                      className="rounded-xl border border-[rgba(var(--color-border-rgb),0.7)] bg-surface-10/20 p-4 text-sm shadow-sm"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-slate-600">
+                          <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-text-secondary">
                             <History className="h-3 w-3" aria-hidden="true" />
                             {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
@@ -810,14 +810,14 @@ const VoiceOrder = () => {
                               : 'English'}
                           </Badge>
                           <div className="flex items-center gap-2 text-[11px]">
-                            <span className="text-slate-600">Helpful?</span>
+                            <span className="text-text-secondary">Helpful?</span>
                             <button
                               type="button"
                               className={cn(
                                 'rounded-full border px-2 py-1 font-semibold transition-colors',
                                 entry.feedback === 'positive'
                                   ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-100'
-                                  : 'border-transparent text-slate-600 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700',
+                                  : 'border-transparent text-text-secondary hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700',
                               )}
                               onClick={() => handleFeedback(entry.id, 'positive')}
                             >
@@ -829,7 +829,7 @@ const VoiceOrder = () => {
                                 'rounded-full border px-2 py-1 font-semibold transition-colors',
                                 entry.feedback === 'negative'
                                   ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-100'
-                                  : 'border-transparent text-slate-600 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700',
+                                  : 'border-transparent text-text-secondary hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700',
                               )}
                               onClick={() => handleFeedback(entry.id, 'negative')}
                             >
@@ -853,13 +853,13 @@ const VoiceOrder = () => {
           >
             <div className="flex flex-col gap-2">
               <h2 className="text-lg font-semibold">Smart results</h2>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-text-secondary">
                 Organised matches from every shop you unlocked with your voice.
               </p>
             </div>
 
             {searchEntries.length === 0 && !processing ? (
-              <div className="mt-4 rounded-2xl border border-dashed border-[rgba(var(--color-border-rgb),0.6)] bg-slate-500/20 p-6 text-sm text-slate-600">
+              <div className="mt-4 rounded-2xl border border-dashed border-[rgba(var(--color-border-rgb),0.6)] bg-surface-10/20 p-6 text-sm text-text-secondary">
                 <p>Start speaking or try a sample prompt to see matches roll in.</p>
               </div>
             ) : null}
@@ -892,7 +892,7 @@ const VoiceOrder = () => {
                 <button
                   type="button"
                   onClick={() => setActiveShopFilter('all')}
-                  className={cn('text-sm font-medium text-slate-600 transition-colors', activeShopFilter === 'all' && 'active')}
+                  className={cn('text-sm font-medium text-text-secondary transition-colors', activeShopFilter === 'all' && 'active')}
                 >
                   All
                 </button>
@@ -901,7 +901,7 @@ const VoiceOrder = () => {
                     key={shop.shopId}
                     type="button"
                     onClick={() => setActiveShopFilter(shop.shopId)}
-                    className={cn('text-sm font-medium text-slate-600 transition-colors', activeShopFilter === shop.shopId && 'active')}
+                    className={cn('text-sm font-medium text-text-secondary transition-colors', activeShopFilter === shop.shopId && 'active')}
                   >
                     {shop.shopName}
                   </button>
@@ -911,14 +911,14 @@ const VoiceOrder = () => {
 
             <div className="mt-6 space-y-3">
               {searchEntries.map((entry) => (
-                <div key={entry.item.name} className="rounded-2xl border border-[rgba(var(--color-border-rgb),0.6)] bg-slate-500/10 p-4">
+                <div key={entry.item.name} className="rounded-2xl border border-[rgba(var(--color-border-rgb),0.6)] bg-surface-10/10 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2 text-sm">
                       <Badge variant="outline">{entry.item.quantity} {entry.item.unit}</Badge>
                       <span className="font-semibold">{entry.item.name}</span>
                     </div>
                     {entry.status === 'loading' ? (
-                      <span className="inline-flex items-center gap-2 text-xs text-slate-600">
+                      <span className="inline-flex items-center gap-2 text-xs text-text-secondary">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                         Searching…
                       </span>
@@ -939,7 +939,7 @@ const VoiceOrder = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="mt-6 flex items-center justify-center gap-3 rounded-2xl border border-[var(--border)] bg-slate-500/20 p-6 text-sm text-slate-600"
+                  className="mt-6 flex items-center justify-center gap-3 rounded-2xl border border-[var(--border)] bg-surface-10/20 p-6 text-sm text-text-secondary"
                 >
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Gathering products…
                 </motion.div>
@@ -948,7 +948,7 @@ const VoiceOrder = () => {
                   key="empty"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="mt-6 rounded-2xl border border-dashed border-[rgba(var(--color-border-rgb),0.7)] bg-slate-500/20 p-6 text-center text-sm text-slate-600"
+                  className="mt-6 rounded-2xl border border-dashed border-[rgba(var(--color-border-rgb),0.7)] bg-surface-10/20 p-6 text-center text-sm text-text-secondary"
                 >
                   No matches yet. Try refining the transcript or manual search.
                 </motion.div>
@@ -967,7 +967,7 @@ const VoiceOrder = () => {
                         <h3 className="text-base font-semibold">{hit.name}</h3>
                         <Badge variant="secondary" className="text-xs">{hit.shopName}</Badge>
                       </div>
-                      <div className="text-xs text-slate-600">
+                      <div className="text-xs text-text-secondary">
                         Requested {item.quantity} {item.unit} • {formatINR(hit.pricePaise)}
                       </div>
                     </div>
@@ -1021,9 +1021,9 @@ const VoiceOrder = () => {
           className={cn(voiceStyles.summary, 'gap-4 flex-wrap sm:flex-nowrap')}
         >
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-600">Subtotal</p>
+            <p className="text-xs uppercase tracking-wide text-text-secondary">Subtotal</p>
             <p className="text-lg font-semibold">{subtotalDisplay}</p>
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-text-secondary">
               {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'} in cart
             </p>
           </div>

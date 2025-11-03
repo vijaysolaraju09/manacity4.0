@@ -188,21 +188,21 @@ const VerifiedList = () => {
 
   return (
     <div className={styles.page}>
-      <h2 className="text-2xl font-semibold text-gray-900">Verified Professionals</h2>
+      <h2 className="text-2xl font-semibold text-text-primary">Verified Professionals</h2>
       <div className={styles.filters}>
         <input
           type="text"
           placeholder="Profession"
           value={profession}
           onChange={(e) => setProfession(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2"
+          className="flex-1 rounded-lg border border-borderc/40 px-3 py-2"
         />
         <input
           type="text"
           placeholder="Location"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2"
+          className="flex-1 rounded-lg border border-borderc/40 px-3 py-2"
         />
       </div>
       {content}

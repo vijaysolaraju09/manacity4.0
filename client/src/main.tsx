@@ -16,7 +16,7 @@ import { initTheme } from './theme/theme'
 
 initTheme()
 
-document.body.classList.remove('bg-slate-50', 'text-slate-900')
+document.body.classList.remove('bg-surface-1', 'text-text-primary')
 document.body.classList.add('antialiased', 'transition-colors', 'duration-200', 'ease-out')
 
 createRoot(document.getElementById('root')!).render(

@@ -86,7 +86,7 @@ const TabLayout = () => {
         <Sidebar />
         <div className="flex min-h-screen flex-col">
           <motion.header
-            className="top-header"
+            className="top-header appbar text-hi"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -115,17 +115,17 @@ const TabLayout = () => {
 
           <motion.button
             type="button"
-            className="special-shop-btn fab"
+            className="special-shop-btn fab focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             onClick={() => navigate(paths.specialShop())}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             aria-label="Special shop"
           >
-            <Gift className="h-5 w-5" aria-hidden="true" />
+            <Gift className="icon h-5 w-5" aria-hidden="true" />
           </motion.button>
 
           <motion.nav
-            className="tab-bar tabs bottom-nav md:hidden"
+            className="tab-bar tabs bottom-nav bottom-glass md:hidden"
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4 }}
@@ -171,13 +171,13 @@ const TabLayout = () => {
                   type="button"
                   className={
                     location.pathname === tab.path
-                      ? 'tab active bottom-nav__item bottom-nav__item--active'
-                      : 'tab bottom-nav__item'
+                      ? 'tab active bottom-nav__item bottom-nav__item--active relative text-brand-500 after:absolute after:-bottom-2 after:left-1/2 after:h-0.5 after:w-8 after:-translate-x-1/2 after:rounded-full after:bg-brand-500'
+                      : 'tab bottom-nav__item relative text-md'
                   }
                   onClick={() => navigate(tab.path)}
                   aria-label={tab.name}
                 >
-                  <Icon className="h-5 w-5" aria-hidden="true" />
+                  <Icon className="icon h-5 w-5" aria-hidden="true" />
                   <span>{tab.name}</span>
                 </button>
               );

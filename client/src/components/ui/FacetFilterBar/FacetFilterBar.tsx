@@ -42,8 +42,13 @@ const FacetFilterBar = ({
           placeholder="Search shops..."
           value={search}
           onChange={(e) => onSearch(e.target.value)}
+          className="input placeholder:text-lo focus-visible:ring-2 focus-visible:ring-brand-500"
         />
-        <select value={location} onChange={(e) => onLocationChange(e.target.value)}>
+        <select
+          value={location}
+          onChange={(e) => onLocationChange(e.target.value)}
+          className="input focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
           <option value="">All locations</option>
           {locations.map((loc) => (
             <option key={loc} value={loc}>
@@ -51,7 +56,11 @@ const FacetFilterBar = ({
             </option>
           ))}
         </select>
-        <select value={category} onChange={(e) => onCategoryChange(e.target.value)}>
+        <select
+          value={category}
+          onChange={(e) => onCategoryChange(e.target.value)}
+          className="input focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
           <option value="">All categories</option>
           {categories.map((c) => (
             <option key={c} value={c}>
@@ -60,7 +69,7 @@ const FacetFilterBar = ({
           ))}
         </select>
         <div className={styles.openNowContainer}>
-          <span className={styles.openNowLabel}>Open now</span>
+          <span className={`${styles.openNowLabel} text-md`}>Open now</span>
           <div className={styles.checkboxWrapper}>
             <input
               id={openToggleId}
@@ -81,7 +90,11 @@ const FacetFilterBar = ({
           </div>
         </div>
         {hasActiveFilters ? (
-          <button type="button" className={styles.clearButton} onClick={onClear}>
+          <button
+            type="button"
+            className={`${styles.clearButton} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500`}
+            onClick={onClear}
+          >
             Clear
           </button>
         ) : null}

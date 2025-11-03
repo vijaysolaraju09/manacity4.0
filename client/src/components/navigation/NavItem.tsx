@@ -18,8 +18,9 @@ type BaseProps = {
 export type NavItemProps = BaseProps & Omit<NavLinkProps, 'className' | 'children'>;
 
 const variantClasses: Record<NavItemVariant, string> = {
-  icon: 'h-11 w-11 justify-center',
-  default: 'w-full justify-start px-3 py-2 text-sm font-medium',
+  icon: 'h-11 w-11 justify-center rounded-lg text-md hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+  default:
+    'w-full justify-start rounded-lg px-3 py-2 text-sm font-medium text-md hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
 };
 
 const NavItem = ({
@@ -37,16 +38,16 @@ const NavItem = ({
     title={typeof label === 'string' ? label : undefined}
     className={({ isActive }) =>
       cn(
-        'group relative inline-flex items-center gap-2 rounded-xl text-ink-500 transition-colors hover:bg-brand-500/10 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:text-ink-300 dark:hover:bg-slate-800 dark:hover:text-white dark:focus-visible:outline-accent-500',
+        'group relative inline-flex items-center gap-2 text-md transition-colors hover:bg-brand-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
         variantClasses[variant],
         isActive &&
-          'bg-brand-500/15 text-brand-600 ring-1 ring-brand-300 dark:bg-brand-500/20 dark:text-brand-300 dark:ring-brand-400/30',
+          'text-brand-500 ring-1 ring-brand-500/40',
         className,
       )
     }
   >
     <span className="relative inline-flex items-center justify-center">
-      <Icon className="h-5 w-5 text-current" aria-hidden="true" />
+      <Icon className="icon h-5 w-5 text-current" aria-hidden="true" />
       {badge ? (
         <span aria-hidden="true" className={styles.badge}>
           {badge}

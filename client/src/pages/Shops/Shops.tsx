@@ -35,7 +35,7 @@ const ShopCard = memo(({ shop, onSelect }: ShopCardProps) => {
   return (
     <button
       type="button"
-      className={`${styles.shopCard} cursor-pointer text-left`}
+      className={`card surface-2 shadow-elevBrand cursor-pointer text-left transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${styles.shopCard}`}
       onClick={() => onSelect(shop._id)}
     >
       <img
@@ -50,18 +50,22 @@ const ShopCard = memo(({ shop, onSelect }: ShopCardProps) => {
           }
         }}
       />
-      <div className="flex flex-1 flex-col gap-2">
+      <div className="flex flex-1 flex-col gap-2 text-hi">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="text-lg font-semibold text-gray-900">{shop.name}</h3>
+          <h3 className="text-lg font-extrabold text-hi">{shop.name}</h3>
           {rating !== null && (
-            <span className="text-sm font-medium text-gray-700">{rating.toFixed(1)}</span>
+            <span className="text-sm font-semibold text-brand-500">{rating.toFixed(1)}</span>
           )}
         </div>
         <p className={styles.meta}>{shop.location || shop.address || "Location coming soon"}</p>
         <div className={styles.chips}>
-          {shop.category && <span>{shop.category}</span>}
-          {shop.isOpen !== undefined && <span>{shop.isOpen ? "Open now" : "Closed"}</span>}
-          {distance && <span>{distance}</span>}
+          {shop.category && <span className="chip">{shop.category}</span>}
+          {shop.isOpen !== undefined && (
+            <span className={shop.isOpen ? "chip active" : "chip"}>
+              {shop.isOpen ? "Open now" : "Closed"}
+            </span>
+          )}
+          {distance && <span className="chip">{distance}</span>}
         </div>
       </div>
     </button>
@@ -153,12 +157,12 @@ const Shops = () => {
   );
 
   return (
-    <div className={`${styles.page} px-4 md:px-6 lg:px-8`}>
+    <div className={`${styles.page} px-4 md:px-6 lg:px-8 text-hi`}>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gray-900">Explore Shops</h2>
+        <h2 className="text-2xl font-extrabold text-hi">Explore Shops</h2>
         <button
           type="button"
-          className="text-sm text-gray-600 hover:text-gray-800"
+          className="text-sm text-md hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           onClick={retryFetch}
         >
           Refresh

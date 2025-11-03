@@ -7,6 +7,10 @@ export default {
         background: 'var(--surface)',
         foreground: 'var(--ink-900)',
         border: 'var(--border-subtle)',
+        surface0: 'var(--surface-0)',
+        surface1: 'var(--surface-1)',
+        surface2: 'var(--surface-2)',
+        surface3: 'var(--surface-3)',
         surface: {
           DEFAULT: 'var(--surface)',
           card: 'var(--surface-card)',
@@ -52,7 +56,10 @@ export default {
           400: 'var(--ink-400)',
           300: 'var(--ink-300)',
           200: 'var(--ink-200)',
-          100: 'var(--ink-100)'
+          100: 'var(--ink-100)',
+          hi: 'var(--ink-hi)',
+          md: 'var(--ink-md)',
+          lo: 'var(--ink-lo)'
         }
       },
       borderRadius: {
@@ -67,7 +74,10 @@ export default {
         lg: 'var(--shadow-lg)',
         glass: 'var(--shadow-glass)',
         mobile: 'var(--shadow-md)',
-        brand: 'var(--shadow-brand)'
+        brand: 'var(--shadow-brand)',
+        elev1: 'var(--elev-1)',
+        elev2: 'var(--elev-2)',
+        elevBrand: 'var(--elev-brand)'
       }
     }
   },

@@ -160,11 +160,18 @@ body.dark,
 }
 
 .tabs .tab {
-  @apply chip;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle);
+  color: var(--ink-md);
+  background: #101826;
 }
 
 .tabs .tab[aria-selected="true"] {
-  @apply chip active;
+  color: #c8f3f1;
+  border-color: color-mix(in srgb, var(--brand-500) 50%, transparent);
+  background: color-mix(in srgb, var(--brand-600) 22%, transparent);
+  box-shadow: var(--elev-brand);
 }
 
 .tabs__bar {
@@ -179,7 +186,10 @@ body.dark,
 
 /* Cards (shops, services, events) */
 .card {
-  @apply surface-2;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elev-2);
   padding: 16px;
 }
 
@@ -296,77 +306,4 @@ svg,
 
 .divider-subtle {
   border-color: var(--border-subtle);
-}
-
-@layer base {
-  :root {
-    /* Light tokens (do not change your current light palette if already defined) */
-    --surface-0:#f7f9fc; --surface-1:#ffffff; --surface-2:#f3f6fb; --surface-3:#eef2f8;
-    --ink-hi:#0f172a; --ink-md:#334155; --ink-lo:#64748b;
-    --border-subtle:#e5e7eb;
-
-    --brand-500:#34a3a7; --brand-600:#2f7d80; --brand-700:#235e61;
-    --accent-500:#8b5cf6; --accent-600:#7c3aed;
-    --grad-brand: linear-gradient(135deg, var(--brand-600), var(--accent-600));
-  }
-
-  :root.dark, [data-theme="dark"] {
-    color-scheme: dark;
-    --surface-0:#0b0f16; /* page */
-    --surface-1:#0f1520; /* base card */
-    --surface-2:#151b26; /* raised */
-    --surface-3:#1a2130; /* highest */
-    --ink-hi:#E6EAF3; --ink-md:#B6C2D1; --ink-lo:#8191aa;
-    --border-subtle:#2a3547;
-  }
-
-  html.dark, [data-theme="dark"] body, .dark body { background: var(--surface-0); color: var(--ink-hi); }
-
-  /* Reusable surfaces */
-  .surface-1 { background: var(--surface-1); border:1px solid var(--border-subtle); border-radius:18px; box-shadow: var(--elev1); }
-  .surface-2 { background: var(--surface-2); border:1px solid var(--border-subtle); border-radius:18px; box-shadow: var(--elev2); }
-  .surface-3 { background: var(--surface-3); border:1px solid var(--border-subtle); border-radius:18px; box-shadow: var(--elev2), var(--brand); }
-
-  /* App bar + bottom nav glass to match Notifications screen */
-  .appbar {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 85%, transparent), var(--surface-1));
-    backdrop-filter: blur(12px);
-    border-bottom:1px solid var(--border-subtle);
-  }
-  .bottom-glass {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 80%, transparent), var(--surface-1));
-    backdrop-filter: blur(18px);
-    border-top:1px solid var(--border-subtle);
-    box-shadow:0 -12px 30px rgba(0,0,0,.35);
-  }
-
-  /* Controls */
-  .btn { min-height:48px; padding:0 18px; border-radius:999px; font-weight:700; border:1px solid transparent; transition:transform .15s, filter .2s, box-shadow .2s; }
-  .btn:active{ transform:scale(.98); }
-  .btn-primary{ background: var(--grad-brand); color:#fff; box-shadow: var(--brand); }
-  .btn-ghost{ background: transparent; color: var(--ink-hi); border-color: var(--border-subtle); }
-  .btn-muted{ background: #2a3344; color: var(--ink-md); }
-
-  .input{ background:#111826; border:1px solid var(--border-subtle); color:var(--ink-hi); border-radius:14px; min-height:46px; padding:0 14px; }
-  .input::placeholder{ color: var(--ink-lo); }
-  .input:focus{ outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 28%, transparent); border-color: var(--brand-500); }
-
-  /* Chips/Tabs */
-  .chip{ padding:8px 14px; border-radius:999px; border:1px solid var(--border-subtle); color:var(--ink-md); background:#101826; }
-  .chip.active{ color:#dff8f7; border-color: color-mix(in srgb, var(--brand-500) 50%, transparent); background: color-mix(in srgb, var(--brand-600) 22%, transparent); box-shadow: var(--brand); }
-
-  .tabs{ display:grid; grid-auto-flow:column; gap:10px; position:relative; }
-  .tabs .tab{ @apply chip; }
-  .tabs .tab[aria-selected="true"]{ @apply chip active; }
-  .tabs__bar{ position:absolute; left:0; right:0; bottom:-8px; height:4px; border-radius:999px; background: color-mix(in srgb, var(--brand-500) 36%, transparent); }
-
-  /* SVG/icon safety: adopt currentColor */
-  svg, .icon { color: currentColor; fill: currentColor; stroke: currentColor; }
-}
-
-@layer utilities {
-  .text-hi{ color: var(--ink-hi); }
-  .text-md{ color: var(--ink-md); }
-  .text-lo{ color: var(--ink-lo); }
-  .divider-subtle{ border-color: var(--border-subtle); }
 }

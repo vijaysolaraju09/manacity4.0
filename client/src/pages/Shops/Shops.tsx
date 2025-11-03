@@ -157,7 +157,7 @@ const Shops = () => {
   );
 
   return (
-    <div className={`${styles.page} px-4 md:px-6 lg:px-8 text-hi`}>
+    <div className={`${styles.page} bg-surface0 dark:bg-surface0 min-h-screen px-4 text-hi md:px-6 lg:px-8`}>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-extrabold text-hi">Explore Shops</h2>
         <button

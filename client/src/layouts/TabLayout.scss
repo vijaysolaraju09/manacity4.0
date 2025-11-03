@@ -2,7 +2,8 @@
   display: flex;
   min-height: 100vh;
   flex-direction: column;
-  background-color: var(--color-background);
+  background-color: var(--surface-0);
+  color: var(--ink-hi);
 }
 
 .top-header {

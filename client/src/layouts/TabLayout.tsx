@@ -81,7 +81,7 @@ const TabLayout = () => {
   }, [location.pathname, navigate]);
 
   return (
-    <div className="tab-layout">
+    <div className="tab-layout bg-surface0 dark:bg-surface0 text-hi">
       <div className="w-full min-h-screen md:grid md:grid-cols-[auto_1fr]">
         <Sidebar />
         <div className="flex min-h-screen flex-col">

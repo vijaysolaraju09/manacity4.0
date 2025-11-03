@@ -18,9 +18,10 @@ type BaseProps = {
 export type NavItemProps = BaseProps & Omit<NavLinkProps, 'className' | 'children'>;
 
 const variantClasses: Record<NavItemVariant, string> = {
-  icon: 'h-11 w-11 justify-center rounded-lg text-md hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+  icon:
+    'h-11 w-11 justify-center rounded-xl text-md hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-0',
   default:
-    'w-full justify-start rounded-lg px-3 py-2 text-sm font-medium text-md hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+    'w-full justify-start rounded-xl px-3 py-2 text-sm font-medium text-md hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-0',
 };
 
 const NavItem = ({
@@ -38,7 +39,7 @@ const NavItem = ({
     title={typeof label === 'string' ? label : undefined}
     className={({ isActive }) =>
       cn(
-        'group relative inline-flex items-center gap-2 text-md transition-colors hover:bg-brand-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+        'group relative inline-flex items-center gap-2 text-md transition-colors hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-0',
         variantClasses[variant],
         isActive &&
           'text-brand-500 ring-1 ring-brand-500/40',

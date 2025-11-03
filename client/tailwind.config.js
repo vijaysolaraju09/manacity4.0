@@ -19,8 +19,8 @@ export default {
         brand: {
           900: 'var(--brand-800)',
           800: 'var(--brand-700)',
-          700: 'var(--brand-600)',
-          600: 'var(--brand-500)',
+          700: 'var(--brand-700)',
+          600: 'var(--brand-600)',
           500: 'var(--brand-500)',
           400: 'var(--brand-400)',
           300: 'var(--brand-300)',
@@ -64,9 +64,10 @@ export default {
       },
       borderRadius: {
         sm: 'var(--radius-sm)',
-        md: 'var(--radius-md)',
-        lg: 'var(--radius-lg)',
-        pill: 'var(--radius-pill)'
+        md: 'var(--radius-md, 14px)',
+        lg: 'var(--radius-lg, 18px)',
+        xl: '24px',
+        pill: 'var(--radius-pill, 999px)'
       },
       boxShadow: {
         sm: 'var(--shadow-sm)',
@@ -74,10 +75,10 @@ export default {
         lg: 'var(--shadow-lg)',
         glass: 'var(--shadow-glass)',
         mobile: 'var(--shadow-md)',
-        brand: 'var(--shadow-brand)',
-        elev1: 'var(--elev-1)',
-        elev2: 'var(--elev-2)',
-        elevBrand: 'var(--elev-brand)'
+        brand: 'var(--shadow-brand, 0 12px 28px rgba(52,163,167,.33))',
+        elev1: 'var(--elev-1, 0 1px 2px rgba(0,0,0,.55))',
+        elev2: 'var(--elev-2, 0 10px 24px rgba(2,6,12,.65), 0 2px 6px rgba(2,6,12,.6))',
+        elevBrand: 'var(--elev-brand, 0 12px 28px rgba(52,163,167,.33))'
       }
     }
   },

@@ -10,10 +10,10 @@ import ScrollToTop from './ScrollToTop';
 const RouteSkeleton = ({ label }: { label: string }) => (
   <div className="flex min-h-[40vh] items-center justify-center px-6 py-10">
     <div className="w-full max-w-md animate-pulse space-y-4" role="status" aria-live="polite">
-      <div className="h-6 w-2/3 rounded-full bg-slate-200 dark:bg-slate-700" />
-      <div className="h-4 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
-      <div className="h-4 w-5/6 rounded-full bg-slate-200 dark:bg-slate-700" />
-      <div className="h-4 w-3/4 rounded-full bg-slate-200 dark:bg-slate-700" />
+      <div className="h-6 w-2/3 rounded-full bg-surface-2 dark:bg-slate-700" />
+      <div className="h-4 w-full rounded-full bg-surface-2 dark:bg-slate-700" />
+      <div className="h-4 w-5/6 rounded-full bg-surface-2 dark:bg-slate-700" />
+      <div className="h-4 w-3/4 rounded-full bg-surface-2 dark:bg-slate-700" />
       <span className="sr-only">Loading {label}</span>
     </div>
   </div>
@@ -93,10 +93,10 @@ const SuspendedOutlet = () => (
 );
 
 const RootLayout = () => (
-  <>
+  <div className="min-h-screen bg-app text-text-primary transition-colors">
     <ScrollToTop />
     <SuspendedOutlet />
-  </>
+  </div>
 );
 
 const AppRoutes = () => (

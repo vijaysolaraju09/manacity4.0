@@ -264,7 +264,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
 
     if (!addresses.length) {
       return (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+        <div className="rounded-2xl border border-dashed border-borderc/40 bg-surface-1/70 p-6 text-center text-sm text-text-secondary dark:border-borderc/40 dark:bg-surface-1/40 dark:text-text-secondary">
           <MapPin className="mx-auto mb-3 h-6 w-6 text-[color:var(--brand-500)]" aria-hidden="true" />
           <p>No saved addresses yet. Add one below to continue with checkout.</p>
         </div>
@@ -281,8 +281,8 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
               type="button"
               onClick={() => setSelectedId(address.id)}
               className={cn(
-                'flex w-full cursor-pointer items-start gap-4 rounded-2xl border bg-white p-4 text-left transition hover:border-[color:var(--brand-400)] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand-500)] dark:border-slate-700 dark:bg-slate-900/80 dark:hover:border-[color:var(--brand-400)]',
-                isSelected ? 'border-[color:var(--brand-500)] shadow-brand' : 'border-slate-200',
+                'flex w-full cursor-pointer items-start gap-4 rounded-2xl border bg-surface-1 p-4 text-left transition hover:border-[color:var(--brand-400)] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand-500)] dark:border-borderc/40 dark:bg-surface-1/80 dark:hover:border-[color:var(--brand-400)]',
+                isSelected ? 'border-[color:var(--brand-500)] shadow-brand' : 'border-borderc/40',
               )}
             >
               <input
@@ -290,12 +290,12 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
                 name="delivery-address"
                 checked={isSelected}
                 onChange={() => setSelectedId(address.id)}
-                className="mt-1 h-4 w-4 border-slate-300 text-[color:var(--brand-600)] focus:ring-[color:var(--brand-500)]"
+                className="mt-1 h-4 w-4 border-borderc/40 text-[color:var(--brand-600)] focus:ring-[color:var(--brand-500)]"
                 aria-label={`Select ${address.label}`}
               />
               <div className="flex flex-1 flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  <p className="text-sm font-semibold text-text-primary dark:text-text-primary">
                     {address.label}
                   </p>
                   {address.isDefault ? (
@@ -305,14 +305,14 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
                     </span>
                   ) : null}
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-300">
+                <p className="text-sm text-text-secondary dark:text-text-secondary">
                   {[address.line1, address.line2, address.city, address.state, address.pincode]
                     .filter(Boolean)
                     .join(', ')}
                 </p>
                 {address.phone ? (
-                  <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Phone: <span className="font-medium text-slate-700 dark:text-slate-200">{address.phone}</span>
+                  <p className="text-xs uppercase tracking-wide text-text-muted dark:text-text-muted">
+                    Phone: <span className="font-medium text-text-secondary dark:text-text-secondary">{address.phone}</span>
                   </p>
                 ) : null}
                 {!address.isDefault ? (
@@ -353,14 +353,14 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex min-h-full items-center justify-center overflow-y-auto bg-slate-900/70 px-4 py-10 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex min-h-full items-center justify-center overflow-y-auto bg-surface-2/70 px-4 py-10 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="address-modal-heading"
       onClick={handleOverlayClick}
     >
       <div
-        className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-slate-200/60 bg-white shadow-2xl dark:border-slate-800/70 dark:bg-slate-900"
+        className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-borderc/40 bg-surface-1 shadow-2xl dark:border-borderc/40 dark:bg-surface-1"
         style={{ maxHeight: 'min(90vh, 48rem)' }}
         ref={dialogRef}
         tabIndex={-1}
@@ -372,11 +372,11 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
               <div>
                 <h2
                   id="address-modal-heading"
-                  className="text-xl font-semibold text-slate-900 dark:text-slate-50"
+                  className="text-xl font-semibold text-text-primary dark:text-slate-50"
                 >
                   Choose delivery address
                 </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-sm text-text-muted dark:text-text-muted">
                   Select an address for this order or add a new one.
                 </p>
               </div>
@@ -386,26 +386,26 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
                 size="icon"
                 onClick={onClose}
                 aria-label="Close address selection"
-                className="rounded-full text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white"
+                className="rounded-full text-text-muted hover:text-text-secondary dark:text-text-secondary dark:hover:text-white"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </Button>
             </div>
 
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted dark:text-text-muted">
                 Saved addresses
               </h3>
               {addressContent}
             </section>
 
             <section className="space-y-4">
-              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-text-muted dark:text-text-muted">
                 <Plus className="h-4 w-4" aria-hidden="true" /> Add new address
               </h3>
               <form className="grid gap-3 md:grid-cols-2" onSubmit={handleAddAddress}>
               <label className="flex flex-col gap-1" htmlFor="address-label">
-                <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+                <span className="text-sm font-semibold text-text-secondary dark:text-text-secondary">
                   Label
                 </span>
                 <Input
@@ -418,7 +418,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
               />
             </label>
             <label className="flex flex-col gap-1" htmlFor="address-phone">
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+              <span className="text-sm font-semibold text-text-secondary dark:text-text-secondary">
                 Phone
               </span>
               <Input
@@ -430,7 +430,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
               />
             </label>
             <label className="flex flex-col gap-1 md:col-span-2" htmlFor="address-line1">
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+              <span className="text-sm font-semibold text-text-secondary dark:text-text-secondary">
                 Address line 1
               </span>
               <Input
@@ -443,7 +443,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
               />
             </label>
             <label className="flex flex-col gap-1 md:col-span-2" htmlFor="address-line2">
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+              <span className="text-sm font-semibold text-text-secondary dark:text-text-secondary">
                 Address line 2 (optional)
               </span>
               <Input
@@ -455,7 +455,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
               />
             </label>
             <label className="flex flex-col gap-1" htmlFor="address-city">
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">City</span>
+              <span className="text-sm font-semibold text-text-secondary dark:text-text-secondary">City</span>
               <Input
                 id="address-city"
                 value={formValues.city}
@@ -466,7 +466,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
               />
             </label>
             <label className="flex flex-col gap-1" htmlFor="address-state">
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">State</span>
+              <span className="text-sm font-semibold text-text-secondary dark:text-text-secondary">State</span>
               <Input
                 id="address-state"
                 value={formValues.state}
@@ -477,7 +477,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
               />
             </label>
             <label className="flex flex-col gap-1" htmlFor="address-pincode">
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
+              <span className="text-sm font-semibold text-text-secondary dark:text-text-secondary">
                 Pincode
               </span>
               <Input
@@ -495,7 +495,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
                   {formError}
                 </p>
               ) : (
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-text-muted dark:text-text-muted">
                   Required fields are marked automatically.
                 </span>
               )}
@@ -512,7 +512,7 @@ const AddressSelectModal = ({ open, onClose, onConfirm, isSubmitting = false }: 
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 bg-white/80 p-6 dark:border-slate-800 dark:bg-slate-900/80 sm:flex-row sm:items-center sm:justify-end">
+        <div className="flex flex-col gap-3 border-t border-borderc/40 bg-surface-1/80 p-6 dark:border-borderc/40 dark:bg-surface-1/80 sm:flex-row sm:items-center sm:justify-end">
           <Button
             type="button"
             variant="ghost"

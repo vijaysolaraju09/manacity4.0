@@ -137,13 +137,13 @@ interface InfoRowProps {
 }
 
 const InfoRow = ({ icon: Icon, label, value, emptyLabel = 'Not provided' }: InfoRowProps) => (
-  <div className="flex items-start gap-3 rounded-xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-white/40">
+  <div className="flex items-start gap-3 rounded-xl border border-borderc/40 bg-surface-1/80 px-4 py-3 text-sm shadow-sm backdrop-blur-sm dark:border-borderc/40 dark:bg-surface-1/40">
     <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color:var(--brand-400)]/15 text-[var(--brand-600)] dark:bg-[color:var(--brand-500)]/20 dark:text-[var(--accent-400)]">
       <Icon className="h-5 w-5" aria-hidden="true" />
     </span>
     <div className="space-y-1">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">{label}</p>
-      <p className="text-sm text-slate-700 dark:text-slate-100">{value || emptyLabel}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted dark:text-text-secondary">{label}</p>
+      <p className="text-sm text-text-secondary dark:text-text-primary">{value || emptyLabel}</p>
     </div>
   </div>
 );
@@ -159,7 +159,7 @@ type StatusVariant = 'default' | 'info' | 'success' | 'warning';
 const StatusBadge = ({ children, variant = 'default' }: { children: ReactNode; variant?: StatusVariant }) => {
   const variants: Record<StatusVariant, string> = {
     default:
-      'border border-indigo-200/70 bg-white/80 text-indigo-600 shadow-sm shadow-indigo-200/40 backdrop-blur-md dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-200',
+      'border border-indigo-200/70 bg-surface-1/80 text-indigo-600 shadow-sm shadow-indigo-200/40 backdrop-blur-md dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-200',
     info:
       'border border-sky-300/70 bg-sky-100/70 text-sky-700 shadow-sm shadow-sky-200/40 backdrop-blur-md dark:border-sky-500/40 dark:bg-sky-500/20 dark:text-sky-100',
     success:
@@ -177,7 +177,7 @@ const StatusBadge = ({ children, variant = 'default' }: { children: ReactNode; v
 
 const ProfileSkeleton = () => (
   <div className={styles.page}>
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 text-slate-900 dark:text-slate-100 sm:px-6 lg:grid lg:grid-cols-[360px,1fr] lg:px-8">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 text-text-primary dark:text-text-primary sm:px-6 lg:grid lg:grid-cols-[360px,1fr] lg:px-8">
       <div className={cn(styles.card, 'p-6 sm:p-8')}>
         <div className="flex items-center gap-4">
           <Skeleton className="h-20 w-20 rounded-full" />
@@ -448,7 +448,7 @@ const Profile = () => {
               <InfoRow icon={BriefcaseBusiness} label="Profession" value={user?.profession} />
               <InfoRow icon={Sparkles} label="Theme preference" value={themeLabel} />
             </div>
-            <div className="rounded-xl border border-slate-200/70 bg-white/80 p-4 text-sm leading-relaxed text-slate-700 shadow-sm dark:border-slate-700 dark:bg-white/40 dark:text-slate-200">
+            <div className="rounded-xl border border-borderc/40 bg-surface-1/80 p-4 text-sm leading-relaxed text-text-secondary shadow-sm dark:border-borderc/40 dark:bg-surface-1/40 dark:text-text-secondary">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-500)] dark:text-[color:var(--accent-400)]">Bio</p>
               <p className="mt-2">
                 {user?.bio || 'Tell customers more about you by adding a short bio.'}
@@ -473,9 +473,9 @@ const Profile = () => {
         label: 'Preferences',
         content: (
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-200/70 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-700 dark:bg-white/40">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">Theme</p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Currently set to {themeLabel}.</p>
+            <div className="rounded-xl border border-borderc/40 bg-surface-1/80 p-4 text-sm shadow-sm dark:border-borderc/40 dark:bg-surface-1/40">
+              <p className="text-sm font-semibold text-text-primary dark:text-white">Theme</p>
+              <p className="mt-1 text-sm text-text-secondary dark:text-text-secondary">Currently set to {themeLabel}.</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <InfoRow icon={UserRoundCog} label="Role" value={user?.role} />
@@ -495,7 +495,7 @@ const Profile = () => {
   if (loadState === 'error') {
     return (
       <div className={styles.page}>
-        <div className="mx-auto max-w-3xl px-4 pb-16 text-slate-900 dark:text-slate-100 sm:px-6">
+        <div className="mx-auto max-w-3xl px-4 pb-16 text-text-primary dark:text-text-primary sm:px-6">
           <div className={cn(styles.card, 'p-6 sm:p-8')}>
             <div className={styles.cardHeader}>
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
@@ -503,7 +503,7 @@ const Profile = () => {
               </span>
               Unable to load profile
             </div>
-            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            <p className="text-sm leading-relaxed text-text-secondary dark:text-text-secondary">
               {error || 'Please try again in a moment.'}
             </p>
             <div className={styles.actionRow}>
@@ -520,10 +520,10 @@ const Profile = () => {
   if (!user) {
     return (
       <div className={styles.page}>
-        <div className="mx-auto max-w-3xl px-4 pb-16 text-slate-900 dark:text-slate-100 sm:px-6">
+        <div className="mx-auto max-w-3xl px-4 pb-16 text-text-primary dark:text-text-primary sm:px-6">
           <div className={cn(styles.card, 'p-6 sm:p-8')}>
             <div className={styles.cardHeader}>No profile information</div>
-            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            <p className="text-sm leading-relaxed text-text-secondary dark:text-text-secondary">
               We could not find your profile details. Try refreshing the page or contact support if the issue persists.
             </p>
             <div className={styles.actionRow}>
@@ -549,7 +549,7 @@ const Profile = () => {
   return (
     <>
       <div className={styles.page}>
-        <div className="mx-auto max-w-6xl px-4 pb-24 pt-10 text-slate-900 dark:text-slate-100 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl px-4 pb-24 pt-10 text-text-primary dark:text-text-primary sm:px-6 lg:px-8">
           <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[360px,1fr]">
             <motion.section
               initial={sectionMotion.initial}
@@ -583,8 +583,8 @@ const Profile = () => {
                         <UserRoundCog className="h-4 w-4" aria-hidden="true" />
                         Profile overview
                       </p>
-                      <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{user.name}</h1>
-                      <p className="text-sm text-slate-600 dark:text-slate-300">
+                      <h1 className="text-2xl font-semibold text-text-primary dark:text-white">{user.name}</h1>
+                      <p className="text-sm text-text-secondary dark:text-text-secondary">
                         Manage how your information appears across Manacity.
                       </p>
                     </div>
@@ -627,7 +627,7 @@ const Profile = () => {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="rounded-lg border-slate-200/80 bg-white/80 text-slate-700 transition hover:border-[color:var(--brand-400)] hover:text-[color:var(--brand-600)] dark:border-slate-700 dark:bg-white/40 dark:text-slate-200 dark:hover:border-[color:var(--accent-500)] dark:hover:text-[color:var(--accent-400)]"
+                            className="rounded-lg border-borderc/40 bg-surface-1/80 text-text-secondary transition hover:border-[color:var(--brand-400)] hover:text-[color:var(--brand-600)] dark:border-borderc/40 dark:bg-surface-1/40 dark:text-text-secondary dark:hover:border-[color:var(--accent-500)] dark:hover:text-[color:var(--accent-400)]"
                             onClick={() => navigate(action.path)}
                           >
                             {action.label}
@@ -667,8 +667,8 @@ const Profile = () => {
             >
               <div className={cn(styles.card, 'p-6 sm:p-8')}>
                 <div>
-                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Account dashboard</h2>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                  <h2 className="text-xl font-semibold text-text-primary dark:text-white">Account dashboard</h2>
+                  <p className="mt-2 text-sm text-text-secondary dark:text-text-secondary">
                     Review your profile details, saved addresses and personal preferences.
                   </p>
                 </div>
@@ -702,7 +702,7 @@ const Profile = () => {
               </div>
               <div className={cn(styles.card, 'p-6 sm:p-8')}>
                 <h3 className={styles.sectionTitle}>Helpful tips</h3>
-                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                <p className="text-sm leading-relaxed text-text-secondary dark:text-text-secondary">
                   Set shopping preferences, notification alerts and privacy controls. More controls are on the way.
                 </p>
               </div>
@@ -714,8 +714,8 @@ const Profile = () => {
       <ModalSheet open={isEditOpen} onClose={() => setIsEditOpen(false)}>
         <div className="space-y-6 p-6">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Edit profile</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300">
+            <h3 className="text-lg font-semibold text-text-primary dark:text-white">Edit profile</h3>
+            <p className="text-sm text-text-secondary dark:text-text-secondary">
               Update your profile details. Fields marked with an asterisk are required.
             </p>
           </div>
@@ -858,8 +858,8 @@ const Profile = () => {
       <ModalSheet open={isVerifyOpen} onClose={() => setIsVerifyOpen(false)}>
         <div className="space-y-6 p-6">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Request verification</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300">
+            <h3 className="text-lg font-semibold text-text-primary dark:text-white">Request verification</h3>
+            <p className="text-sm text-text-secondary dark:text-text-secondary">
               Provide details that help us confirm your professional credentials.
             </p>
           </div>
@@ -908,7 +908,7 @@ const Profile = () => {
                         {...field}
                       />
                     </FormControl>
-                    <p className="text-xs text-slate-500 dark:text-slate-300">
+                    <p className="text-xs text-text-muted dark:text-text-secondary">
                       Separate multiple links with commas.
                     </p>
                     {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
@@ -940,8 +940,8 @@ const Profile = () => {
       <ModalSheet open={isBusinessOpen} onClose={() => setIsBusinessOpen(false)}>
         <div className="space-y-6 p-6">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Request business account</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300">
+            <h3 className="text-lg font-semibold text-text-primary dark:text-white">Request business account</h3>
+            <p className="text-sm text-text-secondary dark:text-text-secondary">
               Tell us about your business to start selling on Manacity.
             </p>
           </div>

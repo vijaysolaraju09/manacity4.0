@@ -46,7 +46,7 @@ FormItem.displayName = 'FormItem';
 
 export const FormLabel = ({ className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) => (
   <label
-    className={cn('text-sm font-medium text-slate-700 dark:text-slate-200', className)}
+    className={cn('text-sm font-medium text-text-secondary dark:text-text-secondary', className)}
     {...props}
   />
 );
@@ -58,7 +58,7 @@ export const FormControl = ({ className, ...props }: HTMLAttributes<HTMLDivEleme
 FormControl.displayName = 'FormControl';
 
 export const FormDescription = ({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) => (
-  <p className={cn('text-sm text-slate-500 dark:text-slate-400', className)} {...props} />
+  <p className={cn('text-sm text-text-muted dark:text-text-muted', className)} {...props} />
 );
 FormDescription.displayName = 'FormDescription';
 

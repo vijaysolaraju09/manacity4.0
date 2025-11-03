@@ -75,12 +75,12 @@ const MiniCartPanel = ({
     <div className="flex h-full w-full flex-col gap-5" role="document">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p id={headingId} className="text-base font-semibold text-slate-900 dark:text-slate-100">
+          <p id={headingId} className="text-base font-semibold text-text-primary dark:text-text-primary">
             Mini cart
           </p>
           <p
             id={descriptionId}
-            className="text-xs text-slate-500 transition-colors duration-150 dark:text-slate-400"
+            className="text-xs text-text-muted transition-colors duration-150 dark:text-text-muted"
           >
             {hasItems
               ? `${count} item${count === 1 ? '' : 's'} ready to checkout`
@@ -93,7 +93,7 @@ const MiniCartPanel = ({
             size="icon"
             onClick={onDismiss}
             aria-label="Close mini cart"
-            className="-mr-1 rounded-full text-slate-500 shadow-none transition hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-offset-2 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+            className="-mr-1 rounded-full text-text-muted shadow-none transition hover:bg-surface-2 hover:text-text-primary focus-visible:ring-2 focus-visible:ring-offset-2 dark:text-text-muted dark:hover:bg-slate-800 dark:hover:text-white"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </Button>
@@ -107,32 +107,32 @@ const MiniCartPanel = ({
               {items.map((item) => (
                 <li
                   key={getCartItemKey(item)}
-                  className="group flex items-start justify-between gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 text-sm shadow-sm transition hover:border-[color:var(--brand-200)] hover:bg-white hover:shadow-md dark:border-slate-700/80 dark:bg-slate-800/70 dark:hover:border-[color:var(--brand-400)]/40 dark:hover:bg-slate-800"
+                  className="group flex items-start justify-between gap-3 rounded-2xl border border-borderc/40 bg-surface-1/80 p-3 text-sm shadow-sm transition hover:border-[color:var(--brand-200)] hover:bg-surface-1 hover:shadow-md dark:border-borderc/40 dark:bg-surface-2/70 dark:hover:border-[color:var(--brand-400)]/40 dark:hover:bg-slate-800"
                   role="listitem"
                 >
                   <div className="min-w-0">
                     <p
-                      className="truncate font-medium text-slate-900 transition-colors group-hover:text-[var(--brand-600)] dark:text-slate-100 dark:group-hover:text-[var(--brand-400)]"
+                      className="truncate font-medium text-text-primary transition-colors group-hover:text-[var(--brand-600)] dark:text-text-primary dark:group-hover:text-[var(--brand-400)]"
                       title={item.name}
                     >
                       {item.name}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Qty: {item.qty}</p>
+                    <p className="text-xs text-text-muted dark:text-text-muted">Qty: {item.qty}</p>
                   </div>
-                  <span className="whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  <span className="whitespace-nowrap text-sm font-semibold text-text-primary dark:text-slate-50">
                     {item.lineTotal}
                   </span>
                 </li>
               ))}
             </ul>
           </div>
-          <div className="flex items-center justify-between rounded-xl bg-slate-900/5 px-4 py-3 text-sm font-medium text-slate-700 dark:bg-slate-100/5 dark:text-slate-200">
+          <div className="flex items-center justify-between rounded-xl bg-surface-2/5 px-4 py-3 text-sm font-medium text-text-secondary dark:bg-surface-2/5 dark:text-text-secondary">
             <span>Subtotal</span>
             <span>{subtotalFormatted}</span>
           </div>
         </>
       ) : (
-        <div className="rounded-2xl border border-dashed border-slate-300/80 bg-white/80 p-6 text-center text-sm text-slate-500 dark:border-slate-700/80 dark:bg-slate-900/70 dark:text-slate-400">
+        <div className="rounded-2xl border border-dashed border-borderc/40 bg-surface-1/80 p-6 text-center text-sm text-text-muted dark:border-borderc/40 dark:bg-surface-1/70 dark:text-text-muted">
           Add items to start your order.
         </div>
       )}
@@ -149,7 +149,7 @@ const MiniCartPanel = ({
         <Button
           onClick={onClear}
           variant="outline"
-          className="flex w-full items-center justify-center gap-2 rounded-full border-slate-300/70 text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="flex w-full items-center justify-center gap-2 rounded-full border-borderc/40 text-text-secondary transition hover:border-borderc/40 hover:bg-surface-2 dark:border-borderc/40 dark:text-text-secondary dark:hover:bg-slate-800"
           disabled={!hasItems}
         >
           <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -266,12 +266,12 @@ const MiniCart = ({ className, showLabel = false, align = 'end', triggerClassNam
   const triggerContent = (
     <>
       <ShoppingCart
-        className="h-5 w-5 text-slate-600 transition-colors group-hover:text-slate-900 group-focus-visible:text-slate-900 dark:text-slate-200 dark:group-hover:text-white dark:group-focus-visible:text-white"
+        className="h-5 w-5 text-text-secondary transition-colors group-hover:text-text-primary group-focus-visible:text-text-primary dark:text-text-secondary dark:group-hover:text-white dark:group-focus-visible:text-white"
         strokeWidth={1.75}
         aria-hidden="true"
       />
       {showLabel ? (
-        <span className="ml-2 text-sm font-medium text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-200 dark:group-hover:text-white">
+        <span className="ml-2 text-sm font-medium text-text-secondary transition-colors group-hover:text-text-primary dark:text-text-secondary dark:group-hover:text-white">
           Cart
         </span>
       ) : null}
@@ -290,8 +290,8 @@ const MiniCart = ({ className, showLabel = false, align = 'end', triggerClassNam
   const triggerClasses = cn(
   'group relative inline-flex items-center justify-center font-medium text-ink-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand-400)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] dark:text-ink-500 dark:hover:text-ink-900 dark:focus-visible:ring-offset-[var(--surface-card)]',
     showLabel
-      ? 'h-10 min-w-[3rem] gap-2 rounded-full bg-slate-100 px-4 py-2 shadow-sm transition-transform duration-150 hover:-translate-y-0.5 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700'
-      : 'h-10 w-10 rounded-full bg-transparent transition-transform duration-150 hover:-translate-y-0.5 hover:bg-slate-100 dark:hover:bg-slate-800',
+      ? 'h-10 min-w-[3rem] gap-2 rounded-full bg-surface-2 px-4 py-2 shadow-sm transition-transform duration-150 hover:-translate-y-0.5 hover:bg-surface-2 dark:bg-surface-2 dark:hover:bg-slate-700'
+      : 'h-10 w-10 rounded-full bg-transparent transition-transform duration-150 hover:-translate-y-0.5 hover:bg-surface-2 dark:hover:bg-slate-800',
     triggerClassName,
   );
 
@@ -320,7 +320,7 @@ const MiniCart = ({ className, showLabel = false, align = 'end', triggerClassNam
               aria-labelledby={headingId}
               aria-describedby={descriptionId}
               id={contentId}
-              className="absolute z-50 mt-3 w-80 max-w-[92vw] rounded-2xl border border-slate-200/80 bg-white/95 p-5 text-left shadow-2xl outline-none backdrop-blur-sm transition dark:border-slate-700/80 dark:bg-slate-900/95"
+              className="absolute z-50 mt-3 w-80 max-w-[92vw] rounded-2xl border border-borderc/40 bg-surface-1/95 p-5 text-left shadow-2xl outline-none backdrop-blur-sm transition dark:border-borderc/40 dark:bg-surface-1/95"
               style={align === 'end' ? { right: 0 } : { left: 0 }}
               initial={popoverMotion.initial}
               animate={popoverMotion.animate}
@@ -371,7 +371,7 @@ const MiniCart = ({ className, showLabel = false, align = 'end', triggerClassNam
                 >
                   <motion.button
                     type="button"
-                    className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
+                    className="absolute inset-0 bg-surface-2/50 backdrop-blur-sm"
                     aria-label="Close mini cart"
                     onClick={() => setSheetOpen(false)}
                     initial={{ opacity: 0 }}
@@ -382,7 +382,7 @@ const MiniCart = ({ className, showLabel = false, align = 'end', triggerClassNam
                   <motion.div
                     ref={sheetContentRef}
                     tabIndex={-1}
-                    className="ml-auto flex h-full w-full max-w-md flex-col gap-5 overflow-y-auto bg-white/95 p-7 shadow-2xl outline-none backdrop-blur-sm dark:bg-slate-950/90"
+                    className="ml-auto flex h-full w-full max-w-md flex-col gap-5 overflow-y-auto bg-surface-1/95 p-7 shadow-2xl outline-none backdrop-blur-sm dark:bg-surface-2/90"
                     initial={sheetMotion.initial}
                     animate={sheetMotion.animate}
                     exit={sheetMotion.exit}

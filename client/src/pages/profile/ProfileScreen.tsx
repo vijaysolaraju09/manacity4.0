@@ -27,6 +27,7 @@ type ThemeButtonProps = {
   className?: string
   onClick?: () => void
   type?: 'button' | 'submit'
+  disabled?: boolean
 }
 
 type ThemeCardProps = {
@@ -77,6 +78,7 @@ const Button = ({
   className = '',
   onClick,
   type = 'button',
+  disabled = false,
 }: ThemeButtonProps) => {
   const styles = {
     primary:
@@ -90,9 +92,11 @@ const Button = ({
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         'focus-ring inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all',
         styles[variant],
+        disabled && 'cursor-not-allowed opacity-60',
         className,
       )}
     >

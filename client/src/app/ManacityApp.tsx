@@ -469,37 +469,43 @@ const Sidebar = ({ items, currentPath }: { items: NavItem[]; currentPath: string
   </aside>
 )
 
-const BottomTabs = ({ items, currentPath }: { items: NavItem[]; currentPath: string }) => (
-  <div className="fixed inset-x-0 bottom-0 z-40 border-t border-default bg-surface-1 backdrop-blur supports-[backdrop-filter]:bg-[color-mix(in_srgb,var(--surface-1)_88%,transparent)] md:hidden">
-    <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-3">
-      {items.map((item) => {
-        const isActive = currentPath === item.path
-        return (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={cn(
-              'flex flex-col items-center gap-1 text-xs transition-colors',
-              isActive ? 'text-primary' : 'text-muted'
-            )}
-          >
-            <span
+const BottomTabs = ({ items, currentPath }: { items: NavItem[]; currentPath: string }) => {
+  const filteredItems = items.filter(
+    (item) => item.path !== '/cart' && item.path !== '/notifications'
+  )
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-default bg-surface-1 backdrop-blur supports-[backdrop-filter]:bg-[color-mix(in_srgb,var(--surface-1)_88%,transparent)] md:hidden">
+      <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-3">
+        {filteredItems.map((item) => {
+          const isActive = currentPath === item.path
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
               className={cn(
-                'inline-flex h-11 w-11 items-center justify-center rounded-full border text-sm transition-all',
-                isActive
-                  ? 'border-transparent bg-[color-mix(in_srgb,var(--primary)_20%,transparent)] text-primary shadow-sm-theme'
-                  : 'border-transparent bg-transparent'
+                'flex flex-col items-center gap-1 text-xs transition-colors',
+                isActive ? 'text-primary' : 'text-muted'
               )}
             >
-              <item.icon className="h-5 w-5" />
-            </span>
-            {item.label}
-          </NavLink>
-        )
-      })}
+              <span
+                className={cn(
+                  'inline-flex h-11 w-11 items-center justify-center rounded-full border text-sm transition-all',
+                  isActive
+                    ? 'border-transparent bg-[color-mix(in_srgb,var(--primary)_20%,transparent)] text-primary shadow-sm-theme'
+                    : 'border-transparent bg-transparent'
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+              </span>
+              {item.label}
+            </NavLink>
+          )
+        })}
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 const Carousel = ({ items }: { items: HeroItem[] }) => {
   const [index, setIndex] = useState(0)

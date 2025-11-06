@@ -1,12 +1,15 @@
+@import './_mixins';
+
 /* Modern responsive sidebar — desktop/tablet only; mobile unchanged */
 @media (min-width: 768px) {
   .mc-sidebar {
     position: sticky; top: 0; height: 100dvh;
     display: grid; grid-template-rows: auto 1fr auto;
-    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    overflow: hidden;
+    background: rgb(var(--mc-surface) / 0.8);
     backdrop-filter: blur(14px);
-    border-right: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
+    border-right: 1px solid rgb(var(--mc-border));
+    @include elevation(1);
     transition: width .22s ease, box-shadow .2s ease, background .2s ease;
     width: 88px;                /* MINI rail */
     padding: 14px 10px;
@@ -37,11 +40,11 @@
     position: relative;
     display:flex; align-items:center; gap:12px;
     height: 44px; padding: 0 12px; border-radius: var(--radius-md);
-    color: var(--ink-700);
+    color: rgb(var(--mc-muted));
     transition: background .18s ease, color .18s ease, transform .12s ease;
     outline: none; border: 1px solid transparent;
   }
-  .mc-item:hover { background: color-mix(in srgb, var(--brand-500) 12%, transparent); color: var(--brand-600); }
+  .mc-item:hover { background: rgb(var(--mc-primary) / 0.12); color: rgb(var(--mc-primary-600)); }
   .mc-item:active { transform: scale(.98); }
   .mc-item:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-400) 35%, transparent); }
 
@@ -58,14 +61,20 @@
   }
 
   .mc-item--active {
-    background: color-mix(in srgb, var(--brand-500) 16%, transparent);
-    color: var(--brand-600);
-    border-color: color-mix(in srgb, var(--brand-500) 30%, transparent);
-    box-shadow: var(--shadow-brand);
+    background: rgb(var(--mc-primary) / 0.16);
+    color: rgb(var(--mc-primary-600));
+    border-color: rgb(var(--mc-primary) / 0.3);
+    @include elevation(1);
   }
   .mc-item--active::before {
-    content:''; position:absolute; left:-10px; top:8px; bottom:8px; width: 4px;
-    border-radius: 999px; background: var(--grad-brand);
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 6px;
+    bottom: 6px;
+    width: 4px;
+    border-radius: 999px;
+    background: var(--mc-gradient);
   }
 
   /* Section title (visible only when expanded) */

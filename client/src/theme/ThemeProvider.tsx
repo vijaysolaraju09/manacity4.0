@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { applyTheme, getInitialTheme, type Theme } from './theme';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { getInitialTheme, getSystemTheme, type Theme } from './theme';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -13,11 +13,45 @@ const storageKey = 'theme';
 const availableThemes: Theme[] = ['light', 'dark', 'system'];
 
 const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+
+  const setTheme = useCallback(
+    (nextTheme: Theme) => {
+      setThemeState(nextTheme);
+
+      if (typeof document === 'undefined') {
+        return;
+      }
+
+      const resolved = nextTheme === 'system' ? getSystemTheme() : nextTheme;
+      const root = document.documentElement;
+      root.setAttribute('data-theme', resolved);
+
+      if (resolved === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+
+      if (document.body) {
+        document.body.setAttribute('data-theme', resolved);
+        document.body.classList.toggle('dark', resolved === 'dark');
+      }
+
+      try {
+        localStorage.setItem(storageKey, nextTheme);
+      } catch (error) {
+        console.warn('[theme] Failed to persist theme preference', error);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+    setTheme(theme);
+    // We only want to run this on mount to ensure the DOM reflects the initial theme.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const handleMedia = () => {

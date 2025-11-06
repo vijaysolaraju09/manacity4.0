@@ -135,7 +135,7 @@ const Home = () => {
       {announcementStatus === 'loading' ? (
         <section className="px-4 md:px-6 lg:px-8">
           <div className="animate-pulse overflow-hidden surface-2">
-            <div className="h-44 bg-surface-2 md:h-56" />
+            <div className="h-44 bg-slate-200 md:h-56" />
           </div>
         </section>
       ) : announcementStatus === 'failed' ? (

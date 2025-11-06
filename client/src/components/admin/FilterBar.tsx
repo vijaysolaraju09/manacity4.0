@@ -41,9 +41,9 @@ export interface FilterBarProps {
 }
 
 const inputBaseClass =
-  'h-10 w-full rounded-xl border border-borderc/40 bg-surface-1 px-3 text-sm text-text-secondary shadow-sm outline-none transition placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[color:var(--brand-500)] focus-visible:ring-offset-2 dark:border-borderc/40 dark:bg-surface-1 dark:text-text-primary dark:placeholder:text-text-muted dark:focus-visible:ring-[color:var(--brand-400)]';
+  'h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[color:var(--brand-500)] focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus-visible:ring-[color:var(--brand-400)]';
 
-const labelBaseClass = 'flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-text-muted dark:text-text-muted';
+const labelBaseClass = 'flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400';
 
 const FilterBar = ({
   searchPlaceholder = 'Search',
@@ -62,7 +62,7 @@ const FilterBar = ({
   return (
     <div
       className={cn(
-        'rounded-3xl border border-borderc/40 bg-surface-1/80 p-4 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-surface-1/70 dark:border-borderc/40 dark:bg-surface-2/40',
+        'rounded-3xl border border-slate-200/80 bg-white/80 p-4 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/70 dark:border-slate-800 dark:bg-slate-950/40',
         className,
       )}
     >
@@ -85,7 +85,7 @@ const FilterBar = ({
                   <button
                     type="button"
                     onClick={() => onSearchChange('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:text-text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--brand-500)]"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--brand-500)]"
                     aria-label="Clear search"
                   >
                     <XCircle className="h-4 w-4" aria-hidden="true" />
@@ -155,7 +155,7 @@ const FilterBar = ({
               type="button"
               variant="ghost"
               onClick={onReset}
-              className="justify-center rounded-full border border-transparent px-4 py-2 text-sm text-text-secondary transition hover:border-borderc/40 hover:bg-surface-2 dark:text-text-secondary dark:hover:border-borderc/40 dark:hover:bg-slate-800"
+              className="justify-center rounded-full border border-transparent px-4 py-2 text-sm text-slate-600 transition hover:border-slate-200 hover:bg-slate-100 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800"
             >
               Reset
             </Button>

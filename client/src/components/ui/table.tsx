@@ -118,7 +118,7 @@ const TableCaption = React.forwardRef<HTMLTableCaptionElement, React.HTMLAttribu
   ({ className, ...props }, ref) => (
     <caption
       ref={ref}
-      className={cn('mt-4 text-sm text-text-muted dark:text-text-muted', className)}
+      className={cn('mt-4 text-sm text-slate-500 dark:text-slate-400', className)}
       {...props}
     />
   ),

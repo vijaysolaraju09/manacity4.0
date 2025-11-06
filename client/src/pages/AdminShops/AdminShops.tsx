@@ -178,8 +178,8 @@ const AdminShops = () => {
   return (
     <div className={`${styles.page} space-y-6 px-4`}>
       <div className="space-y-1">
-        <h2 className="text-2xl font-semibold text-text-primary">Shops</h2>
-        <p className="text-sm text-text-secondary">
+        <h2 className="text-2xl font-semibold text-gray-900">Shops</h2>
+        <p className="text-sm text-gray-600">
           Manage storefronts, update statuses, and keep listings current.
         </p>
       </div>
@@ -193,7 +193,7 @@ const AdminShops = () => {
               setQuery(e.target.value);
               setPage(1);
             }}
-            className="w-48 rounded-lg border border-borderc/40 px-3 py-2 text-sm text-text-secondary"
+            className="w-48 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
           />
           <input
             placeholder="Category"
@@ -202,7 +202,7 @@ const AdminShops = () => {
               setCategory(e.target.value);
               setPage(1);
             }}
-            className="w-40 rounded-lg border border-borderc/40 px-3 py-2 text-sm text-text-secondary"
+            className="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
           />
           <select
             value={status}
@@ -210,7 +210,7 @@ const AdminShops = () => {
               setStatus(e.target.value);
               setPage(1);
             }}
-            className="rounded-lg border border-borderc/40 bg-surface-1 px-3 py-2 text-sm text-text-secondary"
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
           >
             <option value="">All Statuses</option>
             <option value="active">Active</option>
@@ -220,13 +220,13 @@ const AdminShops = () => {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="rounded-lg border border-borderc/40 bg-surface-1 px-3 py-2 text-sm text-text-secondary"
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
           >
             <option value="-createdAt">Newest</option>
             <option value="createdAt">Oldest</option>
           </select>
         </div>
-        <span className="text-sm text-text-muted">Total shops: {total}</span>
+        <span className="text-sm text-gray-500">Total shops: {total}</span>
       </div>
 
       {(() => {
@@ -285,7 +285,7 @@ const AdminShops = () => {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="rounded-md border border-borderc/40 px-3 py-1 text-sm text-text-secondary"
+              className="rounded-md border border-gray-200 px-3 py-1 text-sm text-gray-700"
               onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               disabled={page <= 1}
             >
@@ -293,7 +293,7 @@ const AdminShops = () => {
             </button>
             <button
               type="button"
-              className="rounded-md border border-borderc/40 px-3 py-1 text-sm text-text-secondary"
+              className="rounded-md border border-gray-200 px-3 py-1 text-sm text-gray-700"
               onClick={() => setPage((prev) => (prev < totalPages ? prev + 1 : prev))}
               disabled={page >= totalPages}
             >
@@ -306,7 +306,7 @@ const AdminShops = () => {
       {edit && (
         <div className={styles.modal}>
           <form className={styles.modalContent} onSubmit={handleSave}>
-            <h3 className="text-lg font-semibold text-text-primary">Edit Shop</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Edit Shop</h3>
             <label className={styles.formField}>
               Name
               <input

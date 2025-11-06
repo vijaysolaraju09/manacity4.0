@@ -19,7 +19,7 @@ const variantStyles: Record<AuthButtonVariant, string> = {
   primary:
     'bg-brand-500 text-white shadow-brand hover:bg-brand-600 dark:bg-brand-500 dark:hover:bg-brand-400',
   secondary:
-    'bg-surface-2 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-700 focus-visible:outline-slate-700 dark:bg-surface-2 dark:hover:bg-slate-700',
+    'bg-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-700 focus-visible:outline-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700',
   outline:
     'border border-[color:var(--border-subtle)] bg-[var(--surface)] text-ink-700 hover:border-[color:var(--brand-300)] hover:bg-[var(--surface-card)] dark:border-[color:var(--border-subtle)] dark:bg-[var(--surface-card)] dark:text-ink-500',
   ghost:

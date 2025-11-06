@@ -36,12 +36,12 @@ const ConfirmDialog = ({
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-surface-2/50 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true">
-      <div className="w-full max-w-md rounded-3xl border border-borderc/40 bg-surface-1 p-6 shadow-2xl dark:border-borderc/40 dark:bg-surface-1">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true">
+      <div className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white p-6 shadow-2xl dark:border-slate-800/70 dark:bg-slate-900">
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-text-primary dark:text-slate-50">{title}</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">{title}</h2>
           {description ? (
-            <p className="text-sm text-text-muted dark:text-text-secondary">{description}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-300">{description}</p>
           ) : null}
         </div>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">

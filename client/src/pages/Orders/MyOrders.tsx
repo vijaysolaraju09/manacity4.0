@@ -132,9 +132,9 @@ const MyOrders = () => {
   const renderOrders = () => {
     if (ordersList.length === 0) {
       return (
-        <Card className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/10 via-white/90 to-white/70 p-12 text-center shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-surface-2/70 dark:shadow-indigo-900/40">
-          <h2 className="text-xl font-semibold text-text-primary dark:text-white">No orders yet</h2>
-          <p className="max-w-md text-sm text-text-muted dark:text-text-secondary">
+        <Card className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/10 via-white/90 to-white/70 p-12 text-center shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/70 dark:shadow-indigo-900/40">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">No orders yet</h2>
+          <p className="max-w-md text-sm text-slate-500 dark:text-slate-300">
             Explore products from neighbourhood shops and place your first order. We will keep a premium track of every purchase here.
           </p>
           <Button type="button" className="rounded-full px-6 py-2 text-sm font-semibold" onClick={() => navigate(paths.home?.() ?? '/')}>Browse products</Button>
@@ -168,7 +168,7 @@ const MyOrders = () => {
 
   if (isError) {
     return (
-      <main className={cn(styles.pageShell, 'bg-transparent text-text-primary dark:text-text-primary')}>
+      <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
         <div className={cn(styles.pageShell__inner, 'mx-auto max-w-6xl px-4 py-16 sm:px-6')}>
           <ErrorCard title="Unable to load orders" message={mineState.error ?? 'Please retry in a moment.'} onRetry={handleRetry} />
         </div>
@@ -177,7 +177,7 @@ const MyOrders = () => {
   }
 
   return (
-    <main className={cn(styles.pageShell, 'bg-transparent text-text-primary dark:text-text-primary')}>
+    <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
       <div className={cn(styles.pageShell__inner, 'mx-auto max-w-6xl px-4 pb-24 pt-12 sm:px-6')}>
         <motion.header
           initial={sectionMotion.initial}
@@ -185,11 +185,11 @@ const MyOrders = () => {
           transition={sectionMotion.transition}
           className="flex flex-col gap-6 pb-10"
         >
-          <div className="flex flex-col gap-6 rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/15 via-white/90 to-white/70 p-6 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-surface-2/70 dark:shadow-indigo-900/40">
+          <div className="flex flex-col gap-6 rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/15 via-white/90 to-white/70 p-6 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/70 dark:shadow-indigo-900/40">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="space-y-2">
-                <h1 className="text-3xl font-semibold tracking-tight text-text-primary dark:text-white">My orders</h1>
-                <p className="text-sm text-text-secondary dark:text-text-secondary">
+                <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">My orders</h1>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
                   Track deliveries, download invoices and rate your neighbourhood shopping experiences.
                 </p>
               </div>
@@ -200,7 +200,7 @@ const MyOrders = () => {
                 </div>
               ) : null}
             </div>
-            <div className="flex flex-wrap gap-2 rounded-3xl border border-indigo-200/60 bg-surface-1/90 p-2 shadow-xl shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-surface-1/70">
+            <div className="flex flex-wrap gap-2 rounded-3xl border border-indigo-200/60 bg-white/90 p-2 shadow-xl shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-slate-900/70">
               {statusOptions.map((status) => (
                 <button
                   key={status}
@@ -210,7 +210,7 @@ const MyOrders = () => {
                     'rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500',
                     activeStatus === status
                       ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-400/40 dark:bg-indigo-500 dark:shadow-indigo-900/50'
-                      : 'text-text-secondary hover:bg-surface-1 dark:text-text-secondary dark:hover:bg-slate-800',
+                      : 'text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-800',
                   )}
                 >
                   {statusLabels[status]}
@@ -230,7 +230,7 @@ const MyOrders = () => {
               {Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-40 rounded-3xl border border-borderc/40 bg-surface-1/80 shadow-xl shadow-slate-200/60 dark:border-borderc/40 dark:bg-surface-1/70"
+                  className="h-40 rounded-3xl border border-slate-200/70 bg-white/80 shadow-xl shadow-slate-200/60 dark:border-slate-800/70 dark:bg-slate-900/70"
                 />
               ))}
             </div>

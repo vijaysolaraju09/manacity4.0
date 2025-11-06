@@ -81,14 +81,15 @@ const TabLayout = () => {
   }, [location.pathname, navigate]);
 
   return (
-    <div className="tab-layout relative min-h-screen bg-app text-text-primary transition-colors">
-      <Sidebar />
-      <div className="relative z-0 flex min-h-screen flex-col lg:pl-[112px]">
-        <motion.header
-          className="top-header appbar glass border-b border-borderc/40 bg-surface-2/80 text-text-primary shadow-elev-1 backdrop-blur-xs"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+    <div className="tab-layout bg-surface0 dark:bg-surface0 text-hi">
+      <div className="w-full min-h-screen md:grid md:grid-cols-[auto_1fr]">
+        <Sidebar />
+        <div className="flex min-h-screen flex-col">
+          <motion.header
+            className="top-header appbar text-hi"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <h1 className="logo" onClick={() => navigate(paths.home())}>Manacity</h1>
             <div className="actions">
               <NavItem
@@ -107,21 +108,21 @@ const TabLayout = () => {
               />
               <NavItem to={paths.profile()} icon={UserRound} label="Profile" ariaLabel="Profile" />
             </div>
-        </motion.header>
-        <main className="tab-content flex-1 px-4 pb-24 pt-6 sm:px-6 lg:px-8">
-          <Outlet />
-        </main>
+          </motion.header>
+          <main className="tab-content">
+            <Outlet />
+          </main>
 
-        <motion.button
-          type="button"
-          className="special-shop-btn fab btn btn-gradient focus-visible:outline-none"
-          onClick={() => navigate(paths.specialShop())}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          aria-label="Special shop"
-        >
-          <Gift className="icon h-5 w-5" aria-hidden="true" />
-        </motion.button>
+          <motion.button
+            type="button"
+            className="special-shop-btn fab focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            onClick={() => navigate(paths.specialShop())}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Special shop"
+          >
+            <Gift className="icon h-5 w-5" aria-hidden="true" />
+          </motion.button>
 
           <motion.nav
             className="tab-bar tabs bottom-nav bottom-glass md:hidden"
@@ -182,6 +183,7 @@ const TabLayout = () => {
               );
             })}
           </motion.nav>
+        </div>
       </div>
     </div>
   );

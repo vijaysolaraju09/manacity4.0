@@ -22,13 +22,11 @@ import {
   Heart,
   Home,
   Inbox,
-  ListChecks,
   MapPin,
   MessageCircle,
   Moon,
   PackageCheck,
   Search,
-  Settings,
   ShieldCheck,
   ShoppingBag,
   ShoppingCart,
@@ -40,6 +38,7 @@ import {
   User,
   Users,
 } from 'lucide-react'
+import ProfileScreen from '@/pages/profile/ProfileScreen'
 type ButtonVariant = 'primary' | 'outline' | 'ghost'
 
 type NavItem = {
@@ -103,24 +102,6 @@ type Notification = {
   type: 'order' | 'event' | 'promotion' | 'system'
   unread?: boolean
 }
-
-type Order = {
-  id: string
-  reference: string
-  total: string
-  status: 'Processing' | 'Delivered' | 'Shipped'
-  placedAt: string
-}
-
-type Request = {
-  id: string
-  title: string
-  status: 'Pending' | 'Approved' | 'In progress'
-  updatedAt: string
-  category: string
-}
-
-type Tabs = 'account' | 'orders' | 'requests' | 'notifications'
 
 type Countdown = {
   days: number
@@ -819,53 +800,7 @@ const NOTIFS: Notification[] = [
   },
 ]
 
-const DEMO_ORDERS: Order[] = [
-  {
-    id: 'order-01',
-    reference: 'MC-48392',
-    total: '$642.00',
-    status: 'Processing',
-    placedAt: 'Mar 28, 2025',
-  },
-  {
-    id: 'order-02',
-    reference: 'MC-48231',
-    total: '$318.00',
-    status: 'Delivered',
-    placedAt: 'Mar 12, 2025',
-  },
-  {
-    id: 'order-03',
-    reference: 'MC-47824',
-    total: '$198.00',
-    status: 'Shipped',
-    placedAt: 'Mar 04, 2025',
-  },
-]
 
-const DEMO_REQUESTS: Request[] = [
-  {
-    id: 'request-01',
-    title: 'Penthouse lounge redesign',
-    status: 'In progress',
-    updatedAt: 'Updated 2h ago',
-    category: 'Home & Living',
-  },
-  {
-    id: 'request-02',
-    title: 'Concierge wellness plan',
-    status: 'Pending',
-    updatedAt: 'Updated yesterday',
-    category: 'Health & Wellness',
-  },
-  {
-    id: 'request-03',
-    title: 'Boutique launch experience',
-    status: 'Approved',
-    updatedAt: 'Updated 3d ago',
-    category: 'Events & Experiences',
-  },
-]
 
 
 const HomeScreen = () => (
@@ -1408,152 +1343,6 @@ const NotificationsScreen = () => (
   </div>
 )
 
-const ProfileScreen = () => {
-  const [tab, setTab] = useState<Tabs>('account')
-
-  return (
-    <div className="flex flex-col gap-6">
-      <Card className="rounded-[2rem] p-6">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--primary)_15%,transparent)] text-[var(--primary)]">
-              <User className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold text-primary">Sofia Laurent</h1>
-              <p className="text-sm text-muted">Concierge member since 2022 • Platinum tier</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" icon={Settings}>
-              Account settings
-            </Button>
-            <Button variant="primary" icon={Sparkles}>
-              Upgrade perks
-            </Button>
-          </div>
-        </div>
-        <div className="mt-6 flex flex-wrap gap-4 text-sm">
-          <div className="rounded-2xl border border-default px-4 py-3">
-            <p className="text-xs text-muted">Loyalty balance</p>
-            <p className="mt-1 text-lg font-semibold text-primary">12,450 pts</p>
-          </div>
-          <div className="rounded-2xl border border-default px-4 py-3">
-            <p className="text-xs text-muted">Concierge credits</p>
-            <p className="mt-1 text-lg font-semibold text-primary">$320</p>
-          </div>
-          <div className="rounded-2xl border border-default px-4 py-3">
-            <p className="text-xs text-muted">Upcoming bookings</p>
-            <p className="mt-1 text-lg font-semibold text-primary">3 events</p>
-          </div>
-        </div>
-      </Card>
-
-      <Card className="rounded-3xl p-6">
-        <div className="flex flex-wrap items-center gap-4 border-b border-default pb-4">
-          {(
-            [
-              { key: 'account', label: 'Account' },
-              { key: 'orders', label: 'Orders' },
-              { key: 'requests', label: 'Requests' },
-              { key: 'notifications', label: 'Notifications' },
-            ] satisfies { key: Tabs; label: string }[]
-          ).map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => setTab(item.key)}
-              className={cn(
-                'tab-indicator relative rounded-full px-4 py-2 text-sm font-medium transition-colors',
-                tab === item.key ? 'text-primary' : 'text-muted hover:text-primary',
-              )}
-              data-active={tab === item.key}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-        <div className="mt-6 space-y-4">
-          {tab === 'account' ? (
-            <div className="space-y-4 text-sm">
-              <p className="text-muted">
-                Manage your profile, preferences, and concierge communication settings. Update delivery addresses and
-                event preferences anytime.
-              </p>
-              <Button variant="outline" icon={ListChecks}>
-                Edit preferences
-              </Button>
-            </div>
-          ) : null}
-
-          {tab === 'orders' ? (
-            <div className="space-y-4">
-              {DEMO_ORDERS.map((order) => (
-                <div key={order.id} className="rounded-2xl border border-default p-4 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-primary">Order {order.reference}</p>
-                      <p className="text-xs text-muted">Placed {order.placedAt}</p>
-                    </div>
-                    <Badge tone="accent">{order.status}</Badge>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-sm">
-                    <span className="text-muted">Total</span>
-                    <span className="font-semibold text-primary">{order.total}</span>
-                  </div>
-                  <Button variant="ghost" className="mt-3 px-0 text-sm text-primary">
-                    View receipt
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          {tab === 'requests' ? (
-            <div className="space-y-4">
-              {DEMO_REQUESTS.map((request) => (
-                <div key={request.id} className="rounded-2xl border border-default p-4 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-primary">{request.title}</p>
-                      <p className="text-xs text-muted">{request.category}</p>
-                    </div>
-                    <Badge tone="accent">{request.status}</Badge>
-                  </div>
-                  <p className="mt-3 text-xs text-muted">{request.updatedAt}</p>
-                  <div className="mt-4 flex items-center gap-3">
-                    <Button variant="outline" icon={MessageCircle}>
-                      Message concierge
-                    </Button>
-                    <Button variant="ghost" icon={BookmarkCheck}>
-                      Save update
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          {tab === 'notifications' ? (
-            <div className="space-y-4">
-              {NOTIFS.map((notification) => (
-                <div key={notification.id} className="rounded-2xl border border-default p-4 text-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-primary">{notification.title}</p>
-                      <p className="mt-1 text-xs text-muted">{notification.message}</p>
-                    </div>
-                    <Badge tone="neutral">{notification.time}</Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      </Card>
-    </div>
-  )
-}
 const NAV_ITEMS: NavItem[] = [
   { label: 'Home', icon: Home, path: '/' },
   { label: 'Shops', icon: ShoppingBag, path: '/shops' },

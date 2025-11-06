@@ -1,0 +1,86 @@
+/* Unified theme tokens for Manacity */
+:root,
+:root[data-theme='light'] {
+  --mc-bg: 248 250 252;
+  --mc-surface: 255 255 255;
+  --mc-on-surface: 17 24 39;
+  --mc-muted: 107 114 128;
+  --mc-border: 229 231 235;
+  --mc-primary: 20 184 166;
+  --mc-primary-600: 13 148 136;
+  --mc-accent: 124 58 237;
+  --mc-success: 16 185 129;
+  --mc-warning: 245 158 11;
+  --mc-danger: 239 68 68;
+  --mc-shadow: 15 23 42;
+  --mc-elev-1: 0.1;
+  --mc-elev-2: 0.18;
+  --mc-radius: 16px;
+}
+
+:root[data-theme='dark'] {
+  --mc-bg: 12 18 28;
+  --mc-surface: 22 30 44;
+  --mc-on-surface: 226 232 240;
+  --mc-muted: 148 163 184;
+  --mc-border: 45 55 72;
+  --mc-primary: 34 197 170;
+  --mc-primary-600: 20 184 166;
+  --mc-accent: 167 139 250;
+  --mc-success: 52 211 153;
+  --mc-warning: 251 191 36;
+  --mc-danger: 248 113 113;
+  --mc-shadow: 2 6 23;
+  --mc-elev-1: 0.5;
+  --mc-elev-2: 0.7;
+  --mc-radius: 16px;
+}
+
+:root {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* Shadow utilities */
+:root {
+  --mc-shadow-sm: 0 1px 2px rgba(var(--mc-shadow), 0.06),
+    0 3px 6px rgba(var(--mc-shadow), var(--mc-elev-1));
+  --mc-shadow-md: 0 4px 10px rgba(var(--mc-shadow), 0.08),
+    0 8px 24px rgba(var(--mc-shadow), var(--mc-elev-1));
+  --mc-shadow-lg: 0 10px 20px rgba(var(--mc-shadow), 0.12),
+    0 20px 48px rgba(var(--mc-shadow), var(--mc-elev-2));
+}
+
+.mc-shadow-sm {
+  box-shadow: var(--mc-shadow-sm);
+}
+
+.mc-shadow-md {
+  box-shadow: var(--mc-shadow-md);
+}
+
+.mc-shadow-lg {
+  box-shadow: var(--mc-shadow-lg);
+}
+
+.mc-gradient {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--mc-accent)) 0%,
+    rgb(var(--mc-primary)) 100%
+  );
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--mc-accent));
+  outline-offset: 2px;
+}
+
+.icon {
+  display: inline-block;
+  color: inherit;
+  fill: currentColor;
+  stroke: currentColor;
+}

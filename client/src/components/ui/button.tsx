@@ -2,7 +2,16 @@ import { forwardRef } from 'react';
 import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
-type ButtonVariant = 'default' | 'secondary' | 'outline' | 'ghost' | 'destructive';
+type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'danger'
+  | 'success'
+  | 'warning'
+  | 'outline'
+  | 'default'
+  | 'destructive';
 type ButtonSize = 'default' | 'sm' | 'lg' | 'icon';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -11,11 +20,15 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  default: 'btn--brand btn-primary shadow-elevBrand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
-  secondary: 'btn--ghost btn--ghost-muted btn-ghost focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
-  outline: 'btn--ghost btn-ghost focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
-  ghost: 'btn--ghost btn--ghost-plain btn-ghost focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
-  destructive: 'btn--danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+  primary: 'btn btn-primary',
+  secondary: 'btn btn-secondary',
+  ghost: 'btn btn-tertiary',
+  danger: 'btn btn-danger',
+  success: 'btn btn-success',
+  warning: 'btn btn-warning',
+  outline: 'btn btn-secondary',
+  default: 'btn btn-primary',
+  destructive: 'btn btn-danger',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -26,14 +39,26 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', size = 'default', type = 'button', ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'default', type = 'button', ...props }, ref) => {
+    const alias: Record<ButtonVariant, keyof typeof variantClasses> = {
+      primary: 'primary',
+      secondary: 'secondary',
+      ghost: 'ghost',
+      danger: 'danger',
+      success: 'success',
+      warning: 'warning',
+      outline: 'secondary',
+      default: 'primary',
+      destructive: 'danger',
+    };
+    const classes = variantClasses[alias[variant]];
     return (
       <button
         ref={ref}
         type={type}
         className={cn(
-          'btn whitespace-nowrap text-sm font-medium disabled:pointer-events-none disabled:opacity-50',
-          variantClasses[variant],
+          'whitespace-nowrap text-sm font-semibold disabled:pointer-events-none disabled:opacity-50',
+          classes,
           sizeClasses[size],
           className,
         )}

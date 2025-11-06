@@ -125,7 +125,7 @@ const TabLayout = () => {
           </motion.button>
 
           <motion.nav
-            className="tab-bar tabs bottom-nav bottom-glass md:hidden"
+            className="tab-bar tabs bottom-nav bottom-glass md:hidden fixed bottom-0 inset-x-0 z-50 flex items-center justify-between gap-2 px-4 py-2 bg-[rgba(var(--mc-surface),0.7)] backdrop-blur-md border-t border-[rgb(var(--mc-border)/0.7)] mc-shadow-sm"
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4 }}
@@ -171,12 +171,15 @@ const TabLayout = () => {
                   type="button"
                   className={
                     location.pathname === tab.path
-                      ? 'tab active bottom-nav__item bottom-nav__item--active relative text-brand-500 after:absolute after:-bottom-2 after:left-1/2 after:h-0.5 after:w-8 after:-translate-x-1/2 after:rounded-full after:bg-brand-500'
-                      : 'tab bottom-nav__item relative text-md'
+                      ? 'tab active bottom-nav__item relative overflow-hidden text-[rgb(var(--mc-primary))]'
+                      : 'tab bottom-nav__item relative overflow-hidden text-[rgb(var(--mc-muted))]'
                   }
                   onClick={() => navigate(tab.path)}
                   aria-label={tab.name}
                 >
+                  {location.pathname === tab.path && (
+                    <div className="pointer-events-none absolute -bottom-0.5 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[rgb(var(--mc-primary))]" />
+                  )}
                   <Icon className="icon h-5 w-5" aria-hidden="true" />
                   <span>{tab.name}</span>
                 </button>

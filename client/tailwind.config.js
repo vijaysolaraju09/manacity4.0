@@ -22,11 +22,16 @@ module.exports = {
       },
       borderRadius: {
         md: "var(--mc-radius)",
-        lg: "calc(var(--mc-radius) * 1.25)",
+        lg: "calc(var(--mc-radius) * 1.5)",
+        xl: "calc(var(--mc-radius) * 2)",
       },
       boxShadow: {
-        mc1: "var(--mc-shadow-1)",
-        mc2: "var(--mc-shadow-2)",
+        sm: "var(--mc-shadow-sm)",
+        md: "var(--mc-shadow-md)",
+        lg: "var(--mc-shadow-lg)",
+      },
+      fontFamily: {
+        sans: ["Inter", "Plus Jakarta Sans", "system-ui"],
       },
     },
   },

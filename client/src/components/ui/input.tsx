@@ -10,7 +10,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ className, type
     <input
       ref={ref}
       type={type}
-      className={cn('input', isInvalid && 'input--invalid', className)}
+      className={cn('input mc-input', isInvalid && 'input--invalid mc-input--invalid', className)}
       {...props}
     />
   );

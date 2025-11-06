@@ -1,5 +1,6 @@
 @import './tokens.css';
 @import './theme.css';
+@import './unified-theme.css';
 @import './_mixins.scss';
 
 html {
@@ -59,49 +60,153 @@ svg,
 .card {
   background: rgb(var(--mc-surface));
   border: 1px solid rgb(var(--mc-border));
-  @include radius(md);
-  @include elevation(1);
+  border-radius: var(--mc-radius);
   padding: var(--space-5);
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--mc-shadow-sm);
 }
 
 .card.elevated {
-  @include elevation(2);
+  box-shadow: var(--mc-shadow-md);
 }
 
 .btn {
-  --btn-bg: linear-gradient(135deg, rgb(var(--mc-accent)) 0%, rgb(var(--mc-primary)) 100%);
-  --btn-bg-hover: linear-gradient(135deg, rgb(var(--mc-accent)) 20%, rgb(var(--mc-primary-600)) 80%);
-  --btn-color: rgb(var(--mc-on-surface));
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.625rem;
   min-height: 44px;
   padding: 0 var(--space-5);
-  border-radius: var(--radius-pill);
+  border-radius: var(--mc-radius);
   border: 1px solid transparent;
   font-weight: 600;
   letter-spacing: 0.01em;
+  font-family: 'Inter', 'Plus Jakarta Sans', var(--font-ui);
   cursor: pointer;
-  background: var(--btn-bg);
-  color: var(--btn-color);
-  @include elevation(1);
-  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease,
+    transform 0.15s ease, filter 0.15s ease;
+  position: relative;
+  isolation: isolate;
 }
 
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--mc-accent)), 0 0 0 4px rgb(var(--mc-surface));
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary,
 .btn--brand {
-  --btn-bg: var(--mc-gradient);
-  --btn-bg-hover: linear-gradient(135deg, rgb(var(--mc-accent)) 20%, rgb(var(--mc-primary-600)) 80%);
-  @include elevation(1);
+  background: linear-gradient(135deg, rgb(var(--mc-accent)) 0%, rgb(var(--mc-primary)) 100%);
+  color: rgb(var(--mc-on-surface));
+  box-shadow: var(--mc-shadow-sm);
 }
 
-.btn:hover {
-  background: var(--btn-bg-hover);
+.btn-primary:hover,
+.btn--brand:hover {
+  filter: brightness(0.96);
 }
 
-.btn:active {
-  transform: scale(0.98);
+.btn-primary:active,
+.btn--brand:active {
+  transform: scale(0.99);
+  filter: brightness(0.92);
+}
+
+.btn-secondary,
+.btn--ghost {
+  background: transparent;
+  color: rgb(var(--mc-primary));
+  border-color: rgb(var(--mc-primary) / 0.3);
+  box-shadow: none;
+}
+
+.btn-secondary:hover,
+.btn--ghost:hover {
+  background: rgb(var(--mc-primary) / 0.14);
+  color: rgb(var(--mc-primary-600));
+}
+
+.btn-secondary:active,
+.btn--ghost:active {
+  background: rgb(var(--mc-primary) / 0.2);
+}
+
+.btn-tertiary,
+.btn--ghost-plain {
+  background: transparent;
+  color: rgb(var(--mc-on-surface));
+  border-color: rgb(var(--mc-border));
+  box-shadow: none;
+}
+
+.btn-tertiary:hover,
+.btn--ghost-plain:hover {
+  background: rgb(var(--mc-muted) / 0.12);
+}
+
+.btn-muted,
+.btn--ghost-muted {
+  background: transparent;
+  color: rgb(var(--mc-muted));
+  border-color: rgb(var(--mc-muted) / 0.26);
+  box-shadow: none;
+}
+
+.btn-muted:hover,
+.btn--ghost-muted:hover {
+  background: rgb(var(--mc-muted) / 0.12);
+}
+
+.btn-danger,
+.btn--danger {
+  background: rgb(var(--mc-danger));
+  color: rgb(var(--mc-on-surface));
+  border-color: rgb(var(--mc-danger) / 0.6);
+  box-shadow: var(--mc-shadow-sm);
+}
+
+.btn-danger:hover,
+.btn--danger:hover {
+  filter: brightness(0.95);
+}
+
+.btn-success,
+.btn--success {
+  background: rgb(var(--mc-success));
+  color: rgb(var(--mc-on-surface));
+  border-color: rgb(var(--mc-success) / 0.6);
+  box-shadow: var(--mc-shadow-sm);
+}
+
+.btn-success:hover,
+.btn--success:hover {
+  filter: brightness(0.95);
+}
+
+.btn-warning,
+.btn--warning {
+  background: rgb(var(--mc-warning));
+  color: rgb(var(--mc-on-surface));
+  border-color: rgb(var(--mc-warning) / 0.6);
+  box-shadow: var(--mc-shadow-sm);
+}
+
+.btn-warning:hover,
+.btn--warning:hover {
+  filter: brightness(0.95);
+}
+
+.btn--icon {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--mc-radius);
 }
 
 .btn--sm {
@@ -119,63 +224,10 @@ svg,
   padding-inline: var(--space-6);
 }
 
-.btn--icon {
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border-radius: var(--radius-md);
-}
-
-.btn--ghost {
-  --btn-bg: transparent;
-  --btn-bg-hover: rgb(var(--mc-primary) / 0.14);
-  --btn-color: rgb(var(--mc-primary));
-  border-color: rgb(var(--mc-primary) / 0.3);
-  box-shadow: none;
-}
-
-.btn--ghost:hover {
-  color: rgb(var(--mc-primary-600));
-}
-
-.btn--ghost-muted {
-  --btn-bg: transparent;
-  --btn-bg-hover: rgb(var(--mc-muted) / 0.12);
-  --btn-color: rgb(var(--mc-muted));
-  border-color: rgb(var(--mc-muted) / 0.26);
-  box-shadow: none;
-}
-
-.btn--ghost-plain {
-  --btn-bg: transparent;
-  --btn-bg-hover: rgb(var(--mc-muted) / 0.12);
-  --btn-color: rgb(var(--mc-on-surface));
-  border-color: transparent;
-  box-shadow: none;
-}
-
-.btn--danger {
-  --btn-bg: rgb(var(--mc-danger));
-  --btn-bg-hover: rgb(var(--mc-danger) / 0.88);
-  --btn-color: rgb(var(--mc-on-surface));
-  box-shadow: var(--shadow-sm);
-}
-
-.btn--warning {
-  --btn-bg: rgb(var(--mc-warning));
-  --btn-bg-hover: rgb(var(--mc-warning) / 0.9);
-  --btn-color: rgb(var(--mc-on-surface));
-}
-
-.btn--success {
-  --btn-bg: rgb(var(--mc-success));
-  --btn-bg-hover: rgb(var(--mc-success) / 0.9);
-  --btn-color: rgb(var(--mc-on-surface));
-}
-
 .input,
 .select,
-.textarea {
+.textarea,
+.mc-input {
   width: 100%;
   min-height: 44px;
   padding: var(--space-3) var(--space-4);
@@ -188,21 +240,24 @@ svg,
 }
 
 .input::placeholder,
-.textarea::placeholder {
+.textarea::placeholder,
+.mc-input::placeholder {
   color: rgb(var(--mc-muted));
 }
 
 .input:focus,
 .select:focus,
-.textarea:focus {
+.textarea:focus,
+.mc-input:focus {
   outline: none;
   border-color: rgb(var(--mc-accent));
-  box-shadow: 0 0 0 3px rgb(var(--mc-accent) / 0.35);
+  box-shadow: 0 0 0 2px rgb(var(--mc-accent) / 0.35);
 }
 
 .input--invalid,
 .select--invalid,
-.textarea--invalid {
+.textarea--invalid,
+.mc-input--invalid {
   border-color: rgb(var(--mc-danger));
 }
 

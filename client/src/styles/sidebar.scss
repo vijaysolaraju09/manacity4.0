@@ -50,9 +50,12 @@
   }
   .mc-item__label {
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    opacity: 0; transform: translateX(-6px); transition: .18s ease;
+    opacity: 0; transform: translateX(-6px);
+    max-width: 0; transition: max-width .18s ease, opacity .18s ease, transform .18s ease;
   }
-  .mc-sidebar:hover .mc-item__label, .mc-sidebar.is-open .mc-item__label { opacity: 1; transform: translateX(0); }
+  .mc-sidebar:hover .mc-item__label, .mc-sidebar.is-open .mc-item__label {
+    opacity: 1; transform: translateX(0); max-width: 160px;
+  }
 
   .mc-item--active {
     background: color-mix(in srgb, var(--brand-500) 16%, transparent);

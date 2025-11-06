@@ -2,7 +2,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
-import { Bell, CalendarDays, Gift, Home, Package, ShoppingCart, Store, UserRound, Users } from "lucide-react";
+import { Bell, CalendarDays, Gift, Home, Monitor, Moon, ShoppingCart, Store, Sun, UserRound, Users } from "lucide-react";
 import NavItem from "@/components/navigation/NavItem";
 import Sidebar from "@/components/layout/Sidebar";
 import type { RootState, AppDispatch } from "../store";
@@ -10,6 +10,7 @@ import { fetchNotifs } from "@/store/notifs";
 import { selectItemCount } from "@/store/slices/cartSlice";
 import { paths } from "@/routes/paths";
 import "./TabLayout.scss";
+import { useTheme } from "@/theme/ThemeProvider";
 
 const TabLayout = () => {
   const location = useLocation();
@@ -17,9 +18,9 @@ const TabLayout = () => {
   const unread = useSelector((state: RootState) => state.notifs.unread);
   const notifStatus = useSelector((state: RootState) => state.notifs.status);
   const isAuthenticated = useSelector((state: RootState) => Boolean(state.auth.token));
-  const isBusinessUser = useSelector((state: RootState) => state.auth.user?.role === 'business');
   const cartItemCount = useSelector(selectItemCount);
   const dispatch = useDispatch<AppDispatch>();
+  const { theme, setTheme, availableThemes } = useTheme();
 
   const hasBootstrapped = useRef(false);
 
@@ -73,8 +74,24 @@ const TabLayout = () => {
       path: paths.services.catalog(),
     },
     { name: "Events", icon: CalendarDays, path: paths.events.list() },
-    ...(isBusinessUser ? [{ name: "Manage", icon: Package, path: paths.manageProducts() }] : []),
+    { name: "Profile", icon: UserRound, path: paths.profile() },
   ];
+
+  const iconMap = {
+    light: Sun,
+    dark: Moon,
+    system: Monitor,
+  } as const;
+
+  const handleThemeToggle = () => {
+    if (availableThemes.length === 0) return;
+    const currentIndex = Math.max(0, availableThemes.indexOf(theme));
+    const nextTheme = availableThemes[(currentIndex + 1) % availableThemes.length];
+    setTheme(nextTheme);
+  };
+
+  const ThemeIcon = iconMap[theme] ?? Sun;
+  const themeLabel = `${theme.charAt(0).toUpperCase()}${theme.slice(1)}`;
 
   useEffect(() => {
     if (location.pathname === paths.root()) navigate(paths.home());
@@ -92,13 +109,16 @@ const TabLayout = () => {
           >
             <h1 className="logo" onClick={() => navigate(paths.home())}>Manacity</h1>
             <div className="actions">
-              <NavItem
-                to={paths.cart()}
-                icon={ShoppingCart}
-                label="Cart"
-                ariaLabel="Cart"
-                badge={cartItemCount > 0 ? (cartItemCount > 99 ? "99+" : cartItemCount) : undefined}
-              />
+              <button
+                type="button"
+                onClick={handleThemeToggle}
+                aria-label={`Switch theme (current: ${themeLabel})`}
+                title={`Switch theme (current: ${themeLabel})`}
+                className="group relative inline-flex h-11 w-11 items-center justify-center gap-2 rounded-xl border border-transparent text-md transition-colors hover:text-hi focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-0"
+              >
+                <ThemeIcon className="icon h-5 w-5 text-current" aria-hidden="true" />
+                <span className="sr-only">Switch theme</span>
+              </button>
               <NavItem
                 to={paths.notifications()}
                 icon={Bell}
@@ -106,7 +126,13 @@ const TabLayout = () => {
                 ariaLabel="Notifications"
                 badge={unread > 0 ? (unread > 99 ? "99+" : unread) : undefined}
               />
-              <NavItem to={paths.profile()} icon={UserRound} label="Profile" ariaLabel="Profile" />
+              <NavItem
+                to={paths.cart()}
+                icon={ShoppingCart}
+                label="Cart"
+                ariaLabel="Cart"
+                badge={cartItemCount > 0 ? (cartItemCount > 99 ? "99+" : cartItemCount) : undefined}
+              />
             </div>
           </motion.header>
           <main className="tab-content">
@@ -131,38 +157,6 @@ const TabLayout = () => {
             transition={{ duration: 0.4 }}
             aria-label="Primary navigation"
           >
-            <div className="desktop-extras">
-              <h1 className="sidebar-logo" onClick={() => navigate(paths.home())}>
-                Manacity
-              </h1>
-              <nav className="flex w-full flex-col gap-3" aria-label="Secondary navigation">
-                <div className="flex items-center gap-2">
-                  <NavItem
-                    to={paths.cart()}
-                    icon={ShoppingCart}
-                    label="Cart"
-                    ariaLabel="Cart"
-                    badge={cartItemCount > 0 ? (cartItemCount > 99 ? '99+' : cartItemCount) : undefined}
-                  />
-                  <NavItem
-                    to={paths.notifications()}
-                    icon={Bell}
-                    label="Notifications"
-                    ariaLabel="Notifications"
-                    badge={unread > 0 ? (unread > 99 ? '99+' : unread) : undefined}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <NavItem
-                    to={paths.profile()}
-                    icon={UserRound}
-                    label="Profile"
-                    ariaLabel="Profile"
-                    variant="default"
-                  />
-                </div>
-              </nav>
-            </div>
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (

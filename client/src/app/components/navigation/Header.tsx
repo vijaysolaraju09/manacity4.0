@@ -1,4 +1,6 @@
 import { Bell, Inbox, Search, ShoppingCart, Sparkles } from 'lucide-react'
+import { useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { NavItem } from '@/app/types'
 import { Input, IconButton } from '../primitives'
 import ThemeToggle from '../ThemeToggle'
@@ -12,6 +14,15 @@ interface HeaderProps {
 
 const Header = ({ currentPath, items, cartCount, notificationCount }: HeaderProps) => {
   const active = items.find((item) => item.path === currentPath)
+  const navigate = useNavigate()
+
+  const handleCartClick = useCallback(() => {
+    navigate('/cart')
+  }, [navigate])
+
+  const handleNotificationsClick = useCallback(() => {
+    navigate('/notifications')
+  }, [navigate])
 
   return (
     <header className="sticky top-0 z-30 border-b border-transparent bg-surface-0/80 px-4 py-5 backdrop-blur supports-[backdrop-filter]:bg-surface-0/70 md:px-8">
@@ -32,8 +43,18 @@ const Header = ({ currentPath, items, cartCount, notificationCount }: HeaderProp
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-3">
-            <IconButton icon={ShoppingCart} label="Open cart" badge={cartCount && cartCount > 0 ? cartCount : undefined} />
-            <IconButton icon={Bell} label="Notifications" badge={notificationCount && notificationCount > 0 ? notificationCount : undefined} />
+            <IconButton
+              icon={ShoppingCart}
+              label="Open cart"
+              badge={cartCount && cartCount > 0 ? cartCount : undefined}
+              onClick={handleCartClick}
+            />
+            <IconButton
+              icon={Bell}
+              label="Notifications"
+              badge={notificationCount && notificationCount > 0 ? notificationCount : undefined}
+              onClick={handleNotificationsClick}
+            />
             <div className="hidden lg:flex">
               <IconButton icon={Inbox} label="Messages" />
             </div>

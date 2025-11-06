@@ -26,6 +26,11 @@ const AppLayout = () => {
     [cartCount, notificationCount],
   )
 
+  const bottomNavItems = useMemo(
+    () => navItems.filter((item) => item.path !== '/cart' && item.path !== '/notifications'),
+    [navItems],
+  )
+
   return (
     <div className="bg-surface-0 text-primary">
       <Header currentPath={location.pathname} items={navItems} cartCount={cartCount} notificationCount={notificationCount} />
@@ -37,7 +42,7 @@ const AppLayout = () => {
           </main>
         </div>
       </div>
-      <BottomTabs items={navItems} currentPath={location.pathname} />
+      <BottomTabs items={bottomNavItems} currentPath={location.pathname} />
     </div>
   )
 }

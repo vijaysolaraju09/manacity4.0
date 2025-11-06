@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter } from 'react-router-dom'
+import { Provider } from 'react-redux'
 import ThemeStyles from '@/app/components/ThemeStyles'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import HeroCarousel from '@/app/components/HeroCarousel'
@@ -8,6 +9,7 @@ import AppLayout from '@/app/layouts/AppLayout'
 import AppRoutes from '@/app/routes/AppRoutes'
 import { Sidebar, Header, BottomTabs } from '@/app/components/navigation'
 import useCountdown from '@/app/hooks/useCountdown'
+import { store } from '@/store'
 
 const ManacityApp = () => {
   useEffect(() => {
@@ -18,9 +20,11 @@ const ManacityApp = () => {
   return (
     <>
       <ThemeStyles />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <Provider store={store}>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </Provider>
     </>
   )
 }

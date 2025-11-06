@@ -63,3 +63,16 @@ exports.deleteNotification = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.clearNotifications = async (req, res, next) => {
+  try {
+    const result = await Notification.deleteMany({ userId: req.user._id });
+    res.json({
+      ok: true,
+      data: { deletedCount: result?.deletedCount ?? 0 },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};

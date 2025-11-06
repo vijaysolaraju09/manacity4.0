@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Clock, ShieldCheck, Sparkles, Star } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { AppDispatch, RootState } from '@/store'
 import { fetchServices } from '@/store/services'
 import { Badge, Button, Card, Chip } from '@/app/components/primitives'
+import { paths } from '@/routes/paths'
 
 const ServicesScreen = () => {
   const dispatch = useDispatch<AppDispatch>()
+  const navigate = useNavigate()
   const servicesState = useSelector((state: RootState) => state.services)
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all')
 
@@ -27,6 +30,23 @@ const ServicesScreen = () => {
   const activeServices = servicesState.items.filter((service) => service.isActive !== false).length
   const inactiveServices = totalServices - activeServices
 
+  const openServiceRequest = useCallback(
+    (serviceId?: string, serviceName?: string) => {
+      const params = new URLSearchParams()
+      if (serviceId) params.set('serviceId', serviceId)
+      if (serviceName) params.set('name', serviceName)
+      const target = params.toString()
+        ? `${paths.services.request()}?${params.toString()}`
+        : paths.services.request()
+      navigate(target)
+    },
+    [navigate],
+  )
+
+  const openCatalog = useCallback(() => {
+    navigate(paths.services.catalog())
+  }, [navigate])
+
   return (
     <div className="flex flex-col gap-6">
       <Card className="overflow-hidden rounded-[2rem]">
@@ -43,10 +63,12 @@ const ServicesScreen = () => {
               <Badge tone="neutral">{inactiveServices} paused</Badge>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button variant="primary" icon={Sparkles}>
+              <Button variant="primary" icon={Sparkles} onClick={() => openServiceRequest()}>
                 Submit a request
               </Button>
-              <Button variant="outline">View service catalog</Button>
+              <Button variant="outline" onClick={openCatalog}>
+                View service catalog
+              </Button>
             </div>
           </div>
           <Card className="gradient-card rounded-[2rem] p-6 text-white shadow-md-theme">
@@ -68,7 +90,11 @@ const ServicesScreen = () => {
                   <Star className="h-4 w-4" /> Feedback-driven quality controls
                 </p>
               </div>
-              <Button variant="primary" className="bg-white text-[var(--primary)] shadow-lg-theme">
+              <Button
+                variant="primary"
+                className="bg-white text-[var(--primary)] shadow-lg-theme"
+                onClick={() => openServiceRequest()}
+              >
                 Start a request
               </Button>
             </div>
@@ -95,7 +121,19 @@ const ServicesScreen = () => {
           </Card>
         ) : (
           services.map((service) => (
-            <Card key={service._id} className="rounded-3xl p-5">
+            <Card
+              key={service._id}
+              className="rounded-3xl p-5 transition hover:-translate-y-0.5 hover:shadow-lg-theme focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_45%,transparent)]"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(paths.services.detail(service._id))}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  navigate(paths.services.detail(service._id))
+                }
+              }}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-3">
@@ -108,7 +146,14 @@ const ServicesScreen = () => {
                     {service.description || 'Managed concierge service with tailored fulfilment.'}
                   </p>
                 </div>
-                <Button variant="ghost" className="text-sm text-primary">
+                <Button
+                  variant="ghost"
+                  className="text-sm text-primary"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    openServiceRequest(service._id, service.name)
+                  }}
+                >
                   Request
                 </Button>
               </div>

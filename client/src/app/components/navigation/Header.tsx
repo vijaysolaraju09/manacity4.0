@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import type { NavItem } from '@/app/types'
 import { Input, IconButton } from '../primitives'
 import ThemeToggle from '../ThemeToggle'
+import { paths } from '@/routes/paths'
 
 interface HeaderProps {
   currentPath: string
@@ -17,11 +18,11 @@ const Header = ({ currentPath, items, cartCount, notificationCount }: HeaderProp
   const navigate = useNavigate()
 
   const handleCartClick = useCallback(() => {
-    navigate('/cart')
+    navigate(paths.cart())
   }, [navigate])
 
   const handleNotificationsClick = useCallback(() => {
-    navigate('/notifications')
+    navigate(paths.notifications())
   }, [navigate])
 
   return (

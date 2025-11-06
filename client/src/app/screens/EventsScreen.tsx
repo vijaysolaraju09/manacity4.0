@@ -1,14 +1,20 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CalendarDays, Gift, Heart, MapPin, Ticket, Trophy } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { AppDispatch, RootState } from '@/store'
 import { createEventsQueryKey, fetchEvents, fetchLeaderboard } from '@/store/events.slice'
 import { Badge, Button, Card } from '@/app/components/primitives'
 import { formatDateTime } from '@/utils/date'
 import useCountdown from '@/app/hooks/useCountdown'
+import { paths } from '@/routes/paths'
+import { http } from '@/lib/http'
+import { toErrorMessage } from '@/lib/response'
+import showToast from '@/components/ui/Toast'
 
 const EventsScreen = () => {
   const dispatch = useDispatch<AppDispatch>()
+  const navigate = useNavigate()
   const eventsList = useSelector((state: RootState) => state.events.list)
   const leaderboard = useSelector((state: RootState) => state.events.leaderboard)
 
@@ -67,10 +73,19 @@ const EventsScreen = () => {
               )}
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button variant="primary" className="bg-white text-[var(--primary)] shadow-lg-theme">
+              <Button
+                variant="primary"
+                className="bg-white text-[var(--primary)] shadow-lg-theme"
+                onClick={handleViewCalendar}
+              >
                 View calendar
               </Button>
-              <Button variant="ghost" className="text-white hover:bg-white/15">
+              <Button
+                variant="ghost"
+                className="text-white hover:bg-white/15"
+                onClick={() => void handleRegisterInterest(highlight?._id)}
+                disabled={!highlight?._id}
+              >
                 Register interest
               </Button>
             </div>
@@ -142,7 +157,19 @@ const EventsScreen = () => {
               <p className="text-sm text-muted">Additional events will be listed once published.</p>
             ) : (
               otherEvents.map((event) => (
-                <div key={event._id} className="rounded-2xl border border-default p-4">
+                <div
+                  key={event._id}
+                  className="rounded-2xl border border-default p-4 transition hover:-translate-y-0.5 hover:shadow-lg-theme focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_45%,transparent)]"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleEventClick(event._id)}
+                  onKeyDown={(keyboardEvent) => {
+                    if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+                      keyboardEvent.preventDefault()
+                      handleEventClick(event._id)
+                    }
+                  }}
+                >
                   <p className="text-sm font-semibold text-primary">{event.title}</p>
                   <p className="mt-1 text-xs text-muted">
                     {formatDateTime(event.startAt, { dateStyle: 'medium', timeStyle: 'short' })}
@@ -174,3 +201,27 @@ const EventsScreen = () => {
 }
 
 export default EventsScreen
+  const handleViewCalendar = useCallback(() => {
+    navigate(paths.events.list())
+  }, [navigate])
+
+  const handleRegisterInterest = useCallback(
+    async (eventId: string | undefined) => {
+      if (!eventId) return
+      try {
+        await http.post(`/api/events/${eventId}/interest`)
+        showToast('Thanks for your interest! We will notify you.', 'success')
+      } catch (err) {
+        showToast(toErrorMessage(err) || 'Unable to register interest right now.', 'error')
+      }
+    },
+    [],
+  )
+
+  const handleEventClick = useCallback(
+    (eventId: string) => {
+      navigate(paths.events.detail(eventId))
+    },
+    [navigate],
+  )
+

@@ -10,7 +10,7 @@ import styles from './VerifiedDetail.module.scss';
 import ErrorCard from '@/components/common/ErrorCard';
 import Empty from '@/components/common/Empty';
 import { http } from '@/lib/http';
-import { toItem, toErrorMessage } from '@/lib/response';
+import { toErrorMessage } from '@/lib/response';
 import showToast from '@/components/ui/Toast';
 
 const VerifiedDetails = () => {
@@ -46,12 +46,13 @@ const VerifiedDetails = () => {
   const handleOrder = async () => {
     if (!verified) return;
     try {
-      const res = await http.post('/verified/orders', { targetId: verified._id });
-      toItem(res);
-      showToast('Request sent', 'success');
+      await http.post('/api/pros/orders', {
+        professionalId: verified._id,
+      });
+      showToast('Order placed! Calling the provider…', 'success');
       window.location.assign(`tel:${verified.user.phone}`);
     } catch (err) {
-      showToast(toErrorMessage(err), 'error');
+      showToast(toErrorMessage(err) || 'Unable to place order', 'error');
     }
   };
 

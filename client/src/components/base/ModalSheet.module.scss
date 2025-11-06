@@ -2,7 +2,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: var(--overlay-bg);
+  background: rgba(var(--mc-shadow), 0.5);
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -10,10 +10,10 @@
 }
 
 .sheet {
-  background: var(--color-card);
+  background: rgb(var(--mc-surface));
   width: 100%;
-  border-top-left-radius: var(--radius-lg);
-  border-top-right-radius: var(--radius-lg);
+  border-top-left-radius: var(--mc-radius);
+  border-top-right-radius: var(--mc-radius);
   padding: var(--spacing-md);
   max-height: min(90vh, 720px);
   overflow-y: auto;
@@ -29,7 +29,7 @@
   width: 40px;
   height: 4px;
   border-radius: 2px;
-  background: var(--color-text-secondary);
+  background: rgb(var(--mc-muted));
   margin: 0 auto var(--spacing-md);
 }
 

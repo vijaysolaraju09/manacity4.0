@@ -42,10 +42,15 @@ const SpecialShop = () => {
 
   if (status === 'loading' || status === 'idle') {
     return (
-      <div className={styles.shop}>
+      <div
+        className={styles.shop}
+        style={{ backgroundColor: `rgb(var(--mc-bg))`, color: `rgb(var(--mc-on-surface))` }}
+      >
         <div className={styles.header}>
-          <h1>Special Shop</h1>
-          <p>Curated, limited-availability offers from our verified partners.</p>
+          <h1 style={{ color: `rgb(var(--mc-on-surface))` }}>Special Shop</h1>
+          <p style={{ color: `rgb(var(--mc-muted))` }}>
+            Curated, limited-availability offers from our verified partners.
+          </p>
         </div>
         <div className={styles.grid}>
           {Array.from({ length: 6 }).map((_, index) => (
@@ -62,10 +67,15 @@ const SpecialShop = () => {
 
   if (products.length === 0) {
     return (
-      <div className={styles.shop}>
+      <div
+        className={styles.shop}
+        style={{ backgroundColor: `rgb(var(--mc-bg))`, color: `rgb(var(--mc-on-surface))` }}
+      >
         <div className={styles.header}>
-          <h1>Special Shop</h1>
-          <p>Curated, limited-availability offers from our verified partners.</p>
+          <h1 style={{ color: `rgb(var(--mc-on-surface))` }}>Special Shop</h1>
+          <p style={{ color: `rgb(var(--mc-muted))` }}>
+            Curated, limited-availability offers from our verified partners.
+          </p>
         </div>
         <EmptyState message="No special products are available right now." />
       </div>
@@ -73,10 +83,15 @@ const SpecialShop = () => {
   }
 
   return (
-    <div className={styles.shop}>
+    <div
+      className={styles.shop}
+      style={{ backgroundColor: `rgb(var(--mc-bg))`, color: `rgb(var(--mc-on-surface))` }}
+    >
       <div className={styles.header}>
-        <h1>Special Shop</h1>
-        <p>Discover curated offers and seasonal bundles from verified providers.</p>
+        <h1 style={{ color: `rgb(var(--mc-on-surface))` }}>Special Shop</h1>
+        <p style={{ color: `rgb(var(--mc-muted))` }}>
+          Discover curated offers and seasonal bundles from verified providers.
+        </p>
       </div>
       <div className={styles.grid}>
         {products.map((product) => (

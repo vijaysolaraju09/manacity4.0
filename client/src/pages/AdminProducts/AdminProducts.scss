@@ -38,16 +38,19 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(var(--mc-shadow), 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .modal-content {
-  background: #fff;
+  background: rgb(var(--mc-surface));
+  color: rgb(var(--mc-on-surface));
   padding: 1rem;
-  border-radius: 4px;
+  border-radius: var(--mc-radius);
+  border: 1px solid rgb(var(--mc-border));
+  box-shadow: var(--mc-shadow-2);
   min-width: 300px;
 }
 

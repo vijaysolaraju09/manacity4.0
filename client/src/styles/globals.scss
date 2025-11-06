@@ -1,4 +1,6 @@
 @import './tokens.css';
+@import './theme.css';
+@import './_mixins.scss';
 
 html {
   font-size: 16px;
@@ -14,15 +16,15 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font-ui);
-  background: var(--surface);
-  color: var(--ink-900);
+  background: rgb(var(--mc-bg));
+  color: rgb(var(--mc-on-surface));
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 :root.dark body,
 [data-theme='dark'] body {
-  background: var(--surface);
-  color: var(--ink-900);
+  background: rgb(var(--mc-bg));
+  color: rgb(var(--mc-on-surface));
 }
 
 *,
@@ -32,7 +34,7 @@ body {
 }
 
 *:focus-visible {
-  outline: 2px solid var(--brand-500);
+  outline: 2px solid rgb(var(--mc-accent));
   outline-offset: 2px;
 }
 
@@ -55,22 +57,22 @@ svg,
 }
 
 .card {
-  background: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  background: rgb(var(--mc-surface));
+  border: 1px solid rgb(var(--mc-border));
+  @include radius(md);
+  @include elevation(1);
   padding: var(--space-5);
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card.elevated {
-  box-shadow: var(--shadow-md), var(--shadow-brand);
+  @include elevation(2);
 }
 
 .btn {
-  --btn-bg: var(--brand-500);
-  --btn-bg-hover: var(--brand-600);
-  --btn-color: #ffffff;
+  --btn-bg: linear-gradient(135deg, rgb(var(--mc-accent)) 0%, rgb(var(--mc-primary)) 100%);
+  --btn-bg-hover: linear-gradient(135deg, rgb(var(--mc-accent)) 20%, rgb(var(--mc-primary-600)) 80%);
+  --btn-color: rgb(var(--mc-on-surface));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -84,7 +86,7 @@ svg,
   cursor: pointer;
   background: var(--btn-bg);
   color: var(--btn-color);
-  box-shadow: var(--shadow-brand);
+  @include elevation(1);
   transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
 
@@ -126,21 +128,21 @@ svg,
 
 .btn--ghost {
   --btn-bg: transparent;
-  --btn-bg-hover: color-mix(in srgb, var(--brand-500) 14%, transparent);
-  --btn-color: var(--brand-500);
-  border-color: color-mix(in srgb, var(--brand-500) 30%, transparent);
+  --btn-bg-hover: rgb(var(--mc-primary) / 0.14);
+  --btn-color: rgb(var(--mc-primary));
+  border-color: rgb(var(--mc-primary) / 0.3);
   box-shadow: none;
 }
 
 .btn--ghost:hover {
-  color: var(--brand-600);
+  color: rgb(var(--mc-primary-600));
 }
 
 .btn--ghost-muted {
   --btn-bg: transparent;
-  --btn-bg-hover: color-mix(in srgb, var(--ink-500) 12%, transparent);
-  --btn-color: var(--ink-500);
-  border-color: color-mix(in srgb, var(--ink-500) 26%, transparent);
+  --btn-bg-hover: rgb(var(--mc-muted) / 0.12);
+  --btn-color: rgb(var(--mc-muted));
+  border-color: rgb(var(--mc-muted) / 0.26);
   box-shadow: none;
 }
 
@@ -165,41 +167,41 @@ svg,
   width: 100%;
   min-height: 44px;
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-card);
-  color: var(--ink-900);
+  @include radius(md);
+  border: 1px solid rgb(var(--mc-border));
+  background: rgb(var(--mc-surface));
+  color: rgb(var(--mc-on-surface));
   box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.04);
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .input::placeholder,
 .textarea::placeholder {
-  color: var(--ink-500);
+  color: rgb(var(--mc-muted));
 }
 
 .input:focus,
 .select:focus,
 .textarea:focus {
   outline: none;
-  border-color: var(--brand-500);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-400) 35%, transparent);
+  border-color: rgb(var(--mc-accent));
+  box-shadow: 0 0 0 3px rgb(var(--mc-accent) / 0.35);
 }
 
 .input--invalid,
 .select--invalid,
 .textarea--invalid {
-  border-color: var(--danger-500);
+  border-color: rgb(var(--mc-danger));
 }
 
 .helper-text {
   margin-top: 4px;
   font-size: 0.75rem;
-  color: var(--ink-500);
+  color: rgb(var(--mc-muted));
 }
 
 .helper-text--error {
-  color: var(--danger-500);
+  color: rgb(var(--mc-danger));
 }
 
 .chip,
@@ -220,16 +222,16 @@ svg,
 
 .chip--brand,
 .badge--brand {
-  background: color-mix(in srgb, var(--brand-500) 16%, transparent);
-  color: var(--brand-600);
-  border-color: color-mix(in srgb, var(--brand-500) 22%, transparent);
+  background: rgb(var(--mc-primary) / 0.16);
+  color: rgb(var(--mc-primary-600));
+  border-color: rgb(var(--mc-primary) / 0.22);
 }
 
 .chip--muted,
 .badge--muted {
-  background: color-mix(in srgb, var(--ink-300) 28%, transparent);
-  color: var(--ink-600);
-  border-color: color-mix(in srgb, var(--ink-300) 42%, transparent);
+  background: rgb(var(--mc-muted) / 0.28);
+  color: rgb(var(--mc-muted));
+  border-color: rgb(var(--mc-muted) / 0.42);
 }
 
 .chip--outline,
@@ -241,23 +243,23 @@ svg,
 
 .chip--success,
 .badge--success {
-  background: color-mix(in srgb, var(--success-500) 16%, transparent);
-  color: var(--success-500);
-  border-color: color-mix(in srgb, var(--success-500) 28%, transparent);
+  background: rgb(var(--mc-success) / 0.16);
+  color: rgb(var(--mc-success));
+  border-color: rgb(var(--mc-success) / 0.28);
 }
 
 .chip--warning,
 .badge--warning {
-  background: color-mix(in srgb, var(--warning-500) 18%, transparent);
-  color: var(--warning-500);
-  border-color: color-mix(in srgb, var(--warning-500) 28%, transparent);
+  background: rgb(var(--mc-warning) / 0.18);
+  color: rgb(var(--mc-warning));
+  border-color: rgb(var(--mc-warning) / 0.28);
 }
 
 .chip--danger,
 .badge--danger {
-  background: color-mix(in srgb, var(--danger-500) 16%, transparent);
-  color: var(--danger-500);
-  border-color: color-mix(in srgb, var(--danger-500) 26%, transparent);
+  background: rgb(var(--mc-danger) / 0.16);
+  color: rgb(var(--mc-danger));
+  border-color: rgb(var(--mc-danger) / 0.26);
 }
 
 .tabs {
@@ -277,7 +279,7 @@ svg,
 
 .tabs__item[data-active='true'],
 .tabs__item.tabs__item--active {
-  color: var(--brand-500);
+  color: rgb(var(--mc-primary));
 }
 
 .tabs__item[data-active='true']::after,
@@ -288,7 +290,7 @@ svg,
   right: 0;
   bottom: -1px;
   height: 2px;
-  background: var(--brand-500);
+  background: rgb(var(--mc-primary));
   border-radius: var(--radius-pill);
 }
 
@@ -302,10 +304,10 @@ svg,
   justify-content: space-around;
   gap: var(--space-2);
   padding: var(--space-2) calc(var(--space-2) + env(safe-area-inset-right)) calc(var(--space-2) + env(safe-area-inset-bottom)) calc(var(--space-2) + env(safe-area-inset-left));
-  background: var(--surface-glass);
+  background: rgba(var(--mc-surface), 0.7);
   backdrop-filter: saturate(160%) blur(14px);
-  border-top: 1px solid color-mix(in srgb, var(--border-subtle) 72%, transparent);
-  box-shadow: var(--shadow-glass);
+  border-top: 1px solid rgb(var(--mc-border) / 0.7);
+  box-shadow: 0 8px 16px rgba(var(--mc-shadow), var(--mc-elev-1));
   z-index: 60;
 }
 
@@ -325,8 +327,21 @@ svg,
 
 .bottom-nav__item--active,
 .bottom-nav__item[aria-current='page'] {
-  color: var(--brand-500);
+  color: rgb(var(--mc-primary));
   font-weight: 600;
+  position: relative;
+}
+.bottom-nav__item--active::after,
+.bottom-nav__item[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  border-radius: var(--mc-radius);
+  background: rgb(var(--mc-primary));
 }
 
 .fab {
@@ -356,36 +371,36 @@ svg,
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-lg);
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 65%, transparent);
-  background: var(--surface-card);
-  box-shadow: var(--shadow-lg);
-  color: var(--ink-900);
+  @include radius(md);
+  border: 1px solid rgb(var(--mc-border) / 0.65);
+  background: rgb(var(--mc-surface));
+  @include elevation(1);
+  color: rgb(var(--mc-on-surface));
   font-size: 0.875rem;
 }
 
 .toast--success {
-  border-color: color-mix(in srgb, var(--success-500) 32%, transparent);
-  background: color-mix(in srgb, var(--success-500) 12%, transparent);
-  color: var(--success-500);
+  border-color: rgb(var(--mc-success) / 0.32);
+  background: rgb(var(--mc-success) / 0.12);
+  color: rgb(var(--mc-success));
 }
 
 .toast--warning {
-  border-color: color-mix(in srgb, var(--warning-500) 32%, transparent);
-  background: color-mix(in srgb, var(--warning-500) 12%, transparent);
-  color: var(--warning-500);
+  border-color: rgb(var(--mc-warning) / 0.32);
+  background: rgb(var(--mc-warning) / 0.12);
+  color: rgb(var(--mc-warning));
 }
 
 .toast--danger {
-  border-color: color-mix(in srgb, var(--danger-500) 32%, transparent);
-  background: color-mix(in srgb, var(--danger-500) 12%, transparent);
-  color: var(--danger-500);
+  border-color: rgb(var(--mc-danger) / 0.32);
+  background: rgb(var(--mc-danger) / 0.12);
+  color: rgb(var(--mc-danger));
 }
 
 .toast--info {
-  border-color: color-mix(in srgb, var(--brand-500) 32%, transparent);
-  background: color-mix(in srgb, var(--brand-500) 12%, transparent);
-  color: var(--brand-500);
+  border-color: rgb(var(--mc-primary) / 0.32);
+  background: rgb(var(--mc-primary) / 0.12);
+  color: rgb(var(--mc-primary));
 }
 
 .skeleton {

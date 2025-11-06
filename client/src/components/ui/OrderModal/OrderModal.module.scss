@@ -1,5 +1,9 @@
 @reference "../../../styles/main.css";
 .modal {
+  background: rgb(var(--mc-surface));
+  color: rgb(var(--mc-on-surface));
+  border-radius: var(--mc-radius);
+  box-shadow: var(--mc-shadow-2);
   padding: 1rem;
 
   .product {
@@ -30,9 +34,10 @@
     button {
       width: 32px;
       height: 32px;
-      border: 1px solid #ccc;
-      background: #fff;
-      border-radius: 8px;
+      border: 1px solid rgb(var(--mc-border));
+      background: rgb(var(--mc-surface));
+      color: rgb(var(--mc-on-surface));
+      border-radius: var(--mc-radius);
     }
   }
 
@@ -42,10 +47,10 @@
 
     button {
       padding: 0.5rem 1rem;
-      background: var(--color-primary, #1a1a1a);
-      color: #fff;
+      background: var(--mc-gradient);
+      color: rgb(var(--mc-on-surface));
       border: none;
-      border-radius: 8px;
+      border-radius: var(--mc-radius);
     }
   }
 }

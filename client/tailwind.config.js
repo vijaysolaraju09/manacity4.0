@@ -1,86 +1,33 @@
-export default {
-  darkMode: 'class',
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx,scss}'],
+module.exports = {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
-        background: 'var(--surface)',
-        foreground: 'var(--ink-900)',
-        border: 'var(--border-subtle)',
-        surface0: 'var(--surface-0)',
-        surface1: 'var(--surface-1)',
-        surface2: 'var(--surface-2)',
-        surface3: 'var(--surface-3)',
-        surface: {
-          DEFAULT: 'var(--surface)',
-          card: 'var(--surface-card)',
-          glass: 'var(--surface-glass)'
+        bg: "rgb(var(--mc-bg) / <alpha-value>)",
+        surface: "rgb(var(--mc-surface) / <alpha-value>)",
+        on: {
+          surface: "rgb(var(--mc-on-surface) / <alpha-value>)",
+          muted: "rgb(var(--mc-muted) / <alpha-value>)",
         },
-        brand: {
-          900: 'var(--brand-800)',
-          800: 'var(--brand-700)',
-          700: 'var(--brand-700)',
-          600: 'var(--brand-600)',
-          500: 'var(--brand-500)',
-          400: 'var(--brand-400)',
-          300: 'var(--brand-300)',
-          200: 'var(--brand-200)',
-          100: 'var(--brand-100)',
-          50: 'var(--brand-050)'
+        primary: {
+          DEFAULT: "rgb(var(--mc-primary) / <alpha-value>)",
+          600: "rgb(var(--mc-primary-600) / <alpha-value>)",
         },
-        accent: {
-          700: 'var(--accent-700)',
-          600: 'var(--accent-600)',
-          500: 'var(--accent-500)',
-          400: 'var(--accent-400)',
-          300: 'var(--accent-300)'
-        },
-        success: {
-          600: 'var(--success-600)',
-          500: 'var(--success-500)'
-        },
-        warning: {
-          600: 'var(--warning-600)',
-          500: 'var(--warning-500)'
-        },
-        danger: {
-          600: 'var(--danger-600)',
-          500: 'var(--danger-500)'
-        },
-        ink: {
-          900: 'var(--ink-900)',
-          800: 'var(--ink-800)',
-          700: 'var(--ink-700)',
-          600: 'var(--ink-600)',
-          500: 'var(--ink-500)',
-          400: 'var(--ink-400)',
-          300: 'var(--ink-300)',
-          200: 'var(--ink-200)',
-          100: 'var(--ink-100)',
-          hi: 'var(--ink-hi)',
-          md: 'var(--ink-md)',
-          lo: 'var(--ink-lo)'
-        }
+        accent: "rgb(var(--mc-accent) / <alpha-value>)",
+        success: "rgb(var(--mc-success) / <alpha-value>)",
+        warning: "rgb(var(--mc-warning) / <alpha-value>)",
+        danger: "rgb(var(--mc-danger) / <alpha-value>)",
+        border: "rgb(var(--mc-border) / <alpha-value>)",
       },
       borderRadius: {
-        sm: 'var(--radius-sm)',
-        md: 'var(--radius-md, 14px)',
-        lg: 'var(--radius-lg, 18px)',
-        xl: '24px',
-        pill: 'var(--radius-pill, 999px)'
+        md: "var(--mc-radius)",
+        lg: "calc(var(--mc-radius) * 1.25)",
       },
       boxShadow: {
-        sm: 'var(--shadow-sm)',
-        md: 'var(--shadow-md)',
-        lg: 'var(--shadow-lg)',
-        glass: 'var(--shadow-glass)',
-        mobile: 'var(--shadow-md)',
-        brand: 'var(--shadow-brand, 0 12px 28px rgba(52,163,167,.33))',
-        elev1: 'var(--elev-1, 0 1px 2px rgba(0,0,0,.55))',
-        elev2: 'var(--elev-2, 0 10px 24px rgba(2,6,12,.65), 0 2px 6px rgba(2,6,12,.6))',
-        elevBrand: 'var(--elev-brand, 0 12px 28px rgba(52,163,167,.33))'
-      }
-    }
+        mc1: "var(--mc-shadow-1)",
+        mc2: "var(--mc-shadow-2)",
+      },
+    },
   },
-  plugins: []
-}
+  plugins: [],
+};

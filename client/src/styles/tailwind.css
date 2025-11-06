@@ -9,5 +9,5 @@
 }
 
 [data-theme='dark'] :focus-visible {
-  outline-color: theme('colors.accent.500');
+  outline-color: theme('colors.accent');
 }

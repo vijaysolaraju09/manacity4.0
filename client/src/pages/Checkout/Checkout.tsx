@@ -27,6 +27,7 @@ import {
 import { toErrorMessage } from '@/lib/response';
 import { selectCartItems, clearCart } from '@/store/slices/cartSlice';
 import { formatINR } from '@/utils/currency';
+import { formatLocaleDateTime } from '@/utils/date';
 import { paths } from '@/routes/paths';
 
 type CheckoutCartItem = {
@@ -116,13 +117,8 @@ const listMotion = {
 
 const formatLastUsed = (isoTimestamp: string | null): string | null => {
   if (!isoTimestamp) return null;
-  const date = new Date(isoTimestamp);
-  if (Number.isNaN(date.getTime())) return null;
-
-  return date.toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+  const formatted = formatLocaleDateTime(isoTimestamp, { dateStyle: 'medium', timeStyle: 'short' });
+  return formatted === '—' ? null : formatted;
 };
 
 const Checkout = () => {

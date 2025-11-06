@@ -1,16 +1,153 @@
+const SUPPORTED_DATE_OPTION_KEYS: Array<keyof Intl.DateTimeFormatOptions> = [
+  'localeMatcher',
+  'weekday',
+  'era',
+  'year',
+  'month',
+  'day',
+  'hour',
+  'minute',
+  'second',
+  'timeZoneName',
+  'formatMatcher',
+  'hour12',
+  'timeZone',
+  'hourCycle',
+  'dateStyle',
+  'timeStyle',
+  'calendar',
+  'numberingSystem',
+  'dayPeriod',
+  'fractionalSecondDigits',
+];
+
+const sanitizeDateOptions = (
+  options?: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormatOptions | undefined => {
+  if (!options) return undefined;
+  const sanitized: Intl.DateTimeFormatOptions = {};
+  for (const key of SUPPORTED_DATE_OPTION_KEYS) {
+    if (options[key] !== undefined) {
+      sanitized[key] = options[key];
+    }
+  }
+  return Object.keys(sanitized).length > 0 ? sanitized : undefined;
+};
+
+const stripUnsupportedStyles = (
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormatOptions | undefined => {
+  const fallback: Intl.DateTimeFormatOptions = { ...options };
+  let changed = false;
+
+  if ('dateStyle' in fallback) {
+    delete fallback.dateStyle;
+    changed = true;
+    if (fallback.month === undefined) {
+      fallback.month = 'short';
+    }
+    if (fallback.day === undefined) {
+      fallback.day = 'numeric';
+    }
+    if (fallback.year === undefined) {
+      fallback.year = 'numeric';
+    }
+  }
+
+  if ('timeStyle' in fallback) {
+    delete fallback.timeStyle;
+    changed = true;
+    if (fallback.hour === undefined) {
+      fallback.hour = '2-digit';
+    }
+    if (fallback.minute === undefined) {
+      fallback.minute = '2-digit';
+    }
+  }
+
+  return changed ? fallback : undefined;
+};
+
+const toLocaleStringSafe = (
+  date: Date,
+  locales?: Intl.LocalesArgument,
+  options?: Intl.DateTimeFormatOptions,
+) => {
+  const sanitized = sanitizeDateOptions(options);
+
+  if (!sanitized) {
+    return date.toLocaleString(locales);
+  }
+
+  try {
+    return date.toLocaleString(locales, sanitized);
+  } catch (error) {
+    const fallback = stripUnsupportedStyles(sanitized);
+    if (fallback) {
+      const cleanedFallback = sanitizeDateOptions(fallback);
+      if (cleanedFallback) {
+        try {
+          return date.toLocaleString(locales, cleanedFallback);
+        } catch (err) {
+          // Swallow and fall through to the plain formatter below
+        }
+      }
+    }
+
+    try {
+      return date.toLocaleString(locales);
+    } catch (err) {
+      return date.toString();
+    }
+  }
+};
+
+const toLocaleDateStringSafe = (
+  date: Date,
+  locales?: Intl.LocalesArgument,
+  options?: Intl.DateTimeFormatOptions,
+) => {
+  const sanitized = sanitizeDateOptions(options);
+  if (!sanitized) {
+    return date.toLocaleDateString(locales);
+  }
+
+  try {
+    return date.toLocaleDateString(locales, sanitized);
+  } catch (error) {
+    const fallback = stripUnsupportedStyles(sanitized);
+    if (fallback) {
+      const cleanedFallback = sanitizeDateOptions(fallback);
+      if (cleanedFallback) {
+        try {
+          return date.toLocaleDateString(locales, cleanedFallback);
+        } catch (err) {
+          // Swallow and fall through to the plain formatter below
+        }
+      }
+    }
+
+    try {
+      return date.toLocaleDateString(locales);
+    } catch (err) {
+      return date.toDateString();
+    }
+  }
+};
+
 export const formatSchedule = (start: string | Date, end: string | Date) => {
   const s = new Date(start);
   const e = new Date(end);
   const sameDay = s.toDateString() === e.toDateString();
-  const datePart = s.toLocaleDateString(undefined, {
+  const datePart = toLocaleDateStringSafe(s, undefined, {
     month: 'short',
     day: 'numeric',
   });
-  const startTime = s.toLocaleTimeString(undefined, {
+  const startTime = toLocaleStringSafe(s, undefined, {
     hour: '2-digit',
     minute: '2-digit',
   });
-  const endTime = e.toLocaleTimeString(undefined, {
+  const endTime = toLocaleStringSafe(e, undefined, {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -34,7 +171,7 @@ export const formatDateTime = (
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleString('en-IN', {
+  return toLocaleStringSafe(date, 'en-IN', {
     timeZone: 'Asia/Kolkata',
     hour: '2-digit',
     minute: '2-digit',
@@ -48,13 +185,24 @@ export const formatDate = (value?: string | Date | null, options?: Intl.DateTime
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString('en-IN', {
+  return toLocaleDateStringSafe(date, 'en-IN', {
     timeZone: 'Asia/Kolkata',
     day: 'numeric',
     month: 'short',
     year: 'numeric',
     ...options,
   });
+};
+
+export const formatLocaleDateTime = (
+  value?: string | number | Date | null,
+  options?: Intl.DateTimeFormatOptions,
+  locales?: Intl.LocalesArgument,
+) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return toLocaleStringSafe(date, locales, options);
 };
 
 export const formatTimeAgo = (value?: string | number | Date | null): string => {

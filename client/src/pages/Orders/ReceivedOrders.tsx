@@ -19,6 +19,7 @@ import StatusChip from '@/components/ui/StatusChip';
 import { Button } from '@/components/ui/button';
 import { toErrorMessage } from '@/lib/response';
 import { formatINR } from '@/utils/currency';
+import { formatLocaleDateTime } from '@/utils/date';
 import fallbackImage from '@/assets/no-image.svg';
 import { paths } from '@/routes/paths';
 
@@ -183,13 +184,8 @@ const ReceivedOrders = () => {
       .join(', ');
   };
 
-  const formatDateTime = (iso: string) => {
-    const date = new Date(iso);
-    return date.toLocaleString(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-  };
+  const formatDateTime = (iso: string) =>
+    formatLocaleDateTime(iso, { dateStyle: 'medium', timeStyle: 'short' });
 
   const itemsSummary = (order: Order) =>
     (order.items ?? []).map((item) => {

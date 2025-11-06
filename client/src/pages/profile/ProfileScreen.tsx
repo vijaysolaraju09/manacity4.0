@@ -1,5 +1,19 @@
-import { useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type FocusEvent,
+  type ReactNode,
+} from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { MapPin, Phone, Mail } from 'lucide-react'
+import type { AppDispatch, RootState } from '@/store'
+import { fetchProfile, updateProfile } from '@/store/user'
+import showToast from '@/components/ui/Toast'
+import { toErrorMessage } from '@/lib/response'
+import type { User } from '@/types/user'
 
 type TabKey = 'account' | 'orders' | 'requests' | 'notifications'
 
@@ -24,6 +38,12 @@ type ThemeInputProps = {
   label?: string
   placeholder?: string
   type?: string
+  value?: string
+  name?: string
+  disabled?: boolean
+  autoComplete?: string
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void
+  onBlur?: (event: FocusEvent<HTMLInputElement>) => void
 }
 
 type ThemeBadgeProps = {
@@ -89,12 +109,28 @@ const Card = ({ children, className = '' }: ThemeCardProps) => (
   </div>
 )
 
-const Input = ({ label, placeholder, type = 'text' }: ThemeInputProps) => (
+const Input = ({
+  label,
+  placeholder,
+  type = 'text',
+  value,
+  name,
+  disabled,
+  autoComplete,
+  onChange,
+  onBlur,
+}: ThemeInputProps) => (
   <label className="block text-sm">
     {label ? <div className="mb-1 text-[var(--text-muted)]">{label}</div> : null}
     <input
       type={type}
       placeholder={placeholder}
+      name={name}
+      value={value}
+      disabled={disabled}
+      autoComplete={autoComplete}
+      onChange={onChange}
+      onBlur={onBlur}
       className="focus-ring w-full rounded-xl border border-[var(--border)] bg-[var(--surface-0)] px-3 py-2 outline-none"
     />
   </label>
@@ -163,6 +199,11 @@ const NOTIFS = [
 ] as const
 
 const ProfileScreen = () => {
+  const dispatch = useDispatch<AppDispatch>()
+  const profileState = useSelector((state: RootState) => state.userProfile)
+  const authState = useSelector((state: RootState) => state.auth)
+  const profile = (profileState.item ?? authState.user ?? null) as (User & { createdAt?: string; rating?: number; ordersCount?: number; requestsCount?: number }) | null
+
   const tabs = [
     { key: 'account' as TabKey, label: 'Account' },
     { key: 'orders' as TabKey, label: 'Orders' },
@@ -173,10 +214,74 @@ const ProfileScreen = () => {
   const [active, setActive] = useState<TabKey>('account')
   const [showAvatarModal, setShowAvatarModal] = useState(false)
   const [showAddressModal, setShowAddressModal] = useState(false)
+  const [pendingField, setPendingField] = useState<keyof FormState | null>(null)
 
-  const ordersCount = DEMO_ORDERS.length
-  const requestsCount = DEMO_REQUESTS.length
-  const rating = 4.7
+  const [formState, setFormState] = useState<FormState>({
+    name: '',
+    email: '',
+    phone: '',
+  })
+
+  useEffect(() => {
+    if (profileState.status === 'idle') {
+      void dispatch(fetchProfile())
+    }
+  }, [dispatch, profileState.status])
+
+  useEffect(() => {
+    if (!profile) return
+    setFormState({
+      name: profile.name ?? '',
+      email: profile.email ?? '',
+      phone: profile.phone ?? '',
+    })
+  }, [profile?.name, profile?.email, profile?.phone])
+
+  const handleChange = useCallback(
+    (field: keyof FormState) => (event: ChangeEvent<HTMLInputElement>) => {
+      const { value } = event.target
+      setFormState((prev) => ({ ...prev, [field]: value }))
+    },
+    [],
+  )
+
+  const handleBlur = useCallback(
+    (field: keyof FormState) => async (event: FocusEvent<HTMLInputElement>) => {
+      if (!profile) return
+      const fieldMap: Record<keyof FormState, keyof User> = {
+        name: 'name',
+        email: 'email',
+        phone: 'phone',
+      }
+      const payloadKey = fieldMap[field]
+      const newValue = event.target.value
+      const previousValue = ((profile?.[payloadKey] ?? '') as string | null) ?? ''
+      if (newValue === previousValue) return
+      setPendingField(field)
+      try {
+        await dispatch(updateProfile({ [payloadKey]: newValue })).unwrap()
+        showToast('Profile updated successfully', 'success')
+      } catch (err) {
+        showToast(toErrorMessage(err) || 'Unable to update profile', 'error')
+        setFormState((prev) => ({ ...prev, [field]: previousValue }))
+      } finally {
+        setPendingField(null)
+      }
+    },
+    [dispatch, profile],
+  )
+
+  const ordersCount = useMemo(() => profile?.ordersCount ?? DEMO_ORDERS.length, [profile?.ordersCount])
+  const requestsCount = useMemo(() => profile?.requestsCount ?? DEMO_REQUESTS.length, [profile?.requestsCount])
+  const rating = useMemo(() => profile?.rating ?? 4.7, [profile?.rating])
+  const isLoading = profileState.status === 'loading' && !profile
+  const memberSinceLabel = useMemo(() => {
+    const created = profile?.createdAt
+    if (!created) return 'Member since 2023'
+    const date = new Date(created)
+    if (Number.isNaN(date.getTime())) return 'Member since 2023'
+    return `Member since ${date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}`
+  }, [profile?.createdAt])
 
   return (
     <div className="space-y-6">
@@ -189,8 +294,8 @@ const ProfileScreen = () => {
               className="h-14 w-14 rounded-2xl object-cover"
             />
             <div>
-              <h3 className="font-semibold">Aarav Sharma</h3>
-              <p className="text-sm text-[var(--text-muted)]">Member since 2023</p>
+              <h3 className="font-semibold">{profile?.name || 'Your profile'}</h3>
+              <p className="text-sm text-[var(--text-muted)]">{memberSinceLabel}</p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3 md:gap-4">
@@ -214,12 +319,42 @@ const ProfileScreen = () => {
               <Card className="p-4">
                 <h4 className="mb-3 font-semibold">Account</h4>
                 <div className="grid gap-3">
-                  <Input label="Full name" placeholder="Aarav Sharma" />
-                  <Input label="Email" placeholder="aarav@example.com" />
-                  <Input label="Phone" placeholder="+91 98•• •• ••10" />
+                  <Input
+                    label="Full name"
+                    placeholder="Aarav Sharma"
+                    name="name"
+                    value={formState.name}
+                    disabled={isLoading || pendingField === 'name'}
+                    onChange={handleChange('name')}
+                    onBlur={handleBlur('name')}
+                  />
+                  <Input
+                    label="Email"
+                    placeholder="aarav@example.com"
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    value={formState.email}
+                    disabled={isLoading || pendingField === 'email'}
+                    onChange={handleChange('email')}
+                    onBlur={handleBlur('email')}
+                  />
+                  <Input
+                    label="Phone"
+                    placeholder="+91 98•• •• ••10"
+                    type="tel"
+                    name="phone"
+                    autoComplete="tel"
+                    value={formState.phone}
+                    disabled={isLoading || pendingField === 'phone'}
+                    onChange={handleChange('phone')}
+                    onBlur={handleBlur('phone')}
+                  />
                   <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => setShowAvatarModal(true)}>Change Avatar</Button>
-                    <Button variant="outline" onClick={() => setShowAddressModal(true)}>
+                    <Button onClick={() => setShowAvatarModal(true)} disabled={isLoading}>
+                      Change Avatar
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowAddressModal(true)} disabled={isLoading}>
                       Manage Addresses
                     </Button>
                   </div>
@@ -297,13 +432,13 @@ const ProfileScreen = () => {
             <div className="rounded-xl border border-[var(--border)] p-3">
               <div className="font-medium">Home</div>
               <div className="mt-1 flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                <MapPin className="h-4 w-4" /> 11, City Center, Manacity
+                <MapPin className="h-4 w-4" /> {profile?.address || '11, City Center, Manacity'}
               </div>
               <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                <Phone className="h-4 w-4" /> +91 98765 43210
+                <Phone className="h-4 w-4" /> {profile?.phone || '+91 98765 43210'}
               </div>
               <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                <Mail className="h-4 w-4" /> hello@manacity.example
+                <Mail className="h-4 w-4" /> {profile?.email || 'hello@manacity.example'}
               </div>
             </div>
             <Button>Add New Address</Button>
@@ -315,3 +450,9 @@ const ProfileScreen = () => {
 }
 
 export default ProfileScreen
+
+type FormState = {
+  name: string
+  email: string
+  phone: string
+}

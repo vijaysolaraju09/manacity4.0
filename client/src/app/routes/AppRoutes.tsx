@@ -6,7 +6,7 @@ import ServicesScreen from '@/app/screens/ServicesScreen'
 import EventsScreen from '@/app/screens/EventsScreen'
 import CartScreen from '@/app/screens/CartScreen'
 import NotificationsScreen from '@/app/screens/NotificationsScreen'
-import ProfileScreen from '@/pages/profile/ProfileScreen'
+import ProfileScreen from '@/app/screens/ProfileScreen'
 
 const AppRoutes = () => (
   <Routes>

@@ -1,4 +1,8 @@
-const SUPPORTED_DATE_OPTION_KEYS: Array<keyof Intl.DateTimeFormatOptions> = [
+type ExtendedDateTimeFormatOptions = Intl.DateTimeFormatOptions & {
+  fractionalSecondDigits?: number;
+};
+
+const SUPPORTED_DATE_OPTION_KEYS: Array<keyof ExtendedDateTimeFormatOptions> = [
   'localeMatcher',
   'weekday',
   'era',
@@ -22,22 +26,30 @@ const SUPPORTED_DATE_OPTION_KEYS: Array<keyof Intl.DateTimeFormatOptions> = [
 ];
 
 const sanitizeDateOptions = (
-  options?: Intl.DateTimeFormatOptions,
-): Intl.DateTimeFormatOptions | undefined => {
+  options?: ExtendedDateTimeFormatOptions,
+): ExtendedDateTimeFormatOptions | undefined => {
   if (!options) return undefined;
-  const sanitized: Intl.DateTimeFormatOptions = {};
+  const sanitized: Partial<
+    Record<
+      keyof ExtendedDateTimeFormatOptions,
+      ExtendedDateTimeFormatOptions[keyof ExtendedDateTimeFormatOptions]
+    >
+  > = {};
   for (const key of SUPPORTED_DATE_OPTION_KEYS) {
-    if (options[key] !== undefined) {
-      sanitized[key] = options[key];
+    const value = options[key];
+    if (value !== undefined) {
+      sanitized[key] = value;
     }
   }
-  return Object.keys(sanitized).length > 0 ? sanitized : undefined;
+  return Object.keys(sanitized).length > 0
+    ? (sanitized as ExtendedDateTimeFormatOptions)
+    : undefined;
 };
 
 const stripUnsupportedStyles = (
-  options: Intl.DateTimeFormatOptions,
-): Intl.DateTimeFormatOptions | undefined => {
-  const fallback: Intl.DateTimeFormatOptions = { ...options };
+  options: ExtendedDateTimeFormatOptions,
+): ExtendedDateTimeFormatOptions | undefined => {
+  const fallback: ExtendedDateTimeFormatOptions = { ...options };
   let changed = false;
 
   if ('dateStyle' in fallback) {

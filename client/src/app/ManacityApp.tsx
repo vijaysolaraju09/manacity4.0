@@ -1366,14 +1366,18 @@ const Header = ({ currentPath }: { currentPath: string }) => (
         <div className="hidden md:flex">
           <span className="text-sm font-semibold text-muted">{NAV_ITEMS.find((item) => item.path === currentPath)?.label ?? 'Dashboard'}</span>
         </div>
-        <div className="flex flex-1 justify-center md:justify-start">
+        <div className="hidden flex-1 justify-center lg:flex lg:justify-start">
           <Input icon={Search} placeholder="Search shops, services, events..." />
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <IconButton icon={ShoppingCart} label="Open cart" badge="3" />
-        <IconButton icon={Bell} label="Notifications" badge="4" />
-        <IconButton icon={Inbox} label="Messages" />
+        <div className="flex items-center gap-3">
+          <IconButton icon={ShoppingCart} label="Open cart" badge="3" />
+          <IconButton icon={Bell} label="Notifications" badge="4" />
+          <div className="hidden lg:flex">
+            <IconButton icon={Inbox} label="Messages" />
+          </div>
+        </div>
         <ThemeToggle />
       </div>
     </div>

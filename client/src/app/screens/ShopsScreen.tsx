@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { ChangeEvent, KeyboardEvent } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { MapPin, Star } from 'lucide-react'
+import { MapPin, Search, Star } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { AppDispatch, RootState } from '@/store'
 import { fetchShops, type Shop } from '@/store/shops'
-import { Badge, Button, Card, Chip } from '@/app/components/primitives'
+import { Badge, Button, Card, Chip, Input } from '@/app/components/primitives'
+import { paths } from '@/routes/paths'
 
 const toStatus = (shop: Shop): { tone: 'success' | 'accent' | 'neutral'; label: string } => {
   if (shop.isOpen === false) return { tone: 'neutral', label: 'Closed' }
@@ -14,8 +17,14 @@ const toStatus = (shop: Shop): { tone: 'success' | 'accent' | 'neutral'; label: 
 
 const ShopsScreen = () => {
   const dispatch = useDispatch<AppDispatch>()
+  const navigate = useNavigate()
   const shopsState = useSelector((state: RootState) => state.shops)
   const [filter, setFilter] = useState('All')
+  const [query, setQuery] = useState('')
+
+  const handleSearchChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setQuery(event.target.value)
+  }, [])
 
   useEffect(() => {
     if (shopsState.status === 'idle') {
@@ -34,26 +43,48 @@ const ShopsScreen = () => {
   }, [shopsState.items])
 
   const filtered = useMemo(() => {
-    if (!shopsState.items) return []
-    if (filter === 'All') return shopsState.items
-    const normalized = filter.toLowerCase()
-    return shopsState.items.filter((shop) => shop.category?.toLowerCase() === normalized)
-  }, [filter, shopsState.items])
+    const items = shopsState.items ?? []
+    const normalizedFilter = filter.toLowerCase()
+    const normalizedQuery = query.trim().toLowerCase()
+    return items.filter((shop) => {
+      const matchesCategory =
+        filter === 'All' || shop.category?.toLowerCase() === normalizedFilter
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        shop.name?.toLowerCase().includes(normalizedQuery) ||
+        shop.location?.toLowerCase().includes(normalizedQuery)
+      return matchesCategory && matchesQuery
+    })
+  }, [filter, query, shopsState.items])
 
   return (
     <div className="flex flex-col gap-6">
       <Card className="rounded-[2rem] p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-primary">Explore curated shops</h1>
-            <p className="text-sm text-muted">Browse verified partners and independent businesses offering concierge-grade service.</p>
+            <p className="text-sm text-muted">
+              Browse verified partners and independent businesses offering concierge-grade service.
+            </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            {categories.map((name) => (
-              <Chip key={name} active={filter === name} onClick={() => setFilter(name)}>
-                {name}
-              </Chip>
-            ))}
+          <div className="flex w-full flex-col gap-3 md:w-auto md:items-end">
+            <Input
+              icon={Search}
+              value={query}
+              onChange={handleSearchChange}
+              placeholder="Search shops…"
+              className="w-full md:w-[260px]"
+              inputClassName="text-sm"
+              aria-label="Search shops"
+              type="search"
+            />
+            <div className="flex flex-wrap justify-start gap-3 md:justify-end">
+              {categories.map((name) => (
+                <Chip key={name} active={filter === name} onClick={() => setFilter(name)}>
+                  {name}
+                </Chip>
+              ))}
+            </div>
           </div>
         </div>
       </Card>
@@ -66,8 +97,22 @@ const ShopsScreen = () => {
         ) : (
           filtered.map((shop) => {
             const status = toStatus(shop)
+            const handleVisit = () => navigate(paths.shop(shop._id))
+            const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                handleVisit()
+              }
+            }
             return (
-              <Card key={shop._id} className="rounded-3xl p-5">
+              <Card
+                key={shop._id}
+                className="rounded-3xl p-5 transition hover:-translate-y-0.5 hover:shadow-lg-theme focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_45%,transparent)]"
+                role="button"
+                tabIndex={0}
+                onClick={handleVisit}
+                onKeyDown={handleCardKeyDown}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-semibold text-primary">{shop.name}</h2>
@@ -93,8 +138,23 @@ const ShopsScreen = () => {
                   <Badge tone="neutral">{shop.status}</Badge>
                 </div>
                 <div className="mt-5 flex items-center justify-between">
-                  <Button variant="primary">Visit shop</Button>
-                  <Button variant="ghost">Save</Button>
+                  <Button
+                    variant="primary"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      handleVisit()
+                    }}
+                  >
+                    Visit shop
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                    }}
+                  >
+                    Save
+                  </Button>
                 </div>
               </Card>
             )

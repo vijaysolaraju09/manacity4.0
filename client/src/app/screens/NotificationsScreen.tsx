@@ -7,6 +7,7 @@ import { Badge, Button, Card, Chip, IconButton } from '@/app/components/primitiv
 import { formatDateTime } from '@/utils/date'
 import showToast from '@/components/ui/Toast'
 import { toErrorMessage } from '@/lib/response'
+import { http } from '@/lib/http'
 
 const FILTERS: Array<{ key: 'all' | Notif['type']; label: string }> = [
   { key: 'all', label: 'All' },
@@ -88,6 +89,16 @@ const NotificationsScreen = () => {
     )
   }, [dispatch, filteredItems])
 
+  const handleClearAll = useCallback(async () => {
+    try {
+      await http.delete('api/notifications')
+      showToast('All notifications cleared', 'success')
+      void dispatch(fetchNotifs({ page: 1, limit: 20 }))
+    } catch (err) {
+      showToast(toErrorMessage(err) || 'Unable to clear notifications', 'error')
+    }
+  }, [dispatch])
+
   const handleLoadMore = useCallback(() => {
     if (!notifsState.hasMore || notifsState.status === 'loading') return
     void dispatch(fetchNotifs({ page: notifsState.page + 1, limit: 20 }))
@@ -146,6 +157,11 @@ const NotificationsScreen = () => {
             {unreadCount > 0 ? (
               <Button variant="outline" onClick={handleMarkAllRead}>
                 Mark all as read ({unreadCount})
+              </Button>
+            ) : null}
+            {notifsState.items.length > 0 ? (
+              <Button variant="outline" onClick={handleClearAll}>
+                Clear all
               </Button>
             ) : null}
             <Button variant="ghost" onClick={handleReload}>

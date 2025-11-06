@@ -370,7 +370,7 @@ export const updateServiceOrderStatus = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const res = await http.patch(`/verified/orders/${id}`, { action });
+      const res = await http.patch(`/api/pros/orders/${id}`, { action });
       return normalizeOrder(toItem(res));
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));

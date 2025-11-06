@@ -43,6 +43,7 @@ const CartScreen = () => {
   const itemCount = useSelector(selectItemCount)
   const subtotalPaise = useSelector(selectSubtotalPaise)
   const { updateCartQuantity, removeFromCart, clearCart } = useCartActions()
+  const isEmpty = items.length === 0
 
   const { serviceFeePaise, totalPaise } = useMemo(() => {
     const serviceFee = Math.round(subtotalPaise * 0.04)
@@ -57,12 +58,12 @@ const CartScreen = () => {
   }, [navigate])
 
   const handleCheckout = useCallback(() => {
-    if (items.length === 0) {
+    if (isEmpty) {
       showToast('Add items to your cart before checking out', 'info')
       return
     }
     navigate(paths.checkout())
-  }, [items.length, navigate])
+  }, [isEmpty, navigate])
 
   const handleClear = useCallback(() => {
     if (items.length === 0) return
@@ -177,7 +178,13 @@ const CartScreen = () => {
                 <span className="text-base font-semibold">{formatINR(totalPaise)}</span>
               </div>
             </div>
-            <Button variant="primary" icon={CreditCard} className="mt-5 w-full" onClick={handleCheckout}>
+            <Button
+              variant="primary"
+              icon={CreditCard}
+              className="mt-5 w-full"
+              onClick={handleCheckout}
+              disabled={isEmpty}
+            >
               Proceed to pay
             </Button>
             <p className="mt-3 text-xs text-muted">

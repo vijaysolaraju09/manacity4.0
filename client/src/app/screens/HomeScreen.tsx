@@ -1,6 +1,7 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { BookmarkCheck, MapPin, Star } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { AppDispatch, RootState } from '@/store'
 import { fetchShops, type Shop } from '@/store/shops'
 import { fetchServices } from '@/store/services'
@@ -11,6 +12,10 @@ import { Badge, Button, Card, IconButton } from '@/app/components/primitives'
 import type { Product } from '@/store/products'
 import { formatDateTime } from '@/utils/date'
 import { useCountdown } from '@/app/hooks/useCountdown'
+import { paths } from '@/routes/paths'
+import { http } from '@/lib/http'
+import { toErrorMessage } from '@/lib/response'
+import showToast from '@/components/ui/Toast'
 
 const toShopStatus = (shop: Shop): { tone: 'success' | 'neutral' | 'accent'; label: string } => {
   if (shop.isOpen === false) return { tone: 'neutral', label: 'Closed' }
@@ -27,6 +32,7 @@ const toINR = (paise: number | undefined) => {
 
 const HomeScreen = () => {
   const dispatch = useDispatch<AppDispatch>()
+  const navigate = useNavigate()
   const shopsState = useSelector((state: RootState) => state.shops)
   const servicesState = useSelector((state: RootState) => state.services)
   const eventsList = useSelector((state: RootState) => state.events.list)
@@ -61,6 +67,16 @@ const HomeScreen = () => {
     }
   }, [dispatch, eventsParams, eventsKey, eventsList.items?.length, eventsList.loading, eventsList.queryKey])
 
+  const handleRegisterInterest = useCallback(async (eventId: string) => {
+    if (!eventId) return
+    try {
+      await http.post(`/api/events/${eventId}/interest`)
+      showToast('Thanks for your interest! We will notify you.', 'success')
+    } catch (err) {
+      showToast(toErrorMessage(err) || 'Unable to register interest right now.', 'error')
+    }
+  }, [])
+
   const heroItems: HeroCarouselItem[] = useMemo(() => {
     const items = eventsList.items ?? []
     if (items.length === 0) {
@@ -69,8 +85,8 @@ const HomeScreen = () => {
           id: 'discover-city',
           title: 'Discover verified shops and services',
           description: 'Browse curated merchants, concierge-grade services, and exclusive experiences around you.',
-          primaryAction: { label: 'Start exploring', to: '/shops' },
-          secondaryAction: { label: 'View services', to: '/services' },
+          primaryAction: { label: 'Start exploring', to: paths.shops() },
+          secondaryAction: { label: 'View services', to: paths.services.catalog() },
         },
       ]
     }
@@ -81,10 +97,10 @@ const HomeScreen = () => {
       description:
         event.shortDescription ||
         `Starts ${formatDateTime(event.startAt, { dateStyle: 'medium', timeStyle: 'short' })}`,
-      primaryAction: { label: 'View events', to: '/events' },
-      secondaryAction: { label: 'Register interest', to: '/events' },
+      primaryAction: { label: 'View details', to: paths.events.detail(event._id) },
+      secondaryAction: { label: 'Register interest', onClick: () => handleRegisterInterest(event._id) },
     }))
-  }, [eventsList.items])
+  }, [eventsList.items, handleRegisterInterest])
 
   const sortedShops = useMemo(() => {
     const items = shopsState.items ?? []
@@ -188,10 +204,18 @@ const HomeScreen = () => {
                 ))}
               </div>
               <div className="flex gap-3">
-                <Button variant="primary" className="bg-white text-[var(--primary)] shadow-lg-theme">
+                <Button
+                  variant="primary"
+                  className="bg-white text-[var(--primary)] shadow-lg-theme"
+                  onClick={() => navigate(paths.services.request())}
+                >
                   Submit a request
                 </Button>
-                <Button variant="ghost" className="text-white hover:bg-white/15">
+                <Button
+                  variant="ghost"
+                  className="text-white hover:bg-white/15"
+                  onClick={() => navigate(paths.services.catalog())}
+                >
                   Explore services
                 </Button>
               </div>
@@ -206,7 +230,9 @@ const HomeScreen = () => {
             <h2 className="text-xl font-semibold text-primary">Trending shops</h2>
             <p className="text-sm text-muted">Top-rated merchants from our latest approvals.</p>
           </div>
-          <Button variant="ghost">See marketplace</Button>
+          <Button variant="ghost" onClick={() => navigate(paths.shops())}>
+            See marketplace
+          </Button>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {trendingShops.length === 0 ? (
@@ -217,7 +243,19 @@ const HomeScreen = () => {
             trendingShops.map((shop) => {
               const status = toShopStatus(shop)
               return (
-                <Card key={shop._id} className="rounded-3xl p-5">
+                <Card
+                  key={shop._id}
+                  className="rounded-3xl p-5 transition hover:-translate-y-0.5 hover:shadow-lg-theme focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_45%,transparent)]"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(paths.shop(shop._id))}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      navigate(paths.shop(shop._id))
+                    }
+                  }}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="text-lg font-semibold text-primary">{shop.name}</h3>
@@ -237,7 +275,14 @@ const HomeScreen = () => {
                     <Badge tone="neutral">{shop.status}</Badge>
                     {shop.address ? <Badge tone="neutral">{shop.address.split(',')[0]}</Badge> : null}
                   </div>
-                  <Button variant="outline" className="mt-5 w-full">
+                  <Button
+                    variant="outline"
+                    className="mt-5 w-full"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      navigate(paths.shop(shop._id))
+                    }}
+                  >
                     View details
                   </Button>
                 </Card>
@@ -253,7 +298,9 @@ const HomeScreen = () => {
             <h2 className="text-xl font-semibold text-primary">Featured services</h2>
             <p className="text-sm text-muted">Book trusted providers with transparent timelines.</p>
           </div>
-          <Button variant="ghost">View service catalog</Button>
+          <Button variant="ghost" onClick={() => navigate(paths.services.catalog())}>
+            View service catalog
+          </Button>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           {servicesState.items.length === 0 ? (
@@ -262,7 +309,19 @@ const HomeScreen = () => {
             </Card>
           ) : (
             servicesState.items.slice(0, 6).map((service) => (
-              <Card key={service._id} className="rounded-3xl p-5">
+              <Card
+                key={service._id}
+                className="rounded-3xl p-5 transition hover:-translate-y-0.5 hover:shadow-lg-theme focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_45%,transparent)]"
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(paths.services.detail(service._id))}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    navigate(paths.services.detail(service._id))
+                  }
+                }}
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-3">
@@ -277,7 +336,20 @@ const HomeScreen = () => {
                       <p className="mt-1 text-sm text-muted">Managed by our concierge team.</p>
                     )}
                   </div>
-                  <Button variant="ghost" className="text-sm text-primary">
+                  <Button
+                    variant="ghost"
+                    className="text-sm text-primary"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      const params = new URLSearchParams()
+                      if (service._id) params.set('serviceId', service._id)
+                      if (service.name) params.set('name', service.name)
+                      const target = params.toString()
+                        ? `${paths.services.request()}?${params.toString()}`
+                        : paths.services.request()
+                      navigate(target)
+                    }}
+                  >
                     Request
                   </Button>
                 </div>

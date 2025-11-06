@@ -36,6 +36,30 @@ const EventsScreen = () => {
     void dispatch(fetchLeaderboard(highlight._id))
   }, [dispatch, highlight?._id])
 
+  const handleViewCalendar = useCallback(() => {
+    navigate(paths.events.list())
+  }, [navigate])
+
+  const handleRegisterInterest = useCallback(
+    async (eventId: string | undefined) => {
+      if (!eventId) return
+      try {
+        await http.post(`/api/events/${eventId}/interest`)
+        showToast('Thanks for your interest! We will notify you.', 'success')
+      } catch (err) {
+        showToast(toErrorMessage(err) || 'Unable to register interest right now.', 'error')
+      }
+    },
+    [],
+  )
+
+  const handleEventClick = useCallback(
+    (eventId: string) => {
+      navigate(paths.events.detail(eventId))
+    },
+    [navigate],
+  )
+
   const countdown = useCountdown(highlight?.startAt ?? null)
   const otherEvents = useMemo(() => (eventsList.items ?? []).slice(1, 5), [eventsList.items])
 
@@ -201,27 +225,3 @@ const EventsScreen = () => {
 }
 
 export default EventsScreen
-  const handleViewCalendar = useCallback(() => {
-    navigate(paths.events.list())
-  }, [navigate])
-
-  const handleRegisterInterest = useCallback(
-    async (eventId: string | undefined) => {
-      if (!eventId) return
-      try {
-        await http.post(`/api/events/${eventId}/interest`)
-        showToast('Thanks for your interest! We will notify you.', 'success')
-      } catch (err) {
-        showToast(toErrorMessage(err) || 'Unable to register interest right now.', 'error')
-      }
-    },
-    [],
-  )
-
-  const handleEventClick = useCallback(
-    (eventId: string) => {
-      navigate(paths.events.detail(eventId))
-    },
-    [navigate],
-  )
-

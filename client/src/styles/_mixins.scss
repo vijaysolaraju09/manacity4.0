@@ -37,6 +37,24 @@
   }
 }
 
+@mixin button-style(
+  $background,
+  $color,
+  $hover-background: null,
+  $hover-color: null,
+  $radius: var(--radius-md)
+) {
+  @include button-base($radius);
+
+  background: $background;
+  color: $color;
+
+  &:hover:not(:disabled) {
+    background: if($hover-background != null, $hover-background, $background);
+    color: if($hover-color != null, $hover-color, $color);
+  }
+}
+
 @mixin elevation($level) {
   @if $level == 1 {
     box-shadow: var(--mc-shadow-1);

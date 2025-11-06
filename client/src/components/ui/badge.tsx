@@ -18,7 +18,7 @@ const variantClass: Record<BadgeVariant, string> = {
 };
 
 const Badge = ({ className, variant = 'default', ...props }: BadgeProps) => (
-  <span className={cn('chip', variantClass[variant], className)} {...props} />
+  <span className={cn('chip badge', variantClass[variant], className)} {...props} />
 );
 
 export default Badge;

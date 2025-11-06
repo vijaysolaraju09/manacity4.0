@@ -6,10 +6,10 @@
     position: sticky; top: 0; height: 100dvh;
     display: grid; grid-template-rows: auto 1fr auto;
     overflow: hidden;
-    background: rgb(var(--mc-surface) / 0.8);
+    background: rgb(var(--mc-surface) / 0.85);
     backdrop-filter: blur(14px);
     border-right: 1px solid rgb(var(--mc-border));
-    @include elevation(1);
+    box-shadow: var(--mc-shadow-sm);
     transition: width .22s ease, box-shadow .2s ease, background .2s ease;
     width: 88px;                /* MINI rail */
     padding: 14px 10px;
@@ -18,7 +18,7 @@
   .mc-sidebar:hover,
   .mc-sidebar.is-open {
     width: 256px;               /* EXPANDED */
-    @include elevation(2);
+    box-shadow: var(--mc-shadow-md);
   }
 
   .mc-brand {
@@ -43,6 +43,7 @@
     color: rgb(var(--mc-muted));
     transition: background .18s ease, color .18s ease, transform .12s ease;
     outline: none; border: 1px solid transparent;
+    overflow: hidden;
   }
   .mc-item:hover { background: rgb(var(--mc-primary) / 0.12); color: rgb(var(--mc-primary-600)); }
   .mc-item:active { transform: scale(.98); }
@@ -67,19 +68,7 @@
     background: rgb(var(--mc-primary) / 0.16);
     color: rgb(var(--mc-primary-600));
     border-color: rgb(var(--mc-primary) / 0.3);
-    @include elevation(1);
   }
-  .mc-item--active::before {
-    content: '';
-    position: absolute;
-    left: 4px;
-    top: 6px;
-    bottom: 6px;
-    width: 4px;
-    border-radius: 999px;
-    background: var(--mc-gradient);
-  }
-
   /* Section title (visible only when expanded) */
   .mc-section {
     margin: 14px 10px 8px;

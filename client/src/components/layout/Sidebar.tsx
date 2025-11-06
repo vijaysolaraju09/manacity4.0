@@ -1,6 +1,6 @@
 /* A responsive, mini→expanded sidebar. Mobile uses your existing bottom nav; we only render this on md+ */
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { Home, Bell, Store, PackageOpen, Users, CalendarDays, Settings } from 'lucide-react'; // or your existing icon set
 import { paths } from '@/routes/paths';
 
@@ -17,7 +17,6 @@ const items: Item[] = [
 
 export default function Sidebar() {
   const [open, setOpen] = React.useState(false);
-  const { pathname } = useLocation();
   return (
     <aside
       className={`mc-sidebar ${open ? 'is-open' : ''} hidden md:grid`}
@@ -38,32 +37,48 @@ export default function Sidebar() {
 
       <nav className="mc-nav" role="navigation">
         <div className="mc-section">Main</div>
-        {items.map((it) => {
-          const active = pathname.startsWith(it.to);
-          return (
-            <NavLink
-              key={it.to}
-              to={it.to}
-              aria-current={active ? 'page' : undefined}
-              className={`mc-item ${active ? 'mc-item--active' : ''}`}
-              data-tip={it.label}
-            >
-              {it.icon}
-              <span className="mc-item__label">{it.label}</span>
-              {typeof it.badge === 'number' && it.badge > 0 && <span className="mc-badge">{it.badge}</span>}
-            </NavLink>
-          );
-        })}
+        {items.map((it) => (
+          <NavLink
+            key={it.to}
+            to={it.to}
+            className={({ isActive }) => `mc-item relative overflow-hidden ${isActive ? 'mc-item--active' : ''}`}
+            data-tip={it.label}
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-1 top-1 bottom-1 w-1 rounded-full bg-gradient-to-b from-[rgb(var(--mc-accent))] to-[rgb(var(--mc-primary))]"
+                  />
+                )}
+                {it.icon}
+                <span className="mc-item__label">{it.label}</span>
+                {typeof it.badge === 'number' && it.badge > 0 && <span className="mc-badge">{it.badge}</span>}
+              </>
+            )}
+          </NavLink>
+        ))}
       </nav>
 
       <div className="mc-footer">
         <NavLink
           to={paths.settings()}
-          className={({ isActive }) => `mc-item ${isActive ? 'mc-item--active' : ''}`}
+          className={({ isActive }) => `mc-item relative overflow-hidden ${isActive ? 'mc-item--active' : ''}`}
           data-tip="Settings"
         >
-          <Settings className="mc-item__icon" />
-          <span className="mc-item__label">Settings</span>
+          {({ isActive }) => (
+            <>
+              {isActive && (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-1 top-1 bottom-1 w-1 rounded-full bg-gradient-to-b from-[rgb(var(--mc-accent))] to-[rgb(var(--mc-primary))]"
+                />
+              )}
+              <Settings className="mc-item__icon" />
+              <span className="mc-item__label">Settings</span>
+            </>
+          )}
         </NavLink>
         {/* Optional: theme chip if you have ThemeToggle elsewhere */}
         {/* <button className="mc-theme" onClick={()=>applyTheme('dark')}>Dark</button> */}

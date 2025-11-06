@@ -9,39 +9,39 @@
  */
 
 :root {
-  /* If these already exist in tokens.css, we’re just reaffirming usage */
-  --surface-0: #0b0f16; /* page */
-  --surface-1: #0f1520; /* cards base */
-  --surface-2: #151b26; /* raised panels */
-  --surface-3: #1a2130; /* high elevation */
-  --ink-hi: #E6EAF3; /* main text */
-  --ink-md: #B6C2D1; /* secondary */
-  --ink-lo: #71809A; /* muted */
-  --border-subtle: #263244;
+  /* Mirror theme tokens for legacy surfaces */
+  --surface-0: rgb(var(--mc-bg));
+  --surface-1: rgb(var(--mc-surface));
+  --surface-2: rgb(var(--mc-surface));
+  --surface-3: rgb(var(--mc-surface));
+  --ink-hi: rgb(var(--mc-on-surface));
+  --ink-md: rgb(var(--mc-muted));
+  --ink-lo: rgb(var(--mc-muted));
+  --border-subtle: rgb(var(--mc-border));
 
-  --brand-500: #34a3a7;
-  --brand-600: #2f7d80;
-  --brand-700: #235e61;
-  --accent-500: #8b5cf6;
-  --accent-600: #7c3aed;
-  --grad-brand: linear-gradient(135deg, var(--brand-600), var(--accent-600));
+  --brand-500: rgb(var(--mc-primary));
+  --brand-600: rgb(var(--mc-primary-600));
+  --brand-700: rgb(var(--mc-primary-600));
+  --accent-500: rgb(var(--mc-accent));
+  --accent-600: rgb(var(--mc-accent));
+  --grad-brand: var(--mc-gradient);
 
-  /* Shadow/glow tuned for AMOLED */
-  --elev-1: 0 1px 2px rgba(0, 0, 0, .55);
-  --elev-2: 0 10px 24px rgba(2, 6, 12, .65), 0 2px 6px rgba(2, 6, 12, .6);
-  --elev-brand: 0 12px 28px rgba(52, 163, 167, .33);
-  --radius-md: 14px;
-  --radius-lg: 18px;
+  /* Shadow/glow tuned to theme tokens */
+  --elev-1: var(--mc-shadow-1);
+  --elev-2: var(--mc-shadow-2);
+  --elev-brand: var(--mc-shadow-2);
+  --radius-md: var(--mc-radius);
+  --radius-lg: calc(var(--mc-radius) * 1.25);
   --radius-pill: 999px;
 }
 
 :root.dark,
 [data-theme="dark"] {
   color-scheme: dark;
-  --surface-0: #0b0f16;
-  --surface-1: #0f1520;
-  --surface-2: #151b26;
-  --surface-3: #1a2130;
+  --surface-0: rgb(var(--mc-bg));
+  --surface-1: rgb(var(--mc-surface));
+  --surface-2: rgb(var(--mc-surface));
+  --surface-3: rgb(var(--mc-surface));
 }
 
 body.dark,

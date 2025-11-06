@@ -1,4 +1,4 @@
-@import './_mixins';
+@import './_mixins.scss';
 
 /* Modern responsive sidebar — desktop/tablet only; mobile unchanged */
 @media (min-width: 768px) {
@@ -18,19 +18,19 @@
   .mc-sidebar:hover,
   .mc-sidebar.is-open {
     width: 256px;               /* EXPANDED */
-    box-shadow: var(--shadow-md);
+    @include elevation(2);
   }
 
   .mc-brand {
     display:flex; align-items:center; gap:10px;
     padding: 8px 10px; border-radius: var(--radius-md);
-    color: var(--brand-600); font-weight: 700;
+    color: rgb(var(--mc-primary-600)); font-weight: 700;
   }
   .mc-brand__logo {
     height: 36px; width: 36px; border-radius: 10px;
-    background: var(--grad-brand);
-    display:grid; place-items:center; color:#fff;
-    box-shadow: var(--shadow-brand);
+    background: var(--mc-gradient);
+    display:grid; place-items:center; color: rgb(var(--mc-on-surface));
+    @include elevation(1);
   }
   .mc-brand__name { opacity: 0; transform: translateX(-6px); transition: .18s ease; }
   .mc-sidebar:hover .mc-brand__name, .mc-sidebar.is-open .mc-brand__name { opacity: 1; transform: translateX(0); }
@@ -46,7 +46,10 @@
   }
   .mc-item:hover { background: rgb(var(--mc-primary) / 0.12); color: rgb(var(--mc-primary-600)); }
   .mc-item:active { transform: scale(.98); }
-  .mc-item:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-400) 35%, transparent); }
+  .mc-item:focus-visible {
+    border-color: rgb(var(--mc-primary) / 0.3);
+    box-shadow: 0 0 0 3px rgb(var(--mc-accent) / 0.35);
+  }
 
   .mc-item__icon {
     height: 22px; width: 22px; flex: 0 0 22px; color: currentColor;
@@ -78,26 +81,48 @@
   }
 
   /* Section title (visible only when expanded) */
-  .mc-section { margin: 14px 10px 8px; font-size: 12px; letter-spacing:.4px; color: var(--ink-500); opacity:0; transition:.18s; }
+  .mc-section {
+    margin: 14px 10px 8px;
+    font-size: 12px;
+    letter-spacing:.4px;
+    color: rgb(var(--mc-muted));
+    opacity:0;
+    transition:.18s;
+  }
   .mc-sidebar:hover .mc-section, .mc-sidebar.is-open .mc-section { opacity:1; }
 
   /* Badge (notifications/orders count) */
   .mc-badge {
-    margin-left: auto; padding: 2px 8px; border-radius: 999px;
-    font-size: 12px; font-weight:700; color: #fff; background: var(--brand-600);
-    box-shadow: var(--shadow-brand); opacity: 0; transform: translateX(8px); transition: .18s;
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight:700;
+    color: rgb(var(--mc-on-surface));
+    background: rgb(var(--mc-primary));
+    @include elevation(1);
+    opacity: 0;
+    transform: translateX(8px);
+    transition: .18s;
   }
   .mc-sidebar:hover .mc-badge, .mc-sidebar.is-open .mc-badge { opacity:1; transform: translateX(0); }
 
   /* Compact footer */
   .mc-footer { padding: 10px; display:flex; gap:8px; flex-wrap:wrap; }
-  .mc-theme { border:1px solid var(--border); border-radius: var(--radius-pill); padding:6px 10px; font-size:13px; color: var(--ink-700); }
+  .mc-theme {
+    border:1px solid rgb(var(--mc-border));
+    border-radius: var(--radius-pill);
+    padding:6px 10px;
+    font-size:13px;
+    color: rgb(var(--mc-on-surface));
+  }
 }
 
 /* Dark theme refinements */
-:root.dark .mc-sidebar, [data-theme="dark"] .mc-sidebar {
-  background: color-mix(in srgb, var(--surface) 70%, transparent);
-  border-right-color: var(--border);
+:root.dark .mc-sidebar,
+[data-theme="dark"] .mc-sidebar {
+  background: rgb(var(--mc-surface) / 0.82);
+  border-right-color: rgb(var(--mc-border));
 }
 
 /* Tooltip for mini mode (desktop hover when collapsed) */
@@ -107,7 +132,11 @@
     position:absolute; left: calc(100% + 10px);
     top: 50%; transform: translateY(-50%);
     padding: 6px 10px; font-size: 12px;
-    color: var(--ink-900); background: var(--surface); border:1px solid var(--border);
-    border-radius: var(--radius-md); box-shadow: var(--shadow-sm); white-space: nowrap; z-index: 50;
+    color: rgb(var(--mc-on-surface));
+    background: rgb(var(--mc-surface));
+    border:1px solid rgb(var(--mc-border));
+    border-radius: var(--mc-radius);
+    @include elevation(1);
+    white-space: nowrap; z-index: 50;
   }
 }

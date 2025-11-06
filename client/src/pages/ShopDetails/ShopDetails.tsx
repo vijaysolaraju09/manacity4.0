@@ -105,18 +105,18 @@ const ShopDetails = () => {
 
   return (
     <div className="space-y-4 px-4 py-6 md:px-6 lg:px-8">
-      <div className="flex items-center gap-3 text-text-secondary">
+      <div className="flex items-center gap-3 text-gray-600">
         <button
           type="button"
           onClick={() => window.history.back()}
           aria-label="Back"
-          className="rounded-full border border-borderc/40 p-2 hover:text-gray-800"
+          className="rounded-full border border-gray-200 p-2 hover:text-gray-800"
         >
           <FiArrowLeft />
         </button>
         {shop.contact && (
           <a
-            className="rounded-full border border-borderc/40 p-2 hover:text-gray-800"
+            className="rounded-full border border-gray-200 p-2 hover:text-gray-800"
             href={`tel:${shop.contact}`}
             aria-label="Call"
           >
@@ -125,7 +125,7 @@ const ShopDetails = () => {
         )}
         <button
           type="button"
-          className="rounded-full border border-borderc/40 p-2 hover:text-gray-800"
+          className="rounded-full border border-gray-200 p-2 hover:text-gray-800"
           onClick={() => {
             if (navigator.share) {
               void navigator.share({ title: shop.name, url: window.location.href });
@@ -140,7 +140,7 @@ const ShopDetails = () => {
         </button>
         <button
           type="button"
-          className="relative rounded-full border border-borderc/40 p-2 hover:text-gray-800"
+          className="relative rounded-full border border-gray-200 p-2 hover:text-gray-800"
           onClick={() => navigate(paths.cart())}
           aria-label={cartButtonAriaLabel}
         >
@@ -166,23 +166,23 @@ const ShopDetails = () => {
           />
           <div className="flex flex-1 flex-col gap-3">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-2xl font-semibold text-text-primary">{shop.name}</h2>
+              <h2 className="text-2xl font-semibold text-gray-900">{shop.name}</h2>
               {typeof shop.ratingAvg === 'number' && Number.isFinite(shop.ratingAvg) && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1 text-sm text-text-secondary">
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
                   <AiFillStar className="text-yellow-500" />
                   {shop.ratingAvg.toFixed(1)}
                 </span>
               )}
             </div>
-            <p className="text-sm text-text-secondary">{shop.address || shop.location}</p>
-            <div className="flex flex-wrap gap-2 text-xs text-text-secondary">
-              {shop.category && <span className="rounded-full bg-surface-2 px-3 py-1">{shop.category}</span>}
+            <p className="text-sm text-gray-600">{shop.address || shop.location}</p>
+            <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+              {shop.category && <span className="rounded-full bg-gray-100 px-3 py-1">{shop.category}</span>}
               {shop.isOpen !== undefined && (
-                <span className="rounded-full bg-surface-2 px-3 py-1">
+                <span className="rounded-full bg-gray-100 px-3 py-1">
                   {shop.isOpen ? 'Open now' : 'Closed'}
                 </span>
               )}
-              {shop.contact && <span className="rounded-full bg-surface-2 px-3 py-1">{shop.contact}</span>}
+              {shop.contact && <span className="rounded-full bg-gray-100 px-3 py-1">{shop.contact}</span>}
             </div>
           </div>
         </div>
@@ -204,17 +204,17 @@ const ShopDetails = () => {
 
       {description && (
         <div className={shopStyles.about}>
-          <h3 className="text-lg font-semibold text-text-primary">About</h3>
-          <p className="mt-2 text-sm text-text-secondary">{description}</p>
+          <h3 className="text-lg font-semibold text-gray-900">About</h3>
+          <p className="mt-2 text-sm text-gray-600">{description}</p>
         </div>
       )}
 
-      <div className="rounded-2xl border border-borderc/40 bg-surface-1 p-4 shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             className={`rounded-full px-4 py-2 text-sm font-medium ${
-              tab === 'all' ? 'bg-gray-900 text-white' : 'bg-surface-2 text-text-secondary'
+              tab === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
             }`}
             onClick={() => setTab('all')}
           >
@@ -223,7 +223,7 @@ const ShopDetails = () => {
           <button
             type="button"
             className={`rounded-full px-4 py-2 text-sm font-medium ${
-              tab === 'available' ? 'bg-gray-900 text-white' : 'bg-surface-2 text-text-secondary'
+              tab === 'available' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
             }`}
             onClick={() => setTab('available')}
           >
@@ -236,12 +236,12 @@ const ShopDetails = () => {
             placeholder="Search products"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-borderc/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-500)] md:max-w-md"
+            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-500)] md:max-w-md"
           />
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="w-full rounded-xl border border-borderc/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-500)] md:w-48"
+            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-500)] md:w-48"
           >
             <option value="relevance">Sort: Relevance</option>
             <option value="priceAsc">Price: Low to High</option>

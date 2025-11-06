@@ -67,7 +67,7 @@ const AdminTable = <T extends Record<string, unknown>>({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-3xl border border-borderc/40 bg-surface-1 shadow-lg shadow-slate-900/5 dark:border-borderc/40 dark:bg-surface-2/60',
+        'overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/60',
         className,
       )}
     >
@@ -90,7 +90,7 @@ const AdminTable = <T extends Record<string, unknown>>({
                         type="button"
                         onClick={() => handleSort(column.key)}
                         className={cn(
-                          'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide text-text-muted transition hover:text-[color:var(--brand-600)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--brand-500)] dark:text-text-secondary dark:hover:text-[color:var(--brand-300)]',
+                          'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 transition hover:text-[color:var(--brand-600)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--brand-500)] dark:text-slate-300 dark:hover:text-[color:var(--brand-300)]',
                           isActive && 'text-[color:var(--brand-600)] dark:text-[color:var(--brand-300)]',
                         )}
                         aria-label={`Sort by ${String(column.header)}`}
@@ -103,7 +103,7 @@ const AdminTable = <T extends Record<string, unknown>>({
                         ) : null}
                       </button>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-text-muted dark:text-text-secondary">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
                         {column.header}
                       </span>
                     )}
@@ -117,7 +117,7 @@ const AdminTable = <T extends Record<string, unknown>>({
               ? Array.from({ length: skeletonRows }).map((_, index) => (
                   <TableRow key={`skeleton-${index}`} className="bg-transparent">
                     <TableCell colSpan={columns.length}>
-                      <Skeleton className="h-8 w-full rounded-xl bg-surface-2/80 dark:bg-surface-2/60" />
+                      <Skeleton className="h-8 w-full rounded-xl bg-slate-100/80 dark:bg-slate-800/60" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -130,7 +130,7 @@ const AdminTable = <T extends Record<string, unknown>>({
                       <TableCell
                         key={column.key}
                         className={cn(
-                          'whitespace-nowrap text-sm text-text-secondary dark:text-text-secondary',
+                          'whitespace-nowrap text-sm text-slate-700 dark:text-slate-200',
                           getAlignment(column.align),
                           column.cellClassName,
                         )}
@@ -144,7 +144,7 @@ const AdminTable = <T extends Record<string, unknown>>({
 
             {!isLoading && !hasData ? (
               <TableRow className="bg-transparent">
-                <TableCell colSpan={columns.length} className="px-6 py-12 text-center text-sm text-text-muted dark:text-text-muted">
+                <TableCell colSpan={columns.length} className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
                   {emptyState ?? 'No records found.'}
                 </TableCell>
               </TableRow>
@@ -153,7 +153,7 @@ const AdminTable = <T extends Record<string, unknown>>({
         </Table>
       </TableProvider>
       {caption ? (
-        <div className="border-t border-borderc/40 bg-surface-1/80 px-6 py-4 text-sm text-text-muted dark:border-borderc/40 dark:bg-surface-1/50 dark:text-text-muted">
+        <div className="border-t border-slate-100/80 bg-slate-50/80 px-6 py-4 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
           {caption}
         </div>
       ) : null}

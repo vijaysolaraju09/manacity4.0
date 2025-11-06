@@ -3,37 +3,11 @@
 @tailwind components;
 @tailwind utilities;
 
-:root{
-  --bg: 248 250 252;
-  --surface-0: 255 255 255;
-  --surface-1: 248 250 252;
-  --surface-2: 241 245 249;
-  --text-primary: 15 23 42;
-  --text-secondary: 71 85 105;
-  --text-muted: 100 116 139;
-  --border: 203 213 225;
+:focus-visible {
+  outline: 2px solid theme('colors.brand.500');
+  outline-offset: 2px;
 }
 
-.dark{
-  --bg: 10 14 22;
-  --surface-0: 17 24 39;
-  --surface-1: 24 33 52;
-  --surface-2: 30 41 66;
-  --text-primary: 241 245 249;
-  --text-secondary: 203 213 225;
-  --text-muted: 148 163 184;
-  --border: 51 65 85;
+[data-theme='dark'] :focus-visible {
+  outline-color: theme('colors.accent.500');
 }
-
-.bg-app { background-color: theme('colors.bg.DEFAULT'); }
-.card-surface { @apply bg-surface-1 text-text-primary shadow-inner-card dark:shadow-inner-card rounded-2xl border border-borderc/40; }
-.glass { background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06)); backdrop-filter: blur(8px); }
-.btn-gradient { background-image: linear-gradient(135deg, theme('colors.accent.500'), theme('colors.brand.500')); }
-.btn { @apply rounded-xl px-4 py-2 font-medium text-white shadow-elev-1 hover:shadow-elev-2 transition-all; }
-.icon-btn { @apply rounded-full bg-surface-2 text-text-primary/80 hover:text-white hover:bg-surface-2/80 border border-borderc/30; }
-
-:focus-visible{ outline:2px solid rgb(var(--text-secondary)); outline-offset:2px; }
-::-webkit-scrollbar{ width:10px; height:10px; }
-::-webkit-scrollbar-thumb{ background: rgba(148,163,184,.35); border-radius:999px; }
-.no-scrollbar::-webkit-scrollbar{ display:none; }
-.no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none; }

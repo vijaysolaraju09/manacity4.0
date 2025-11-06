@@ -229,8 +229,8 @@ const AddressManager = () => {
     <div className="space-y-4">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h3 className="text-lg font-semibold text-text-primary dark:text-white">Saved addresses</h3>
-          <p className="text-sm text-text-secondary dark:text-text-secondary">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Saved addresses</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Manage delivery locations for faster checkout.
           </p>
         </div>
@@ -252,7 +252,7 @@ const AddressManager = () => {
       ) : null}
 
       {status === 'success' && sortedAddresses.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-borderc/40 bg-surface-1/60 p-6 text-sm text-text-secondary dark:border-borderc/40 dark:bg-surface-1/40 dark:text-text-secondary">
+        <div className="rounded-2xl border border-dashed border-slate-200/70 bg-white/60 p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
           <p>You have not saved any addresses yet. Add one to speed up checkout.</p>
         </div>
       ) : null}
@@ -270,16 +270,16 @@ const AddressManager = () => {
                 key={address.id}
                 layout
                 className={cn(
-                  'relative flex flex-col gap-3 rounded-2xl border bg-surface-1/90 p-5 shadow-sm transition hover:shadow-md dark:border-borderc/40 dark:bg-surface-1/70',
+                  'relative flex flex-col gap-3 rounded-2xl border bg-white/90 p-5 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70',
                   address.isDefault
                     ? 'border-[color:var(--brand-400)] shadow-brand dark:border-[color:var(--brand-400)]'
-                    : 'border-borderc/40',
+                    : 'border-slate-200/70',
                 )}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-5 w-5 text-[color:var(--brand-500)]" aria-hidden="true" />
-                    <p className="text-base font-semibold text-text-primary dark:text-white">{address.label}</p>
+                    <p className="text-base font-semibold text-slate-900 dark:text-white">{address.label}</p>
                   </div>
                   {address.isDefault ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">
@@ -287,8 +287,8 @@ const AddressManager = () => {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-sm text-text-secondary dark:text-text-secondary">{formatAddress(address)}</p>
-                <p className="flex items-center gap-2 text-sm text-text-secondary dark:text-text-secondary">
+                <p className="text-sm text-slate-600 dark:text-slate-300">{formatAddress(address)}</p>
+                <p className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <Phone className="h-4 w-4" aria-hidden="true" />
                   <span>{address.phone || 'Not provided'}</span>
                 </p>
@@ -334,10 +334,10 @@ const AddressManager = () => {
       <ModalSheet open={isSheetOpen} onClose={closeSheet}>
         <div className="space-y-6 p-6">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-text-primary dark:text-white">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
               {editingAddress ? 'Edit address' : 'Add address'}
             </h3>
-            <p className="text-sm text-text-secondary dark:text-text-secondary">
+            <p className="text-sm text-slate-600 dark:text-slate-300">
               Provide delivery details exactly as you would like them to appear during checkout.
             </p>
           </div>

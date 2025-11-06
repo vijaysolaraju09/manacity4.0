@@ -104,9 +104,9 @@ const OrderDetail = () => {
 
   if (loading) {
     return (
-      <main className={cn(styles.pageShell, 'bg-transparent text-text-primary dark:text-text-primary')}>
+      <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
         <div className={cn(styles.pageShell__inner, 'mx-auto max-w-6xl px-4 py-16 sm:px-6')}>
-          <div className="h-64 rounded-3xl border border-indigo-200/60 bg-surface-1/90 shadow-2xl shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-surface-2/70 dark:shadow-indigo-900/40" />
+          <div className="h-64 rounded-3xl border border-indigo-200/60 bg-white/90 shadow-2xl shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-slate-950/70 dark:shadow-indigo-900/40" />
         </div>
       </main>
     );
@@ -114,7 +114,7 @@ const OrderDetail = () => {
 
   if (error) {
     return (
-      <main className={cn(styles.pageShell, 'bg-transparent text-text-primary dark:text-text-primary')}>
+      <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
         <div className={cn(styles.pageShell__inner, 'mx-auto max-w-6xl px-4 py-16 sm:px-6')}>
           <ErrorCard message={error} onRetry={() => window.location.reload()} />
         </div>
@@ -124,7 +124,7 @@ const OrderDetail = () => {
 
   if (!order) {
     return (
-      <main className={cn(styles.pageShell, 'bg-transparent text-text-primary dark:text-text-primary')}>
+      <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
         <div className={cn(styles.pageShell__inner, 'mx-auto max-w-6xl px-4 py-16 sm:px-6')}>
           <ErrorCard message="Order not found." />
         </div>
@@ -139,7 +139,7 @@ const OrderDetail = () => {
   const canRate = authUserId && order.customer.id === authUserId && order.status === 'delivered';
 
   return (
-    <main className={cn(styles.pageShell, 'bg-transparent text-text-primary dark:text-text-primary')}>
+    <main className={cn(styles.pageShell, 'bg-transparent text-slate-900 dark:text-slate-100')}>
       <div className={cn(styles.pageShell__inner, 'mx-auto max-w-6xl px-4 pb-28 pt-12 sm:px-6')}>
         <motion.section
           initial={sectionMotion.initial}
@@ -150,7 +150,7 @@ const OrderDetail = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
               variant="ghost"
-              className="inline-flex items-center gap-2 rounded-full border border-indigo-200/60 bg-surface-1/80 px-4 py-2 text-sm font-semibold text-indigo-600 shadow-sm hover:border-indigo-400 hover:text-indigo-700 dark:border-indigo-500/30 dark:bg-surface-1/70 dark:text-indigo-200"
+              className="inline-flex items-center gap-2 rounded-full border border-indigo-200/60 bg-white/80 px-4 py-2 text-sm font-semibold text-indigo-600 shadow-sm hover:border-indigo-400 hover:text-indigo-700 dark:border-indigo-500/30 dark:bg-slate-900/70 dark:text-indigo-200"
               onClick={() => navigate(paths.orders.mine())}
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -161,21 +161,21 @@ const OrderDetail = () => {
               Order ID #{order.id.slice(-8)}
             </div>
           </div>
-          <Card className="rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/12 via-white/90 to-white/70 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-surface-2/70 dark:shadow-indigo-900/40">
+          <Card className="rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-indigo-500/12 via-white/90 to-white/70 shadow-2xl shadow-indigo-200/40 backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/70 dark:shadow-indigo-900/40">
             <CardHeader className="flex flex-col gap-6 border-none p-6 md:p-8">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-3">
-                  <CardTitle className="text-2xl font-semibold tracking-tight text-text-primary dark:text-white md:text-3xl">
+                  <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
                     Order summary
                   </CardTitle>
-                  <p className="text-sm text-text-secondary dark:text-text-secondary md:text-base">
+                  <p className="text-sm text-slate-600 dark:text-slate-300 md:text-base">
                     Placed on {new Date(order.createdAt).toLocaleString()} • {totalItems} item{totalItems === 1 ? '' : 's'} • {formatINR(grandTotalPaise)}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <span className="rounded-full border border-indigo-300/70 bg-indigo-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-600 dark:border-indigo-500/40 dark:bg-indigo-500/20 dark:text-indigo-200">
                       {order.status.replace(/_/g, ' ').toUpperCase()}
                     </span>
-                    <span className="rounded-full border border-borderc/40 bg-surface-1/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-text-secondary dark:border-borderc/40 dark:bg-surface-1/70 dark:text-text-secondary">
+                    <span className="rounded-full border border-slate-200/70 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600 dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-300">
                       {orderItems.length} products
                     </span>
                   </div>
@@ -213,15 +213,15 @@ const OrderDetail = () => {
                   ) : null}
                 </div>
               </div>
-              <div className="grid gap-6 text-sm text-text-secondary dark:text-text-secondary md:grid-cols-2">
-                <div className="rounded-2xl border border-indigo-200/60 bg-surface-1/80 p-4 shadow-md shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-surface-1/70 dark:text-text-secondary">
+              <div className="grid gap-6 text-sm text-slate-600 dark:text-slate-300 md:grid-cols-2">
+                <div className="rounded-2xl border border-indigo-200/60 bg-white/80 p-4 shadow-md shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-slate-900/70 dark:text-slate-200">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-500 dark:text-indigo-300">Delivery</p>
-                  <p className="mt-2 font-semibold text-text-primary dark:text-white">{order.fulfillment?.type ?? 'Standard delivery'}</p>
+                  <p className="mt-2 font-semibold text-slate-900 dark:text-white">{order.fulfillment?.type ?? 'Standard delivery'}</p>
                   <p>{order.fulfillment?.eta ?? 'We will notify you with live updates.'}</p>
                 </div>
-                <div className="rounded-2xl border border-indigo-200/60 bg-surface-1/80 p-4 shadow-md shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-surface-1/70 dark:text-text-secondary">
+                <div className="rounded-2xl border border-indigo-200/60 bg-white/80 p-4 shadow-md shadow-indigo-200/40 dark:border-indigo-500/30 dark:bg-slate-900/70 dark:text-slate-200">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-500 dark:text-indigo-300">Payment</p>
-                  <p className="mt-2 font-semibold text-text-primary dark:text-white">
+                  <p className="mt-2 font-semibold text-slate-900 dark:text-white">
                     {order.payment?.method ? order.payment.method.replace(/_/g, ' ') : 'Pending confirmation'}
                   </p>
                   <p>{order.payment?.status ? order.payment.status.replace(/_/g, ' ') : 'Awaiting payment status'}</p>
@@ -230,8 +230,8 @@ const OrderDetail = () => {
             </CardHeader>
             <CardContent className="grid gap-8 px-6 pb-8 pt-0 md:px-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
               <div className="space-y-6">
-                <div className="rounded-2xl border border-borderc/40 bg-surface-1/80 p-6 shadow-xl shadow-slate-200/60 dark:border-borderc/40 dark:bg-surface-1/70">
-                  <h3 className="text-lg font-semibold text-text-primary dark:text-white">Items</h3>
+                <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-xl shadow-slate-200/60 dark:border-slate-800/70 dark:bg-slate-900/70">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Items</h3>
                   <div className="mt-4 hidden md:block">
                     <Table>
                       <TableHeader>
@@ -250,15 +250,15 @@ const OrderDetail = () => {
                                 <img
                                   src={item.image || fallbackImage}
                                   alt={item.title}
-                                  className="h-14 w-14 rounded-2xl border border-borderc/40 object-cover shadow-md dark:border-borderc/40"
+                                  className="h-14 w-14 rounded-2xl border border-slate-200/70 object-cover shadow-md dark:border-slate-700/70"
                                   loading="lazy"
                                 />
-                                <span className="text-sm font-semibold text-text-primary dark:text-white">{item.title}</span>
+                                <span className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</span>
                               </div>
                             </TableCell>
                             <TableCell>{item.qty}</TableCell>
                             <TableCell>{formatINR(item.unitPricePaise)}</TableCell>
-                            <TableCell className="text-right font-semibold text-text-primary dark:text-white">
+                            <TableCell className="text-right font-semibold text-slate-900 dark:text-white">
                               {formatINR(item.subtotalPaise)}
                             </TableCell>
                           </TableRow>
@@ -270,28 +270,28 @@ const OrderDetail = () => {
                     {orderItems.map((item) => (
                       <div
                         key={item.id}
-                        className="flex flex-col gap-3 rounded-2xl border border-borderc/40 bg-surface-1/80 p-4 shadow-sm shadow-slate-200/60 dark:border-borderc/40 dark:bg-surface-1/80"
+                        className="flex flex-col gap-3 rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-sm shadow-slate-200/60 dark:border-slate-800/70 dark:bg-slate-900/80"
                       >
                         <div className="flex items-start gap-3">
                           <img
                             src={item.image || fallbackImage}
                             alt={item.title}
-                            className="h-16 w-16 rounded-2xl border border-borderc/40 object-cover shadow-md dark:border-borderc/40"
+                            className="h-16 w-16 rounded-2xl border border-slate-200/70 object-cover shadow-md dark:border-slate-700/70"
                             loading="lazy"
                           />
                           <div className="flex-1 space-y-1">
-                            <p className="text-sm font-semibold text-text-primary dark:text-white">{item.title}</p>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
                             <p className="text-xs uppercase tracking-[0.3em] text-indigo-500 dark:text-indigo-300">
                               Qty {item.qty}
                             </p>
                           </div>
-                          <span className="text-sm font-semibold text-text-primary dark:text-white">
+                          <span className="text-sm font-semibold text-slate-900 dark:text-white">
                             {formatINR(item.subtotalPaise)}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-xs text-text-secondary dark:text-text-secondary">
+                        <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
                           <span>Unit price</span>
-                          <span className="font-medium text-text-primary dark:text-white">
+                          <span className="font-medium text-slate-900 dark:text-white">
                             {formatINR(item.unitPricePaise)}
                           </span>
                         </div>
@@ -299,8 +299,8 @@ const OrderDetail = () => {
                     ))}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-borderc/40 bg-surface-1/80 p-6 shadow-xl shadow-slate-200/60 dark:border-borderc/40 dark:bg-surface-1/70">
-                  <h3 className="text-lg font-semibold text-text-primary dark:text-white">Timeline</h3>
+                <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-xl shadow-slate-200/60 dark:border-slate-800/70 dark:bg-slate-900/70">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Timeline</h3>
                   <OrderTimeline status={order.status} timeline={sortedTimeline} />
                 </div>
               </div>

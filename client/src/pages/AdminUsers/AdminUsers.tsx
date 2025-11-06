@@ -167,8 +167,8 @@ const AdminUsers = () => {
               {user.name?.[0]?.toUpperCase() ?? 'U'}
             </span>
             <div className="space-y-1">
-              <p className="font-medium text-text-primary dark:text-text-primary">{user.name || 'Unnamed user'}</p>
-              <p className="text-xs text-text-muted dark:text-text-muted">{user.phone || '—'}</p>
+              <p className="font-medium text-slate-900 dark:text-slate-100">{user.name || 'Unnamed user'}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{user.phone || '—'}</p>
             </div>
           </div>
         ),
@@ -183,7 +183,7 @@ const AdminUsers = () => {
             <Select
               value={user.role}
               onChange={(event) => handleRoleChange(user._id, event.target.value)}
-              className="w-36 rounded-full bg-surface-1/80 dark:bg-surface-1"
+              className="w-36 rounded-full bg-white/80 dark:bg-slate-900"
             >
               <option value="customer">Customer</option>
               <option value="verified">Verified</option>
@@ -224,7 +224,7 @@ const AdminUsers = () => {
         className: styles.th,
         cellClassName: styles.td,
         render: (user) => (
-          <span className="inline-flex min-w-[3rem] items-center justify-center rounded-full bg-surface-2 px-3 py-1 text-sm font-semibold text-text-secondary dark:bg-surface-2/70 dark:text-text-primary">
+          <span className="inline-flex min-w-[3rem] items-center justify-center rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 dark:bg-slate-800/70 dark:text-slate-100">
             {user.ordersCount ?? 0}
           </span>
         ),
@@ -236,7 +236,7 @@ const AdminUsers = () => {
         className: styles.th,
         cellClassName: styles.td,
         render: (user) => (
-          <span className="text-sm text-text-secondary dark:text-text-secondary">{formatDate(user.createdAt)}</span>
+          <span className="text-sm text-slate-600 dark:text-slate-300">{formatDate(user.createdAt)}</span>
         ),
       },
       {
@@ -251,7 +251,7 @@ const AdminUsers = () => {
               type="button"
               variant="outline"
               size="sm"
-              className="rounded-full border-borderc/40 text-xs text-text-secondary hover:border-[color:var(--brand-200)] hover:text-[color:var(--brand-600)] dark:border-borderc/40 dark:text-text-secondary dark:hover:border-[color:var(--brand-400)] dark:hover:text-[color:var(--brand-200)]"
+              className="rounded-full border-slate-200 text-xs text-slate-600 hover:border-[color:var(--brand-200)] hover:text-[color:var(--brand-600)] dark:border-slate-700 dark:text-slate-300 dark:hover:border-[color:var(--brand-400)] dark:hover:text-[color:var(--brand-200)]"
               onClick={() => handleToggleActive(user)}
             >
               {user.isActive ? (
@@ -290,8 +290,8 @@ const AdminUsers = () => {
   return (
     <div className={`${styles.page} space-y-6 px-4`}>
       <div className={styles.header}>
-        <h1 className="text-2xl font-semibold text-text-primary dark:text-text-primary">Users</h1>
-        <p className="text-sm text-text-muted dark:text-text-muted">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Users</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           Monitor user roles, verification status, and account activity in one place.
         </p>
       </div>
@@ -367,8 +367,8 @@ const AdminUsers = () => {
           skeletonRows={pageSize}
           emptyState={
             <div className="space-y-2 text-center">
-              <h3 className="text-base font-semibold text-text-primary dark:text-text-primary">No users found</h3>
-              <p className="text-sm text-text-muted dark:text-text-muted">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">No users found</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Adjust your filters or refresh to see recent signups.
               </p>
               <Button type="button" variant="outline" className="rounded-full" onClick={() => void load()}>
@@ -378,7 +378,7 @@ const AdminUsers = () => {
           }
           caption={
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="text-sm text-text-secondary dark:text-text-muted">
+              <span className="text-sm text-slate-600 dark:text-slate-400">
                 Showing page {page} of {Math.max(1, Math.ceil(total / pageSize))}
               </span>
               <div className="flex items-center gap-2">

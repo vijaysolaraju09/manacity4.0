@@ -148,7 +148,7 @@ const OrderNow = () => {
       <select
         value={language}
         onChange={(e) => setLanguage(e.target.value)}
-        className="mx-auto w-full max-w-xs rounded-xl border border-borderc/40 px-3 py-2 text-sm text-text-secondary shadow-sm"
+        className="mx-auto w-full max-w-xs rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 shadow-sm"
       >
         <option value="en-US">English</option>
         <option value="hi-IN">Hindi</option>
@@ -183,16 +183,16 @@ const OrderNow = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <h4 className="text-lg font-semibold text-text-primary">{m.product.name}</h4>
+            <h4 className="text-lg font-semibold text-gray-900">{m.product.name}</h4>
             <div className={styles.line}>
-              <span className="text-sm text-text-secondary">Quantity</span>
-              <span className="font-medium text-text-primary">{m.quantity}</span>
+              <span className="text-sm text-gray-600">Quantity</span>
+              <span className="font-medium text-gray-900">{m.quantity}</span>
             </div>
             <div className={styles.line}>
-              <span className="text-sm text-text-secondary">Price</span>
-              <span className="font-medium text-text-primary">{formatINR(m.product.pricePaise)}</span>
+              <span className="text-sm text-gray-600">Price</span>
+              <span className="font-medium text-gray-900">{formatINR(m.product.pricePaise)}</span>
             </div>
-            <p className="text-sm text-text-secondary">{m.shop.name}</p>
+            <p className="text-sm text-gray-600">{m.shop.name}</p>
           </motion.div>
         ))}
       </div>
@@ -203,18 +203,18 @@ const OrderNow = () => {
       )}
       <ModalSheet open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <div className={`${styles.panel} ${styles.sheetContent}`}>
-          <h3 className="text-lg font-semibold text-text-primary">Confirm Order</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Confirm Order</h3>
           <div className="space-y-2">
             {matched.map((m) => (
               <div key={m.product._id} className={styles.line}>
-                <span className="text-sm text-text-secondary">{m.product.name}</span>
-                <span className="font-medium text-text-primary">
+                <span className="text-sm text-gray-600">{m.product.name}</span>
+                <span className="font-medium text-gray-900">
                   {formatINR(m.product.pricePaise * m.quantity)}
                 </span>
               </div>
             ))}
           </div>
-          <div className={`${styles.line} font-semibold text-text-primary`}>
+          <div className={`${styles.line} font-semibold text-gray-900`}>
             <span>Total</span>
             <span>{formatINR(totalPaise)}</span>
           </div>

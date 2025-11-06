@@ -106,7 +106,7 @@ const toShippingAddress = (payload: AddressPayload | Address) => {
 };
 
 const cardClass =
-  'rounded-2xl border border-borderc/40 bg-surface-1/80 p-6 shadow-sm backdrop-blur-sm transition hover:shadow-md dark:border-borderc/40 dark:bg-surface-1/70';
+  'rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition hover:shadow-md dark:border-slate-800/70 dark:bg-slate-900/70';
 
 const listMotion = {
   initial: { opacity: 0, y: 12 },
@@ -461,15 +461,15 @@ const Checkout = () => {
   if (checkoutResult) {
     const orderCount = checkoutResult.orders.length;
     return (
-      <main className="min-h-screen bg-surface-1 pb-16 pt-10 dark:bg-surface-2" role="main">
+      <main className="min-h-screen bg-slate-50 pb-16 pt-10 dark:bg-slate-950" role="main">
         <section
-          className="mx-auto flex max-w-3xl flex-col gap-6 rounded-2xl border border-borderc/40 bg-surface-1/80 p-8 text-center shadow-xl backdrop-blur-sm dark:border-borderc/40 dark:bg-surface-1/80"
+          className="mx-auto flex max-w-3xl flex-col gap-6 rounded-2xl border border-slate-200/80 bg-white/80 p-8 text-center shadow-xl backdrop-blur-sm dark:border-slate-800/70 dark:bg-slate-900/80"
           aria-live="polite"
         >
           <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" aria-hidden="true" />
           <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-text-primary dark:text-white">Order placed successfully</h1>
-            <p className="text-sm text-text-muted dark:text-text-muted">
+            <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Order placed successfully</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               We created {orderCount} suborder{orderCount === 1 ? '' : 's'}. Track each shop order below.
             </p>
           </div>
@@ -478,11 +478,11 @@ const Checkout = () => {
             {checkoutResult.orders.map((order) => (
               <li
                 key={order.id}
-                className="flex items-center justify-between gap-4 rounded-2xl border border-borderc/40 bg-surface-1/90 px-4 py-3 text-sm shadow-sm transition hover:border-[color:var(--brand-200)] hover:shadow-md dark:border-borderc/40 dark:bg-surface-2/70"
+                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 text-sm shadow-sm transition hover:border-[color:var(--brand-200)] hover:shadow-md dark:border-slate-800/70 dark:bg-slate-950/70"
               >
                 <div>
-                  <span className="block font-semibold text-text-primary dark:text-white">{order.label}</span>
-                  <span className="text-xs text-text-muted dark:text-text-muted">Order ID: {order.id}</span>
+                  <span className="block font-semibold text-slate-900 dark:text-white">{order.label}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Order ID: {order.id}</span>
                 </div>
                 <Link
                   className="inline-flex items-center gap-1 rounded-full border border-transparent bg-[var(--brand-500)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--brand-600)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-500)] dark:bg-[color:var(--brand-500)] dark:hover:bg-[color:var(--brand-400)]"
@@ -507,7 +507,7 @@ const Checkout = () => {
 
   if (checkoutItems.length === 0) {
     return (
-      <main className="min-h-screen bg-surface-1 pb-16 pt-10 dark:bg-surface-2" role="main">
+      <main className="min-h-screen bg-slate-50 pb-16 pt-10 dark:bg-slate-950" role="main">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <EmptyState
             title="Your cart is empty"
@@ -521,11 +521,11 @@ const Checkout = () => {
   }
 
   return (
-    <main className="min-h-screen bg-surface-1 pb-16 pt-10 dark:bg-surface-2" role="main">
+    <main className="min-h-screen bg-slate-50 pb-16 pt-10 dark:bg-slate-950" role="main">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 sm:px-6">
-        <header className="flex flex-col gap-3 rounded-2xl border border-borderc/40 bg-surface-1/80 p-6 shadow-sm backdrop-blur-sm dark:border-borderc/40 dark:bg-surface-1/70">
-          <h1 className="text-3xl font-semibold text-text-primary dark:text-white">Checkout</h1>
-          <p className="text-sm text-text-muted dark:text-text-muted">
+        <header className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm dark:border-slate-800/70 dark:bg-slate-900/70">
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Checkout</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Confirm your delivery details and place your order.
           </p>
         </header>
@@ -534,14 +534,14 @@ const Checkout = () => {
           <section className="space-y-6" aria-labelledby="delivery-details-heading">
             <div className={cardClass}>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-2 text-text-primary dark:text-white">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                   <MapPin className="h-5 w-5 text-[color:var(--brand-500)] dark:text-[color:var(--brand-400)]" aria-hidden="true" />
                   <h2 id="delivery-details-heading" className="text-lg font-semibold">
                     Delivery address
                   </h2>
                 </div>
                 {isAddressLoading && (
-                  <span className="text-xs text-slate-400 dark:text-text-muted">Loading addresses…</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">Loading addresses…</span>
                 )}
               </div>
 
@@ -555,7 +555,7 @@ const Checkout = () => {
                 <div className="space-y-4">
                   {addresses.length > 0 && (
                     <div className="grid gap-3">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-text-muted">
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
                         Previously used addresses
                       </p>
                       {addresses.map((address) => {
@@ -563,7 +563,7 @@ const Checkout = () => {
                         return (
                           <label
                             key={address.id}
-                            className="flex cursor-pointer items-start gap-3 rounded-2xl border border-borderc/40 bg-surface-1/70 p-4 text-sm shadow-sm transition hover:border-[color:var(--brand-200)] hover:shadow-md focus-within:border-[color:var(--brand-500)] focus-within:ring-2 focus-within:ring-[color:var(--brand-400)]/35 dark:border-borderc/40 dark:bg-surface-2/60 dark:hover:border-[color:var(--brand-400)]/40"
+                            className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-4 text-sm shadow-sm transition hover:border-[color:var(--brand-200)] hover:shadow-md focus-within:border-[color:var(--brand-500)] focus-within:ring-2 focus-within:ring-[color:var(--brand-400)]/35 dark:border-slate-800/70 dark:bg-slate-950/60 dark:hover:border-[color:var(--brand-400)]/40"
                           >
                           <input
                             type="radio"
@@ -571,10 +571,10 @@ const Checkout = () => {
                             value={address.id}
                             checked={selectedAddressId === address.id}
                             onChange={() => setSelectedAddressId(address.id)}
-                            className="mt-1 h-4 w-4 rounded-full border-borderc/40 text-[color:var(--brand-600)] focus:ring-[color:var(--brand-500)] dark:border-borderc/40"
+                            className="mt-1 h-4 w-4 rounded-full border-slate-300 text-[color:var(--brand-600)] focus:ring-[color:var(--brand-500)] dark:border-slate-600"
                           />
                           <div className="space-y-1">
-                            <span className="flex items-center gap-2 text-sm font-semibold text-text-primary dark:text-white">
+                            <span className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
                               <Home className="h-4 w-4" aria-hidden="true" />
                               {address.label}
                               {address.isDefault ? (
@@ -583,15 +583,15 @@ const Checkout = () => {
                                 </span>
                               ) : null}
                             </span>
-                            <span className="block text-sm text-text-secondary dark:text-text-secondary">{address.line1}</span>
+                            <span className="block text-sm text-slate-600 dark:text-slate-300">{address.line1}</span>
                             {address.line2 && (
-                              <span className="block text-sm text-text-secondary dark:text-text-secondary">{address.line2}</span>
+                              <span className="block text-sm text-slate-600 dark:text-slate-300">{address.line2}</span>
                             )}
-                            <span className="block text-sm text-text-secondary dark:text-text-secondary">
+                            <span className="block text-sm text-slate-600 dark:text-slate-300">
                               {address.city}, {address.state} {address.pincode}
                             </span>
                             {lastUsedLabel ? (
-                              <span className="block text-xs text-slate-400 dark:text-text-muted">
+                              <span className="block text-xs text-slate-400 dark:text-slate-500">
                                 Last used {lastUsedLabel}
                               </span>
                             ) : null}
@@ -602,21 +602,21 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-dashed border-borderc/40 bg-surface-2/60 p-4 text-sm shadow-sm transition hover:border-[color:var(--brand-200)] hover:bg-surface-1 hover:shadow-md focus-within:border-[color:var(--brand-500)] focus-within:ring-2 focus-within:ring-[color:var(--brand-400)]/35 dark:border-borderc/40 dark:bg-surface-2/60 dark:hover:border-[color:var(--brand-400)]/40">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-dashed border-slate-300/80 bg-slate-100/60 p-4 text-sm shadow-sm transition hover:border-[color:var(--brand-200)] hover:bg-white hover:shadow-md focus-within:border-[color:var(--brand-500)] focus-within:ring-2 focus-within:ring-[color:var(--brand-400)]/35 dark:border-slate-700/70 dark:bg-slate-800/60 dark:hover:border-[color:var(--brand-400)]/40">
                     <input
                       type="radio"
                       name="checkout-address"
                       value="new"
                       checked={selectedAddressId === 'new'}
                       onChange={() => setSelectedAddressId('new')}
-                      className="mt-1 h-4 w-4 rounded-full border-borderc/40 text-[color:var(--brand-600)] focus:ring-[color:var(--brand-500)] dark:border-borderc/40"
+                      className="mt-1 h-4 w-4 rounded-full border-slate-300 text-[color:var(--brand-600)] focus:ring-[color:var(--brand-500)] dark:border-slate-600"
                     />
                     <div className="space-y-1">
-                      <span className="flex items-center gap-2 text-sm font-semibold text-text-primary dark:text-white">
+                      <span className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
                         <Pencil className="h-4 w-4" aria-hidden="true" />
                         Use a new address
                       </span>
-                      <span className="block text-sm text-text-secondary dark:text-text-secondary">
+                      <span className="block text-sm text-slate-600 dark:text-slate-300">
                         Provide a fresh delivery address for this order.
                       </span>
                     </div>
@@ -628,7 +628,7 @@ const Checkout = () => {
                 <div className="mt-6 space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1">
-                      <label htmlFor={fieldId('label')} className="text-sm font-medium text-text-secondary dark:text-text-secondary">
+                      <label htmlFor={fieldId('label')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         Label
                       </label>
                       <input
@@ -637,11 +637,11 @@ const Checkout = () => {
                         value={addressForm.label}
                         onChange={handleAddressFieldChange('label')}
                         autoComplete="address-type"
-                        className="w-full rounded-xl border border-borderc/40 bg-surface-1/90 px-3 py-2 text-sm text-text-primary shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-borderc/40 dark:bg-surface-1/80 dark:text-text-primary"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label htmlFor={fieldId('line1')} className="text-sm font-medium text-text-secondary dark:text-text-secondary">
+                      <label htmlFor={fieldId('line1')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         Address line 1
                       </label>
                       <input
@@ -650,12 +650,12 @@ const Checkout = () => {
                         value={addressForm.line1}
                         onChange={handleAddressFieldChange('line1')}
                         autoComplete="address-line1"
-                        className="w-full rounded-xl border border-borderc/40 bg-surface-1/90 px-3 py-2 text-sm text-text-primary shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-borderc/40 dark:bg-surface-1/80 dark:text-text-primary"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
                       />
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor={fieldId('line2')} className="text-sm font-medium text-text-secondary dark:text-text-secondary">
+                    <label htmlFor={fieldId('line2')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
                       Address line 2 (optional)
                     </label>
                     <input
@@ -664,12 +664,12 @@ const Checkout = () => {
                       value={addressForm.line2}
                       onChange={handleAddressFieldChange('line2')}
                       autoComplete="address-line2"
-                      className="w-full rounded-xl border border-borderc/40 bg-surface-1/90 px-3 py-2 text-sm text-text-primary shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-borderc/40 dark:bg-surface-1/80 dark:text-text-primary"
+                      className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
                     />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div className="space-y-1">
-                      <label htmlFor={fieldId('city')} className="text-sm font-medium text-text-secondary dark:text-text-secondary">
+                      <label htmlFor={fieldId('city')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         City
                       </label>
                       <input
@@ -678,11 +678,11 @@ const Checkout = () => {
                         value={addressForm.city}
                         onChange={handleAddressFieldChange('city')}
                         autoComplete="address-level2"
-                        className="w-full rounded-xl border border-borderc/40 bg-surface-1/90 px-3 py-2 text-sm text-text-primary shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-borderc/40 dark:bg-surface-1/80 dark:text-text-primary"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label htmlFor={fieldId('state')} className="text-sm font-medium text-text-secondary dark:text-text-secondary">
+                      <label htmlFor={fieldId('state')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         State
                       </label>
                       <input
@@ -691,11 +691,11 @@ const Checkout = () => {
                         value={addressForm.state}
                         onChange={handleAddressFieldChange('state')}
                         autoComplete="address-level1"
-                        className="w-full rounded-xl border border-borderc/40 bg-surface-1/90 px-3 py-2 text-sm text-text-primary shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-borderc/40 dark:bg-surface-1/80 dark:text-text-primary"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label htmlFor={fieldId('pincode')} className="text-sm font-medium text-text-secondary dark:text-text-secondary">
+                      <label htmlFor={fieldId('pincode')} className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         PIN code
                       </label>
                       <input
@@ -706,7 +706,7 @@ const Checkout = () => {
                         value={addressForm.pincode}
                         onChange={handleAddressFieldChange('pincode')}
                         autoComplete="postal-code"
-                        className="w-full rounded-xl border border-borderc/40 bg-surface-1/90 px-3 py-2 text-sm text-text-primary shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-borderc/40 dark:bg-surface-1/80 dark:text-text-primary"
+                        className="w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-inner transition focus:border-[color:var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-400)]/35 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
                       />
                     </div>
                   </div>
@@ -715,10 +715,10 @@ const Checkout = () => {
             </div>
 
             <div className={cardClass}>
-              <div className="flex items-center gap-2 text-text-primary dark:text-white">
+              <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                 <ClipboardList className="h-5 w-5 text-purple-600 dark:text-purple-400" aria-hidden="true" />
                 <h2 className="text-lg font-semibold">Order review</h2>
-                <span className="ml-auto text-xs text-slate-400 dark:text-text-muted">
+                <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
                   {totalItemCount} item{totalItemCount === 1 ? '' : 's'} across {shopGroups.length} shop
                   {shopGroups.length === 1 ? '' : 's'}
                 </span>
@@ -729,7 +729,7 @@ const Checkout = () => {
                   {shopGroups.map((group) => (
                     <motion.section
                       key={group.shopId}
-                      className="space-y-3 rounded-2xl border border-borderc/40 bg-surface-1/90 p-4 shadow-sm transition hover:border-[color:var(--brand-200)] hover:shadow-md dark:border-borderc/40 dark:bg-surface-2/60"
+                      className="space-y-3 rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm transition hover:border-[color:var(--brand-200)] hover:shadow-md dark:border-slate-800/70 dark:bg-slate-950/60"
                       initial={listMotion.initial}
                       animate={listMotion.animate}
                       exit={listMotion.exit}
@@ -737,8 +737,8 @@ const Checkout = () => {
                       aria-label={group.label}
                     >
                       <header className="flex flex-wrap items-center justify-between gap-2">
-                        <h3 className="text-sm font-semibold text-text-primary dark:text-white">{group.label}</h3>
-                        <span className="text-xs text-text-muted dark:text-text-muted">
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{group.label}</h3>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
                           {group.itemCount} item{group.itemCount === 1 ? '' : 's'} · {group.subtotalDisplay}
                         </span>
                       </header>
@@ -746,22 +746,22 @@ const Checkout = () => {
                         {group.items.map((item) => (
                           <li
                             key={item.productId}
-                            className="flex items-start gap-4 rounded-2xl border border-borderc/40 bg-surface-1/95 p-3 text-sm shadow-sm dark:border-borderc/40 dark:bg-surface-2/60"
+                            className="flex items-start gap-4 rounded-2xl border border-slate-200/60 bg-white/95 p-3 text-sm shadow-sm dark:border-slate-800/60 dark:bg-slate-950/60"
                           >
                             <img
                               src={item.image}
                               alt=""
                               loading="lazy"
-                              className="h-16 w-16 shrink-0 rounded-xl border border-borderc/40 object-cover shadow-sm dark:border-borderc/40"
+                              className="h-16 w-16 shrink-0 rounded-xl border border-slate-200 object-cover shadow-sm dark:border-slate-800"
                             />
                             <div className="flex flex-1 flex-col gap-1">
-                              <span className="font-medium text-text-primary dark:text-white">{item.name}</span>
-                              <div className="flex flex-wrap items-center gap-3 text-xs text-text-muted dark:text-text-muted">
+                              <span className="font-medium text-slate-900 dark:text-white">{item.name}</span>
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                                 <span>Qty: {item.qty}</span>
                                 <span>{item.unitPriceDisplay}</span>
                               </div>
                             </div>
-                            <span className="font-semibold text-text-primary dark:text-white">{item.lineTotalDisplay}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white">{item.lineTotalDisplay}</span>
                           </li>
                         ))}
                       </ul>
@@ -773,26 +773,26 @@ const Checkout = () => {
           </section>
 
           <aside
-            className="space-y-5 rounded-2xl border border-borderc/40 bg-surface-1/80 p-6 shadow-lg backdrop-blur-sm dark:border-borderc/40 dark:bg-surface-1/80"
+            className="space-y-5 rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-slate-800/70 dark:bg-slate-900/80"
             aria-labelledby="checkout-summary"
           >
             <div className="flex items-center gap-2">
               <Truck className="h-5 w-5 text-emerald-500" aria-hidden="true" />
-              <h2 id="checkout-summary" className="text-lg font-semibold text-text-primary dark:text-white">
+              <h2 id="checkout-summary" className="text-lg font-semibold text-slate-900 dark:text-white">
                 Order summary
               </h2>
             </div>
 
-            <dl className="space-y-3 text-sm text-text-secondary dark:text-text-secondary">
+            <dl className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
               <div className="flex items-center justify-between">
                 <dt>Items ({totalItemCount})</dt>
-                <dd className="font-semibold text-text-primary dark:text-white">{totalSubtotalDisplay}</dd>
+                <dd className="font-semibold text-slate-900 dark:text-white">{totalSubtotalDisplay}</dd>
               </div>
-              <div className="flex items-center justify-between text-slate-400 dark:text-text-muted">
+              <div className="flex items-center justify-between text-slate-400 dark:text-slate-500">
                 <dt>Shipping</dt>
                 <dd>Calculated at delivery</dd>
               </div>
-              <div className="flex items-center justify-between text-base font-semibold text-text-primary dark:text-white">
+              <div className="flex items-center justify-between text-base font-semibold text-slate-900 dark:text-white">
                 <dt>Estimated total</dt>
                 <dd>{totalSubtotalDisplay}</dd>
               </div>
@@ -825,7 +825,7 @@ const Checkout = () => {
               </div>
             )}
 
-            <p className="text-xs text-text-muted dark:text-text-muted">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Your entire cart will be split into shop-specific orders once this checkout succeeds.
             </p>
           </aside>

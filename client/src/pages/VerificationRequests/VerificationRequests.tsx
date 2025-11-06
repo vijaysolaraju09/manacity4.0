@@ -191,8 +191,8 @@ const VerificationRequests = () => {
   return (
     <div className={`${styles.page} space-y-6 px-4`}>
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-text-primary">Verification Requests</h1>
-        <p className="text-sm text-text-secondary">
+        <h1 className="text-2xl font-semibold text-gray-900">Verification Requests</h1>
+        <p className="text-sm text-gray-600">
           Approve trusted professionals quickly by reviewing their submissions here.
         </p>
       </div>
@@ -202,7 +202,7 @@ const VerificationRequests = () => {
           <select
             value={status}
             onChange={(e) => updateParam('status', e.target.value)}
-            className="rounded-lg border border-borderc/40 bg-surface-1 px-3 py-2 text-sm text-text-secondary"
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
           >
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
@@ -215,10 +215,10 @@ const VerificationRequests = () => {
             value={professionInput}
             onChange={(e) => setProfessionInput(e.target.value)}
             onBlur={() => updateParam('profession', professionInput)}
-            className="w-48 rounded-lg border border-borderc/40 px-3 py-2 text-sm text-text-secondary"
+            className="w-48 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
           />
         </div>
-        <span className="text-sm text-text-muted">Page {page}</span>
+        <span className="text-sm text-gray-500">Page {page}</span>
       </div>
 
       <DataTable<RequestRow>

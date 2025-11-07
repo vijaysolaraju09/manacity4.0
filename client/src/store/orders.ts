@@ -418,13 +418,18 @@ export const checkoutCart = createAsyncThunk(
               ? (data.shop as { _id?: string; id?: string })._id ?? (data.shop as { id?: string }).id
               : undefined;
           const statusCandidate = typeof data.status === 'string' ? (data.status as OrderStatus) : undefined;
-          return {
+          const summary: { id: string; shopId?: string; status?: OrderStatus } = {
             id: idCandidate,
-            shopId: shopIdCandidate,
-            status: statusCandidate,
           };
+          if (typeof shopIdCandidate === 'string' && shopIdCandidate) {
+            summary.shopId = shopIdCandidate;
+          }
+          if (typeof statusCandidate === 'string' && statusCandidate) {
+            summary.status = statusCandidate;
+          }
+          return summary;
         })
-        .filter((entry): entry is { id: string; shopId?: string; status?: OrderStatus } => Boolean(entry));
+        .filter((entry): entry is { id: string; shopId?: string; status?: OrderStatus } => entry !== null);
 
       return { summaries, orders: normalizedOrders, raw: rawOrders } satisfies CheckoutCartResult;
     } catch (err) {

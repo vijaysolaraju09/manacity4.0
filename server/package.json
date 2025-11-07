@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "postinstall": "patch-package",
     "test": "jest",
     "start": "node server.js",
     "dev": "nodemon server.js",
@@ -45,6 +46,8 @@
     "typescript": "^5.4.3",
     "@types/jsonwebtoken": "^9.0.6",
     "eslint": "^9.25.0",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0"
   }
 }

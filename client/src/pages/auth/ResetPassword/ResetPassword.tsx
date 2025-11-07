@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import './ResetPassword.scss';
-import logo from '@/assets/logo.png';
-import fallbackImage from '@/assets/no-image.svg';
 import Loader from '@/components/Loader';
 import showToast from '@/components/ui/Toast';
+import { AuthCard, AuthShell, Button, cn } from '@/components/auth/AuthShell';
 import { paths } from '@/routes/paths';
 import { createZodResolver } from '@/lib/createZodResolver';
 import { useForm } from '@/components/ui/form';
@@ -69,63 +66,53 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="reset-page">
-      <motion.div
-        className="panel"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: 'easeOut' }}
-      >
-        <img
-          src={logo}
-          alt="Manacity Logo"
-          className="logo"
-          onError={(event) => {
-            event.currentTarget.src = fallbackImage;
-          }}
-        />
-        <h2 className="title">Reset your password</h2>
-        <p className="hint">Enter a new password for your account.</p>
+    <AuthShell>
+      <div className="mx-auto max-w-xl">
+        <AuthCard title="Set new password" subtitle="Use 8+ characters to secure your account">
+          <form className="grid gap-4" onSubmit={handleSubmit(onSubmitNewPassword)} noValidate>
+            <label className="text-sm">
+              <div className="mb-1 text-[var(--text-muted)]">New password</div>
+              <div className="relative flex items-center">
+                <input
+                  id="reset-password"
+                  type={showPassword ? 'text' : 'password'}
+                  {...register('password')}
+                  placeholder="Enter new password"
+                  autoComplete="new-password"
+                  className={cn(
+                    'focus-ring w-full rounded-xl border border-[var(--border)] bg-[var(--surface-0)] px-3 py-2 pr-10 text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]/70',
+                    errors.password && 'border-red-400 text-red-500 placeholder:text-red-300',
+                  )}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.password && <div className="mt-1 text-xs text-red-500">{errors.password.message}</div>}
+            </label>
 
-        <form onSubmit={handleSubmit(onSubmitNewPassword)} noValidate>
-          <div className="control">
-            <label htmlFor="reset-password">New Password</label>
-            <div className="password-field">
-              <input
-                id="reset-password"
-                type={showPassword ? 'text' : 'password'}
-                {...register('password')}
-                placeholder="Enter new password"
-                autoComplete="new-password"
-              />
+            <Button type="submit" className="w-full" disabled={!isValid || isSubmitting}>
+              {isSubmitting ? <Loader /> : 'Reset password'}
+            </Button>
+
+            <div className="text-center text-sm text-[var(--text-muted)]">
               <button
                 type="button"
-                className="toggle"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                onClick={() => setShowPassword((prev) => !prev)}
+                className="underline transition-colors hover:text-[var(--text-primary)]"
+                onClick={() => navigate(paths.auth.login())}
               >
-                {showPassword ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
+                Back to login
               </button>
             </div>
-            {errors.password && <div className="error">{errors.password.message}</div>}
-          </div>
-          <div className="actions">
-            <motion.button
-              type="submit"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              disabled={!isValid || isSubmitting}
-            >
-              {isSubmitting ? <Loader /> : 'Reset password'}
-            </motion.button>
-          </div>
-        </form>
-
-        <div className="links">
-          <span onClick={() => navigate(paths.auth.login())}>Back to login</span>
-        </div>
-      </motion.div>
-    </div>
+          </form>
+        </AuthCard>
+      </div>
+    </AuthShell>
   );
 };
 

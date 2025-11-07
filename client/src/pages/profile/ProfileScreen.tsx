@@ -1,10 +1,6 @@
 import { useState, type ReactNode } from 'react'
-import { useDispatch } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
 import AddressManager from '@/pages/Profile/components/AddressManager'
-import { paths } from '@/routes/paths'
-import type { AppDispatch } from '@/store'
-import { logoutUser } from '@/store/slices/authSlice'
+import { useUnifiedLogout } from '@/auth/hooks'
 
 type TabKey = 'account' | 'orders' | 'requests' | 'notifications'
 
@@ -174,8 +170,7 @@ const NOTIFS = [
 ]
 
 const ProfileScreen = () => {
-  const dispatch = useDispatch<AppDispatch>()
-  const navigate = useNavigate()
+  const unifiedLogout = useUnifiedLogout()
 
   const tabs: Array<{ key: TabKey; label: string }> = [
     { key: 'account', label: 'Account' },
@@ -192,9 +187,7 @@ const ProfileScreen = () => {
   const rating = 4.7
 
   const handleLogout = () => {
-    void dispatch(logoutUser()).finally(() => {
-      navigate(paths.auth.login(), { replace: true })
-    })
+    void unifiedLogout()
   }
 
   return (

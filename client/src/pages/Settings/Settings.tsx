@@ -1,22 +1,18 @@
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { logoutUser } from '../../store/slices/authSlice';
 import { setLanguage, setNotificationPrefs } from '../../store/slices/settingsSlice';
 import type { AppDispatch, RootState } from '../../store';
-import { paths } from '@/routes/paths';
+import { useUnifiedLogout } from '@/auth/hooks';
 import ThemeToggle from '@/components/ThemeToggle';
 import styles from './Settings.module.scss';
 
 const Settings = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
+  const unifiedLogout = useUnifiedLogout();
   const settings = useSelector((state: RootState) => state.settings);
 
   const handleLogout = () => {
-    void dispatch(logoutUser()).finally(() => {
-      navigate(paths.auth.login(), { replace: true });
-    });
+    void unifiedLogout();
   };
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

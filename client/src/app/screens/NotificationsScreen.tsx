@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CalendarDays, CheckCircle2, Gift, Inbox, PackageCheck, Trash2 } from 'lucide-react'
 import type { AppDispatch, RootState } from '@/store'
-import { fetchNotifs, markNotifRead, removeNotif, type Notif } from '@/store/notifs'
+import { clearAll, fetchNotifs, markAllAsRead, markNotifRead, removeNotif, type Notif } from '@/store/notifs'
 import { Badge, Button, Card, Chip, IconButton } from '@/app/components/primitives'
 import { formatDateTime } from '@/utils/date'
 import showToast from '@/components/ui/Toast'
@@ -79,25 +79,26 @@ const NotificationsScreen = () => {
   }, [dispatch])
 
   const handleMarkAllRead = useCallback(async () => {
-    const unread = filteredItems.filter((notif) => !notif.read)
-    if (unread.length === 0) return
-    const responses = await Promise.allSettled(unread.map((notif) => dispatch(markNotifRead(notif._id)).unwrap()))
-    const failed = responses.some((result) => result.status === 'rejected')
-    showToast(
-      failed ? 'Some notifications could not be marked as read. Please try again.' : 'All notifications marked as read.',
-      failed ? 'error' : 'success',
-    )
-  }, [dispatch, filteredItems])
+    if (unreadCount === 0) return
+    try {
+      await http.patch('/api/notifications/mark-read')
+      dispatch(markAllAsRead())
+      showToast('All notifications marked as read.', 'success')
+    } catch (err) {
+      showToast(toErrorMessage(err) || 'Unable to mark notifications as read', 'error')
+    }
+  }, [dispatch, unreadCount])
 
   const handleClearAll = useCallback(async () => {
+    if (notifsState.items.length === 0) return
     try {
-      await http.delete('api/notifications')
+      await http.delete('/api/notifications')
+      dispatch(clearAll())
       showToast('All notifications cleared', 'success')
-      void dispatch(fetchNotifs({ page: 1, limit: 20 }))
     } catch (err) {
       showToast(toErrorMessage(err) || 'Unable to clear notifications', 'error')
     }
-  }, [dispatch])
+  }, [dispatch, notifsState.items.length])
 
   const handleLoadMore = useCallback(() => {
     if (!notifsState.hasMore || notifsState.status === 'loading') return

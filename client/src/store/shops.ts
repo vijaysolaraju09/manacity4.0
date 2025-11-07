@@ -28,8 +28,14 @@ interface Product {
   _id: string;
   name: string;
   pricePaise: number;
+  price?: number;
+  mrp?: number;
+  mrpPaise?: number;
   image?: string;
   available?: boolean;
+  variantId?: string;
+  description?: string;
+  stock?: number;
   shopId?: string;
 }
 
@@ -115,6 +121,43 @@ const normalizeShopProduct = (
   });
 
   normalized.pricePaise = pricePaise;
+  const rupeePrice =
+    typeof input.price === "number"
+      ? input.price
+      : Number.isFinite(Number(input.price))
+      ? Number(input.price)
+      : undefined;
+  if (typeof rupeePrice === "number" && Number.isFinite(rupeePrice)) {
+    normalized.price = rupeePrice;
+  }
+
+  const normalizedMrpPaise = sanitizePaise(
+    pickPaise(
+      input.mrpPaise,
+      input.mrp_paise,
+      input.mrpInPaise,
+      typeof input.mrp === "number" ? rupeesToPaise(input.mrp) : undefined,
+    ),
+  );
+  if (normalizedMrpPaise > 0) {
+    normalized.mrpPaise = normalizedMrpPaise;
+    normalized.mrp = Math.round((normalizedMrpPaise / 100) * 100) / 100;
+  } else if (typeof input.mrp === "number" && Number.isFinite(input.mrp)) {
+    normalized.mrp = input.mrp;
+  }
+
+  if (typeof input.variantId === "string" && input.variantId) {
+    normalized.variantId = input.variantId;
+  }
+
+  if (typeof input.description === "string" && input.description.trim().length > 0) {
+    normalized.description = input.description;
+  }
+
+  const stockValue = Number((input as Record<string, unknown>)?.stock ?? (input as Record<string, unknown>)?.quantity);
+  if (Number.isFinite(stockValue)) {
+    normalized.stock = Math.max(0, Math.round(stockValue));
+  }
 
   if (!normalized.shop && resolvedShopId) {
     normalized.shop = {

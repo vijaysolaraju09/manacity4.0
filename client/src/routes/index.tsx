@@ -43,6 +43,7 @@ const EventDetailPage = lazy(() => import('@/pages/Events/EventDetail'));
 const EventRegisterPage = lazy(() => import('@/pages/Events/RegisterEvent'));
 const ServicesHub = lazy(() => import('@/pages/Services/ServicesHub'));
 const ServicesCatalog = lazy(() => import('@/pages/Services/ServicesCatalog'));
+const ServiceDetails = lazy(() => import('@/pages/Services/ServiceDetails'));
 const PublicRequests = lazy(() => import('@/pages/Services/PublicRequests'));
 const MyRequests = lazy(() => import('@/pages/Services/MyRequests'));
 const ServiceProviders = lazy(() => import('@/pages/Services/ServiceProviders'));
@@ -158,6 +159,11 @@ const AppRoutes = () => (
             <Route path="requests" element={<PublicRequests />} />
             <Route path="requests/mine" element={<MyRequests />} />
           </Route>
+          <Route
+            key="service-detail"
+            path="services/:serviceId"
+            element={withSuspense(ServiceDetails, <RouteSkeleton label="Service details" />)}
+          />
           <Route
             key="service-request"
             path="services/request"

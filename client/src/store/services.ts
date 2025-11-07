@@ -17,11 +17,20 @@ interface ProvidersEntry {
   error: string | null;
 }
 
+interface ServiceDetailState {
+  serviceId: string | null;
+  currentService: Service | null;
+  providers: ServiceProvider[];
+  loading: boolean;
+  error: string | null;
+}
+
 interface ServicesState {
   items: Service[];
   status: RequestStatus;
   error: string | null;
   providers: Record<string, ProvidersEntry>;
+  detail: ServiceDetailState;
   createStatus: RequestStatus;
   createError: string | null;
   updateStatus: RequestStatus;
@@ -33,6 +42,13 @@ const initialState: ServicesState = {
   status: 'idle',
   error: null,
   providers: {},
+  detail: {
+    serviceId: null,
+    currentService: null,
+    providers: [],
+    loading: false,
+    error: null,
+  },
   createStatus: 'idle',
   createError: null,
   updateStatus: 'idle',
@@ -49,6 +65,10 @@ const normalizeService = (data: any): Service => ({
   createdBy: data.createdBy ?? undefined,
   createdAt: data.createdAt,
   updatedAt: data.updatedAt,
+  title: data.title ?? undefined,
+  images: Array.isArray(data.images)
+    ? data.images.map((image: unknown) => String(image))
+    : undefined,
 });
 
 const normalizeProvider = (data: any): ServiceProvider => ({
@@ -84,6 +104,27 @@ const normalizeProvider = (data: any): ServiceProvider => ({
   profession: data.profession ?? '',
   source: data.source ?? undefined,
 });
+
+interface CreateServiceRequestInput {
+  serviceId: string;
+  providerId?: string;
+  notes?: string;
+}
+
+export const fetchServiceById = createAsyncThunk(
+  'services/fetchById',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await http.get(`/services/${id}`);
+      const data = res?.data?.data ?? res?.data ?? {};
+      const serviceRaw = data.service ?? data;
+      const service = normalizeService(serviceRaw);
+      return service;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
+  }
+);
 
 export const fetchServices = createAsyncThunk(
   'services/fetchAll',
@@ -151,6 +192,18 @@ export const updateService = createAsyncThunk(
   }
 );
 
+export const createServiceRequest = createAsyncThunk(
+  'services/createRequest',
+  async (payload: CreateServiceRequestInput, { rejectWithValue }) => {
+    try {
+      await http.post('/service-requests', payload);
+      return true;
+    } catch (err) {
+      return rejectWithValue(toErrorMessage(err));
+    }
+  }
+);
+
 const servicesSlice = createSlice({
   name: 'services',
   initialState: initialState,
@@ -169,6 +222,28 @@ const servicesSlice = createSlice({
         state.status = 'failed';
         state.error = (action.payload as string) || action.error.message || 'Failed to load services';
       })
+      .addCase(fetchServiceById.pending, (state, action) => {
+        state.detail.serviceId = action.meta.arg as string;
+        state.detail.loading = true;
+        state.detail.error = null;
+      })
+      .addCase(fetchServiceById.fulfilled, (state, action) => {
+        state.detail.loading = false;
+        if ((state.detail.serviceId ?? action.meta.arg) === action.payload._id) {
+          state.detail.error = null;
+          state.detail.serviceId = action.payload._id;
+          state.detail.currentService = action.payload;
+        }
+        const index = state.items.findIndex((item) => item._id === action.payload._id);
+        if (index >= 0) state.items[index] = action.payload;
+        else state.items.push(action.payload);
+      })
+      .addCase(fetchServiceById.rejected, (state, action) => {
+        state.detail.loading = false;
+        if (state.detail.serviceId === (action.meta.arg as string)) {
+          state.detail.error = (action.payload as string) || action.error.message || 'Failed to load service';
+        }
+      })
       .addCase(fetchServiceProviders.pending, (state, action) => {
         const serviceId = action.meta.arg;
         state.providers[serviceId] = {
@@ -178,6 +253,13 @@ const servicesSlice = createSlice({
           status: 'loading',
           error: null,
         };
+        state.detail.serviceId = serviceId;
+        if (!state.detail.currentService || state.detail.currentService._id !== serviceId) {
+          state.detail.currentService = state.providers[serviceId]?.service ?? null;
+        }
+        state.detail.providers = [];
+        state.detail.loading = true;
+        state.detail.error = null;
       })
       .addCase(fetchServiceProviders.fulfilled, (state, action) => {
         const { serviceId, service, providers, fallbackProviders } = action.payload;
@@ -193,6 +275,16 @@ const servicesSlice = createSlice({
           if (index >= 0) state.items[index] = service;
           else state.items.push(service);
         }
+        if (state.detail.serviceId === serviceId) {
+          if (service) {
+            state.detail.currentService = service;
+          } else if (!state.detail.currentService && state.providers[serviceId]?.service) {
+            state.detail.currentService = state.providers[serviceId]?.service ?? null;
+          }
+          state.detail.providers = providers;
+          state.detail.loading = false;
+          state.detail.error = null;
+        }
       })
       .addCase(fetchServiceProviders.rejected, (state, action) => {
         const serviceId = action.meta.arg;
@@ -203,6 +295,12 @@ const servicesSlice = createSlice({
           status: 'failed',
           error: (action.payload as string) || action.error.message || 'Failed to load providers',
         };
+        if (state.detail.serviceId === serviceId) {
+          state.detail.providers = [];
+          state.detail.error =
+            (action.payload as string) || action.error.message || 'Failed to load providers';
+          state.detail.loading = false;
+        }
       })
       .addCase(createService.pending, (state) => {
         state.createStatus = 'loading';

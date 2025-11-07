@@ -114,7 +114,7 @@ const ServiceProviders = () => {
               <ServiceCard
                 key={related._id}
                 service={related}
-                onClick={() => navigate(paths.services.detail(related._id))}
+                to={paths.services.detail(related._id)}
               />
             ))}
           </div>

@@ -86,6 +86,7 @@ const EventsHub = () => {
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [q, setQ] = useState('');
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 60000);
@@ -119,21 +120,30 @@ const EventsHub = () => {
     return Array.isArray(eventsState.items) ? (eventsState.items as ExtendedEventSummary[]) : [];
   }, [eventsState.items]);
 
+  const filteredEvents = useMemo(() => {
+    const search = q.trim().toLowerCase();
+    if (!search) return items;
+    return items.filter((event) => {
+      const label = (event?.title || event?.name || '').toLowerCase();
+      return label.includes(search);
+    });
+  }, [items, q]);
+
   const loading = eventsState.loading && items.length === 0;
   const error = eventsState.error;
 
-  const registeredItems = useMemo(() => items.filter((item) => isRegistered(item)), [items]);
+  const registeredItems = useMemo(() => filteredEvents.filter((item) => isRegistered(item)), [filteredEvents]);
   const registeredIds = useMemo(() => new Set(registeredItems.map((item) => item._id)), [registeredItems]);
 
   const groupedItems = useMemo(() => {
-    const base = items.filter((item) => !registeredIds.has(item._id));
+    const base = filteredEvents.filter((item) => !registeredIds.has(item._id));
     return {
       all: base,
       events: base.filter((item) => item.type !== 'tournament'),
       tournaments: base.filter((item) => item.type === 'tournament'),
       registrations: registeredItems,
     } satisfies Record<TabKey, ExtendedEventSummary[]>;
-  }, [items, registeredItems, registeredIds]);
+  }, [filteredEvents, registeredItems, registeredIds]);
 
   const activeList = useMemo(() => groupedItems[activeTab] ?? [], [groupedItems, activeTab]);
 
@@ -165,7 +175,7 @@ const EventsHub = () => {
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [activeTab]);
+  }, [activeTab, q]);
 
   const handleShowMore = useCallback(async () => {
     if (activeTab === 'registrations') return;
@@ -539,6 +549,17 @@ const EventsHub = () => {
           <span>Refresh</span>
         </button>
       </header>
+
+      <div className={styles.searchWrapper}>
+        <input
+          className={styles.searchInput}
+          type="text"
+          placeholder="Search events…"
+          value={q}
+          onChange={(event) => setQ(event.target.value)}
+          aria-label="Search events"
+        />
+      </div>
 
       <nav className={styles.tabs} aria-label="Events filters">
         {TABS.map((tab) => (

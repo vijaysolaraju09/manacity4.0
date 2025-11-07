@@ -10,6 +10,8 @@ export interface Service {
   updatedAt?: string;
   serviceArea?: string;
   startingPricePaise?: number;
+  title?: string;
+  images?: string[];
 }
 
 export interface ServiceProviderUser {

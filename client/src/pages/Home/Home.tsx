@@ -394,7 +394,7 @@ const Section = ({
               <ServiceCard
                 key={item._id}
                 service={item}
-                onClick={() => navigate(paths.services.detail(item._id))}
+                to={paths.services.detail(item._id)}
               />
             );
           }

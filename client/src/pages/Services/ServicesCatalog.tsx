@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styles from './ServicesCatalog.module.scss';
@@ -14,6 +14,13 @@ const ServicesCatalog = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const servicesState = useSelector((state: RootState) => state.services);
+  const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedQ(q.trim().toLowerCase()), 300);
+    return () => window.clearTimeout(id);
+  }, [q]);
 
   useEffect(() => {
     if (servicesState.status === 'idle') {
@@ -24,6 +31,15 @@ const ServicesCatalog = () => {
   const items = Array.isArray(servicesState.items) ? servicesState.items : [];
   const activeCount = items.filter((service) => service.isActive !== false).length;
   const upcomingCount = Math.max(0, items.length - activeCount);
+
+  const filteredServices = useMemo(() => {
+    if (!Array.isArray(items)) return [] as typeof items;
+    if (!debouncedQ) return items;
+    return items.filter((service) => {
+      const label = (service?.name || service?.description || '').toLowerCase();
+      return label.includes(debouncedQ);
+    });
+  }, [items, debouncedQ]);
 
   const handleRetry = () => {
     dispatch(fetchServices(undefined));
@@ -52,6 +68,17 @@ const ServicesCatalog = () => {
             Refresh
           </Button>
         </div>
+      </div>
+
+      <div className={styles.searchWrapper}>
+        <input
+          type="text"
+          value={q}
+          onChange={(event) => setQ(event.target.value)}
+          placeholder="Search services…"
+          className={styles.searchInput}
+          aria-label="Search services"
+        />
       </div>
 
       {servicesState.status === 'loading' ? (
@@ -83,11 +110,11 @@ const ServicesCatalog = () => {
             </div>
           </div>
           <div className={styles.grid}>
-            {items.map((service) => (
+            {filteredServices.map((service) => (
               <ServiceCard
                 key={service._id}
                 service={service}
-                onClick={() => navigate(paths.services.detail(service._id))}
+                to={paths.services.detail(service._id)}
               />
             ))}
           </div>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppSelector } from '@/store/hooks';
 import fallbackImage from '@/assets/no-image.svg';

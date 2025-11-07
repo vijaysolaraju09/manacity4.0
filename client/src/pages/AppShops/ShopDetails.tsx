@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchShopById, fetchProductsByShop } from '@/store/shops/actions';
@@ -11,8 +11,8 @@ export default function ShopDetails() {
   const dispatch = useAppDispatch();
   const shopState = useAppSelector((s) => s.shops);
   const products = shopState.products ?? [];
-  const shop = shopState.item ?? shopState.items?.find((x) => x._id === shopId) ?? {};
-  const coverImage = shop.cover || shop.banner || shop.image;
+  const shop = (shopState.item ?? shopState.items?.find((x) => x._id === shopId)) ?? null;
+  const coverImage = shop?.cover || shop?.banner || shop?.image || null;
   const [productQuery, setProductQuery] = useState('');
   const [sort, setSort] = useState<'priceAsc' | 'priceDesc' | 'none'>('none');
 
@@ -43,15 +43,15 @@ export default function ShopDetails() {
         &larr; Back
       </button>
       <div className="rounded-2xl overflow-hidden border border-borderc/40 bg-surface-1 shadow-inner-card mb-4">
-        {coverImage && <img src={coverImage} alt={shop.name} className="w-full h-40 object-cover" />}
+        {coverImage && <img src={coverImage} alt={shop?.name ?? 'Shop cover'} className="w-full h-40 object-cover" />}
         <div className="p-4">
-          <h1 className="text-2xl font-bold">{shop.name}</h1>
-          <div className="text-text-muted">{shop.address}</div>
+          <h1 className="text-2xl font-bold">{shop?.name ?? 'Shop'}</h1>
+          <div className="text-text-muted">{shop?.address ?? 'Address unavailable'}</div>
           <div className="flex items-center gap-3 mt-2 text-sm">
-            <span className={`${shop.isOpen ? 'text-emerald-500' : 'text-red-500'}`}>
-              {shop.isOpen ? 'Open' : 'Closed'}
+            <span className={`${shop?.isOpen ? 'text-emerald-500' : 'text-red-500'}`}>
+              {shop?.isOpen ? 'Open' : 'Closed'}
             </span>
-            <span className="text-text-muted">{shop.category}</span>
+            <span className="text-text-muted">{shop?.category ?? 'General'}</span>
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-3">
             <input

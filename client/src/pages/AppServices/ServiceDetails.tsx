@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import showToast from '@/components/ui/Toast';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchServiceById, fetchServiceProviders, createServiceRequest } from '@/store/services/actions';
 
@@ -55,10 +55,10 @@ export default function ServiceDetails() {
                   notes: notes.trim() || undefined,
                 }) as any,
               );
-              toast.success('Service request submitted');
+              showToast('Service request submitted', 'success');
               nav('/services?tab=my');
             } catch (err: any) {
-              toast.error(err?.response?.data?.message || 'Failed to submit');
+              showToast(err?.response?.data?.message || 'Failed to submit', 'error');
             }
           }}
           className="rounded-2xl border border-borderc/40 bg-surface-1 p-4 shadow-inner-card space-y-4"

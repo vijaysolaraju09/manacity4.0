@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchProductById } from '@/store/products/actions';
@@ -9,7 +9,7 @@ export default function ProductDetails() {
   const { productId = '' } = useParams();
   const nav = useNavigate();
   const dispatch = useAppDispatch();
-  const { item: current, status, error } = useAppSelector((s) => s.products);
+  const { item: current, status, error } = useAppSelector((s) => s.catalog);
 
   useEffect(() => {
     if (productId) {

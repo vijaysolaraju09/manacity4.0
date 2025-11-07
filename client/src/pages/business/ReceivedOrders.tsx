@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { toast } from 'react-hot-toast';
+import { useEffect, useState } from 'react';
+import showToast from '@/components/ui/Toast';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import api from '@/utils/api';
 import { fetchReceivedOrders } from '@/store/orders';
@@ -69,12 +69,12 @@ export default function ReceivedOrders() {
                     } catch (err) {
                       // Notification dispatch failures are non-blocking.
                     }
-                    toast.success(`Order ${modal.action}`);
+                    showToast(`Order ${modal.action}`, 'success');
                     setModal(null);
                     setNote('');
                     void dispatch(fetchReceivedOrders());
                   } catch (e: any) {
-                    toast.error(e?.response?.data?.message || 'Update failed');
+                    showToast(e?.response?.data?.message || 'Update failed', 'error');
                   }
                 }}
                 type="button"

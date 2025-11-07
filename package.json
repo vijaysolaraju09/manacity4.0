@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "postinstall": "patch-package",
     "dev": "concurrently \"npm run client\" \"npm run server\"",
     "server": "cd server && npm run dev",
     "client": "cd client && npm start",
     "qa:open": "node -e \"const {spawnSync}=require('child_process'); const path=require('path'); const fs=require('fs'); const file=path.join(__dirname,'docs','QA-CHECKLIST.md'); if(!fs.existsSync(file)){console.error('QA checklist not found at', file); process.exit(1);} const platform=process.platform; let opened=false; try { if(platform==='win32'){ const result=spawnSync('cmd.exe',['/c','start','', file],{stdio:'ignore'}); opened=result.status===0; } else if(platform==='darwin'){ const result=spawnSync('open',[file],{stdio:'ignore'}); opened=result.status===0; } else { const result=spawnSync('xdg-open',[file],{stdio:'ignore'}); opened=result.status===0; } } catch (err) {} if(!opened){ console.log(file); }\""
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0"
   }
 }

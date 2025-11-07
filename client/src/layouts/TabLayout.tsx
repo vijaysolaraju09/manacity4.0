@@ -94,8 +94,11 @@ const TabLayout = () => {
   const themeLabel = `${theme.charAt(0).toUpperCase()}${theme.slice(1)}`;
 
   useEffect(() => {
-    if (location.pathname === paths.root()) navigate(paths.home());
-  }, [location.pathname, navigate]);
+    if (!isAuthenticated) return;
+    if (location.pathname === paths.root()) {
+      navigate(paths.home(), { replace: true });
+    }
+  }, [isAuthenticated, location.pathname, navigate]);
 
   return (
     <div className="tab-layout bg-surface0 dark:bg-surface0 text-hi">

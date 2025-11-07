@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import showToast from '@/components/ui/Toast';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchEventById } from '@/store/events.slice';
 import { api } from '@/utils/api';
@@ -26,8 +26,10 @@ export default function EventDetails() {
     return <div className="p-6">Event not found.</div>;
   }
 
-  const registrationClose = event.registrationClose
-    ? new Date(event.registrationClose).getTime()
+  const registrationClose = event.registrationCloseAt
+    ? Date.parse(event.registrationCloseAt)
+    : event.regCloseAt
+    ? Date.parse(event.regCloseAt)
     : undefined;
   const isClosed = registrationClose !== undefined && registrationClose < Date.now();
 
@@ -38,9 +40,9 @@ export default function EventDetails() {
       </button>
       <div className="rounded-2xl border border-borderc/40 bg-surface-1 p-4 shadow-inner-card">
         <h1 className="text-3xl font-bold mb-3">{event.title}</h1>
-        {(event.cover || event.coverUrl) && (
+        {event.coverUrl && (
           <img
-            src={event.cover || event.coverUrl}
+            src={event.coverUrl}
             alt={event.title}
             className="w-full h-64 object-cover rounded-xl mb-4"
           />
@@ -58,10 +60,10 @@ export default function EventDetails() {
             onClick={async () => {
               try {
                 await api.post(`/api/events/${event._id}/register`, {});
-                toast.success('Registered');
+                showToast('Registered', 'success');
                 void dispatch(fetchEventById(event._id));
               } catch (e: any) {
-                toast.error(e?.response?.data?.message || 'Registration failed');
+                showToast(e?.response?.data?.message || 'Registration failed', 'error');
               }
             }}
             type="button"
@@ -77,7 +79,7 @@ export default function EventDetails() {
             className="btn btn-ghost btn-circle"
             target="_blank"
             rel="noreferrer"
-            href={`https://wa.me/${event.adminPhone || '919999999999'}?text=${encodeURIComponent(
+            href={`https://wa.me/${event.contact?.phone || '919999999999'}?text=${encodeURIComponent(
               `Hi regarding ${event.title || 'event'}`,
             )}`}
           >

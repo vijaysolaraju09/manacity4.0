@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import styles from './ServiceCard.module.scss';
 import type { Service } from '@/types/services';
 import { cn } from '@/lib/utils';
 
 interface ServiceCardProps {
   service: Service;
+  to?: string;
   onClick?: () => void;
   footer?: ReactNode;
 }
 
-const ServiceCard = ({ service, onClick, footer }: ServiceCardProps) => {
+const ServiceCard = ({ service, to, onClick, footer }: ServiceCardProps) => {
   const rawIcon = service.icon?.trim();
   const isImageIcon = Boolean(rawIcon && /^(https?:)?\/\//.test(rawIcon));
   const icon = rawIcon && !isImageIcon ? rawIcon : service.name?.charAt(0) ?? 'S';
@@ -25,21 +27,8 @@ const ServiceCard = ({ service, onClick, footer }: ServiceCardProps) => {
     }
   }
 
-  return (
-    <div
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      className={cn('card', styles.card)}
-      onClick={onClick}
-      onKeyDown={(event) => {
-        if (!onClick) return;
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onClick();
-        }
-      }}
-      aria-label={service.name}
-    >
+  const content = (
+    <>
       <div className={styles.header}>
         <div className={styles.icon} aria-hidden="true">
           {isImageIcon ? (
@@ -73,6 +62,33 @@ const ServiceCard = ({ service, onClick, footer }: ServiceCardProps) => {
         </span>
       </div>
       {footer ? <div className={styles.footer}>{footer}</div> : null}
+    </>
+  );
+
+  if (to) {
+    return (
+      <Link to={to} className={cn('card', styles.card)} aria-label={service.name} onClick={onClick}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      className={cn('card', styles.card)}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (!onClick) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      aria-label={service.name}
+    >
+      {content}
     </div>
   );
 };

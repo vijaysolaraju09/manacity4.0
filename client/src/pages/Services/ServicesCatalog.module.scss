@@ -94,6 +94,30 @@
   margin-top: 0.75rem;
 }
 
+.searchWrapper {
+  margin: 0.75rem 0 1.5rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #111827;
+  outline: none;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.searchInput::placeholder {
+  color: #6b7280;
+}
+
+.searchInput:focus {
+  border-color: rgba(79, 70, 229, 0.65);
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25);
+}
+
 .empty {
   display: flex;
   flex-direction: column;

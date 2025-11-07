@@ -4,14 +4,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import {
-  BadgeCheck,
   BriefcaseBusiness,
+  ClipboardList,
   Home,
   LogOut,
   Mail,
   MapPin,
   Phone,
-  ShieldCheck,
   Sparkles,
   UserRound,
   UserRoundCog,
@@ -38,7 +37,6 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   getCurrentUser,
   requestBusiness,
-  requestVerification,
   updateProfile,
 } from '@/api/profile';
 import { createZodResolver } from '@/lib/createZodResolver';
@@ -83,31 +81,6 @@ const editProfileSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']),
 });
 
-const verificationSchema = z.object({
-  profession: z.string().trim().min(1, 'Profession is required'),
-  bio: z
-    .string()
-    .trim()
-    .max(500, 'Bio must be 500 characters or less')
-    .optional(),
-  portfolio: z
-    .string()
-    .trim()
-    .refine(
-      (value) =>
-        !value ||
-        value
-          .split(',')
-          .map((item) => item.trim())
-          .filter(Boolean)
-          .every((item) => /^https?:\/\//i.test(item)),
-      {
-        message: 'Portfolio URLs must be valid links separated by commas',
-      },
-    )
-    .optional(),
-});
-
 const businessSchema = z.object({
   name: z.string().trim().min(1, 'Business name is required'),
   category: z.string().trim().min(1, 'Category is required'),
@@ -124,9 +97,7 @@ const businessSchema = z.object({
 });
 
 type EditProfileFormValues = z.infer<typeof editProfileSchema>;
-type VerificationFormValues = z.infer<typeof verificationSchema>;
 type BusinessFormValues = z.infer<typeof businessSchema>;
-
 type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
 interface InfoRowProps {
@@ -219,6 +190,33 @@ const ProfileSkeleton = () => (
   </div>
 );
 
+interface QuickActionProps {
+  title: string;
+  subtitle: string;
+  to: string;
+  icon: LucideIcon;
+}
+
+const QuickAction = ({ title, subtitle, to, icon: Icon }: QuickActionProps) => {
+  const navigate = useNavigate();
+
+  return (
+    <button
+      type="button"
+      onClick={() => navigate(to)}
+      className="flex w-full items-center gap-3 rounded-xl border border-slate-200/70 bg-white/80 px-4 py-3 text-left transition hover:border-[color:var(--brand-400)] hover:shadow-sm dark:border-slate-700 dark:bg-white/40"
+    >
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--brand-500)]/15 text-[color:var(--brand-600)] dark:bg-[color:var(--accent-500)]/20 dark:text-[color:var(--accent-200)]">
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      </span>
+      <span>
+        <span className="block text-sm font-semibold text-slate-900 dark:text-white">{title}</span>
+        <span className="block text-xs text-slate-600 dark:text-slate-300">{subtitle}</span>
+      </span>
+    </button>
+  );
+};
+
 const Profile = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -229,7 +227,6 @@ const Profile = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isVerifyOpen, setIsVerifyOpen] = useState(false);
   const [isBusinessOpen, setIsBusinessOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'preferences'>('profile');
 
@@ -244,15 +241,6 @@ const Profile = () => {
       bio: storedUser?.bio ?? '',
       avatarUrl: storedUser?.avatarUrl ?? '',
       theme: storedUser?.preferences?.theme ?? 'light',
-    },
-  });
-
-  const verificationForm = useForm<VerificationFormValues>({
-    resolver: createZodResolver(verificationSchema),
-    defaultValues: {
-      profession: storedUser?.profession ?? '',
-      bio: storedUser?.bio ?? '',
-      portfolio: '',
     },
   });
 
@@ -298,11 +286,6 @@ const Profile = () => {
       avatarUrl: profile.avatarUrl ?? '',
       theme: profile.preferences?.theme ?? 'light',
     });
-    verificationForm.reset({
-      profession: profile.profession ?? '',
-      bio: profile.bio ?? '',
-      portfolio: '',
-    });
     businessForm.reset({
       name: '',
       category: '',
@@ -311,7 +294,7 @@ const Profile = () => {
       description: '',
       image: '',
     });
-  }, [profile, editForm, verificationForm, businessForm]);
+  }, [profile, editForm, businessForm]);
 
   const refreshSilently = useCallback(async () => {
     try {
@@ -319,7 +302,6 @@ const Profile = () => {
       setProfile(data);
       dispatch(setUser(data));
     } catch (err) {
-      // Surface the error but avoid breaking the current view.
       showToast(toErrorMessage(err), 'error');
     }
   }, [dispatch]);
@@ -345,32 +327,6 @@ const Profile = () => {
       await refreshSilently();
       showToast('Profile updated successfully', 'success');
       setIsEditOpen(false);
-    } catch (err) {
-      showToast(toErrorMessage(err), 'error');
-    }
-  };
-
-  const handleVerificationSubmit: SubmitHandler<VerificationFormValues> = async (values) => {
-    const profession = typeof values.profession === 'string' ? values.profession : '';
-    const bio = typeof values.bio === 'string' ? values.bio : undefined;
-    const portfolioSource = typeof values.portfolio === 'string' ? values.portfolio : undefined;
-
-    const portfolio = portfolioSource
-      ? portfolioSource
-          .split(',')
-          .map((entry: string) => entry.trim())
-          .filter(Boolean)
-      : undefined;
-
-    try {
-      await requestVerification({
-        profession: profession.trim(),
-        bio: bio?.trim() || undefined,
-        portfolio,
-      });
-      await refreshSilently();
-      showToast('Verification request submitted', 'success');
-      setIsVerifyOpen(false);
     } catch (err) {
       showToast(toErrorMessage(err), 'error');
     }
@@ -405,28 +361,6 @@ const Profile = () => {
       .slice(0, 2)
       .toUpperCase();
   }, [user?.name]);
-
-  const quickActions = useMemo(() => {
-    if (!user) return [] as { label: string; path: string }[];
-    const actions: { label: string; path: string }[] = [];
-    if (user.role === 'business') {
-      actions.push(
-        { label: 'Manage Products', path: paths.manageProducts() },
-        { label: 'Received Orders', path: paths.orders.received() },
-      );
-    }
-    const shouldShowServiceOrders = user.role === 'business' || user.isVerified;
-    if (shouldShowServiceOrders) {
-      const hasAction = actions.some((action) => action.path === paths.orders.service());
-      if (!hasAction) {
-        actions.push({ label: 'Service Orders', path: paths.orders.service() });
-      }
-    }
-    if (actions.length === 0) {
-      actions.push({ label: 'My Orders', path: paths.orders.mine() });
-    }
-    return actions;
-  }, [user]);
 
   const themeLabel = useMemo(() => {
     const theme = user?.preferences?.theme ?? 'light';
@@ -479,13 +413,12 @@ const Profile = () => {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <InfoRow icon={UserRoundCog} label="Role" value={user?.role} />
-              <InfoRow icon={ShieldCheck} label="Verification" value={user?.verificationStatus} />
             </div>
           </div>
         ),
       },
     ],
-    [themeLabel, user?.address, user?.bio, user?.email, user?.location, user?.phone, user?.profession, user?.role, user?.verificationStatus],
+    [themeLabel, user?.address, user?.bio, user?.email, user?.location, user?.phone, user?.profession, user?.role],
   );
 
   if (loadState === 'loading') {
@@ -499,7 +432,7 @@ const Profile = () => {
           <div className={cn(styles.card, 'p-6 sm:p-8')}>
             <div className={styles.cardHeader}>
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
-                <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+                <UserRound className="h-5 w-5" aria-hidden="true" />
               </span>
               Unable to load profile
             </div>
@@ -538,13 +471,12 @@ const Profile = () => {
   }
 
   const businessDisabled = user.role === 'business' || user.businessStatus === 'pending';
-  const verificationDisabled = user.verificationStatus === 'approved';
-  const businessButtonLabel = user.role === 'business'
-    ? 'Business account active'
-    : user.businessStatus === 'pending'
+  const businessButtonLabel =
+    user.role === 'business'
+      ? 'Business account active'
+      : user.businessStatus === 'pending'
       ? 'Business request pending'
       : 'Request business';
-  const verificationButtonLabel = verificationDisabled ? 'Verified' : 'Request verification';
 
   return (
     <>
@@ -588,7 +520,7 @@ const Profile = () => {
                         Manage how your information appears across Manacity.
                       </p>
                     </div>
-                </div>
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
@@ -603,11 +535,6 @@ const Profile = () => {
                   <StatusBadge>
                     <UserRound className="h-4 w-4" aria-hidden="true" /> {user.role}
                   </StatusBadge>
-                  {user.verificationStatus !== 'none' ? (
-                    <StatusBadge variant={user.verificationStatus === 'approved' ? 'success' : 'info'}>
-                      <BadgeCheck className="h-4 w-4" aria-hidden="true" /> {user.verificationStatus}
-                    </StatusBadge>
-                  ) : null}
                   {user.businessStatus && user.businessStatus !== 'none' ? (
                     <StatusBadge variant={user.businessStatus === 'approved' ? 'success' : 'warning'}>
                       <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" /> {user.businessStatus}
@@ -615,24 +542,18 @@ const Profile = () => {
                   ) : null}
                 </div>
                 <div className={styles.divider} />
-                {quickActions.length > 0 ? (
+                {user.role === 'business' ? (
                   <>
                     <div className={styles.divider} />
                     <div>
                       <h2 className={styles.sectionTitle}>Quick navigation</h2>
-                      <div className="flex flex-wrap gap-2">
-                        {quickActions.map((action) => (
-                          <Button
-                            key={action.label}
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="rounded-lg border-slate-200/80 bg-white/80 text-slate-700 transition hover:border-[color:var(--brand-400)] hover:text-[color:var(--brand-600)] dark:border-slate-700 dark:bg-white/40 dark:text-slate-200 dark:hover:border-[color:var(--accent-500)] dark:hover:text-[color:var(--accent-400)]"
-                            onClick={() => navigate(action.path)}
-                          >
-                            {action.label}
-                          </Button>
-                        ))}
+                      <div className="grid gap-3">
+                        <QuickAction
+                          title="Service Orders"
+                          subtitle="Manage and track assigned service requests"
+                          to="/business/service-orders"
+                          icon={ClipboardList}
+                        />
                       </div>
                     </div>
                   </>
@@ -648,13 +569,6 @@ const Profile = () => {
                     onClick={() => setIsBusinessOpen(true)}
                   >
                     {businessButtonLabel}
-                  </Button>
-                  <Button
-                    className="flex-1 sm:flex-none"
-                    disabled={verificationDisabled}
-                    onClick={() => setIsVerifyOpen(true)}
-                  >
-                    {verificationButtonLabel}
                   </Button>
                 </div>
               </div>
@@ -848,88 +762,6 @@ const Profile = () => {
                   disabled={editForm.formState.isSubmitting}
                 >
                   {editForm.formState.isSubmitting ? 'Saving...' : 'Save changes'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </div>
-      </ModalSheet>
-
-      <ModalSheet open={isVerifyOpen} onClose={() => setIsVerifyOpen(false)}>
-        <div className="space-y-6 p-6">
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Request verification</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              Provide details that help us confirm your professional credentials.
-            </p>
-          </div>
-          <Form {...verificationForm}>
-            <form
-              onSubmit={verificationForm.handleSubmit(handleVerificationSubmit)}
-              className="space-y-4"
-              aria-label="Verification request form"
-            >
-              <FormField
-                control={verificationForm.control}
-                name="profession"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="verify-profession">Profession *</FormLabel>
-                    <FormControl>
-                      <Input id="verify-profession" {...field} />
-                    </FormControl>
-                    {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={verificationForm.control}
-                name="bio"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="verify-bio">Bio</FormLabel>
-                    <FormControl>
-                      <Textarea id="verify-bio" {...field} />
-                    </FormControl>
-                    {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={verificationForm.control}
-                name="portfolio"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="verify-portfolio">Portfolio URLs</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        id="verify-portfolio"
-                        placeholder="https://portfolio-one.com, https://dribbble.com/you"
-                        {...field}
-                      />
-                    </FormControl>
-                    <p className="text-xs text-slate-500 dark:text-slate-300">
-                      Separate multiple links with commas.
-                    </p>
-                    {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
-                  </FormItem>
-                )}
-              />
-              <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full rounded-full sm:w-auto"
-                  onClick={() => setIsVerifyOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="w-full rounded-full sm:w-auto"
-                  disabled={verificationForm.formState.isSubmitting}
-                >
-                  {verificationForm.formState.isSubmitting ? 'Submitting...' : 'Submit request'}
                 </Button>
               </div>
             </form>

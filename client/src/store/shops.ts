@@ -13,6 +13,7 @@ export interface Shop {
   address: string;
   image?: string | null;
   banner?: string | null;
+  cover?: string | null;
   description?: string;
   status: "pending" | "approved" | "rejected";
   ratingAvg?: number;

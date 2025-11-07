@@ -40,8 +40,8 @@ const ShopDetails: FC = () => {
     if (s)
       arr = arr.filter((p) =>
         [p.name, (p as { description?: string }).description]
-          .filter(Boolean)
-          .some((v) => v.toLowerCase().includes(s)),
+          .filter((value): value is string => typeof value === 'string' && value.length > 0)
+          .some((value) => value.toLowerCase().includes(s)),
       );
     if (sort === 'priceAsc') arr.sort((a, b) => getProductPriceValue(a) - getProductPriceValue(b));
     if (sort === 'priceDesc') arr.sort((a, b) => getProductPriceValue(b) - getProductPriceValue(a));

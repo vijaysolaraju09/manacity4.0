@@ -1,5 +1,10 @@
 import { useState, type ReactNode } from 'react'
+import { useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import AddressManager from '@/pages/Profile/components/AddressManager'
+import { paths } from '@/routes/paths'
+import type { AppDispatch } from '@/store'
+import { logoutUser } from '@/store/slices/authSlice'
 
 type TabKey = 'account' | 'orders' | 'requests' | 'notifications'
 
@@ -169,6 +174,9 @@ const NOTIFS = [
 ]
 
 const ProfileScreen = () => {
+  const dispatch = useDispatch<AppDispatch>()
+  const navigate = useNavigate()
+
   const tabs: Array<{ key: TabKey; label: string }> = [
     { key: 'account', label: 'Account' },
     { key: 'orders', label: 'Orders' },
@@ -182,6 +190,12 @@ const ProfileScreen = () => {
   const ordersCount = DEMO_ORDERS.length
   const requestsCount = DEMO_REQUESTS.length
   const rating = 4.7
+
+  const handleLogout = () => {
+    void dispatch(logoutUser()).finally(() => {
+      navigate(paths.auth.login(), { replace: true })
+    })
+  }
 
   return (
     <div className="space-y-6">
@@ -226,6 +240,13 @@ const ProfileScreen = () => {
                     <Button onClick={() => setShowAvatarModal(true)}>Change Avatar</Button>
                     <Button variant="outline" onClick={() => setShowAddressModal(true)}>
                       Manage Addresses
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="text-rose-500 transition hover:text-rose-600"
+                      onClick={handleLogout}
+                    >
+                      Logout
                     </Button>
                   </div>
                 </div>

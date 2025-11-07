@@ -1,23 +1,19 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import AppLayout from '@/app/layouts/AppLayout'
-import Home from '@/pages/AppHome/Home'
-import Shops from '@/pages/AppShops/Shops'
-import ShopDetails from '@/pages/AppShops/ShopDetails'
-import ProductDetails from '@/pages/products/ProductDetails'
-import Services from '@/pages/AppServices/ServicesCatalog'
-import ServiceDetails from '@/pages/AppServices/ServiceDetails'
-import Events from '@/pages/AppEvents/EventsHub'
-import EventDetails from '@/pages/AppEvents/EventDetails'
+import HomeScreen from '@/app/screens/HomeScreen'
+import ShopsScreen from '@/app/screens/ShopsScreen'
+import ShopDetailScreen from '@/app/screens/ShopDetailScreen'
+import ServicesScreen from '@/app/screens/ServicesScreen'
+import ServiceProvidersScreen from '@/app/screens/ServiceProvidersScreen'
+import ServiceRequestScreen from '@/app/screens/ServiceRequestScreen'
+import EventsScreen from '@/app/screens/EventsScreen'
+import EventDetailScreen from '@/app/screens/EventDetailScreen'
 import EventRegisterScreen from '@/app/screens/EventRegisterScreen'
-import MyOrders from '@/pages/AppOrders/MyOrders'
-import ReceivedOrders from '@/pages/business/ReceivedOrders'
-import Profile from '@/pages/AppProfile/Profile'
 import CartScreen from '@/app/screens/CartScreen'
 import CheckoutScreen from '@/app/screens/CheckoutScreen'
 import NotificationsScreen from '@/app/screens/NotificationsScreen'
-import ServiceRequestScreen from '@/app/screens/ServiceRequestScreen'
-import ServiceProvidersScreen from '@/app/screens/ServiceProvidersScreen'
+import ProfileScreen from '@/app/screens/ProfileScreen'
 import Landing from '@/pages/Landing/Landing'
 import Login from '@/pages/auth/Login'
 import Signup from '@/pages/auth/Signup'
@@ -48,7 +44,7 @@ import type { RootState } from '@/store'
 
 const AppRoutes = () => {
   const isAuthenticated = useSelector((state: RootState) => Boolean(state.auth.token))
-  const fallbackTarget = isAuthenticated ? '/' : '/login'
+  const fallbackTarget = isAuthenticated ? '/home' : '/login'
 
   return (
     <Routes>
@@ -96,32 +92,27 @@ const AppRoutes = () => {
       {isAuthenticated && (
         <>
           <Route path="/" element={<AppLayout />}>
-            <Route index element={<Home />} />
-            <Route path="shops" element={<Shops />} />
-            <Route path="shops/:shopId" element={<ShopDetails />} />
-            <Route path="products/:productId" element={<ProductDetails />} />
-            <Route path="services" element={<Services />} />
+            <Route index element={<Navigate to="/home" replace />} />
+            <Route path="home" element={<HomeScreen />} />
+            <Route path="shops" element={<ShopsScreen />} />
+            <Route path="shops/:id" element={<ShopDetailScreen />} />
+            <Route path="services" element={<ServicesScreen />} />
             <Route path="services/request" element={<ServiceRequestScreen />} />
-            <Route path="services/:serviceId" element={<ServiceDetails />} />
-            <Route path="services/:serviceId/providers" element={<ServiceProvidersScreen />} />
-            <Route path="events" element={<Events />} />
-            <Route path="events/:eventId" element={<EventDetails />} />
-            <Route path="events/:eventId/register" element={<EventRegisterScreen />} />
+            <Route path="services/:id" element={<ServiceProvidersScreen />} />
+            <Route path="events" element={<EventsScreen />} />
+            <Route path="events/:id" element={<EventDetailScreen />} />
+            <Route path="events/:id/register" element={<EventRegisterScreen />} />
             <Route path="cart" element={<CartScreen />} />
             <Route path="checkout" element={<CheckoutScreen />} />
             <Route path="notifications" element={<NotificationsScreen />} />
-            <Route path="orders" element={<MyOrders />} />
-            <Route path="orders/mine" element={<Navigate to="/orders" replace />} />
-            <Route path="business/received-orders" element={<ReceivedOrders />} />
-            <Route path="orders/received" element={<Navigate to="/business/received-orders" replace />} />
-            <Route path="profile" element={<Profile />} />
+            <Route path="profile" element={<ProfileScreen />} />
           </Route>
-          <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="/signup" element={<Navigate to="/" replace />} />
-          <Route path="/auth/login" element={<Navigate to="/" replace />} />
-          <Route path="/auth/signup" element={<Navigate to="/" replace />} />
-          <Route path="/auth/forgot" element={<Navigate to="/" replace />} />
-          <Route path="/reset" element={<Navigate to="/" replace />} />
+          <Route path="/login" element={<Navigate to="/home" replace />} />
+          <Route path="/signup" element={<Navigate to="/home" replace />} />
+          <Route path="/auth/login" element={<Navigate to="/home" replace />} />
+          <Route path="/auth/signup" element={<Navigate to="/home" replace />} />
+          <Route path="/auth/forgot" element={<Navigate to="/home" replace />} />
+          <Route path="/reset" element={<Navigate to="/home" replace />} />
         </>
       )}
 

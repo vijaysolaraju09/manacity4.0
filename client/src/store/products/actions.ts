@@ -1,1 +1,0 @@
-export { fetchProductById } from '../products';

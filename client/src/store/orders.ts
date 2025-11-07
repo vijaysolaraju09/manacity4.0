@@ -97,26 +97,6 @@ export interface Order {
   contactSharedAt?: string | null;
 }
 
-export interface CheckoutCartItemPayload {
-  productId: string;
-  qty: number;
-  shopId?: string;
-  variantId?: string;
-  options?: Record<string, unknown> | null;
-}
-
-export interface CheckoutCartInput {
-  items: CheckoutCartItemPayload[];
-  addressId?: string;
-  shippingAddress?: Record<string, unknown>;
-}
-
-export interface CheckoutCartResult {
-  summaries: { id: string; shopId?: string; status?: OrderStatus }[];
-  orders: Order[];
-  raw?: unknown;
-}
-
 const toIsoString = (value: unknown): string => {
   if (!value) return new Date().toISOString();
   const date = value instanceof Date ? value : new Date(value as string);
@@ -315,129 +295,6 @@ const initialState: OrdersSliceState = {
   received: ordersAdapter.getInitialState({ status: 'idle', error: null }),
 };
 
-const toObject = (value: unknown): Record<string, unknown> | null => {
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  return null;
-};
-
-const extractOrdersFromResponse = (res: any): any[] => {
-  const directArray = Array.isArray(res?.data?.orders)
-    ? res.data.orders
-    : Array.isArray(res?.data?.data?.orders)
-    ? res.data.data.orders
-    : Array.isArray(res?.data)
-    ? res.data
-    : null;
-
-  if (Array.isArray(directArray)) {
-    return directArray;
-  }
-
-  const envelope = toObject(toItem(res));
-  if (envelope) {
-    if (Array.isArray(envelope.orders)) {
-      return envelope.orders as any[];
-    }
-    const firstArray = Object.values(envelope).find((entry) => Array.isArray(entry));
-    if (Array.isArray(firstArray)) {
-      return firstArray as any[];
-    }
-  }
-
-  const fallback = toItems(res);
-  return Array.isArray(fallback) ? fallback : [];
-};
-
-export const checkoutCart = createAsyncThunk(
-  'orders/checkoutCart',
-  async ({ items, addressId, shippingAddress }: CheckoutCartInput, { rejectWithValue }) => {
-    try {
-      const sanitizedItems = Array.isArray(items)
-        ? items
-            .map((item) => {
-              const productId = String(item.productId ?? '').trim();
-              if (!productId) {
-                return null;
-              }
-              const qtyRaw = Number(item.qty);
-              const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? Math.floor(qtyRaw) : 1;
-              const payload: Record<string, unknown> = { productId, qty };
-              if (item.options && typeof item.options === 'object') {
-                payload.options = item.options;
-              }
-              if (item.variantId) {
-                payload.variantId = String(item.variantId);
-              }
-              return payload;
-            })
-            .filter((entry): entry is Record<string, unknown> => Boolean(entry))
-        : [];
-
-      if (sanitizedItems.length === 0) {
-        throw new Error('At least one item is required to checkout');
-      }
-
-      const body: Record<string, unknown> = {
-        items: sanitizedItems,
-      };
-
-      const trimmedAddressId = typeof addressId === 'string' ? addressId.trim() : '';
-      if (trimmedAddressId) {
-        body.addressId = trimmedAddressId;
-      }
-      if (shippingAddress && typeof shippingAddress === 'object') {
-        body.shippingAddress = shippingAddress;
-      }
-
-      const res = await http.post('/api/orders/checkout', body);
-      const rawOrders = extractOrdersFromResponse(res);
-
-      const normalizedOrders = rawOrders
-        .map((entry) => {
-          try {
-            return normalizeOrder(entry);
-          } catch (error) {
-            return null;
-          }
-        })
-        .filter((order): order is Order => Boolean(order));
-
-      const summaries = rawOrders
-        .map((entry) => {
-          const data = toObject(entry) ?? {};
-          const idCandidate = data._id ?? data.id;
-          if (!idCandidate || typeof idCandidate !== 'string') {
-            return null;
-          }
-          const shopIdCandidate =
-            typeof data.shopId === 'string'
-              ? data.shopId
-              : typeof data.shop === 'object' && data.shop
-              ? (data.shop as { _id?: string; id?: string })._id ?? (data.shop as { id?: string }).id
-              : undefined;
-          const statusCandidate = typeof data.status === 'string' ? (data.status as OrderStatus) : undefined;
-          const summary: { id: string; shopId?: string; status?: OrderStatus } = {
-            id: idCandidate,
-          };
-          if (typeof shopIdCandidate === 'string' && shopIdCandidate) {
-            summary.shopId = shopIdCandidate;
-          }
-          if (typeof statusCandidate === 'string' && statusCandidate) {
-            summary.status = statusCandidate;
-          }
-          return summary;
-        })
-        .filter((entry): entry is { id: string; shopId?: string; status?: OrderStatus } => entry !== null);
-
-      return { summaries, orders: normalizedOrders, raw: rawOrders } satisfies CheckoutCartResult;
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
-    }
-  },
-);
-
 export const fetchMyOrders = createAsyncThunk(
   'orders/fetchMine',
   async (_: void, { rejectWithValue }) => {
@@ -458,29 +315,6 @@ export const fetchReceivedOrders = createAsyncThunk(
       const res = await http.get('/api/orders/received');
       const data = toItems(res) as any[];
       return data.map(normalizeOrder);
-    } catch (err) {
-      return rejectWithValue(toErrorMessage(err));
-    }
-  }
-);
-
-export const respondToReceivedOrder = createAsyncThunk(
-  'orders/respondToReceived',
-  async (
-    { id, status, note }: { id: string; status: Extract<OrderStatus, 'accepted' | 'rejected'>; note?: string },
-    { rejectWithValue }
-  ) => {
-    try {
-      const trimmedId = String(id ?? '').trim();
-      if (!trimmedId) {
-        throw new Error('Order id is required');
-      }
-      const payload: Record<string, unknown> = { status };
-      if (note && note.trim()) {
-        payload.note = note.trim();
-      }
-      const res = await http.patch(`/api/business/orders/${trimmedId}`, payload);
-      return normalizeOrder(toItem(res));
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }
@@ -574,16 +408,6 @@ const ordersSlice = createSlice({
         state.received.status = 'failed';
         state.received.error =
           (action.payload as string) || action.error.message || 'Failed to load';
-      })
-      .addCase(checkoutCart.fulfilled, (state, action) => {
-        const { orders } = action.payload as CheckoutCartResult;
-        if (Array.isArray(orders) && orders.length > 0) {
-          ordersAdapter.upsertMany(state.mine, orders);
-        }
-      })
-      .addCase(respondToReceivedOrder.fulfilled, (state, action) => {
-        ordersAdapter.upsertOne(state.received, action.payload);
-        ordersAdapter.upsertOne(state.mine, action.payload);
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         ordersAdapter.upsertOne(state.mine, action.payload);

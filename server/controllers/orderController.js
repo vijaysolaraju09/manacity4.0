@@ -236,13 +236,6 @@ const createShopOrder = async ({
     await notifyUser(shop.owner, {
       type: 'order',
       message: `New order ${code || ''} from ${user.name || 'a customer'}.`,
-      deepLink: '/business/received-orders',
-      metadata: {
-        orderId: order?._id?.toString?.() ?? order?.id,
-        shopId: shop?._id?.toString?.() ?? shop?.id,
-        status: order.status,
-        recipient: 'owner',
-      },
     });
   }
   await notifyUser(user._id, {
@@ -569,13 +562,6 @@ exports.cancelOrder = async (req, res, next) => {
         message: `Order ${code || ''} was cancelled by the customer${
           reason ? `: ${reason}` : ''
         }.`,
-        deepLink: '/business/received-orders',
-        metadata: {
-          orderId: order?._id?.toString?.() ?? order?.id,
-          shopId: shop?._id?.toString?.() ?? shop?.id,
-          status: order.status,
-          recipient: 'owner',
-        },
       });
     }
     await notifyUser(order.user, {
@@ -611,13 +597,6 @@ exports.rateOrder = async (req, res, next) => {
       await notifyUser(shop.owner, {
         type: 'order',
         message: `Order ${code || ''} received a ${rating}-star review.`,
-        deepLink: '/business/received-orders',
-        metadata: {
-          orderId: order?._id?.toString?.() ?? order?.id,
-          shopId: shop?._id?.toString?.() ?? shop?.id,
-          status: order.status,
-          recipient: 'owner',
-        },
       });
     }
     res.json({ ok: true, data: { order }, traceId: req.traceId });

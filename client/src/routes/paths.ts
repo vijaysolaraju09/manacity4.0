@@ -1,14 +1,14 @@
 export const paths = {
   root: () => '/',
   landing: () => '/',
-  home: () => '/',
+  home: () => '/home',
   cart: () => '/cart',
   checkout: () => '/checkout',
   notifications: () => '/notifications',
   profile: () => '/profile',
   settings: () => '/settings',
   shops: () => '/shops',
-  shop: (id: string = ':shopId') => `/shops/${id}`,
+  shop: (id: string = ':id') => `/shops/${id}`,
   specialShop: () => '/special-shop',
   voiceOrder: () => '/voice-order',
   providers: {
@@ -19,7 +19,7 @@ export const paths = {
     catalog: () => '/services',
     requests: () => '/services/requests',
     requestsMine: () => '/services/requests/mine',
-    detail: (id: string = ':serviceId') => `/services/${id}`,
+    detail: (id: string = ':id') => `/services/${id}`,
     request: () => '/services/request',
   },
   verified: () => '/verified',
@@ -29,19 +29,15 @@ export const paths = {
   },
   products: {
     list: () => '/products',
-    detail: (id: string = ':productId') => `/products/${id}`,
+    detail: (id: string = ':id') => `/product/${id}`,
     special: () => '/special-shop',
   },
   orders: {
     root: () => '/orders',
-    mine: () => '/orders',
-    received: () => '/business/received-orders',
+    mine: () => '/orders/mine',
+    received: () => '/orders/received',
     service: () => '/orders/service',
     detail: (orderId: string = ':id') => `/orders/${orderId}`,
-  },
-  business: {
-    receivedOrders: () => '/business/received-orders',
-    manageProducts: () => '/business/manage-products',
   },
   auth: {
     login: () => '/login',
@@ -75,8 +71,8 @@ export const paths = {
   },
   events: {
     list: () => '/events',
-    detail: (eventId: string = ':eventId') => `/events/${eventId}`,
-    register: (eventId: string = ':eventId') => `/events/${eventId}/register`,
+    detail: (eventId: string = ':id') => `/events/${eventId}`,
+    register: (eventId: string = ':id') => `/events/${eventId}/register`,
   },
   verification: {
     requests: () => '/verification-requests',

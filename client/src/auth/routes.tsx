@@ -38,7 +38,7 @@ export const PublicOnlyRoute = () => {
   }
 
   if (user) {
-    const redirectTo = (location.state as { from?: Location })?.from ?? { pathname: '/' };
+    const redirectTo = (location.state as { from?: Location })?.from ?? { pathname: paths.home() };
     return <Navigate to={redirectTo} replace />;
   }
 

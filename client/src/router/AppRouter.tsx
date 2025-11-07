@@ -4,6 +4,7 @@ import { AuthProvider } from '@/auth/AuthProvider';
 import { ProtectedRoute, PublicOnlyRoute } from '@/auth/routes';
 import { Spinner } from '@/components/ui/Spinner';
 
+const Landing = lazy(() => import('@/pages/Landing/Landing'));
 const Signup = lazy(() => import('@/pages/auth/Signup'));
 const Login = lazy(() => import('@/pages/auth/Login'));
 const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'));
@@ -24,6 +25,7 @@ const AppRouter = () => (
       <Suspense fallback={<FullscreenLoader />}>
         <Routes>
           <Route element={<PublicOnlyRoute />}>
+            <Route path="/" element={<Landing />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/auth/signup" element={<Navigate to="/signup" replace />} />
@@ -32,10 +34,10 @@ const AppRouter = () => (
           </Route>
 
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/home" element={<Dashboard />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </AuthProvider>

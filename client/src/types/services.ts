@@ -4,7 +4,6 @@ export interface Service {
   name: string;
   description?: string;
   icon?: string;
-  category?: string;
   isActive?: boolean;
   createdBy?: string;
   createdAt?: string;

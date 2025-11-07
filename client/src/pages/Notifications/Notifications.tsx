@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/utils/cn';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import type { AppDispatch, RootState } from '@/store';
 import { fetchNotifs, markNotifRead, removeNotif, type Notif } from '@/store/notifs';
-import { paths } from '@/routes/paths';
 import NotificationCard from '../../components/ui/NotificationCard';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorCard from '@/components/ui/ErrorCard';
@@ -26,7 +24,6 @@ const PAGE_SIZE = 50;
 
 const Notifications = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
   const { items, status, error, hasMore, page } = useSelector(
     (state: RootState) => state.notifs
   );
@@ -114,59 +111,6 @@ const Notifications = () => {
     }
   };
 
-  const resolveOrderTab = (status?: string): string | undefined => {
-    if (!status) return undefined;
-    const normalized = status.toLowerCase();
-    if (['accepted', 'confirmed', 'delivered', 'completed'].includes(normalized)) {
-      return 'accepted';
-    }
-    if (['rejected', 'cancelled'].includes(normalized)) {
-      return 'rejected';
-    }
-    return undefined;
-  };
-
-  const handleNotificationClick = async (notif: Notif) => {
-    const metadata = (notif.metadata ?? notif.data ?? {}) as Record<string, unknown>;
-    const orderId = typeof metadata.orderId === 'string' ? metadata.orderId : undefined;
-    const statusValue = typeof metadata.status === 'string' ? metadata.status : undefined;
-    const recipient =
-      typeof metadata.recipient === 'string' ? metadata.recipient.toLowerCase() : undefined;
-    try {
-      if (!notif.read) {
-        await dispatch(markNotifRead(notif._id)).unwrap();
-      }
-    } catch {
-      // ignore mark read errors; toast already handled in mark handler
-    }
-
-    if (recipient === 'owner') {
-      navigate(paths.business.receivedOrders(), {
-        state: {
-          orderId,
-          status: statusValue,
-        },
-      });
-      return;
-    }
-
-    if (typeof notif.link === 'string' && notif.link.trim()) {
-      navigate(notif.link);
-      return;
-    }
-
-    if (notif.type === 'order') {
-      navigate('/orders', {
-        state: {
-          tab: resolveOrderTab(statusValue),
-          status: statusValue,
-          orderId,
-        },
-      });
-      return;
-    }
-  };
-
   const handleReload = () => {
     dispatch(fetchNotifs({ page: 1 }));
   };
@@ -246,7 +190,6 @@ const Notifications = () => {
                       message={notif.message}
                       timestamp={notif.createdAt}
                       read={notif.read}
-                      onClick={() => handleNotificationClick(notif)}
                       onSwipeLeft={() => handleMarkRead(notif._id)}
                     />
                   </div>

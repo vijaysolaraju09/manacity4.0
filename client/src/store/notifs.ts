@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import { http } from '@/lib/http';
 import { toItems, toItem, toErrorMessage } from '@/lib/response';
 
@@ -200,6 +200,23 @@ const notifsSlice = createSlice({
       state.unread = 0;
       state.status = state.status === 'idle' ? 'succeeded' : state.status;
     },
+    notificationAdded: (state, { payload }: PayloadAction<any>) => {
+      const notif = normalizeNotification(payload);
+      state.items = [notif, ...state.items];
+      if (!notif.read) {
+        state.unread += 1;
+      }
+    },
+    notificationRead: (state, { payload }: PayloadAction<string>) => {
+      const id = String(payload);
+      const target = state.items.find((notif) => notif._id === id);
+      if (target && !target.read) {
+        target.read = true;
+        if (state.unread > 0) {
+          state.unread -= 1;
+        }
+      }
+    },
     clearAll: (state) => {
       state.items = [];
       state.unread = 0;
@@ -263,7 +280,7 @@ const notifsSlice = createSlice({
   },
 });
 
-export const { markAllAsRead, clearAll } = notifsSlice.actions;
+export const { markAllAsRead, clearAll, notificationAdded, notificationRead } = notifsSlice.actions;
 
 export default notifsSlice.reducer;
 

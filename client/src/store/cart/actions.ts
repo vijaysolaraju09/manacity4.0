@@ -1,5 +1,5 @@
 import { rupeesToPaise } from '@/utils/currency';
-import { addItem } from '../slices/cartSlice';
+import { addItem, updateQty as updateQtyAction } from '../slices/cartSlice';
 
 type AddToCartPayload = {
   productId: string;
@@ -48,4 +48,13 @@ export const addToCart = (payload: AddToCartPayload) => {
     image,
     variantId,
   });
+};
+
+export const updateQty = (payload: { productId: string; delta: number }) => {
+  const productId = String(payload.productId ?? '').trim();
+  const delta = Number(payload.delta);
+  if (!productId || !Number.isFinite(delta) || delta === 0) {
+    return updateQtyAction({ productId, delta: 0 });
+  }
+  return updateQtyAction({ productId, delta });
 };

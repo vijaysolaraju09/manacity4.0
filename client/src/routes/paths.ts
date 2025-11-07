@@ -1,14 +1,14 @@
 export const paths = {
   root: () => '/',
   landing: () => '/',
-  home: () => '/home',
+  home: () => '/',
   cart: () => '/cart',
   checkout: () => '/checkout',
   notifications: () => '/notifications',
   profile: () => '/profile',
   settings: () => '/settings',
   shops: () => '/shops',
-  shop: (id: string = ':id') => `/shops/${id}`,
+  shop: (id: string = ':shopId') => `/shops/${id}`,
   specialShop: () => '/special-shop',
   voiceOrder: () => '/voice-order',
   providers: {
@@ -19,7 +19,7 @@ export const paths = {
     catalog: () => '/services',
     requests: () => '/services/requests',
     requestsMine: () => '/services/requests/mine',
-    detail: (id: string = ':id') => `/services/${id}`,
+    detail: (id: string = ':serviceId') => `/services/${id}`,
     request: () => '/services/request',
   },
   verified: () => '/verified',
@@ -29,13 +29,13 @@ export const paths = {
   },
   products: {
     list: () => '/products',
-    detail: (id: string = ':id') => `/product/${id}`,
+    detail: (id: string = ':productId') => `/products/${id}`,
     special: () => '/special-shop',
   },
   orders: {
     root: () => '/orders',
-    mine: () => '/orders/mine',
-    received: () => '/orders/received',
+    mine: () => '/orders',
+    received: () => '/business/received-orders',
     service: () => '/orders/service',
     detail: (orderId: string = ':id') => `/orders/${orderId}`,
   },
@@ -75,8 +75,8 @@ export const paths = {
   },
   events: {
     list: () => '/events',
-    detail: (eventId: string = ':id') => `/events/${eventId}`,
-    register: (eventId: string = ':id') => `/events/${eventId}/register`,
+    detail: (eventId: string = ':eventId') => `/events/${eventId}`,
+    register: (eventId: string = ':eventId') => `/events/${eventId}/register`,
   },
   verification: {
     requests: () => '/verification-requests',

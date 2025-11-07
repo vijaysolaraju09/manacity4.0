@@ -8,6 +8,8 @@ export interface Service {
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
+  serviceArea?: string;
+  startingPricePaise?: number;
 }
 
 export interface ServiceProviderUser {

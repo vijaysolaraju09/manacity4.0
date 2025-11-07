@@ -64,7 +64,7 @@ const Login = () => {
   return (
     <AuthShell>
       <div className="grid gap-8 md:grid-cols-2">
-        <Card className="relative overflow-hidden p-6 md:p-8">
+        <Card className="relative hidden overflow-hidden p-6 md:block md:p-8">
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary)]/20 via-transparent to-[var(--accent)]/25" />
           <div className="relative space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full bg-[var(--surface-0)] px-3 py-1 text-xs text-[var(--text-muted)]">

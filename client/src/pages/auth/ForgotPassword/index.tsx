@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import './ForgotPassword.scss';
-import logo from '@/assets/logo.png';
-import fallbackImage from '@/assets/no-image.svg';
 import Loader from '@/components/Loader';
 import showToast from '@/components/ui/Toast';
+import { AuthCard, AuthShell, Button, Card, Input } from '@/components/auth/AuthShell';
 import { paths } from '@/routes/paths';
 import { normalizePhoneDigits } from '@/utils/phone';
 import { createZodResolver } from '@/lib/createZodResolver';
@@ -56,81 +53,88 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="forgot-page">
-      <motion.div
-        className="panel"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-      >
-        <img
-          src={logo}
-          alt="Manacity Logo"
-          className="logo"
-          onError={(event) => {
-            event.currentTarget.src = fallbackImage;
-          }}
-        />
+    <AuthShell>
+      <div className="mx-auto max-w-3xl space-y-6">
+        <Card className="relative overflow-hidden p-6 md:p-8">
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary)]/15 via-transparent to-[var(--accent)]/20" />
+          <div className="relative space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[var(--surface-0)] px-3 py-1 text-xs text-[var(--text-muted)]">
+              <span>Password support</span>
+              <span>•</span>
+              <span>OTP verification</span>
+            </div>
+            <h1 className="text-3xl font-bold leading-tight md:text-4xl">Reset your access</h1>
+            <p className="max-w-prose text-[var(--text-muted)]">
+              We&apos;ll send a 6-digit code to your registered phone number.
+            </p>
+          </div>
+        </Card>
+
         {!otpStep ? (
-          <>
-            <h2 className="title">Reset Your Password</h2>
-            <p className="hint">Enter your phone number to receive an OTP for password reset.</p>
-            <form onSubmit={handleSubmit(onSubmitPhone)} noValidate>
-              <div className="control">
-                <label htmlFor="reset-phone">Phone Number</label>
-                <input
-                  type="tel"
-                  id="reset-phone"
-                  {...register('phone')}
-                  inputMode="tel"
-                  pattern="\d{10}"
-                  placeholder="Enter your phone number"
-                  autoComplete="tel"
-                />
-                {errors.phone && <div className="error">{errors.phone.message}</div>}
-              </div>
-              <div className="actions">
-                <motion.button
-                  type="submit"
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  disabled={!isValid || isSubmitting}
+          <AuthCard title="Forgot password" subtitle="Enter your phone number to receive an OTP">
+            <form className="grid gap-3" onSubmit={handleSubmit(onSubmitPhone)} noValidate>
+              <Input
+                label="Phone number"
+                placeholder="Enter your phone number"
+                inputMode="tel"
+                pattern="\d{10}"
+                autoComplete="tel"
+                {...register('phone')}
+                error={errors.phone?.message}
+              />
+
+              <Button type="submit" className="mt-1 w-full" disabled={!isValid || isSubmitting}>
+                {isSubmitting ? <Loader /> : 'Send OTP'}
+              </Button>
+
+              <div className="text-center text-sm text-[var(--text-muted)]">
+                <button
+                  type="button"
+                  className="underline transition-colors hover:text-[var(--text-primary)]"
+                  onClick={() => navigate(paths.auth.login())}
                 >
-                  {isSubmitting ? <Loader /> : 'Send OTP'}
-                </motion.button>
+                  Back to login
+                </button>
               </div>
             </form>
-            <div className="back" onClick={() => navigate(paths.auth.login())}>
-              ← Back to Login
-            </div>
-          </>
+          </AuthCard>
         ) : (
-          <>
-            <h2 className="title">Verify your phone</h2>
-            <p className="hint">
-              Enter the OTP sent via SMS to verify your identity.
-              <span className="phone"> Code sent to {`••••••${resetPhone?.slice(-4)}`}</span>
-            </p>
-            {resetPhone && (
-              <OTPPhoneFirebase phone={`${defaultCountryCode}${resetPhone}`} onVerifySuccess={handleOtpVerified} />
-            )}
-            <div className="links">
-              <span
-                onClick={() => {
-                  setOtpStep(false);
-                  setResetPhone(null);
-                }}
-              >
-                Use a different number
-              </span>
+          <AuthCard
+            title="Verify your phone"
+            subtitle={
+              resetPhone
+                ? `Enter the OTP sent via SMS to verify your identity. Code sent to ••••••${resetPhone.slice(-4)}`
+                : 'Enter the OTP sent via SMS to verify your identity.'
+            }
+          >
+            <div className="space-y-4">
+              {resetPhone && (
+                <OTPPhoneFirebase phone={`${defaultCountryCode}${resetPhone}`} onVerifySuccess={handleOtpVerified} />
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--text-muted)]">
+                <button
+                  type="button"
+                  className="underline transition-colors hover:text-[var(--text-primary)]"
+                  onClick={() => {
+                    setOtpStep(false);
+                    setResetPhone(null);
+                  }}
+                >
+                  Use a different number
+                </button>
+                <button
+                  type="button"
+                  className="underline transition-colors hover:text-[var(--text-primary)]"
+                  onClick={() => navigate(paths.auth.login())}
+                >
+                  Back to login
+                </button>
+              </div>
             </div>
-            <div className="back" onClick={() => navigate(paths.auth.login())}>
-              ← Back to Login
-            </div>
-          </>
+          </AuthCard>
         )}
-      </motion.div>
-    </div>
+      </div>
+    </AuthShell>
   );
 };
 

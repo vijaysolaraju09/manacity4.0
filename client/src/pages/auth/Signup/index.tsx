@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
-import './Signup.scss';
-import logo from '@/assets/logo.png';
-import fallbackImage from '@/assets/no-image.svg';
 import Loader from '@/components/Loader';
 import showToast from '@/components/ui/Toast';
+import { AuthCard, AuthShell, Button, Card, Input, cn } from '@/components/auth/AuthShell';
 import { paths } from '@/routes/paths';
 import { normalizePhoneDigits } from '@/utils/phone';
 import { createZodResolver } from '@/lib/createZodResolver';
@@ -86,111 +83,148 @@ const Signup = () => {
   };
 
   return (
-    <div className="signup-page">
-      <motion.div
-        className="panel"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-      >
-        <img src={logo} alt="Manacity Logo" className="logo" onError={(event) => (event.currentTarget.src = fallbackImage)} />
+    <AuthShell>
+      <div className="mx-auto max-w-3xl space-y-6">
+        <Card className="relative overflow-hidden p-6 md:p-8">
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary)]/15 via-transparent to-[var(--accent)]/20" />
+          <div className="relative space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[var(--surface-0)] px-3 py-1 text-xs text-[var(--text-muted)]">
+              <span>Join the community</span>
+              <span>•</span>
+              <span>Access exclusive offers</span>
+            </div>
+            <h1 className="text-3xl font-bold leading-tight md:text-4xl">Create your Manacity account</h1>
+            <p className="max-w-prose text-[var(--text-muted)]">
+              Sign up to discover shops, events, and verified services nearby.
+            </p>
+          </div>
+        </Card>
 
         {!otpStep && (
-          <>
-            <h2 className="title">Create Your Account</h2>
-            <p className="hint">Sign up to discover shops, events, and verified services nearby.</p>
+          <AuthCard title="Create your account" subtitle="It only takes a minute">
+            <form className="grid gap-3" onSubmit={handleSubmit(onSubmit)} noValidate>
+              <Input
+                label="Full name"
+                placeholder="Your name"
+                {...register('name')}
+                error={errors.name?.message}
+              />
 
-            <form onSubmit={handleSubmit(onSubmit)} noValidate>
-              <div className="control">
-                <label htmlFor="signup-name">Name</label>
-                <input type="text" id="signup-name" {...register('name')} />
-                {errors.name && <div className="error">{errors.name.message}</div>}
-              </div>
+              <Input
+                label="Phone number"
+                placeholder="Enter phone number"
+                inputMode="tel"
+                pattern="\d{10}"
+                autoComplete="tel"
+                {...register('phone')}
+                error={errors.phone?.message}
+              />
 
-              <div className="control">
-                <label htmlFor="signup-phone">Phone Number</label>
-                <input
-                  type="tel"
-                  id="signup-phone"
-                  {...register('phone')}
-                  inputMode="tel"
-                  pattern="\d{10}"
-                  placeholder="Enter phone number"
-                  autoComplete="tel"
-                />
-                {errors.phone && <div className="error">{errors.phone.message}</div>}
-              </div>
+              <Input
+                label="Email (optional)"
+                type="email"
+                placeholder="you@manacity.app"
+                {...register('email')}
+                error={errors.email?.message}
+              />
 
-              <div className="control">
-                <label htmlFor="signup-email">Email (optional)</label>
-                <input type="email" id="signup-email" {...register('email')} />
-                {errors.email && <div className="error">{errors.email.message}</div>}
-              </div>
-
-              <div className="control">
-                <label htmlFor="signup-password">Password</label>
-                <div className="password-field">
-                  <input id="signup-password" type={showPassword ? 'text' : 'password'} {...register('password')} />
+              <div className="text-sm">
+                <div className="mb-1 text-[var(--text-muted)]">Password</div>
+                <div className="relative flex items-center">
+                  <input
+                    id="signup-password"
+                    type={showPassword ? 'text' : 'password'}
+                    {...register('password')}
+                    className={cn(
+                      'focus-ring w-full rounded-xl border border-[var(--border)] bg-[var(--surface-0)] px-3 py-2 pr-10 text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]/70',
+                      errors.password && 'border-red-400 text-red-500 placeholder:text-red-300',
+                    )}
+                  />
                   <button
                     type="button"
-                    className="toggle"
+                    className="absolute right-3 text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     onClick={() => setShowPassword((prev) => !prev)}
                   >
                     {showPassword ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
                   </button>
                 </div>
-                {errors.password && <div className="error">{errors.password.message}</div>}
+                {errors.password && <div className="mt-1 text-xs text-red-500">{errors.password.message}</div>}
               </div>
 
-              <div className="control">
-                <label htmlFor="signup-location">Location</label>
-                <select id="signup-location" {...register('location')}>
+              <label className="text-sm">
+                <div className="mb-1 text-[var(--text-muted)]">Location</div>
+                <select
+                  id="signup-location"
+                  {...register('location')}
+                  className={cn(
+                    'focus-ring w-full rounded-xl border border-[var(--border)] bg-[var(--surface-0)] px-3 py-2 text-[var(--text-primary)] outline-none',
+                    errors.location && 'border-red-400 text-red-500',
+                  )}
+                >
                   <option value="">Select Area</option>
                   <option value="Town Center">Town Center</option>
                   <option value="Main Road">Main Road</option>
                   <option value="North Market">North Market</option>
                   <option value="Old Street">Old Street</option>
                 </select>
-                {errors.location && <div className="error">{errors.location.message}</div>}
-              </div>
+                {errors.location && <div className="mt-1 text-xs text-red-500">{errors.location.message}</div>}
+              </label>
 
-              <div className="actions">
-                <motion.button type="submit" whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} disabled={!isValid || isSubmitting}>
-                  {isSubmitting ? <Loader /> : 'Continue'}
-                </motion.button>
+              <Button type="submit" className="mt-1 w-full" disabled={!isValid || isSubmitting}>
+                {isSubmitting ? <Loader /> : 'Continue'}
+              </Button>
+
+              <div className="text-center text-sm text-[var(--text-muted)]">
+                <button
+                  type="button"
+                  className="underline transition-colors hover:text-[var(--text-primary)]"
+                  onClick={() => navigate(paths.auth.login())}
+                >
+                  Already have an account?
+                </button>
+              </div>
+              <div className="text-center text-sm text-[var(--text-muted)]">
+                <button
+                  type="button"
+                  className="underline transition-colors hover:text-[var(--text-primary)]"
+                  onClick={() => navigate(paths.landing())}
+                >
+                  Back to landing
+                </button>
               </div>
             </form>
-
-            <div className="links">
-              <span onClick={() => navigate(paths.auth.login())}>Already have an account?</span>
-            </div>
-            <div className="back" onClick={() => navigate(paths.landing())}>← Back to Landing</div>
-          </>
+          </AuthCard>
         )}
 
         {otpStep && signupData && (
-          <>
-            <h2 className="title">Verify your phone</h2>
-            <p className="hint">
-              Enter the OTP sent via SMS to confirm your account.
-              <span className="phone"> Code sent to {`••••••${signupData.phone.slice(-4)}`}</span>
-            </p>
-            <OTPPhoneFirebase phone={`${defaultCountryCode}${signupData.phone}`} onVerifySuccess={handleOtpVerified} />
-            <div className="links">
-              <span
-                onClick={() => {
-                  setOtpStep(false);
-                }}
-              >
-                Use a different number
-              </span>
+          <AuthCard
+            title="Verify your phone"
+            subtitle={`Enter the OTP sent via SMS to confirm your account. Code sent to ••••••${signupData.phone.slice(-4)}`}
+          >
+            <div className="space-y-4">
+              <OTPPhoneFirebase phone={`${defaultCountryCode}${signupData.phone}`} onVerifySuccess={handleOtpVerified} />
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--text-muted)]">
+                <button
+                  type="button"
+                  className="underline transition-colors hover:text-[var(--text-primary)]"
+                  onClick={() => setOtpStep(false)}
+                >
+                  Use a different number
+                </button>
+                <button
+                  type="button"
+                  className="underline transition-colors hover:text-[var(--text-primary)]"
+                  onClick={() => navigate(paths.auth.login())}
+                >
+                  Back to login
+                </button>
+              </div>
             </div>
-            <div className="back" onClick={() => navigate(paths.auth.login())}>← Back to Login</div>
-          </>
+          </AuthCard>
         )}
-      </motion.div>
-    </div>
+      </div>
+    </AuthShell>
   );
 };
 

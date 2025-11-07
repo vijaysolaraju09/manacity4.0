@@ -3,22 +3,22 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/auth/AuthProvider';
 import { ProtectedRoute, PublicOnlyRoute } from '@/auth/routes';
 import { Spinner } from '@/components/ui/Spinner';
-import Home from '@/pages/home/Home';
-import Shops from '@/pages/shops/Shops';
-import ShopDetails from '@/pages/shops/ShopDetails';
-import ServicesCatalog from '@/pages/services/ServicesCatalog';
-import ServiceDetails from '@/pages/services/ServiceDetails';
-import EventsHub from '@/pages/events/EventsHub';
-import EventDetails from '@/pages/events/EventDetails';
-import Profile from '@/pages/profile/Profile';
-import Cart from '@/pages/cart/Cart';
-import MyOrders from '@/pages/orders/MyOrders';
-import ReceivedOrders from '@/pages/business/ReceivedOrders';
+import Home from '@/pages/Home/Home';
+import Shops from '@/pages/Shops/Shops';
+import ShopDetails from '@/pages/ShopDetails/ShopDetails';
+import ServicesCatalog from '@/pages/Services/ServicesCatalog';
+import ServiceDetails from '@/pages/Services/ServiceDetails';
+import EventsHub from '@/pages/Events/EventsHub';
+import EventDetails from '@/pages/Events/EventDetail';
+import Profile from '@/pages/Profile/Profile';
+import Cart from '@/pages/Cart/Cart';
+import MyOrders from '@/pages/Orders/MyOrders';
+import ReceivedOrders from '@/pages/Business/ReceivedOrders';
 
 const Landing = lazy(() => import('@/pages/Landing/Landing'));
-const Signup = lazy(() => import('@/pages/auth/Signup'));
-const Login = lazy(() => import('@/pages/auth/Login'));
-const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'));
+const Signup = lazy(() => import('@/pages/Auth/Signup'));
+const Login = lazy(() => import('@/pages/Auth/Login'));
+const ForgotPassword = lazy(() => import('@/pages/Auth/ForgotPassword'));
 
 const FullscreenLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">

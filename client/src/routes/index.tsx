@@ -30,11 +30,11 @@ const withSuspense = <P extends object>(
 );
 
 const Landing = lazy(() => import('@/pages/Landing/Landing'));
-const Login = lazy(() => import('@/pages/auth/Login'));
-const Signup = lazy(() => import('@/pages/auth/Signup'));
-const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'));
-const ResetPassword = lazy(() => import('@/pages/auth/ResetPassword/ResetPassword'));
-const Profile = lazy(() => import('@/pages/profile/ProfileScreen'));
+const Login = lazy(() => import('@/pages/Auth/Login'));
+const Signup = lazy(() => import('@/pages/Auth/Signup'));
+const ForgotPassword = lazy(() => import('@/pages/Auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('@/pages/Auth/ResetPassword/ResetPassword'));
+const Profile = lazy(() => import('@/pages/Profile/ProfileScreen'));
 const Home = lazy(() => import('@/pages/Home/Home'));
 const Shops = lazy(() => import('@/pages/Shops/Shops'));
 const ShopDetails = lazy(() => import('@/pages/ShopDetails/ShopDetails'));
@@ -83,8 +83,8 @@ const VerificationRequests = lazy(() => import('@/pages/VerificationRequests'));
 const BusinessRequests = lazy(() => import('@/pages/BusinessRequests'));
 const AdminUsers = lazy(() => import('@/pages/AdminUsers'));
 const AdminAnalytics = lazy(() => import('@/pages/AdminAnalytics'));
-const AdminFormBuilderPage = lazy(() => import('@/pages/admin/FormBuilder/FormBuilder'));
-const AdminEventFormAttachPage = lazy(() => import('@/pages/admin/EventFormAttach/EventFormAttach'));
+const AdminFormBuilderPage = lazy(() => import('@/pages/Admin/FormBuilder/FormBuilder'));
+const AdminEventFormAttachPage = lazy(() => import('@/pages/Admin/EventFormAttach/EventFormAttach'));
 const NotFound = lazy(() => import('@/pages/NotFound/NotFound'));
 
 const SuspendedOutlet = () => (

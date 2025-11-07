@@ -37,7 +37,7 @@ export const fetchNotifs = createAsyncThunk(
     try {
       const page = params?.page ?? 1;
       const limit = params?.limit ?? 20;
-      const res = await http.get('api/notifications', { params: { page, limit } });
+      const res = await http.get('/api/notifications', { params: { page, limit } });
       const items = toItems(res) as Notif[];
       const payload = res.data?.data ?? res.data ?? {};
       const hasMore = Boolean(payload.hasMore);
@@ -58,7 +58,7 @@ export const markNotifRead = createAsyncThunk(
   'notifs/markRead',
   async (id: string, { rejectWithValue }) => {
     try {
-      await http.patch(`api/notifications/${id}/read`);
+      await http.patch(`/api/notifications/${id}/read`);
       return id;
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
@@ -70,7 +70,7 @@ export const removeNotif = createAsyncThunk(
   'notifs/remove',
   async (id: string, { rejectWithValue }) => {
     try {
-      await http.delete(`api/notifications/${id}`);
+      await http.delete(`/api/notifications/${id}`);
       return id;
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
@@ -81,7 +81,20 @@ export const removeNotif = createAsyncThunk(
 const notifsSlice = createSlice({
   name: 'notifs',
   initialState,
-  reducers: {},
+  reducers: {
+    markAllAsRead: (state) => {
+      state.items = state.items.map((notif) => ({ ...notif, read: true }));
+      state.unread = 0;
+      state.status = state.status === 'idle' ? 'succeeded' : state.status;
+    },
+    clearAll: (state) => {
+      state.items = [];
+      state.unread = 0;
+      state.hasMore = false;
+      state.page = 1;
+      state.status = 'succeeded';
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchNotifs.pending, (state, action) => {
@@ -128,6 +141,8 @@ const notifsSlice = createSlice({
       });
   },
 });
+
+export const { markAllAsRead, clearAll } = notifsSlice.actions;
 
 export default notifsSlice.reducer;
 

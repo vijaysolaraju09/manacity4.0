@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { MapPin, Phone, Mail } from 'lucide-react'
+import AddressManager from '@/pages/Profile/components/AddressManager'
 
 type TabKey = 'account' | 'orders' | 'requests' | 'notifications'
 
@@ -304,21 +304,7 @@ const ProfileScreen = () => {
       )}
       {showAddressModal && (
         <Modal title="Manage Addresses" onClose={() => setShowAddressModal(false)}>
-          <div className="grid gap-3 text-sm">
-            <div className="rounded-xl border border-[var(--border)] p-3">
-              <div className="font-medium">Home</div>
-              <div className="text-xs text-[var(--text-muted)] flex items-center gap-2 mt-1">
-                <MapPin className="h-4 w-4" /> 11, City Center, Manacity
-              </div>
-              <div className="text-xs text-[var(--text-muted)] flex items-center gap-2">
-                <Phone className="h-4 w-4" /> +91 98765 43210
-              </div>
-              <div className="text-xs text-[var(--text-muted)] flex items-center gap-2">
-                <Mail className="h-4 w-4" /> hello@manacity.example
-              </div>
-            </div>
-            <Button>Add New Address</Button>
-          </div>
+          <AddressManager />
         </Modal>
       )}
     </div>

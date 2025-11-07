@@ -20,6 +20,7 @@ export interface EventRegistrationMeta {
 export interface EventSummary {
   _id: string;
   title: string;
+  name?: string | null;
   type: EventType;
   category: string;
   format: EventFormat;
@@ -152,6 +153,7 @@ export const adaptEventSummary = (raw: any): EventSummary | null => {
   const summary: EventSummary = {
     _id: raw._id || raw.id,
     title: raw.title || '',
+    name: raw.name ?? raw.title ?? null,
     type: (raw.type as EventType) || 'activity',
     category: raw.category || 'other',
     format: (raw.format as EventFormat) || 'single_match',

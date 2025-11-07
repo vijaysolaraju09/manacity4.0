@@ -234,58 +234,64 @@ const HomeScreen = () => {
             See marketplace
           </Button>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 pr-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:pb-0 sm:pr-0 lg:grid-cols-3">
           {trendingShops.length === 0 ? (
-            <Card className="rounded-3xl p-6">
-              <p className="text-sm text-muted">No shops to display yet.</p>
-            </Card>
+            <div className="min-w-[85%] flex-shrink-0 snap-start sm:min-w-0 sm:snap-none">
+              <Card className="rounded-3xl p-6">
+                <p className="text-sm text-muted">No shops to display yet.</p>
+              </Card>
+            </div>
           ) : (
             trendingShops.map((shop) => {
               const status = toShopStatus(shop)
               return (
-                <Card
+                <div
                   key={shop._id}
-                  className="rounded-3xl p-5 transition hover:-translate-y-0.5 hover:shadow-lg-theme focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_45%,transparent)]"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate(paths.shop(shop._id))}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      navigate(paths.shop(shop._id))
-                    }
-                  }}
+                  className="min-w-[85%] flex-shrink-0 snap-start sm:min-w-0 sm:snap-none"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-lg font-semibold text-primary">{shop.name}</h3>
-                      <p className="mt-1 text-sm text-muted">{shop.category || 'Independent merchant'}</p>
-                    </div>
-                    <Badge tone={status.tone}>{status.label}</Badge>
-                  </div>
-                  <div className="mt-4 flex items-center gap-3 text-xs text-muted">
-                    <span className="inline-flex items-center gap-1">
-                      <Star className="h-3.5 w-3.5 text-[var(--accent)]" />
-                      {(shop.ratingAvg ?? 0).toFixed(1)}
-                    </span>
-                    {shop.ratingCount ? <span>{shop.ratingCount} reviews</span> : null}
-                    {shop.location ? <span>{shop.location}</span> : null}
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Badge tone="neutral">{shop.status}</Badge>
-                    {shop.address ? <Badge tone="neutral">{shop.address.split(',')[0]}</Badge> : null}
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="mt-5 w-full"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      navigate(paths.shop(shop._id))
+                  <Card
+                    className="rounded-3xl p-5 transition hover:-translate-y-0.5 hover:shadow-lg-theme focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_45%,transparent)]"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(paths.shop(shop._id))}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        navigate(paths.shop(shop._id))
+                      }
                     }}
                   >
-                    View details
-                  </Button>
-                </Card>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-semibold text-primary">{shop.name}</h3>
+                        <p className="mt-1 text-sm text-muted">{shop.category || 'Independent merchant'}</p>
+                      </div>
+                      <Badge tone={status.tone}>{status.label}</Badge>
+                    </div>
+                    <div className="mt-4 flex items-center gap-3 text-xs text-muted">
+                      <span className="inline-flex items-center gap-1">
+                        <Star className="h-3.5 w-3.5 text-[var(--accent)]" />
+                        {(shop.ratingAvg ?? 0).toFixed(1)}
+                      </span>
+                      {shop.ratingCount ? <span>{shop.ratingCount} reviews</span> : null}
+                      {shop.location ? <span>{shop.location}</span> : null}
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Badge tone="neutral">{shop.status}</Badge>
+                      {shop.address ? <Badge tone="neutral">{shop.address.split(',')[0]}</Badge> : null}
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="mt-5 w-full"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        navigate(paths.shop(shop._id))
+                      }}
+                    >
+                      View details
+                    </Button>
+                  </Card>
+                </div>
               )
             })
           )}
@@ -302,67 +308,88 @@ const HomeScreen = () => {
             View service catalog
           </Button>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 pr-4 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:pb-0 md:pr-0">
           {servicesState.items.length === 0 ? (
-            <Card className="rounded-3xl p-6">
-              <p className="text-sm text-muted">Services will appear once added by administrators.</p>
-            </Card>
+            <div className="min-w-[85%] flex-shrink-0 snap-start md:min-w-0 md:snap-none">
+              <Card className="rounded-3xl p-6">
+                <p className="text-sm text-muted">Services will appear once added by administrators.</p>
+              </Card>
+            </div>
           ) : (
             servicesState.items.slice(0, 6).map((service) => (
-              <Card
+              <div
                 key={service._id}
-                className="rounded-3xl p-5 transition hover:-translate-y-0.5 hover:shadow-lg-theme focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_45%,transparent)]"
-                role="button"
-                tabIndex={0}
-                onClick={() => navigate(paths.services.detail(service._id))}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    navigate(paths.services.detail(service._id))
-                  }
-                }}
+                className="min-w-[85%] flex-shrink-0 snap-start md:min-w-0 md:snap-none"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-semibold text-primary">{service.name}</h3>
-                      <Badge tone={service.isActive === false ? 'neutral' : 'accent'}>
-                        {service.isActive === false ? 'Inactive' : 'Active'}
-                      </Badge>
+                <Card
+                  className="rounded-3xl p-5 transition hover:-translate-y-0.5 hover:shadow-lg-theme focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_45%,transparent)]"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(paths.services.detail(service._id))}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      navigate(paths.services.detail(service._id))
+                    }
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-lg font-semibold text-primary">{service.name}</h3>
+                        <Badge tone={service.isActive === false ? 'neutral' : 'accent'}>
+                          {service.isActive === false ? 'Inactive' : 'Active'}
+                        </Badge>
+                      </div>
+                      {service.description ? (
+                        <p className="mt-1 text-sm text-muted">{service.description}</p>
+                      ) : (
+                        <p className="mt-1 text-sm text-muted">Managed by our concierge team.</p>
+                      )}
                     </div>
-                    {service.description ? (
-                      <p className="mt-1 text-sm text-muted">{service.description}</p>
-                    ) : (
-                      <p className="mt-1 text-sm text-muted">Managed by our concierge team.</p>
-                    )}
+                    <Button
+                      variant="ghost"
+                      className="text-sm text-primary"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        const params = new URLSearchParams()
+                        if (service._id) params.set('serviceId', service._id)
+                        if (service.name) params.set('name', service.name)
+                        const target = params.toString()
+                          ? `${paths.services.request()}?${params.toString()}`
+                          : paths.services.request()
+                        navigate(target)
+                      }}
+                    >
+                      Request
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    className="text-sm text-primary"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      const params = new URLSearchParams()
-                      if (service._id) params.set('serviceId', service._id)
-                      if (service.name) params.set('name', service.name)
-                      const target = params.toString()
-                        ? `${paths.services.request()}?${params.toString()}`
-                        : paths.services.request()
-                      navigate(target)
-                    }}
-                  >
-                    Request
-                  </Button>
-                </div>
-                {serviceCategories.length > 0 ? (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {serviceCategories.slice(0, 3).map((category) => (
-                      <Badge key={`${service._id}-${category}`} tone="neutral">
-                        {category}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : null}
-              </Card>
+                  {serviceCategories.length > 0 ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {serviceCategories.slice(0, 3).map((category) => (
+                        <Badge key={`${service._id}-${category}`} tone="neutral">
+                          {category}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : null}
+                  {service.serviceArea || service.startingPricePaise ? (
+                    <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted">
+                      {service.serviceArea ? (
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {service.serviceArea}
+                        </span>
+                      ) : null}
+                      {service.startingPricePaise ? (
+                        <span className="inline-flex items-center gap-1">
+                          Starting {toINR(service.startingPricePaise)}
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </Card>
+              </div>
             ))
           )}
         </div>

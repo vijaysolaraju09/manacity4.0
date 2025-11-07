@@ -140,6 +140,40 @@ const cartSlice = createSlice({
       state.items = sanitized;
       touch(state);
     },
+    updateQty(state, action: PayloadAction<{ productId: string; delta: number }>) {
+      const productId = normalizeString(action.payload.productId);
+      if (!productId) return;
+
+      const index = state.items.findIndex((item) => item.productId === productId);
+      if (index < 0) {
+        if (action.payload.delta > 0) {
+          try {
+            state.items.push(
+              sanitizeItem({
+                productId,
+                shopId: productId,
+                name: 'Item',
+                pricePaise: 0,
+                qty: 1,
+              }),
+            );
+            touch(state);
+          } catch {
+            // Ignore invalid placeholder item.
+          }
+        }
+        return;
+      }
+
+      const item = state.items[index];
+      const nextQty = (item.qty ?? 0) + action.payload.delta;
+      if (nextQty <= 0) {
+        state.items.splice(index, 1);
+      } else {
+        item.qty = toPositiveInteger(nextQty, 1);
+      }
+      touch(state);
+    },
     addItem(state, action: PayloadAction<CartItem>) {
       const sanitized = sanitizeItem(action.payload);
       const index = findMatchingIndex(state.items, sanitized);
@@ -209,7 +243,7 @@ const cartSlice = createSlice({
   },
 });
 
-export const { addItem, updateItemQty, removeItem, clearCart, clearShop, hydrateCart } = cartSlice.actions;
+export const { addItem, updateItemQty, removeItem, clearCart, clearShop, hydrateCart, updateQty } = cartSlice.actions;
 
 export const selectCartState = (state: RootState) => state.cart;
 export const selectCartItems = (state: RootState) => state.cart.items;

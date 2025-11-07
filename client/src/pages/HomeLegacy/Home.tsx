@@ -6,6 +6,7 @@ import type { RootState, AppDispatch } from '@/store';
 import { fetchShops } from '@/store/shops';
 import { fetchServices } from '@/store/services';
 import { fetchEvents } from '@/store/events.slice';
+import fallbackImage from '@/assets/no-image.svg';
 
 const Home: FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -79,7 +80,14 @@ const Home: FC = () => {
           {services.slice(0, 10).map((svc) => (
             <Link key={svc._id} to={`/services/${svc._id}`} className="min-w-[220px] rounded-xl border border-borderc/40 bg-surface-1 shadow-inner-card p-3">
               <div className="h-28 rounded-lg overflow-hidden mb-2 bg-surface-2 grid place-items-center">
-                <img src={svc.icon || '/assets/service-fallback.png'} alt="" className="h-14 w-14 object-contain opacity-90" />
+                <img
+                  src={svc.icon || fallbackImage}
+                  alt={svc.title || svc.name}
+                  onError={(e) => {
+                    e.currentTarget.src = fallbackImage;
+                  }}
+                  className="h-14 w-14 object-contain opacity-90"
+                />
               </div>
               <div className="font-medium truncate">{svc.title || svc.name}</div>
               <div className="text-text-muted text-sm">{svc.category}</div>

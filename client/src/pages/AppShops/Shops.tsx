@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchShops } from '@/store/shops';
+import fallbackImage from '@/assets/no-image.svg';
 
 export default function Shops() {
   const dispatch = useAppDispatch();
@@ -38,28 +39,41 @@ export default function Shops() {
           />
         </div>
       </header>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filtered.map((s: any) => (
-          <Link
-            key={s._id}
-            to={`/shops/${s._id}`}
-            className="rounded-xl border border-borderc/40 bg-surface-1 p-3 shadow-inner-card"
-          >
-            <div className="flex gap-3">
-              <div className="h-16 w-16 rounded-lg overflow-hidden bg-surface-2">
-                {s.image && <img src={s.image} alt={s.name} className="h-full w-full object-cover" />}
-              </div>
-              <div className="min-w-0">
-                <div className="font-semibold truncate">{s.name}</div>
-                <div className="text-text-muted text-sm truncate">{s.category || 'General'}</div>
-                <div className={`text-sm ${s.isOpen ? 'text-emerald-500' : 'text-red-500'}`}>
-                  {s.isOpen ? 'Open' : 'Closed'}
+      {filtered.length > 0 ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filtered.map((s: any) => (
+            <Link
+              key={s._id}
+              to={`/shops/${s._id}`}
+              className="rounded-xl border border-borderc/40 bg-surface-1 p-3 shadow-inner-card transition hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              <div className="flex gap-3">
+                <div className="h-16 w-16 rounded-lg overflow-hidden bg-surface-2">
+                  <img
+                    src={s.image || fallbackImage}
+                    onError={(e) => {
+                      e.currentTarget.src = fallbackImage;
+                    }}
+                    alt={s.name}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-semibold truncate">{s.name}</div>
+                  <div className="text-text-muted text-sm truncate">{s.category || 'General'}</div>
+                  <div className={`text-sm ${s.isOpen ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {s.isOpen ? 'Open' : 'Closed'}
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-borderc/60 bg-surface-1 px-4 py-10 text-center text-sm text-text-muted">
+          No shops match that search yet. Try a different keyword or explore the home feed for featured stores.
+        </div>
+      )}
     </div>
   );
 }

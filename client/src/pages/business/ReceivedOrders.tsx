@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FC } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Bell } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,14 +14,18 @@ import {
   type Order,
 } from '@/store/orders';
 import { formatINR } from '@/utils/currency';
-import { sendNotification } from '@/store/notifs';
+import { fetchNotifs, sendNotification } from '@/store/notifs';
+import { paths } from '@/routes/paths';
 
 type ActionType = 'accepted' | 'rejected';
 
 const ReceivedOrders: FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const receivedState = useSelector((state: RootState) => state.orders.received);
   const orders = useSelector(selectReceivedOrders);
+  const unreadNotifications = useSelector((state: RootState) => state.notifs.unread);
+  const notificationsStatus = useSelector((state: RootState) => state.notifs.status);
   const [modalOrder, setModalOrder] = useState<Order | null>(null);
   const [actionType, setActionType] = useState<ActionType | null>(null);
   const [note, setNote] = useState('');
@@ -30,6 +36,12 @@ const ReceivedOrders: FC = () => {
       dispatch(fetchReceivedOrders());
     }
   }, [dispatch, receivedState.status]);
+
+  useEffect(() => {
+    if (notificationsStatus === 'idle') {
+      void dispatch(fetchNotifs({ page: 1 }));
+    }
+  }, [dispatch, notificationsStatus]);
 
   useEffect(() => {
     if (receivedState.status === 'failed' && receivedState.error) {
@@ -114,13 +126,35 @@ const ReceivedOrders: FC = () => {
       .join(', ');
   };
 
+  const unreadBadge = unreadNotifications > 0 ? (unreadNotifications > 99 ? '99+' : String(unreadNotifications)) : null;
+
+  const handleNotificationsClick = () => {
+    navigate(paths.business.receivedOrders());
+  };
+
   return (
     <main className="mx-auto flex min-h-[60vh] w-full max-w-6xl flex-col gap-6 px-4 py-10">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Received Orders</h1>
-        <p className="mt-2 text-base text-muted-foreground">
-          Monitor incoming orders for your business and manage fulfillment workflows.
-        </p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Received Orders</h1>
+          <p className="mt-2 text-base text-muted-foreground">
+            Monitor incoming orders for your business and manage fulfillment workflows.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleNotificationsClick}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          aria-label="Go to received orders"
+        >
+          <Bell aria-hidden="true" className="h-4 w-4" />
+          <span>New orders</span>
+          {unreadBadge ? (
+            <span className="inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-blue-600 px-2 text-xs font-bold text-white">
+              {unreadBadge}
+            </span>
+          ) : null}
+        </button>
       </header>
 
       <section className="flex flex-col gap-4">

@@ -275,6 +275,13 @@ const createShopOrder = async ({
     await notifyUser(shop.owner, {
       type: 'order',
       message: `New order ${code || ''} from ${user.name || 'a customer'}.`,
+      deepLink: '/business/received-orders',
+      metadata: {
+        orderId: order?._id?.toString?.() ?? order?.id,
+        shopId: shop?._id?.toString?.() ?? shop?.id,
+        status: order.status,
+        recipient: 'owner',
+      },
     });
   }
   await notifyUser(user._id, {

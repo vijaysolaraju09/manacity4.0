@@ -55,7 +55,9 @@ const normalizeNotification = (input: any): Notif => {
     toPlainObject(base.meta) ??
     (data ? { ...data } : null);
   const link =
-    typeof base.link === 'string'
+    typeof base.deepLink === 'string'
+      ? base.deepLink
+      : typeof base.link === 'string'
       ? base.link
       : typeof base.url === 'string'
       ? base.url
@@ -151,6 +153,7 @@ export interface CreateNotificationPayload {
   metadata?: Record<string, unknown>;
   data?: Record<string, unknown>;
   link?: string;
+  deepLink?: string;
 }
 
 export const sendNotification = createAsyncThunk(
@@ -175,6 +178,9 @@ export const sendNotification = createAsyncThunk(
       }
       if (payload.link && typeof payload.link === 'string') {
         body.link = payload.link;
+      }
+      if (payload.deepLink && typeof payload.deepLink === 'string') {
+        body.deepLink = payload.deepLink;
       }
 
       const res = await http.post('/api/notifications', body);

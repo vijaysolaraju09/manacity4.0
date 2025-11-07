@@ -47,9 +47,16 @@ const initialState: ProductState = { items: [], loading: false };
 
 export const fetchMyProducts = createAsyncThunk(
   'products/fetchMy',
-  async (_: void, { rejectWithValue }) => {
+  async (
+    params: { shopId?: string } | undefined,
+    { rejectWithValue }
+  ) => {
     try {
-      const res = await http.get('/products/my');
+      const shopId = params?.shopId ? String(params.shopId).trim() : '';
+      if (!shopId) {
+        return [] as Product[];
+      }
+      const res = await http.get(`/api/business/shops/${shopId}/products`);
       return toItems(res) as Product[];
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
@@ -61,7 +68,12 @@ export const createProduct = createAsyncThunk(
   'products/create',
   async (data: CreateProductPayload, { rejectWithValue }) => {
     try {
-      const res = await http.post('/products', data);
+      const { shopId, ...payload } = data;
+      const trimmedShopId = String(shopId ?? '').trim();
+      if (!trimmedShopId) {
+        throw new Error('Shop id is required to create a product');
+      }
+      const res = await http.post(`/api/business/shops/${trimmedShopId}/products`, payload);
       return toItem(res) as Product;
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
@@ -77,14 +89,14 @@ export const updateProduct = createAsyncThunk(
   ) => {
     try {
       const { shopId, ...payload } = data;
-      if (!shopId) {
-        const res = await http.patch(`/products/${id}`, data);
-        return toItem(res) as Product;
-      }
       const sanitizedPayload = Object.fromEntries(
         Object.entries(payload).filter(([, value]) => value !== undefined)
       ) as Partial<UpdateProductPayload>;
-      const res = await http.patch(`/shops/${shopId}/products/${id}`, sanitizedPayload);
+      const endpointShopId = shopId ? String(shopId).trim() : undefined;
+      const res = await http.patch(`/api/business/products/${id}`, {
+        ...sanitizedPayload,
+        ...(endpointShopId ? { shopId: endpointShopId } : {}),
+      });
       return toItem(res) as Product;
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
@@ -93,7 +105,7 @@ export const updateProduct = createAsyncThunk(
 );
 
 export const deleteProduct = createAsyncThunk('products/delete', async (id: string) => {
-  await http.delete(`/products/${id}`);
+  await http.delete(`/api/business/products/${id}`);
   return id;
 });
 

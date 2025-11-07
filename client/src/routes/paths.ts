@@ -39,6 +39,10 @@ export const paths = {
     service: () => '/orders/service',
     detail: (orderId: string = ':id') => `/orders/${orderId}`,
   },
+  business: {
+    receivedOrders: () => '/business/received-orders',
+    manageProducts: () => '/business/manage-products',
+  },
   auth: {
     login: () => '/login',
     signup: () => '/signup',

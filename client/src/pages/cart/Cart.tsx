@@ -16,6 +16,7 @@ import {
 import { formatINR } from '@/utils/currency';
 import type { AppDispatch } from '@/store';
 import { checkoutCart } from '@/store/orders';
+import { fetchNotifs } from '@/store/notifs';
 
 const Cart: FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -75,6 +76,7 @@ const Cart: FC = () => {
 
       dispatch(clearCart());
       showToast('Checkout successful! Your order has been placed.', 'success');
+      void dispatch(fetchNotifs({ page: 1 }));
       navigate('/orders');
     } catch (error) {
       const message =

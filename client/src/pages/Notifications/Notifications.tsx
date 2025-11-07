@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import type { AppDispatch, RootState } from '@/store';
 import { fetchNotifs, markNotifRead, removeNotif, type Notif } from '@/store/notifs';
+import { paths } from '@/routes/paths';
 import NotificationCard from '../../components/ui/NotificationCard';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorCard from '@/components/ui/ErrorCard';
@@ -129,12 +130,29 @@ const Notifications = () => {
     const metadata = (notif.metadata ?? notif.data ?? {}) as Record<string, unknown>;
     const orderId = typeof metadata.orderId === 'string' ? metadata.orderId : undefined;
     const statusValue = typeof metadata.status === 'string' ? metadata.status : undefined;
+    const recipient =
+      typeof metadata.recipient === 'string' ? metadata.recipient.toLowerCase() : undefined;
     try {
       if (!notif.read) {
         await dispatch(markNotifRead(notif._id)).unwrap();
       }
     } catch {
       // ignore mark read errors; toast already handled in mark handler
+    }
+
+    if (recipient === 'owner') {
+      navigate(paths.business.receivedOrders(), {
+        state: {
+          orderId,
+          status: statusValue,
+        },
+      });
+      return;
+    }
+
+    if (typeof notif.link === 'string' && notif.link.trim()) {
+      navigate(notif.link);
+      return;
     }
 
     if (notif.type === 'order') {
@@ -146,10 +164,6 @@ const Notifications = () => {
         },
       });
       return;
-    }
-
-    if (typeof notif.link === 'string' && notif.link.trim()) {
-      navigate(notif.link);
     }
   };
 

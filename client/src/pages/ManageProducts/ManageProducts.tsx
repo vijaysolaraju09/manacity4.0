@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { Bell } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { http } from '@/lib/http';
@@ -22,6 +23,7 @@ import styles from './ManageProducts.module.scss';
 import { rupeesToPaise } from '@/utils/currency';
 import EmptyState from '@/components/ui/EmptyState';
 import { paths } from '@/routes/paths';
+import { fetchNotifs } from '@/store/notifs';
 
 type ProductFormState = {
   shopId: string;
@@ -138,6 +140,8 @@ const ManageProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { items, loading } = useSelector((s: RootState) => s.products);
   const userRole = useSelector((s: RootState) => s.auth.user?.role);
+  const unreadNotifications = useSelector((s: RootState) => s.notifs.unread);
+  const notificationsStatus = useSelector((s: RootState) => s.notifs.status);
   const isPrivileged = userRole === 'business' || userRole === 'admin';
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<ProductFormState>(emptyForm);
@@ -149,6 +153,7 @@ const ManageProducts = () => {
   const [shops, setShops] = useState<ShopSummary[]>([]);
   const [shopsLoading, setShopsLoading] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [selectedShopId, setSelectedShopId] = useState('');
   const navigate = useNavigate();
 
   if (!isPrivileged) {
@@ -170,10 +175,6 @@ const ManageProducts = () => {
     const target = approved ?? shops[0];
     return target?._id || target?.id || '';
   }, [shops]);
-
-  useEffect(() => {
-    dispatch(fetchMyProducts());
-  }, [dispatch]);
 
   useEffect(() => {
     let active = true;
@@ -206,15 +207,53 @@ const ManageProducts = () => {
   }, []);
 
   useEffect(() => {
+    if (!isPrivileged) return;
+    if (notificationsStatus === 'idle') {
+      void dispatch(fetchNotifs({ page: 1 }));
+    }
+  }, [dispatch, notificationsStatus, isPrivileged]);
+
+  useEffect(() => {
     if (!defaultShopId) return;
-    setForm((prev) => {
-      if (prev.shopId) return prev;
-      return { ...prev, shopId: defaultShopId };
-    });
+    setSelectedShopId((prev) => (prev ? prev : defaultShopId));
   }, [defaultShopId]);
 
+  useEffect(() => {
+    if (!shops.length) {
+      setSelectedShopId('');
+      return;
+    }
+    if (
+      selectedShopId &&
+      shops.some((shop) => {
+        const id = shop._id || shop.id;
+        return id === selectedShopId;
+      })
+    ) {
+      return;
+    }
+    if (defaultShopId) {
+      setSelectedShopId(defaultShopId);
+    }
+  }, [shops, selectedShopId, defaultShopId]);
+
+  useEffect(() => {
+    if (!selectedShopId) return;
+    dispatch(fetchMyProducts({ shopId: selectedShopId }));
+  }, [dispatch, selectedShopId]);
+
+  useEffect(() => {
+    if (!selectedShopId) return;
+    setForm((prev) => {
+      if (editId) return prev;
+      if (prev.shopId) return prev;
+      return { ...prev, shopId: selectedShopId };
+    });
+  }, [selectedShopId, editId]);
+
   const resetForm = () => {
-    setForm((prev) => ({ ...emptyForm, shopId: prev.shopId || defaultShopId }));
+    const baseShopId = selectedShopId || defaultShopId;
+    setForm({ ...emptyForm, shopId: baseShopId });
     setEditId(null);
     setFormError(null);
     setTouched({});
@@ -222,7 +261,8 @@ const ManageProducts = () => {
   };
 
   const openNew = () => {
-    setForm((prev) => ({ ...emptyForm, shopId: prev.shopId || defaultShopId }));
+    const baseShopId = selectedShopId || defaultShopId;
+    setForm({ ...emptyForm, shopId: baseShopId });
     setEditId(null);
     setFormError(null);
     setTouched({});
@@ -231,9 +271,13 @@ const ManageProducts = () => {
   };
 
   const openEdit = (p: Product) => {
+    const targetShopId = p.shopId || (typeof p.shop === 'string' ? p.shop : '') || defaultShopId;
+    if (targetShopId) {
+      setSelectedShopId((prev) => (prev === targetShopId ? prev : targetShopId));
+    }
     setEditId(p._id);
     setForm({
-      shopId: p.shopId || p.shop || defaultShopId,
+      shopId: targetShopId,
       name: p.name || '',
       description: p.description || '',
       price: typeof p.price === 'number' ? p.price : 0,
@@ -270,13 +314,16 @@ const ManageProducts = () => {
         stock: Number.isFinite(form.stock) ? form.stock : 0,
       } satisfies Omit<CreateProductPayload, 'shopId'>;
 
+      const activeShopId = form.shopId || selectedShopId || defaultShopId;
       if (editId) {
         const updatePayload: UpdateProductPayload = {
           ...payloadBase,
           shopId: form.shopId,
         };
         await dispatch(updateProduct({ id: editId, data: updatePayload })).unwrap();
-        await dispatch(fetchMyProducts()).unwrap();
+        if (activeShopId) {
+          await dispatch(fetchMyProducts({ shopId: activeShopId })).unwrap();
+        }
         showToast('Product updated', 'success');
       } else {
         const createPayload: CreateProductPayload = {
@@ -284,6 +331,9 @@ const ManageProducts = () => {
           shopId: form.shopId,
         };
         await dispatch(createProduct(createPayload)).unwrap();
+        if (activeShopId) {
+          await dispatch(fetchMyProducts({ shopId: activeShopId })).unwrap();
+        }
         showToast('Product added', 'success');
       }
       setShowModal(false);
@@ -351,7 +401,26 @@ const ManageProducts = () => {
     }
   };
 
-  const canAddProduct = shops.length > 0;
+  const unreadBadge = unreadNotifications > 0
+    ? unreadNotifications > 99
+      ? '99+'
+      : String(unreadNotifications)
+    : null;
+
+  const handleNotificationsClick = () => {
+    navigate(paths.business.receivedOrders());
+  };
+
+  const handleActiveShopChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value;
+    setSelectedShopId(value);
+    if (!editId) {
+      setForm((prev) => ({ ...prev, shopId: value }));
+    }
+  };
+
+  const canAddProduct = shops.length > 0 && Boolean(selectedShopId);
+  const shopSelectValue = selectedShopId || '';
 
   return (
     <div className={styles.manageProducts}>
@@ -362,9 +431,42 @@ const ManageProducts = () => {
             Keep your menu current and control when your shop is open for orders.
           </p>
         </div>
-        <button onClick={openNew} disabled={!canAddProduct}>
-          Add Product
-        </button>
+        <div className={styles.headerControls}>
+          <button
+            type="button"
+            className={styles.notificationButton}
+            onClick={handleNotificationsClick}
+            aria-label="View received orders"
+          >
+            <Bell aria-hidden="true" size={18} />
+            <span>Received orders</span>
+            {unreadBadge ? <span className={styles.badge}>{unreadBadge}</span> : null}
+          </button>
+          <label className={styles.shopPicker}>
+            <span>Viewing shop</span>
+            <select
+              value={shopSelectValue}
+              onChange={handleActiveShopChange}
+              disabled={shopsLoading || shops.length === 0}
+            >
+              <option value="" disabled>
+                Select a shop
+              </option>
+              {shops.map((shop) => {
+                const value = shop._id || shop.id || '';
+                return (
+                  <option key={value || shop.name} value={value}>
+                    {shop.name}
+                    {shop.status && shop.status !== 'approved' ? ` (${shop.status})` : ''}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+          <button onClick={openNew} disabled={!canAddProduct}>
+            Add Product
+          </button>
+        </div>
       </div>
 
       <section

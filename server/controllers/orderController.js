@@ -405,7 +405,7 @@ exports.checkoutOrders = async (req, res, next) => {
     const userAddresses = await findAddressesForUser(req.user._id);
 
     for (const group of groups.values()) {
-      const { order, isNew } = await createShopOrder({
+      const { order, shop, isNew } = await createShopOrder({
         shopId: group.shopId,
         items: group.items,
         user: req.user,
@@ -420,7 +420,16 @@ exports.checkoutOrders = async (req, res, next) => {
         userAddresses,
       });
       anyNew = anyNew || isNew;
-      orders.push({ _id: order._id, shopId: order.shop });
+      const orderId = order._id.toString();
+      const shopId = order.shop?.toString?.() || group.shopId;
+      orders.push({
+        _id: orderId,
+        id: orderId,
+        shopId,
+        shopName: shop?.name || order.shopSnapshot?.name || null,
+        status: order.status,
+        grandTotal: order.grandTotal,
+      });
     }
 
     const statusCode = anyNew ? 201 : 200;

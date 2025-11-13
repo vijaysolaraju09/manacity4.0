@@ -64,6 +64,8 @@ type CheckoutSuccessOrder = {
   id: string;
   shopId: string;
   label: string;
+  status?: string | null;
+  totalPaise?: number | null;
 };
 
 type CheckoutResult = {
@@ -407,11 +409,17 @@ const Checkout = () => {
         paymentMethod: 'COD',
       });
 
-      const orders: CheckoutSuccessOrder[] = createdOrders.map((entry) => ({
-        id: entry.id,
-        shopId: entry.shopId,
-        label: labelMap.get(entry.shopId) ?? `Shop ${entry.shopId}`,
-      }));
+      const orders: CheckoutSuccessOrder[] = createdOrders.map((entry) => {
+        const fallbackLabel = labelMap.get(entry.shopId) ?? `Shop ${entry.shopId}`;
+        const resolvedLabel = entry.shopName && entry.shopName.trim() ? entry.shopName : fallbackLabel;
+        return {
+          id: entry.id,
+          shopId: entry.shopId,
+          label: resolvedLabel,
+          status: entry.status ?? null,
+          totalPaise: entry.grandTotal ?? null,
+        } satisfies CheckoutSuccessOrder;
+      });
 
       setCheckoutResult({ orders });
       dispatch(clearCart());
@@ -476,9 +484,21 @@ const Checkout = () => {
                 key={order.id}
                 className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 text-sm shadow-sm transition hover:border-[color:var(--brand-200)] hover:shadow-md dark:border-slate-800/70 dark:bg-slate-950/70"
               >
-                <div>
+                <div className="space-y-1">
                   <span className="block font-semibold text-slate-900 dark:text-white">{order.label}</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Order ID: {order.id}</span>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <span>Order ID: {order.id}</span>
+                    {order.status ? (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                        {order.status.replace(/_/g, ' ')}
+                      </span>
+                    ) : null}
+                    {typeof order.totalPaise === 'number' ? (
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">
+                        {formatINR(order.totalPaise)}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <Link
                   className="inline-flex items-center gap-1 rounded-full border border-transparent bg-[var(--brand-500)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--brand-600)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-500)] dark:bg-[color:var(--brand-500)] dark:hover:bg-[color:var(--brand-400)]"

@@ -6,6 +6,7 @@ export const paths = {
   checkout: () => '/checkout',
   notifications: () => '/notifications',
   profile: () => '/profile',
+  profileHistory: () => '/profile/history',
   settings: () => '/settings',
   shops: () => '/shops',
   shop: (id: string = ':id') => `/shops/${id}`,

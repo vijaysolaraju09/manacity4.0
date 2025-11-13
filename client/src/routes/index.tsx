@@ -35,6 +35,7 @@ const Signup = lazy(() => import('@/pages/auth/Signup'));
 const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('@/pages/auth/ResetPassword/ResetPassword'));
 const Profile = lazy(() => import('@/pages/profile/ProfileScreen'));
+const ProfileHistory = lazy(() => import('@/pages/Profile/History'));
 const Home = lazy(() => import('@/pages/Home/Home'));
 const Shops = lazy(() => import('@/pages/Shops/Shops'));
 const ShopDetails = lazy(() => import('@/pages/ShopDetails/ShopDetails'));
@@ -197,6 +198,11 @@ const AppRoutes = () => (
             element={withSuspense(Notifications, <RouteSkeleton label="Notifications" />)}
           />
           <Route key="profile" path="profile" element={<Profile />} />
+          <Route
+            key="profile-history"
+            path="profile/history"
+            element={withSuspense(ProfileHistory, <RouteSkeleton label="History" />)}
+          />
           <Route key="settings" path="settings" element={<Settings />} />
           <Route key="manage-products" path="manage-products" element={<ManageProducts />} />
           <Route

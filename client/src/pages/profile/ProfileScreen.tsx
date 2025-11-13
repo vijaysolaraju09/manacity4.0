@@ -264,20 +264,40 @@ const ProfileScreen = () => {
 
           {active === 'orders' && (
             <>
-              {DEMO_ORDERS.map((o) => (
-                <Card key={o.id} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Order #{o.id}</div>
-                      <div className="text-xs text-[var(--text-muted)]">{o.date}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold">₹{o.total}</div>
-                      <Badge>{o.status}</Badge>
-                    </div>
+              <Card className="p-4">
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <h4 className="font-semibold">Stay on top of your orders</h4>
+                    <p className="text-sm text-[var(--text-muted)]">
+                      View order timelines, track delivery status and download invoices from the orders dashboard.
+                    </p>
                   </div>
-                </Card>
-              ))}
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => navigate(paths.orders.mine())}>View my orders</Button>
+                    <Button variant="outline" onClick={() => navigate(paths.profileHistory())}>
+                      Activity history
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+              <Card className="p-4">
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <h4 className="font-semibold">Need help with a service?</h4>
+                    <p className="text-sm text-[var(--text-muted)]">
+                      Raise a service request or review your previous requests from the services hub.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={() => navigate(paths.services.requestsMine())}>
+                      My service requests
+                    </Button>
+                    <Button variant="ghost" onClick={() => navigate(paths.services.catalog())}>
+                      Explore services
+                    </Button>
+                  </div>
+                </div>
+              </Card>
             </>
           )}
 

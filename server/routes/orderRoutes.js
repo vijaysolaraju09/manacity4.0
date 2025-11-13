@@ -124,6 +124,7 @@ router.post('/', protect, validate(createOrderSchema), createOrder);
 router.post('/checkout', protect, validate(checkoutOrderSchema), checkoutOrders);
 router.get('/mine', protect, validate(listQuerySchema), getMyOrders);
 router.get('/my', protect, validate(listQuerySchema), getMyOrders);
+router.get('/me', protect, validate(listQuerySchema), getMyOrders);
 router.get(
   '/received',
   protect,

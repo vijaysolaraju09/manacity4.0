@@ -307,6 +307,7 @@ const ShopDetails = () => {
                 key={product._id}
                 product={cardProduct}
                 actions={actions}
+                onClick={() => navigate(paths.products.detail(cardProduct._id))}
               />
             );
           })

@@ -83,12 +83,12 @@ export const deleteProduct = async (id: string) => {
 };
 
 export const getBusinessOrders = async () => {
-  const res = await http.get('/orders/received');
+  const res = await http.get('/api/orders/received');
   return res.data;
 };
 
 export const getUserOrders = async () => {
-  const res = await http.get('/orders/mine');
+  const res = await http.get('/api/orders/me');
   return res.data;
 };
 

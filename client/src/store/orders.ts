@@ -299,7 +299,7 @@ export const fetchMyOrders = createAsyncThunk(
   'orders/fetchMine',
   async (_: void, { rejectWithValue }) => {
     try {
-      const res = await http.get('/orders/mine');
+      const res = await http.get('/api/orders/me');
       const data = toItems(res) as any[];
       return data.map(normalizeOrder);
     } catch (err) {
@@ -340,7 +340,7 @@ export const cancelOrder = createAsyncThunk(
   'orders/cancel',
   async ({ id, reason }: { id: string; reason?: string }, { rejectWithValue }) => {
     try {
-      const res = await http.patch(`/orders/${id}/cancel`, { reason });
+      const res = await http.patch(`/api/orders/${id}/cancel`, { reason });
       return normalizeOrder(toItem(res));
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
@@ -355,7 +355,7 @@ export const rateOrder = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const res = await http.post(`/orders/${id}/rate`, { rating, review });
+      const res = await http.post(`/api/orders/${id}/rate`, { rating, review });
       return normalizeOrder(toItem(res));
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));

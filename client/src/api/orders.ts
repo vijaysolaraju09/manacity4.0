@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { toItem } from '@/lib/response';
+import { toItem, toItems } from '@/lib/response';
 import { normalizeOrder, type Order } from '@/store/orders';
 
 const baseURL = import.meta.env.VITE_API_URL;
@@ -100,6 +100,9 @@ export interface CheckoutOrdersPayload {
 export interface CheckoutOrderSummary {
   id: string;
   shopId: string;
+  shopName?: string | null;
+  status?: string | null;
+  grandTotal?: number | null;
 }
 
 export const checkoutOrders = async (
@@ -148,20 +151,25 @@ export const checkoutOrders = async (
   if (payment) body.payment = payment;
 
   const response = await ordersClient.post('/orders/checkout', body);
-  const payloadData = toItem(response) as {
-    orders?: { _id?: string; id?: string; shopId?: string }[];
-  };
-
-  const orders = Array.isArray(payloadData?.orders) ? payloadData.orders : [];
+  const payloadData = response?.data?.data;
+  const orders = Array.isArray(payloadData?.orders)
+    ? payloadData.orders
+    : (toItems(response) as { _id?: string; id?: string; shopId?: string }[]);
 
   return orders
     .map((order) => {
-      const id = order._id || order.id;
+      const id = order.id || order._id;
       const shopId = order.shopId;
       if (!id || !shopId) {
         return null;
       }
-      return { id, shopId } satisfies CheckoutOrderSummary;
+      return {
+        id,
+        shopId,
+        shopName: 'shopName' in order ? (order as any).shopName ?? null : undefined,
+        status: 'status' in order ? (order as any).status ?? null : undefined,
+        grandTotal: 'grandTotal' in order ? (order as any).grandTotal ?? null : undefined,
+      } satisfies CheckoutOrderSummary;
     })
     .filter((entry): entry is CheckoutOrderSummary => Boolean(entry));
 };

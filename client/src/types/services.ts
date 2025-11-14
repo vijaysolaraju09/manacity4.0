@@ -66,6 +66,13 @@ export interface ServiceRequestHistoryEntry {
   message?: string | null;
 }
 
+export interface ServiceRequestFeedback {
+  id?: string;
+  rating: number | null;
+  comment: string | null;
+  updatedAt?: string | null;
+}
+
 export interface ServiceRequest {
   _id: string;
   id: string;
@@ -92,6 +99,7 @@ export interface ServiceRequest {
   isAnonymizedPublic?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  feedback?: ServiceRequestFeedback | null;
 }
 
 export interface PublicServiceRequest {

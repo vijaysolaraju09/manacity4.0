@@ -68,3 +68,47 @@
 .admin-service-requests__error {
   color: #dc2626;
 }
+
+.admin-service-requests__feedback {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background-color: #f8fafc;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.admin-service-requests__feedbackHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.admin-service-requests__feedbackMeta {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.admin-service-requests__feedbackRating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.admin-service-requests__star {
+  width: 1rem;
+  height: 1rem;
+}
+
+.admin-service-requests__feedbackComment {
+  margin: 0;
+  color: #334155;
+  line-height: 1.45;
+}

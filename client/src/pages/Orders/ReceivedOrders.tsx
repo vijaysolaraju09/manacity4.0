@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { Star } from 'lucide-react';
 
 import {
   fetchReceivedOrders,
@@ -293,6 +294,29 @@ const ReceivedOrders = () => {
                           <span key={`${order.id}-item-${index}`}>{line}</span>
                         ))}
                       </div>
+                      {(order.rating || order.review) ? (
+                        <div className={styles.feedback}>
+                          <div className={styles.feedbackHeader}>Customer feedback</div>
+                          {order.rating ? (
+                            <div className={styles.feedbackRating}>
+                              <div className={styles.feedbackStars} aria-hidden="true">
+                                {Array.from({ length: 5 }).map((_, index) => (
+                                  <Star
+                                    key={index}
+                                    className={styles.feedbackStar}
+                                    strokeWidth={1.5}
+                                    fill={index < (order.rating ?? 0) ? 'currentColor' : 'none'}
+                                  />
+                                ))}
+                              </div>
+                              <span>{order.rating} / 5</span>
+                            </div>
+                          ) : null}
+                          {order.review ? (
+                            <p className={styles.feedbackComment}>{order.review}</p>
+                          ) : null}
+                        </div>
+                      ) : null}
                       {order.notes ? (
                         <p className={styles.notes}>Customer note: {order.notes}</p>
                       ) : null}

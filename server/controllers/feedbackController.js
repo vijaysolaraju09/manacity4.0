@@ -16,25 +16,41 @@ const toObjectId = (value) => {
 
 exports.submitFeedback = async (req, res, next) => {
   try {
-    const { subjectType, subjectId, rating, comment } = req.body ?? {};
+    const rawType =
+      typeof req.body?.subjectType === 'string'
+        ? req.body.subjectType
+        : typeof req.body?.entityType === 'string'
+        ? req.body.entityType
+        : '';
+    const subjectType = rawType.toLowerCase();
+    const referenceId = req.body?.subjectId ?? req.body?.entityId;
+    const { rating, comment } = req.body ?? {};
 
     if (!['order', 'service_request', 'event'].includes(subjectType)) {
       throw AppError.badRequest('INVALID_SUBJECT', 'Unsupported feedback subject');
     }
 
-    const objectId = toObjectId(subjectId);
+    const objectId = toObjectId(referenceId);
     if (!objectId) {
       throw AppError.badRequest('INVALID_REFERENCE', 'Invalid subject reference');
     }
 
     const normalizedComment = typeof comment === 'string' ? comment.trim() : '';
     let normalizedRating = null;
+    let hasRatingUpdate = false;
     if (rating !== undefined) {
-      const parsed = Number(rating);
-      if (!Number.isFinite(parsed) || parsed < 1 || parsed > 5) {
-        throw AppError.badRequest('INVALID_RATING', 'Rating must be between 1 and 5');
+      hasRatingUpdate = true;
+      const ratingValue =
+        typeof rating === 'string' ? rating.trim() : rating === null ? null : rating;
+      if (ratingValue === null || ratingValue === '') {
+        normalizedRating = null;
+      } else {
+        const parsed = Number(ratingValue);
+        if (!Number.isFinite(parsed) || parsed < 1 || parsed > 5) {
+          throw AppError.badRequest('INVALID_RATING', 'Rating must be between 1 and 5');
+        }
+        normalizedRating = Math.round(parsed);
       }
-      normalizedRating = Math.round(parsed);
     }
 
     const userId = req.user._id;
@@ -82,7 +98,7 @@ exports.submitFeedback = async (req, res, next) => {
       updatedAt: new Date(),
     };
 
-    if (normalizedRating !== null) update.rating = normalizedRating;
+    if (hasRatingUpdate) update.rating = normalizedRating;
     if (normalizedComment || normalizedComment === '') update.comment = normalizedComment;
 
     const feedback = await Feedback.findOneAndUpdate(
@@ -91,7 +107,21 @@ exports.submitFeedback = async (req, res, next) => {
       { upsert: true, new: true, setDefaultsOnInsert: true },
     ).lean();
 
-    res.status(201).json({ ok: true, data: { feedback }, traceId: req.traceId });
+    const payload = feedback
+      ? {
+          id: feedback._id?.toString?.(),
+          subjectType: feedback.subjectType,
+          subjectId: feedback.subjectId?.toString?.(),
+          entityType: feedback.subjectType,
+          entityId: feedback.subjectId?.toString?.(),
+          rating: typeof feedback.rating === 'number' ? feedback.rating : null,
+          comment: typeof feedback.comment === 'string' ? feedback.comment : '',
+          createdAt: feedback.createdAt,
+          updatedAt: feedback.updatedAt,
+        }
+      : null;
+
+    res.status(201).json({ ok: true, data: { feedback: payload }, traceId: req.traceId });
   } catch (err) {
     next(err);
   }

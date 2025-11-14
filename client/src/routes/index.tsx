@@ -217,9 +217,14 @@ const AppRoutes = () => (
           />
           <Route key="profile" path="profile" element={<Profile />} />
           <Route
+            key="history"
+            path="history"
+            element={withSuspense(ProfileHistory, <RouteSkeleton label="History" />)}
+          />
+          <Route
             key="profile-history"
             path="profile/history"
-            element={withSuspense(ProfileHistory, <RouteSkeleton label="History" />)}
+            element={<Navigate to="/history" replace />}
           />
           <Route key="settings" path="settings" element={<Settings />} />
           <Route key="manage-products" path="manage-products" element={<ManageProducts />} />

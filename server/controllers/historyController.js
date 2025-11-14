@@ -215,19 +215,25 @@ exports.getHistoryItem = async (req, res, next) => {
     let entry;
 
     if (type === 'order') {
-      const order = await Order.findOne({ _id: referenceId, user: userId })
-        .select('shop shopSnapshot items grandTotal status createdAt updatedAt rating review')
-        .lean();
+      const [order, feedbackDocs] = await Promise.all([
+        Order.findOne({ _id: referenceId, user: userId })
+          .select('shop shopSnapshot items grandTotal status createdAt updatedAt rating review')
+          .lean(),
+        Feedback.find({ user: userId, subjectType: 'order', subjectId: referenceId }).lean(),
+      ]);
       if (!order) throw AppError.notFound('ORDER_NOT_FOUND', 'Order not found');
-      entry = mapOrderEntry(order, buildFeedbackMap());
+      entry = mapOrderEntry(order, buildFeedbackMap(feedbackDocs));
     } else if (type === 'service_request') {
-      const request = await ServiceRequest.findOne({ _id: referenceId, $or: [{ userId }, { user: userId }] })
-        .select(
-          'customName description desc preferredDate preferredTime location status createdAt updatedAt service serviceId visibility',
-        )
-        .lean();
+      const [request, feedbackDocs] = await Promise.all([
+        ServiceRequest.findOne({ _id: referenceId, $or: [{ userId }, { user: userId }] })
+          .select(
+            'customName description desc preferredDate preferredTime location status createdAt updatedAt service serviceId visibility',
+          )
+          .lean(),
+        Feedback.find({ user: userId, subjectType: 'service_request', subjectId: referenceId }).lean(),
+      ]);
       if (!request) throw AppError.notFound('SERVICE_REQUEST_NOT_FOUND', 'Service request not found');
-      entry = mapServiceRequestEntry(request, buildFeedbackMap());
+      entry = mapServiceRequestEntry(request, buildFeedbackMap(feedbackDocs));
     } else {
       const registration = await EventRegistration.findOne({ event: referenceId, user: userId })
         .select('event status createdAt teamName')

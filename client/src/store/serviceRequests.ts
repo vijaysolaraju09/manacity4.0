@@ -6,6 +6,7 @@ import type {
   CreateServiceRequestPayload,
   PublicServiceRequest,
   ServiceRequest,
+  ServiceRequestFeedback,
   ServiceRequestHistoryEntry,
   ServiceRequestOffer,
   ServiceProviderUser,
@@ -136,6 +137,29 @@ const normalizePublicRequest = (data: any): PublicServiceRequest => ({
   requester: data?.requester ?? 'Anonymous',
 });
 
+const normalizeRequestFeedback = (data: any): ServiceRequestFeedback => {
+  if (!data || typeof data !== 'object') {
+    return { rating: null, comment: null };
+  }
+  const rating = typeof data.rating === 'number' ? data.rating : null;
+  const rawComment = typeof data.comment === 'string' ? data.comment.trim() : '';
+  return {
+    id: data._id ? String(data._id) : data.id ? String(data.id) : undefined,
+    rating,
+    comment: rawComment ? rawComment : null,
+    updatedAt:
+      typeof data.updatedAt === 'string'
+        ? data.updatedAt
+        : data.updatedAt instanceof Date
+        ? data.updatedAt.toISOString()
+        : typeof data.createdAt === 'string'
+        ? data.createdAt
+        : data.createdAt instanceof Date
+        ? data.createdAt.toISOString()
+        : undefined,
+  };
+};
+
 const normalizeRequest = (data: any): ServiceRequest => ({
   _id: String(data._id ?? data.id ?? ''),
   id: String(data.id ?? data._id ?? ''),
@@ -221,14 +245,26 @@ const normalizeRequest = (data: any): ServiceRequest => ({
     typeof data.isAnonymizedPublic === 'boolean' ? data.isAnonymizedPublic : undefined,
   createdAt: data.createdAt,
   updatedAt: data.updatedAt,
+  feedback:
+    typeof data.feedback === 'undefined'
+      ? undefined
+      : data.feedback === null
+      ? null
+      : normalizeRequestFeedback(data.feedback),
 });
 
 const applyRequestUpdate = (state: Draft<ServiceRequestsState>, updated: ServiceRequest) => {
+  const merge = (item: ServiceRequest): ServiceRequest => ({
+    ...item,
+    ...updated,
+    feedback: typeof updated.feedback === 'undefined' ? item.feedback : updated.feedback,
+  });
+
   state.mine.items = state.mine.items.map((item) =>
-    item._id === updated._id ? updated : item
+    item._id === updated._id ? merge(item) : item
   );
   state.admin.items = state.admin.items.map((item) =>
-    item._id === updated._id ? updated : item
+    item._id === updated._id ? merge(item) : item
   );
   state.publicList.items = state.publicList.items.map((item) =>
     item._id === updated._id

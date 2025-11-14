@@ -186,3 +186,45 @@
   border-color: var(--color-danger);
 }
 
+.feedback {
+  margin-top: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(251, 191, 36, 0.12);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.feedbackHeader {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.feedbackRating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.feedbackStars {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.feedbackStar {
+  width: 1rem;
+  height: 1rem;
+}
+
+.feedbackComment {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+

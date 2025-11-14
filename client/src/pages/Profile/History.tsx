@@ -98,24 +98,49 @@ const FeedbackDialog = ({
             ) : null}
           </div>
 
-          <label className="block space-y-2">
+          <div className="space-y-2">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Rating</span>
-            <select
-              value={rating ?? ''}
-              onChange={(event) =>
-                onRatingChange(event.target.value ? Number(event.target.value) : null)
-              }
-              disabled={busy}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            >
-              <option value="">Select rating</option>
-              {[5, 4, 3, 2, 1].map((value) => (
-                <option key={value} value={value}>
-                  {value} Star{value === 1 ? '' : 's'}
-                </option>
-              ))}
-            </select>
-          </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1" role="radiogroup" aria-label="Select rating">
+                {Array.from({ length: 5 }).map((_, index) => {
+                  const value = index + 1;
+                  const selected = typeof rating === 'number' ? rating >= value : false;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      className={cn(
+                        'inline-flex h-9 w-9 items-center justify-center rounded-full border text-sm transition',
+                        selected
+                          ? 'border-amber-400 bg-amber-100 text-amber-600 dark:border-amber-500/60 dark:bg-amber-500/20 dark:text-amber-300'
+                          : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300',
+                      )}
+                      onClick={() => onRatingChange(selected && rating === value ? null : value)}
+                      disabled={busy}
+                      aria-label={`Rate ${value} star${value === 1 ? '' : 's'}`}
+                      role="radio"
+                      aria-checked={selected}
+                    >
+                      <Star
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                        strokeWidth={1.5}
+                        fill={selected ? 'currentColor' : 'none'}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={() => onRatingChange(null)}
+                disabled={busy || rating === null}
+                className="text-xs font-medium text-slate-500 transition hover:text-rose-500 disabled:cursor-not-allowed disabled:text-slate-400 dark:text-slate-400 dark:hover:text-rose-400"
+              >
+                Clear rating
+              </button>
+            </div>
+          </div>
 
           <label className="block space-y-2">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Comments</span>
@@ -185,11 +210,17 @@ const HistoryPage = () => {
     if (!feedbackTarget) return;
     try {
       setFeedbackBusy(true);
+      const trimmedComment = feedbackComment.trim();
+      const previousComment = feedbackTarget.feedback?.comment ?? '';
+      const commentChanged = trimmedComment !== previousComment;
+      const previousRating = feedbackTarget.feedback?.rating ?? null;
+      const nextRating = feedbackRating ?? null;
+      const ratingChanged = nextRating !== previousRating;
       const payload = {
-        subjectType: feedbackTarget.type,
-        subjectId: feedbackTarget.referenceId,
-        rating: feedbackRating ?? undefined,
-        comment: feedbackComment.trim() || undefined,
+        entityType: feedbackTarget.type,
+        entityId: feedbackTarget.referenceId,
+        rating: ratingChanged ? nextRating : undefined,
+        comment: commentChanged ? trimmedComment : undefined,
       };
       const feedback = await submitFeedback(payload);
       setEntries((current) =>

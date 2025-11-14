@@ -213,8 +213,8 @@ const HistoryPage = () => {
       const trimmedComment = feedbackComment.trim();
       const previousComment = feedbackTarget.feedback?.comment ?? '';
       const commentChanged = trimmedComment !== previousComment;
-      const previousRating = feedbackTarget.feedback?.rating ?? null;
-      const nextRating = feedbackRating ?? null;
+      const previousRating = feedbackTarget.feedback?.rating ?? undefined;
+      const nextRating = feedbackRating ?? undefined;
       const ratingChanged = nextRating !== previousRating;
       const payload = {
         entityType: feedbackTarget.type,
@@ -229,7 +229,7 @@ const HistoryPage = () => {
             ? {
                 ...entry,
                 feedback: {
-                  rating: feedback.rating ?? feedbackRating ?? null,
+                  rating: feedback.rating ?? (nextRating ?? null),
                   comment:
                     typeof feedback.comment === 'string'
                       ? feedback.comment

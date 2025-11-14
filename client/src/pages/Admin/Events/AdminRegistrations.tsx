@@ -17,6 +17,8 @@ const statusLabels: Record<RegistrationStatus, string> = {
   checked_in: 'Checked in',
   withdrawn: 'Withdrawn',
   disqualified: 'Disqualified',
+  submitted: 'Submitted',
+  rejected: 'Rejected',
 };
 
 const STATUS_OPTIONS: RegistrationStatus[] = [
@@ -25,6 +27,8 @@ const STATUS_OPTIONS: RegistrationStatus[] = [
   'checked_in',
   'withdrawn',
   'disqualified',
+  'submitted',
+  'rejected',
 ];
 
 const PAGE_SIZE = 20;
@@ -160,6 +164,8 @@ const AdminRegistrations = () => {
       checked_in: 0,
       withdrawn: 0,
       disqualified: 0,
+      submitted: 0,
+      rejected: 0,
     };
     registrations.forEach((registration) => {
       const key = registration.status;

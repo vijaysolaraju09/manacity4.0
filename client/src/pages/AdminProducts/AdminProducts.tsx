@@ -605,7 +605,7 @@ const AdminProducts = () => {
                 <option value="">Select shop</option>
                 {shops.map((shopItem) => {
                   const disabled =
-                    shopItem.status &&
+                    Boolean(shopItem.status) &&
                     !['approved', 'active'].includes(shopItem.status.toLowerCase());
                   return (
                     <option key={shopItem._id} value={shopItem._id} disabled={disabled}>

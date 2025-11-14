@@ -105,6 +105,16 @@ export interface CheckoutOrderSummary {
   grandTotal?: number | null;
 }
 
+type RawCheckoutOrder = {
+  id?: string | null;
+  _id?: string | null;
+  shopId?: string | null;
+  shopName?: string | null;
+  status?: string | null;
+  grandTotal?: number | null;
+  [key: string]: unknown;
+};
+
 export const checkoutOrders = async (
   payload: CheckoutOrdersPayload,
 ): Promise<CheckoutOrderSummary[]> => {
@@ -152,23 +162,26 @@ export const checkoutOrders = async (
 
   const response = await ordersClient.post('/orders/checkout', body);
   const payloadData = response?.data?.data;
-  const orders = Array.isArray(payloadData?.orders)
-    ? payloadData.orders
-    : (toItems(response) as { _id?: string; id?: string; shopId?: string }[]);
+  const orders: RawCheckoutOrder[] = Array.isArray(payloadData?.orders)
+    ? (payloadData.orders as RawCheckoutOrder[])
+    : (toItems(response) as RawCheckoutOrder[]);
 
   return orders
-    .map((order) => {
-      const id = order.id || order._id;
+    .map((order): CheckoutOrderSummary | null => {
+      const id = order.id ?? order._id;
       const shopId = order.shopId;
       if (!id || !shopId) {
         return null;
       }
+      const hasShopName = Object.prototype.hasOwnProperty.call(order, 'shopName');
+      const hasStatus = Object.prototype.hasOwnProperty.call(order, 'status');
+      const hasGrandTotal = Object.prototype.hasOwnProperty.call(order, 'grandTotal');
       return {
         id,
         shopId,
-        shopName: 'shopName' in order ? (order as any).shopName ?? null : undefined,
-        status: 'status' in order ? (order as any).status ?? null : undefined,
-        grandTotal: 'grandTotal' in order ? (order as any).grandTotal ?? null : undefined,
+        shopName: hasShopName ? order.shopName ?? null : undefined,
+        status: hasStatus ? order.status ?? null : undefined,
+        grandTotal: hasGrandTotal ? order.grandTotal ?? null : undefined,
       } satisfies CheckoutOrderSummary;
     })
     .filter((entry): entry is CheckoutOrderSummary => Boolean(entry));

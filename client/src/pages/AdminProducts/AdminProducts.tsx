@@ -604,13 +604,13 @@ const AdminProducts = () => {
               >
                 <option value="">Select shop</option>
                 {shops.map((shopItem) => {
+                  const status = shopItem.status?.toLowerCase();
                   const disabled =
-                    Boolean(shopItem.status) &&
-                    !['approved', 'active'].includes(shopItem.status.toLowerCase());
+                    status !== undefined && !['approved', 'active'].includes(status);
                   return (
                     <option key={shopItem._id} value={shopItem._id} disabled={disabled}>
                       {shopItem.name}
-                      {shopItem.status && shopItem.status.toLowerCase() !== 'approved'
+                      {status && status !== 'approved'
                         ? ` (${shopItem.status})`
                         : ''}
                     </option>

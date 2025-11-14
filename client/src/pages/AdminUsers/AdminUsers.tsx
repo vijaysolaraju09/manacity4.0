@@ -300,7 +300,8 @@ const AdminUsers = () => {
   );
 
   return (
-    <div className={`${styles.page} space-y-6 px-4`}>
+    <>
+      <div className={`${styles.page} space-y-6 px-4`}>
       <div className={styles.header}>
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Users</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -436,7 +437,7 @@ const AdminUsers = () => {
           className={styles.tableWrap}
         />
       ) : null}
-    </div>
+      </div>
       <ConfirmDialog
         open={Boolean(statusDialog)}
         title={statusDialog?.nextActive ? 'Activate user?' : 'Suspend user?'}
@@ -469,6 +470,7 @@ const AdminUsers = () => {
         }}
         onCancel={() => setDeleteDialog(null)}
       />
+    </>
   );
 };
 

@@ -18,6 +18,9 @@ export interface Notification {
   expiresAt?: string;
   read: boolean;
   createdAt: string;
+  entityType?: 'order' | 'serviceRequest' | 'event' | 'announcement' | null;
+  entityId?: string | null;
+  redirectUrl?: string | null;
 }
 
 export interface NotificationsResponse {
@@ -41,7 +44,7 @@ export const fetchNotifications = async ({
 
 export const markNotificationRead = async (id: string) => {
   try {
-    const res = await http.patch(`/notifications/${id}/read`);
+    const res = await http.post(`/notifications/${id}/read`);
     return toItem(res);
   } catch (err) {
     throw new Error(toErrorMessage(err));

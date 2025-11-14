@@ -8,6 +8,7 @@ import { formatDateTime } from '@/utils/date'
 import showToast from '@/components/ui/Toast'
 import { toErrorMessage } from '@/lib/response'
 import { http } from '@/lib/http'
+import { useNavigate } from 'react-router-dom'
 
 const FILTERS: Array<{ key: 'all' | Notif['type']; label: string }> = [
   { key: 'all', label: 'All' },
@@ -43,6 +44,7 @@ const toneForType = (type: string | undefined): 'success' | 'accent' | 'neutral'
 const NotificationsScreen = () => {
   const dispatch = useDispatch<AppDispatch>()
   const notifsState = useSelector((state: RootState) => state.notifs)
+  const navigate = useNavigate()
   const [activeFilter, setActiveFilter] = useState<(typeof FILTERS)[number]['key']>('all')
 
   useEffect(() => {
@@ -128,6 +130,18 @@ const NotificationsScreen = () => {
     [dispatch],
   )
 
+  const handleOpen = useCallback(
+    (notification: Notif) => {
+      if (!notification.read) {
+        void handleMarkRead(notification._id)
+      }
+      if (notification.redirectUrl) {
+        navigate(notification.redirectUrl)
+      }
+    },
+    [handleMarkRead, navigate],
+  )
+
   const loading = notifsState.status === 'loading' && notifsState.items.length === 0
   const hasError = notifsState.status === 'failed'
   const hasNotifications = filteredItems.length > 0
@@ -196,7 +210,19 @@ const NotificationsScreen = () => {
                 const Icon = iconForType(notification.type)
                 const tone = toneForType(notification.type)
                 return (
-                  <Card key={notification._id} className="rounded-3xl border border-default/80 p-5">
+                  <Card
+                    key={notification._id}
+                    className="cursor-pointer rounded-3xl border border-default/80 p-5"
+                    onClick={() => handleOpen(notification)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        handleOpen(notification)
+                      }
+                    }}
+                  >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex items-start gap-4">
                         <div
@@ -225,13 +251,21 @@ const NotificationsScreen = () => {
                           <IconButton
                             icon={CheckCircle2}
                             label="Mark notification as read"
-                            onClick={() => void handleMarkRead(notification._id)}
+                            onClick={(event) => {
+                              event.preventDefault()
+                              event.stopPropagation()
+                              void handleMarkRead(notification._id)
+                            }}
                           />
                         ) : null}
                         <IconButton
                           icon={Trash2}
                           label="Remove notification"
-                          onClick={() => void handleRemove(notification._id)}
+                          onClick={(event) => {
+                            event.preventDefault()
+                            event.stopPropagation()
+                            void handleRemove(notification._id)
+                          }}
                         />
                       </div>
                     </div>

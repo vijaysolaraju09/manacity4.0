@@ -24,6 +24,17 @@ const toObjectId = (value) => {
   return null;
 };
 
+const buildEventNotificationContext = (event) => {
+  const eventId =
+    event && typeof event === 'object' && event._id ? toObjectId(event._id) : toObjectId(event);
+  if (!eventId) return { entityType: 'event' };
+  return {
+    entityType: 'event',
+    entityId: eventId,
+    redirectUrl: `/events/${eventId.toString()}`,
+  };
+};
+
 const resolveTimestamp = (value) => {
   if (!value) return Number.NaN;
   if (value instanceof Date) {
@@ -114,14 +125,15 @@ const mapMatchForResponse = (match) => {
   };
 };
 
-const notifyUsers = async (userIds, message) => {
+const notifyUsers = async (userIds, message, event) => {
   if (!message) return;
   const ids = Array.isArray(userIds) ? userIds : [userIds];
   const prepared = [];
+  const context = buildEventNotificationContext(event);
   for (const id of ids) {
     const objectId = toObjectId(id);
     if (!objectId) continue;
-    prepared.push({ userId: objectId, type: 'event', message });
+    prepared.push({ userId: objectId, type: 'event', message, ...context, payload: context });
   }
   if (!prepared.length) return;
   try {
@@ -140,7 +152,7 @@ const notifyRegisteredUsers = async (eventId, message) => {
     .select('user')
     .lean();
   const userIds = registrations.map((reg) => reg.user);
-  if (userIds.length) await notifyUsers(userIds, message);
+  if (userIds.length) await notifyUsers(userIds, message, eventId);
 };
 
 const loadEventOrThrow = async (id) => {
@@ -437,7 +449,7 @@ exports.publishEvent = async (req, res, next) => {
       throw AppError.badRequest('INVALID_WINDOW', 'Registration window is invalid');
     event.status = 'published';
     await event.save();
-    await notifyUsers(event.createdBy, `${event.title} is now published`);
+    await notifyUsers(event.createdBy, `${event.title} is now published`, event);
     res.json({ ok: true, data: event.toDetailJSON(), traceId: req.traceId });
   } catch (err) {
     next(err);
@@ -690,9 +702,9 @@ exports.register = async (req, res, next) => {
     await Event.updateOne({ _id: event._id }, { $set: { registeredCount: totalRegistrations } });
 
     if (status === 'registered') {
-      await notifyUsers(req.user._id, `You are registered for ${event.title}`);
+      await notifyUsers(req.user._id, `You are registered for ${event.title}`, event);
     } else {
-      await notifyUsers(req.user._id, `You are waitlisted for ${event.title}`);
+      await notifyUsers(req.user._id, `You are waitlisted for ${event.title}`, event);
     }
 
     res.json({
@@ -809,7 +821,7 @@ exports.unregister = async (req, res, next) => {
 
     await Event.updateOne({ _id: event._id }, { $set: { registeredCount: totalRegistrations } });
 
-    await notifyUsers(req.user._id, `You have been removed from ${event.title}`);
+    await notifyUsers(req.user._id, `You have been removed from ${event.title}`, event);
 
     res.json({ ok: true, data: true, traceId: req.traceId });
   } catch (err) {
@@ -1297,7 +1309,7 @@ exports.reportMatch = async (req, res, next) => {
 
     const updated = await Match.findByIdAndUpdate(match._id, update, { new: true });
 
-    await notifyUsers(event.createdBy, `Match report submitted for ${event.title}`);
+    await notifyUsers(event.createdBy, `Match report submitted for ${event.title}`, event);
 
     res.json({ ok: true, data: mapMatchForResponse(updated), traceId: req.traceId });
   } catch (err) {
@@ -1361,7 +1373,7 @@ exports.verifyMatch = async (req, res, next) => {
       }
     }
 
-    await notifyUsers(req.body.winner, `You won a match in ${event.title}`);
+    await notifyUsers(req.body.winner, `You won a match in ${event.title}`, event);
 
     res.json({ ok: true, data: mapMatchForResponse(updated), traceId: req.traceId });
   } catch (err) {

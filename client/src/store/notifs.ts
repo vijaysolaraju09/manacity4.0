@@ -8,6 +8,9 @@ export interface Notif {
   message: string;
   read: boolean;
   createdAt: string;
+  entityType?: 'order' | 'serviceRequest' | 'event' | 'announcement' | null;
+  entityId?: string | null;
+  redirectUrl?: string | null;
 }
 
 interface NotifState {
@@ -38,7 +41,12 @@ export const fetchNotifs = createAsyncThunk(
       const page = params?.page ?? 1;
       const limit = params?.limit ?? 20;
       const res = await http.get('/api/notifications', { params: { page, limit } });
-      const items = toItems(res) as Notif[];
+      const items = (toItems(res) as Notif[]).map((item) => ({
+        ...item,
+        entityType: item.entityType ?? null,
+        entityId: item.entityId ?? null,
+        redirectUrl: item.redirectUrl ?? null,
+      }));
       const payload = res.data?.data ?? res.data ?? {};
       const hasMore = Boolean(payload.hasMore);
       const unread =
@@ -58,7 +66,7 @@ export const markNotifRead = createAsyncThunk(
   'notifs/markRead',
   async (id: string, { rejectWithValue }) => {
     try {
-      await http.patch(`/api/notifications/${id}/read`);
+      await http.post(`/api/notifications/${id}/read`);
       return id;
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));

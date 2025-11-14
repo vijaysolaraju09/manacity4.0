@@ -33,6 +33,17 @@ const orderCode = (order) =>
     .slice(-6)
     .toUpperCase();
 
+const buildOrderNotificationContext = (order) => {
+  const id = order?._id || order?.id;
+  if (!id) return { entityType: 'order' };
+  const idString = id.toString();
+  return {
+    entityType: 'order',
+    entityId: id,
+    redirectUrl: `/orders/${idString}`,
+  };
+};
+
 const resolveShippingAddress = ({ shippingAddress, addressId, userAddresses }) => {
   let shippingAddressInput = sanitizeShippingAddress(shippingAddress);
 
@@ -232,15 +243,20 @@ const createShopOrder = async ({
   });
 
   const code = orderCode(order);
+  const notificationContext = buildOrderNotificationContext(order);
   if (shop?.owner) {
     await notifyUser(shop.owner, {
       type: 'order',
       message: `New order ${code || ''} from ${user.name || 'a customer'}.`,
+      ...notificationContext,
+      payload: notificationContext,
     });
   }
   await notifyUser(user._id, {
     type: 'order',
     message: 'Order placed',
+    ...notificationContext,
+    payload: notificationContext,
   });
 
   if (shippingAddressInput) {
@@ -533,10 +549,12 @@ exports.updateOrderStatus = async (req, res, next) => {
       };
     }
     await order.save();
-    const code = orderCode(order);
+    const notificationContext = buildOrderNotificationContext(order);
     await notifyUser(order.user, {
       type: 'order',
       message: `Order is ${statusLabel(nextStatus)}`,
+      ...notificationContext,
+      payload: notificationContext,
     });
     res.json({ ok: true, data: { order }, traceId: req.traceId });
   } catch (err) {
@@ -565,17 +583,21 @@ exports.cancelOrder = async (req, res, next) => {
     await order.save();
     const shop = await Shop.findById(order.shop).select('owner name').lean();
     const code = orderCode(order);
+    const notificationContext = buildOrderNotificationContext(order);
     if (shop?.owner) {
+      const reasonSuffix = reason ? `: ${reason}` : '';
       await notifyUser(shop.owner, {
         type: 'order',
-        message: `Order ${code || ''} was cancelled by the customer${
-          reason ? `: ${reason}` : ''
-        }.`,
+        message: `Order ${code || ''} was cancelled by the customer${reasonSuffix}.`,
+        ...notificationContext,
+        payload: notificationContext,
       });
     }
     await notifyUser(order.user, {
       type: 'order',
       message: 'Order is cancelled',
+      ...notificationContext,
+      payload: notificationContext,
     });
     res.json({ ok: true, data: { order }, traceId: req.traceId });
   } catch (err) {
@@ -603,9 +625,12 @@ exports.rateOrder = async (req, res, next) => {
     const shop = await Shop.findById(order.shop).select('owner name').lean();
     if (shop?.owner && rating) {
       const code = orderCode(order);
+      const notificationContext = buildOrderNotificationContext(order);
       await notifyUser(shop.owner, {
         type: 'order',
         message: `Order ${code || ''} received a ${rating}-star review.`,
+        ...notificationContext,
+        payload: notificationContext,
       });
     }
     res.json({ ok: true, data: { order }, traceId: req.traceId });

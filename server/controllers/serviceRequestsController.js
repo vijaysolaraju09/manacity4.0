@@ -255,7 +255,7 @@ const populateRequest = (query) => {
   return query.populate(paths);
 };
 
-const buildNotificationPayload = (request) => {
+const buildNotificationContext = (request) => {
   const entityId = toId(request?._id || request?.id);
   const payload = { entityType: 'serviceRequest' };
   if (!entityId) return payload;
@@ -271,13 +271,14 @@ const sendNotification = async (userIds, subType, message, request) => {
     .map((id) => toId(id))
     .filter(Boolean);
   if (!ids.length) return;
-  const payload = buildNotificationPayload(request);
+  const payload = buildNotificationContext(request);
   await Promise.allSettled(
     ids.map((id) =>
       notifyUser(id, {
         type: 'service_request',
         subType,
         message,
+        ...payload,
         payload,
       })
     )

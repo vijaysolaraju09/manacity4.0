@@ -16,6 +16,7 @@ router.delete("/", protect, clearNotifications);
 
 // User: mark one as read
 router.patch("/:id/read", protect, markAsRead);
+router.post("/:id/read", protect, markAsRead);
 
 // User: delete notification
 router.delete("/:id", protect, deleteNotification);

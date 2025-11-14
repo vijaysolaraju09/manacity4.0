@@ -23,6 +23,7 @@ const {
   rejectShop,
 } = require('../controllers/adminShopController');
 const {
+  createProduct: adminCreateProduct,
   listProducts,
   updateProduct: adminUpdateProduct,
   deleteProduct: adminDeleteProduct,
@@ -76,6 +77,7 @@ router.post('/shops/reject/:id', protect, isAdmin, rejectShop);
 router.post('/shops/:id/reject', protect, isAdmin, rejectShop);
 
 router.get('/products', protect, isAdmin, listProducts);
+router.post('/products', protect, isAdmin, adminCreateProduct);
 router.put('/products/:id', protect, isAdmin, adminUpdateProduct);
 router.delete('/products/:id', protect, isAdmin, adminDeleteProduct);
 

@@ -213,6 +213,7 @@ export const fetchMetricSeries = async (
 export interface UserQueryParams {
   role?: string;
   verified?: boolean;
+  status?: string;
   query?: string;
   page?: number;
   pageSize?: number;
@@ -371,6 +372,23 @@ export interface ProductQueryParams {
 export const fetchProducts = async (params: ProductQueryParams = {}) => {
   const res = await adminApi.get(withAdminPrefix('products'), { params });
   return extractPaginatedResult<any>(res.data);
+};
+
+export interface AdminCreateProductPayload {
+  shopId: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  mrp: number;
+  stock: number;
+  image?: string;
+  images?: string[];
+}
+
+export const createProduct = async (data: AdminCreateProductPayload) => {
+  const res = await adminApi.post(withAdminPrefix('products'), data);
+  return extractEntity<any>(res.data);
 };
 
 export const updateProduct = async (

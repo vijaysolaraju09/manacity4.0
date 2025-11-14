@@ -10,6 +10,8 @@ import { formatCountdown } from '@/utils/time';
 import { formatDateTime, formatTimeAgo } from '@/utils/date';
 import { cn } from '@/utils/cn';
 import fallbackImage from '@/assets/no-image.svg';
+import showToast from '@/components/ui/Toast';
+import { paths } from '@/routes/paths';
 import styles from './EventsHub.module.scss';
 
 type TabKey = 'all' | 'events' | 'tournaments' | 'registrations';
@@ -90,6 +92,19 @@ const EventsHub = () => {
   const [busy, setBusy] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [q, setQ] = useState('');
+
+  const promptLogin = useCallback(
+    (targetPath: string) => {
+      showToast('Sign in or create an account to register for events.', 'info');
+      navigate(paths.auth.login(), {
+        state: {
+          from: targetPath,
+          message: 'Sign in or create an account to register for events.',
+        },
+      });
+    },
+    [navigate],
+  );
 
   const availableTabs = useMemo(
     () => (authUser ? TABS : TABS.filter((tab) => tab.id !== 'registrations')),
@@ -264,6 +279,18 @@ const EventsHub = () => {
           onClick={() => navigate(`/events/${event._id}`)}
         >
           View results
+        </button>
+      );
+    }
+
+    if (!authUser) {
+      return (
+        <button
+          type="button"
+          className={styles.secondaryAction}
+          onClick={() => promptLogin(`/events/${event._id}#register`)}
+        >
+          Log in to register
         </button>
       );
     }

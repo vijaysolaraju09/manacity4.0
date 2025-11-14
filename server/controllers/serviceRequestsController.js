@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Service = require('../models/Service');
 const ServiceRequest = require('../models/ServiceRequest');
+const Feedback = require('../models/Feedback');
 const AppError = require('../utils/AppError');
 const { notifyUser } = require('../services/notificationService');
 
@@ -158,6 +159,18 @@ const formatHistory = (entry) => ({
   message: entry?.message ?? null,
 });
 
+const formatFeedback = (feedback) => {
+  if (!feedback) return null;
+  const rating = typeof feedback.rating === 'number' ? feedback.rating : null;
+  const commentValue = sanitizeString(feedback.comment);
+  return {
+    id: toId(feedback._id),
+    rating,
+    comment: commentValue ? commentValue : null,
+    updatedAt: feedback.updatedAt || feedback.createdAt || null,
+  };
+};
+
 const formatOffer = (offer, { currentUserId, isOwner, isAdmin }) => {
   if (!offer) return null;
   const providerId = toId(offer.providerId);
@@ -188,6 +201,7 @@ const toRequestJson = (doc, options = {}) => {
   const isOwner = Boolean(currentUserId && ownerId && currentUserId === ownerId);
 
   const service = doc.serviceId && doc.serviceId.name ? doc.serviceId : doc.service;
+  const feedback = isOwner || isAdmin ? formatFeedback(options.feedback) : null;
   const assignedRaw = Array.isArray(doc.assignedProviderIds)
     ? doc.assignedProviderIds
     : doc.assignedProviderId
@@ -241,6 +255,7 @@ const toRequestJson = (doc, options = {}) => {
       typeof doc.isAnonymizedPublic === 'boolean' ? doc.isAnonymizedPublic : true,
     createdAt: doc.createdAt || null,
     updatedAt: doc.updatedAt || null,
+    feedback,
   };
 };
 
@@ -396,12 +411,22 @@ exports.getServiceRequestById = async (req, res, next) => {
     if (!isOwner && !isAdmin)
       throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to view this request');
 
+    const ownerObjectId = toObjectId(request.userId || request.user);
+    const feedbackDoc = ownerObjectId
+      ? await Feedback.findOne({
+          subjectType: 'service_request',
+          subjectId: request._id,
+          user: ownerObjectId,
+        }).lean()
+      : null;
+
     res.json({
       ok: true,
       data: {
         request: toRequestJson(request.toObject(), {
           currentUserId,
           isAdmin,
+          feedback: feedbackDoc,
         }),
       },
       traceId: req.traceId,
@@ -919,8 +944,39 @@ exports.adminListServiceRequests = async (req, res, next) => {
 
     const [items, total] = await Promise.all([query.lean(), ServiceRequest.countDocuments(filter)]);
 
+    const requestIds = Array.isArray(items)
+      ? items
+          .map((doc) => toObjectId(doc?._id))
+          .filter((value) => Boolean(value))
+      : [];
+
+    const feedbackDocs = requestIds.length
+      ? await Feedback.find({
+          subjectType: 'service_request',
+          subjectId: { $in: requestIds },
+        }).lean()
+      : [];
+
+    const feedbackMap = new Map();
+    feedbackDocs.forEach((doc) => {
+      const subjectKey = doc.subjectId?.toString?.();
+      const userKey = doc.user?.toString?.();
+      if (subjectKey && userKey) {
+        feedbackMap.set(`${subjectKey}:${userKey}`, doc);
+      }
+      if (subjectKey && !feedbackMap.has(subjectKey)) {
+        feedbackMap.set(subjectKey, doc);
+      }
+    });
+
     const normalized = Array.isArray(items)
-      ? items.map((doc) => toRequestJson(doc, { isAdmin: true }))
+      ? items.map((doc) => {
+          const requestId = toId(doc._id);
+          const ownerId = toId(doc.userId || doc.user);
+          const feedbackDoc =
+            feedbackMap.get(`${requestId}:${ownerId}`) ?? feedbackMap.get(requestId) ?? null;
+          return toRequestJson(doc, { isAdmin: true, feedback: feedbackDoc });
+        })
       : [];
 
     res.json({
@@ -1100,12 +1156,22 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
       );
     }
 
+    const ownerObjectId = toObjectId(request.userId || request.user);
+    const feedbackDoc = ownerObjectId
+      ? await Feedback.findOne({
+          subjectType: 'service_request',
+          subjectId: request._id,
+          user: ownerObjectId,
+        }).lean()
+      : null;
+
     res.json({
       ok: true,
       data: {
         request: toRequestJson(request.toObject(), {
           isAdmin: true,
           currentUserId: req.user?._id ?? null,
+          feedback: feedbackDoc,
         }),
       },
       traceId: req.traceId,

@@ -113,16 +113,18 @@ export const fetchHistory = async (): Promise<HistoryEntry[]> => {
 };
 
 export interface SubmitFeedbackPayload {
-  subjectType: HistoryEntryType;
-  subjectId: string;
+  entityType: HistoryEntryType;
+  entityId: string;
   rating?: number;
   comment?: string;
 }
 
 export interface FeedbackResponse {
   id?: string;
-  subjectType: HistoryEntryType;
-  subjectId: string;
+  entityType: HistoryEntryType;
+  entityId: string;
+  subjectType?: HistoryEntryType;
+  subjectId?: string;
   rating?: number | null;
   comment?: string | null;
   updatedAt?: string;
@@ -132,17 +134,30 @@ const normalizeFeedback = (input: any): FeedbackResponse => {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid feedback payload');
   }
-  const rawType = typeof input.subjectType === 'string' ? input.subjectType : 'order';
-  const subjectType: HistoryEntryType = ['order', 'service_request', 'event'].includes(rawType)
+  const rawType =
+    typeof input.entityType === 'string'
+      ? input.entityType
+      : typeof input.subjectType === 'string'
+      ? input.subjectType
+      : 'order';
+  const entityType: HistoryEntryType = ['order', 'service_request', 'event'].includes(rawType)
     ? (rawType as HistoryEntryType)
     : 'order';
 
   return {
     id: input._id ? String(input._id) : undefined,
-    subjectType,
-    subjectId: String(input.subjectId ?? input.referenceId ?? ''),
+    entityType,
+    entityId: String(input.entityId ?? input.subjectId ?? input.referenceId ?? ''),
+    subjectType:
+      typeof input.subjectType === 'string'
+        ? (input.subjectType as HistoryEntryType)
+        : undefined,
+    subjectId: input.subjectId ? String(input.subjectId) : undefined,
     rating: typeof input.rating === 'number' ? input.rating : null,
-    comment: typeof input.comment === 'string' ? input.comment : null,
+    comment:
+      typeof input.comment === 'string'
+        ? input.comment.trim() || null
+        : null,
     updatedAt: input.updatedAt ? toIsoString(input.updatedAt) : undefined,
   };
 };
@@ -150,7 +165,17 @@ const normalizeFeedback = (input: any): FeedbackResponse => {
 export const submitFeedback = async (
   payload: SubmitFeedbackPayload,
 ): Promise<FeedbackResponse> => {
-  const res = await http.post('/api/feedback', payload);
+  const body: Record<string, unknown> = {
+    entityType: payload.entityType,
+    entityId: payload.entityId,
+  };
+  if (payload.rating !== undefined) body.rating = payload.rating;
+  if (payload.comment !== undefined) body.comment = payload.comment;
+  // Backwards compatibility with older API versions.
+  body.subjectType = payload.entityType;
+  body.subjectId = payload.entityId;
+
+  const res = await http.post('/api/feedback', body);
   const raw = toItem(res);
   return normalizeFeedback(raw?.feedback ?? raw);
 };

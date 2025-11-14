@@ -278,7 +278,7 @@ const ProfileScreen = () => {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button onClick={() => navigate(paths.orders.mine())}>View my orders</Button>
-                    <Button variant="outline" onClick={() => navigate(paths.profileHistory())}>
+                    <Button variant="outline" onClick={() => navigate(paths.history())}>
                       Activity history
                     </Button>
                   </div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Star } from 'lucide-react';
 import Button from '@/components/ui/button';
 import showToast from '@/components/ui/Toast';
 import { http } from '@/lib/http';
@@ -190,6 +191,45 @@ const ServiceRequestDetail = () => {
               </div>
             ) : null}
           </section>
+
+          {request.feedback && (request.feedback.rating || request.feedback.comment) ? (
+            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="text-lg font-semibold text-slate-900">Your feedback</h3>
+              <div className="mt-3 space-y-3 text-sm text-slate-700">
+                {request.feedback.rating ? (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Rating</p>
+                    <div className="mt-1 flex items-center gap-2 text-amber-500">
+                      <div className="flex items-center gap-0.5" aria-hidden="true">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <Star
+                            key={index}
+                            className="h-4 w-4"
+                            strokeWidth={1.5}
+                            fill={index < (request.feedback?.rating ?? 0) ? 'currentColor' : 'none'}
+                          />
+                        ))}
+                      </div>
+                      <span className="font-semibold text-slate-900">
+                        {request.feedback.rating} / 5
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+                {request.feedback.comment ? (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Comment</p>
+                    <p className="mt-1 whitespace-pre-wrap text-slate-700">{request.feedback.comment}</p>
+                  </div>
+                ) : null}
+                {request.feedback.updatedAt ? (
+                  <p className="text-xs text-slate-500">
+                    Updated {formatDate(request.feedback.updatedAt)}
+                  </p>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-lg font-semibold text-slate-900">Status timeline</h3>

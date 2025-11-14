@@ -305,6 +305,37 @@ const OrderDetail = () => {
                 </div>
               </div>
               <div className="space-y-6">
+                {(order.rating || order.review) ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeOut', delay: 0.05 }}
+                  >
+                    <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-xl shadow-slate-200/60 dark:border-slate-800/70 dark:bg-slate-900/70">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Your feedback</h3>
+                      {order.rating ? (
+                        <div className="mt-3 flex items-center gap-2 text-amber-500">
+                          <div className="flex items-center gap-0.5" aria-hidden="true">
+                            {Array.from({ length: 5 }).map((_, index) => (
+                              <Star
+                                key={index}
+                                className="h-4 w-4"
+                                strokeWidth={1.5}
+                                fill={index < (order.rating ?? 0) ? 'currentColor' : 'none'}
+                              />
+                            ))}
+                          </div>
+                          <span className="font-semibold text-slate-900 dark:text-white">{order.rating} / 5</span>
+                        </div>
+                      ) : null}
+                      {order.review ? (
+                        <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+                          {order.review}
+                        </p>
+                      ) : null}
+                    </div>
+                  </motion.div>
+                ) : null}
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -319,7 +350,7 @@ const OrderDetail = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, ease: 'easeOut', delay: 0.05 }}
+                  transition={{ duration: 0.2, ease: 'easeOut', delay: 0.1 }}
                 >
                   <OrderAddressCard address={order.shippingAddress} fulfillment={order.fulfillment} />
                 </motion.div>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Star } from 'lucide-react';
 import Button from '@/components/ui/button';
 import showToast from '@/components/ui/Toast';
 import './AdminServiceRequests.scss';
@@ -141,12 +142,43 @@ const AdminServiceRequests = () => {
               providerId: request.assignedProviderId ?? '',
             };
             const statusLabel = formatStatus(request.status);
+            const feedbackUpdatedLabel = request.feedback?.updatedAt
+              ? new Date(request.feedback.updatedAt).toLocaleDateString()
+              : null;
             return (
               <div key={request._id} className="admin-service-requests__item">
                 <div>
                   <strong>{request.service?.name || request.customName || 'Service request'}</strong>
                   <div className="admin-service-requests__status">Current status: {statusLabel}</div>
                 </div>
+                {request.feedback && (request.feedback.rating || request.feedback.comment) ? (
+                  <div className="admin-service-requests__feedback">
+                    <div className="admin-service-requests__feedbackHeader">
+                      <span>User feedback</span>
+                      {feedbackUpdatedLabel ? (
+                        <span className="admin-service-requests__feedbackMeta">
+                          Updated {feedbackUpdatedLabel}
+                        </span>
+                      ) : null}
+                    </div>
+                    {request.feedback.rating ? (
+                      <div className="admin-service-requests__feedbackRating">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <Star
+                            key={index}
+                            className="admin-service-requests__star"
+                            strokeWidth={1.5}
+                            fill={index < (request.feedback?.rating ?? 0) ? 'currentColor' : 'none'}
+                          />
+                        ))}
+                        <span>{request.feedback.rating} / 5</span>
+                      </div>
+                    ) : null}
+                    {request.feedback.comment ? (
+                      <p className="admin-service-requests__feedbackComment">{request.feedback.comment}</p>
+                    ) : null}
+                  </div>
+                ) : null}
                 <label>
                   Update status
                   <select

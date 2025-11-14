@@ -18,6 +18,12 @@ const notificationSchema = new Schema(
     deepLink: { type: String, trim: true },
     payload: { type: Schema.Types.Mixed },
     metadata: { type: Schema.Types.Mixed },
+    entityType: {
+      type: String,
+      enum: ['order', 'serviceRequest', 'event', 'announcement'],
+    },
+    entityId: { type: Schema.Types.ObjectId },
+    redirectUrl: { type: String, trim: true },
     read: { type: Boolean, default: false },
     priority: {
       type: String,

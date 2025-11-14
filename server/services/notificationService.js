@@ -10,6 +10,16 @@ const toObjectId = (value) => {
   return null;
 };
 
+const ENTITY_TYPES = new Set(['order', 'serviceRequest', 'event', 'announcement']);
+
+const normalizeEntityType = (value) => {
+  if (!value) return undefined;
+  const raw = String(value).trim();
+  if (ENTITY_TYPES.has(raw)) return raw;
+  if (raw === 'service_request') return 'serviceRequest';
+  return undefined;
+};
+
 const sanitizeEntries = (entries = []) =>
   entries
     .map((entry) => {
@@ -23,6 +33,9 @@ const sanitizeEntries = (entries = []) =>
       const imageUrl = entry.imageUrl ? String(entry.imageUrl).trim() : undefined;
       const actionUrl = entry.actionUrl ? String(entry.actionUrl).trim() : undefined;
       const deepLink = entry.deepLink ? String(entry.deepLink).trim() : undefined;
+      const redirectUrl = entry.redirectUrl ? String(entry.redirectUrl).trim() : undefined;
+      const entityType = normalizeEntityType(entry.entityType);
+      const entityId = toObjectId(entry.entityId);
       const priority = ['low', 'normal', 'high'].includes(String(entry.priority))
         ? String(entry.priority)
         : undefined;
@@ -43,8 +56,11 @@ const sanitizeEntries = (entries = []) =>
         imageUrl,
         actionUrl,
         deepLink,
+        redirectUrl,
         payload: entry.payload,
         metadata: entry.metadata,
+        entityType,
+        entityId,
         priority: priority || undefined,
         expiresAt: normalizedExpiresAt,
       };

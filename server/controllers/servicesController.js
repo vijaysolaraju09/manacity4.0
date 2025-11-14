@@ -94,6 +94,16 @@ const toIdString = (value) => {
   return undefined;
 };
 
+const buildServiceRequestNotificationContext = (request) => {
+  const id = toIdString(request?._id || request?.id || request);
+  if (!id) return { entityType: 'serviceRequest' };
+  return {
+    entityType: 'serviceRequest',
+    entityId: id,
+    redirectUrl: `/requests/${id}`,
+  };
+};
+
 const toObjectId = (value) => {
   if (!value) return null;
   if (value instanceof Types.ObjectId) return value;
@@ -795,12 +805,15 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
       newProviderId &&
       newProviderId !== previousProviderId
     ) {
+      const context = buildServiceRequestNotificationContext(updated);
       notifications.push(
         notifyUser(requestOwnerId, {
           type: 'service_request',
           subType: 'service_assigned',
           message: 'Service request assigned',
           metadata: { requestId: toIdString(updated._id) },
+          ...context,
+          payload: context,
         })
       );
     }
@@ -808,12 +821,15 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
     const previousStatusLabel = mapStatusForResponse(previous.status);
     const newStatusLabel = mapStatusForResponse(updated.status);
     if (requestOwnerId && newStatusLabel !== previousStatusLabel) {
+      const context = buildServiceRequestNotificationContext(updated);
       notifications.push(
         notifyUser(requestOwnerId, {
           type: 'service_request',
           subType: 'service_status',
           message: `Service request ${formatStatusLabel(updated.status)}`,
           metadata: { requestId: toIdString(updated._id) },
+          ...context,
+          payload: context,
         })
       );
     }

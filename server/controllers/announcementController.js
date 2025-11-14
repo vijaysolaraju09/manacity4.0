@@ -1,5 +1,7 @@
 const Announcement = require('../models/Announcement');
+const User = require('../models/User');
 const AppError = require('../utils/AppError');
+const { notifyUsers } = require('../services/notificationService');
 
 const buildUpdate = (payload = {}) => {
   const updates = {};
@@ -48,6 +50,47 @@ const deactivateOtherAnnouncements = async (id) => {
   );
 };
 
+const buildAnnouncementNotificationContext = (announcement) => {
+  if (!announcement) return { entityType: 'announcement' };
+  const id = announcement._id;
+  const idString = id ? id.toString() : null;
+  let redirectUrl = '/announcements';
+  const cta =
+    typeof announcement.ctaLink === 'string' && announcement.ctaLink.trim().startsWith('/')
+      ? announcement.ctaLink.trim()
+      : null;
+  if (cta) redirectUrl = cta;
+  else if (idString) redirectUrl = `/announcements/${idString}`;
+  if (!id) {
+    return { entityType: 'announcement', redirectUrl };
+  }
+  return {
+    entityType: 'announcement',
+    entityId: id,
+    redirectUrl,
+  };
+};
+
+const broadcastAnnouncementNotification = async (announcement) => {
+  const messageBase =
+    (typeof announcement?.text === 'string' && announcement.text.trim()) ||
+    (typeof announcement?.title === 'string' && announcement.title.trim()) ||
+    '';
+  if (!messageBase) return;
+  const users = await User.find({ isActive: { $ne: false } }).select('_id').lean();
+  const userIds = users.map((user) => user._id).filter(Boolean);
+  if (!userIds.length) return;
+  const context = buildAnnouncementNotificationContext(announcement);
+  await notifyUsers(userIds, {
+    type: 'system',
+    subType: 'announcement',
+    title: announcement.title,
+    message: messageBase,
+    ...context,
+    payload: context,
+  });
+};
+
 exports.listAnnouncements = async (_req, res, next) => {
   try {
     const items = await Announcement.find({ deletedAt: null })
@@ -73,6 +116,8 @@ exports.createAnnouncement = async (req, res, next) => {
       await deactivateOtherAnnouncements(announcement._id);
     }
 
+    await broadcastAnnouncementNotification(announcement);
+
     res.status(201).json({ announcement });
   } catch (err) {
     next(err);
@@ -94,6 +139,7 @@ exports.updateAnnouncement = async (req, res, next) => {
 
     if (announcement.active) {
       await deactivateOtherAnnouncements(announcement._id);
+      await broadcastAnnouncementNotification(announcement);
     }
 
     res.json({ announcement });

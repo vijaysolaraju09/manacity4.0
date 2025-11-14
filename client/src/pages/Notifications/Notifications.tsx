@@ -9,6 +9,7 @@ import ErrorCard from '@/components/ui/ErrorCard';
 import SkeletonList from '@/components/ui/SkeletonList';
 import showToast from '@/components/ui/Toast';
 import styles from './Notifications.module.scss';
+import { useNavigate } from 'react-router-dom';
 
 const filterLabels: Record<string, string> = {
   all: 'All',
@@ -24,6 +25,7 @@ const PAGE_SIZE = 50;
 
 const Notifications = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { items, status, error, hasMore, page } = useSelector(
     (state: RootState) => state.notifs
   );
@@ -94,26 +96,44 @@ const Notifications = () => {
 
   const unreadCount = useMemo(() => filtered.filter((notif) => !notif.read).length, [filtered]);
 
-  const handleMarkRead = async (id: string) => {
-    try {
-      await dispatch(markNotifRead(id)).unwrap();
-    } catch (err) {
-      showToast('We couldn\'t mark that notification as read. Please try again.', 'error');
-    }
-  };
+  const handleMarkRead = useCallback(
+    async (id: string) => {
+      try {
+        await dispatch(markNotifRead(id)).unwrap();
+      } catch (err) {
+        showToast("We couldn't mark that notification as read. Please try again.", 'error');
+      }
+    },
+    [dispatch]
+  );
 
-  const handleDelete = async (id: string) => {
-    try {
-      await dispatch(removeNotif(id)).unwrap();
-      showToast('Notification removed', 'success');
-    } catch (err) {
-      showToast('We couldn\'t delete that notification. Please try again.', 'error');
-    }
-  };
+  const handleDelete = useCallback(
+    async (id: string) => {
+      try {
+        await dispatch(removeNotif(id)).unwrap();
+        showToast('Notification removed', 'success');
+      } catch (err) {
+        showToast("We couldn't delete that notification. Please try again.", 'error');
+      }
+    },
+    [dispatch]
+  );
 
-  const handleReload = () => {
+  const handleReload = useCallback(() => {
     dispatch(fetchNotifs({ page: 1 }));
-  };
+  }, [dispatch]);
+
+  const handleOpen = useCallback(
+    (notif: Notif) => {
+      if (!notif.read) {
+        void handleMarkRead(notif._id);
+      }
+      if (notif.redirectUrl) {
+        navigate(notif.redirectUrl);
+      }
+    },
+    [handleMarkRead, navigate]
+  );
 
   const handleMarkAllRead = useCallback(async () => {
     const unread = filtered.filter((notif) => !notif.read);
@@ -190,6 +210,7 @@ const Notifications = () => {
                       message={notif.message}
                       timestamp={notif.createdAt}
                       read={notif.read}
+                      onClick={() => handleOpen(notif)}
                       onSwipeLeft={() => handleMarkRead(notif._id)}
                     />
                   </div>

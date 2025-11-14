@@ -161,12 +161,6 @@ const DEMO_ORDERS = [
   { id: 1477, date: 'Oct 07, 2025', total: 540, status: 'Delivered' },
 ]
 
-const DEMO_REQUESTS = [
-  { id: 201, title: 'AC Repair – Split 1.5T', date: 'Nov 04, 2025', status: 'Scheduled' },
-  { id: 198, title: 'Home Cleaning – 2BHK', date: 'Oct 28, 2025', status: 'Completed' },
-  { id: 192, title: 'iPhone Battery Replacement', date: 'Oct 12, 2025', status: 'Completed' },
-]
-
 const NOTIFS = [
   { id: 1, title: 'Order #1523 shipped', time: '2h ago', type: 'Order' },
   { id: 2, title: 'New event near you', time: '1d ago', type: 'Events' },
@@ -188,7 +182,7 @@ const ProfileScreen = () => {
   const [showAddressModal, setShowAddressModal] = useState(false)
 
   const ordersCount = DEMO_ORDERS.length
-  const requestsCount = DEMO_REQUESTS.length
+  const requestsCount = 0
   const rating = 4.7
 
   const handleLogout = () => {
@@ -221,7 +215,17 @@ const ProfileScreen = () => {
 
         <div className="mt-4 flex flex-wrap gap-2">
           {tabs.map((t) => (
-            <Chip key={t.key} active={active === t.key} onClick={() => setActive(t.key)}>
+            <Chip
+              key={t.key}
+              active={active === t.key}
+              onClick={() => {
+                if (t.key === 'requests') {
+                  navigate(paths.serviceRequests.mine());
+                  return;
+                }
+                setActive(t.key);
+              }}
+            >
               {t.label}
             </Chip>
           ))}
@@ -289,7 +293,7 @@ const ProfileScreen = () => {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" onClick={() => navigate(paths.services.requestsMine())}>
+                    <Button variant="outline" onClick={() => navigate(paths.serviceRequests.mine())}>
                       My service requests
                     </Button>
                     <Button variant="ghost" onClick={() => navigate(paths.services.catalog())}>
@@ -301,21 +305,7 @@ const ProfileScreen = () => {
             </>
           )}
 
-          {active === 'requests' && (
-            <>
-              {DEMO_REQUESTS.map((r) => (
-                <Card key={r.id} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{r.title}</div>
-                      <div className="text-xs text-[var(--text-muted)]">{r.date}</div>
-                    </div>
-                    <Badge>{r.status}</Badge>
-                  </div>
-                </Card>
-              ))}
-            </>
-          )}
+          {active === 'requests' && null}
 
           {active === 'notifications' && (
             <>

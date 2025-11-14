@@ -6,6 +6,7 @@ import TabLayout from '@/layouts/TabLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import Loader from '@/components/Loader';
 import ScrollToTop from './ScrollToTop';
+import { paths } from '@/routes/paths';
 
 const RouteSkeleton = ({ label }: { label: string }) => (
   <div className="flex min-h-[40vh] items-center justify-center px-6 py-10">
@@ -46,7 +47,8 @@ const ServicesHub = lazy(() => import('@/pages/Services/ServicesHub'));
 const ServicesCatalog = lazy(() => import('@/pages/Services/ServicesCatalog'));
 const ServiceDetails = lazy(() => import('@/pages/Services/ServiceDetails'));
 const PublicRequests = lazy(() => import('@/pages/Services/PublicRequests'));
-const MyRequests = lazy(() => import('@/pages/Services/MyRequests'));
+const ServiceRequestListPage = lazy(() => import('@/pages/ServiceRequests/MyRequests'));
+const ServiceRequestDetailPage = lazy(() => import('@/pages/ServiceRequests/ServiceRequestDetail'));
 const ServiceProviders = lazy(() => import('@/pages/Services/ServiceProviders'));
 const ServiceRequestFormPage = lazy(() => import('@/pages/Services/ServiceRequestForm'));
 const LegacyVerified = lazy(() => import('@/pages/Services/LegacyVerified'));
@@ -158,8 +160,24 @@ const AppRoutes = () => (
           <Route key="services" path="services" element={<ServicesHub />}>
             <Route index element={<ServicesCatalog />} />
             <Route path="requests" element={<PublicRequests />} />
-            <Route path="requests/mine" element={<MyRequests />} />
+            <Route path="requests/mine" element={<Navigate to={paths.serviceRequests.mine()} replace />} />
           </Route>
+          <Route
+            key="service-requests"
+            path="requests"
+            element={withSuspense(
+              ServiceRequestListPage,
+              <RouteSkeleton label="My service requests" />
+            )}
+          />
+          <Route
+            key="service-request-detail"
+            path="requests/:requestId"
+            element={withSuspense(
+              ServiceRequestDetailPage,
+              <RouteSkeleton label="Service request" />
+            )}
+          />
           <Route
             key="service-detail"
             path="services/:serviceId"

@@ -23,6 +23,10 @@ export const paths = {
     detail: (id: string = ':id') => `/services/${id}`,
     request: () => '/services/request',
   },
+  serviceRequests: {
+    mine: () => '/requests',
+    detail: (id: string = ':id') => `/requests/${id}`,
+  },
   verified: () => '/verified',
   verifiedUsers: {
     list: () => '/verified-users',

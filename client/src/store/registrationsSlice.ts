@@ -15,6 +15,9 @@ interface RegistrationResult {
     currency?: string;
     proofUrl?: string;
   };
+  data?: Record<string, unknown>;
+  createdAt?: string;
+  teamName?: string | null;
 }
 
 interface RegistrationState {
@@ -182,10 +185,44 @@ export const submitRegistration = createAsyncThunk<
     const res = await http.post(`/events/${eventId}/register`, body);
     const payload = res?.data?.data ?? res?.data ?? {};
     const record = (payload as any)?.registration ?? payload;
+
+    const toPlainObject = (value: any): Record<string, unknown> => {
+      if (!value) return {};
+      if (value instanceof Map) {
+        return Object.fromEntries(value.entries());
+      }
+      return typeof value === 'object' ? (value as Record<string, unknown>) : {};
+    };
+
+    const resolveTeamName = (value: Record<string, unknown>): string | null => {
+      const candidates = [
+        value.teamName,
+        value.team_name,
+        value.team,
+        value.name,
+        value.captain,
+      ];
+      for (const candidate of candidates) {
+        if (typeof candidate === 'string' && candidate.trim().length > 0) {
+          return candidate;
+        }
+      }
+      return null;
+    };
+
+    const dataRecord = toPlainObject(record?.data ?? payload?.data);
+    const createdAt =
+      (typeof record?.createdAt === 'string' && record.createdAt) ||
+      (typeof payload?.createdAt === 'string' && payload.createdAt) ||
+      undefined;
+
     return {
       id: String(record?.id ?? record?._id ?? ''),
       status: String(record?.status ?? payload?.status ?? (payload as any)?.data?.status ?? 'submitted'),
       payment: record?.payment ?? payload?.payment,
+      data: dataRecord,
+      createdAt,
+      teamName: resolveTeamName({ ...data, ...dataRecord }),
     };
   } catch (error) {
     const fallback = toErrorMessage(error);

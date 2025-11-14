@@ -105,7 +105,14 @@ export interface EventLeaderboardEntry {
 
 export interface EventRegistration {
   _id: string;
-  status: 'registered' | 'waitlisted' | 'checked_in' | 'withdrawn' | 'disqualified';
+  status:
+    | 'registered'
+    | 'waitlisted'
+    | 'checked_in'
+    | 'withdrawn'
+    | 'disqualified'
+    | 'submitted'
+    | 'rejected';
   teamName?: string;
   payment?: {
     required?: boolean;
@@ -320,7 +327,33 @@ export const adaptEventDetail = (raw: any): EventDetail | null => {
 
 export const adaptEventRegistrationSummary = (raw: any): EventRegistrationSummary | null => {
   if (!raw) return null;
-  const status = (raw.status || 'registered') as EventRegistration['status'];
+  const normalizeStatus = (value: any): EventRegistration['status'] => {
+    const lowered = typeof value === 'string' ? value.toLowerCase() : '';
+    switch (lowered) {
+      case 'accepted':
+      case 'approved':
+      case 'confirmed':
+        return 'registered';
+      case 'waitlisted':
+        return 'waitlisted';
+      case 'checkedin':
+      case 'checked_in':
+        return 'checked_in';
+      case 'withdrawn':
+        return 'withdrawn';
+      case 'disqualified':
+        return 'disqualified';
+      case 'rejected':
+        return 'rejected';
+      case 'submitted':
+        return 'submitted';
+      case 'registered':
+      default:
+        return 'registered';
+    }
+  };
+
+  const status = normalizeStatus(raw.status);
   const teamName = raw.teamName ?? raw.team_name ?? raw.name ?? null;
   const members = Array.isArray(raw.members)
     ? raw.members

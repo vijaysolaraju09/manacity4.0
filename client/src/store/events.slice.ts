@@ -156,7 +156,10 @@ export const fetchRegistrations = createAsyncThunk<
       if (status && status.length > 0) params.status = status.join(',');
       if (search && search.trim().length > 0) params.q = search.trim();
 
-      const res = await client.get(`/events/${eventId}/registrations`, { params });
+      const endpoint = admin
+        ? `/events/${eventId}/registrations`
+        : `/events/${eventId}/participants`;
+      const res = await client.get(endpoint, { params });
       const payload = res?.data?.data ?? res?.data ?? {};
       const items = Array.isArray(payload.items)
         ? payload.items
@@ -441,6 +444,19 @@ const eventsSlice = createSlice({
         if (!eventId) return;
         const result = action.payload;
         const status = result?.status ?? 'registered';
+        const normalizedStatus = status as EventRegistration['status'];
+        const createdAt = result?.createdAt ?? new Date().toISOString();
+        const teamName = typeof result?.teamName === 'string' ? result.teamName : undefined;
+
+        state.myRegistration.data = {
+          _id: result?.id ?? '',
+          status: normalizedStatus,
+          teamName,
+          createdAt,
+          payment: result?.payment ?? undefined,
+        } as EventRegistration;
+        state.myRegistration.error = null;
+
         if (state.list.items) {
           state.list.items = state.list.items.map((event) => {
             if (event._id !== eventId) return event;
@@ -468,8 +484,8 @@ const eventsSlice = createSlice({
             return {
               ...event,
               registration: nextRegistration,
-              registrationStatus: status,
-              myRegistrationStatus: status,
+              registrationStatus: normalizedStatus,
+              myRegistrationStatus: normalizedStatus,
             };
           });
         }
@@ -478,14 +494,17 @@ const eventsSlice = createSlice({
           state.detail.data.registration = {
             ...(state.detail.data.registration ?? {
               _id: result?.id ?? '',
-              status: status as EventRegistration['status'],
+              status: normalizedStatus,
             }),
-            status: status as EventRegistration['status'],
+            status: normalizedStatus,
             payment,
             proofUrl: payment?.proofUrl ?? state.detail.data.registration?.proofUrl ?? null,
             createdAt: state.detail.data.registration?.createdAt ?? new Date().toISOString(),
           } as EventRegistration;
-          state.detail.data.myRegistrationStatus = status;
+          if (teamName) {
+            state.detail.data.registration.teamName = teamName;
+          }
+          state.detail.data.myRegistrationStatus = normalizedStatus;
           const registrationMeta = state.detail.data.registration as EventRegistration & {
             paymentProofUrl?: string | null;
             paymentRequired?: boolean;
@@ -507,6 +526,26 @@ const eventsSlice = createSlice({
               ? payment.currency
               : registrationMeta.paymentCurrency ?? null;
           registrationMeta.submittedAt = registrationMeta.submittedAt ?? new Date().toISOString();
+        }
+
+        if (Array.isArray(state.registrations.items)) {
+          const summary: EventRegistrationSummary = {
+            _id: result?.id ?? `reg-${Date.now()}`,
+            status: normalizedStatus,
+            teamName,
+            createdAt,
+          };
+          const existingIndex = state.registrations.items.findIndex((item) => item._id === summary._id);
+          if (existingIndex >= 0) {
+            state.registrations.items[existingIndex] = { ...state.registrations.items[existingIndex], ...summary };
+          } else {
+            state.registrations.items = [summary, ...state.registrations.items];
+          }
+          if (typeof state.registrations.total === 'number') {
+            state.registrations.total = Math.max(state.registrations.total, state.registrations.items.length);
+          } else {
+            state.registrations.total = state.registrations.items.length;
+          }
         }
       })
       .addCase(registerForEvent.rejected, (state, action) => {

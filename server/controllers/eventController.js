@@ -712,6 +712,66 @@ exports.register = async (req, res, next) => {
   }
 };
 
+const toPlainRegistrationData = (data) => {
+  if (!data) return {};
+  if (data instanceof Map) {
+    return Object.fromEntries(data.entries());
+  }
+  return data;
+};
+
+const normalizeFormRegistrationStatus = (status) => {
+  const normalized = typeof status === 'string' ? status.toLowerCase() : '';
+  switch (normalized) {
+    case 'accepted':
+    case 'approved':
+    case 'confirmed':
+      return 'registered';
+    case 'waitlisted':
+      return 'waitlisted';
+    case 'checked_in':
+    case 'checkedin':
+      return 'checked_in';
+    case 'withdrawn':
+      return 'withdrawn';
+    case 'disqualified':
+      return 'disqualified';
+    case 'rejected':
+      return 'rejected';
+    case 'submitted':
+    default:
+      return normalized || 'submitted';
+  }
+};
+
+const mapFormRegistrationToResponse = (registration) => {
+  if (!registration) return null;
+  const data = toPlainRegistrationData(registration.data);
+  const teamNameCandidate =
+    registration.teamName ||
+    data.teamName ||
+    data.team_name ||
+    data.team ||
+    data.name ||
+    null;
+  const createdAt =
+    registration.createdAt instanceof Date
+      ? registration.createdAt.toISOString()
+      : registration.createdAt ?? null;
+  const updatedAt =
+    registration.updatedAt instanceof Date
+      ? registration.updatedAt.toISOString()
+      : registration.updatedAt ?? null;
+  return {
+    _id: registration._id,
+    status: normalizeFormRegistrationStatus(registration.status),
+    teamName: typeof teamNameCandidate === 'string' ? teamNameCandidate : undefined,
+    payment: registration.payment || { required: false },
+    createdAt,
+    updatedAt,
+  };
+};
+
 exports.unregister = async (req, res, next) => {
   try {
     const event = await loadEventOrThrow(req.params.id);
@@ -719,21 +779,37 @@ exports.unregister = async (req, res, next) => {
     if (new Date(event.startAt).getTime() <= Date.now())
       throw AppError.badRequest('EVENT_STARTED', 'Event already started');
 
-    const registration = await EventRegistration.findOne({
+    let removed = false;
+
+    const legacyRegistration = await EventRegistration.findOne({
       event: event._id,
       user: req.user._id,
     });
-    if (!registration) throw AppError.notFound('REG_NOT_FOUND', 'Registration not found');
-
-    await registration.deleteOne();
-    if (registration.status === 'registered') {
-      await Event.updateOne({ _id: event._id, registeredCount: { $gt: 0 } }, { $inc: { registeredCount: -1 } });
+    if (legacyRegistration) {
+      await legacyRegistration.deleteOne();
+      removed = true;
     }
 
-    await notifyUsers(req.user._id, `You have been removed from ${event.title}`);
+    const formRegistration = await Registration.findOne({
+      eventId: event._id,
+      userId: req.user._id,
+    });
+    if (formRegistration) {
+      await formRegistration.deleteOne();
+      removed = true;
+    }
 
-    const totalRegistrations = await EventRegistration.countDocuments({ event: event._id });
+    if (!removed) throw AppError.notFound('REG_NOT_FOUND', 'Registration not found');
+
+    const [legacyCount, formCount] = await Promise.all([
+      EventRegistration.countDocuments({ event: event._id }),
+      Registration.countDocuments({ eventId: event._id }),
+    ]);
+    const totalRegistrations = legacyCount + formCount;
+
     await Event.updateOne({ _id: event._id }, { $set: { registeredCount: totalRegistrations } });
+
+    await notifyUsers(req.user._id, `You have been removed from ${event.title}`);
 
     res.json({ ok: true, data: true, traceId: req.traceId });
   } catch (err) {
@@ -744,13 +820,27 @@ exports.unregister = async (req, res, next) => {
 exports.getMyRegistration = async (req, res, next) => {
   try {
     if (!req.user) throw AppError.unauthorized('LOGIN_REQUIRED', 'Login required');
-    const registration = await EventRegistration.findOne({
-      event: req.params.id,
-      user: req.user._id,
-    })
-      .lean()
-      .exec();
-    res.json({ ok: true, data: registration, traceId: req.traceId });
+
+    const [legacyRegistration, formRegistration] = await Promise.all([
+      EventRegistration.findOne({
+        event: req.params.id,
+        user: req.user._id,
+      })
+        .lean()
+        .exec(),
+      Registration.findOne({
+        eventId: req.params.id,
+        userId: req.user._id,
+      })
+        .lean()
+        .exec(),
+    ]);
+
+    const payload = formRegistration
+      ? mapFormRegistrationToResponse(formRegistration)
+      : legacyRegistration || null;
+
+    res.json({ ok: true, data: payload, traceId: req.traceId });
   } catch (err) {
     next(err);
   }

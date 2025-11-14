@@ -34,6 +34,7 @@ import EventsSkeleton from '@/components/common/EventsSkeleton';
 import ErrorCard from '@/components/common/ErrorCard';
 import showToast from '@/components/ui/Toast';
 import styles from './EventDetail.module.scss';
+import { paths } from '@/routes/paths';
 
 const tabs: Array<{ key: TabKey; label: string }> = [
   { key: 'about', label: 'About' },
@@ -44,6 +45,17 @@ const tabs: Array<{ key: TabKey; label: string }> = [
   { key: 'updates', label: 'Updates' },
   { key: 'leaderboard', label: 'Leaderboard' },
 ];
+
+const PARTICIPANT_STATUS_LABELS: Record<string, string> = {
+  registered: 'Registered',
+  waitlisted: 'Waitlisted',
+  checked_in: 'Checked in',
+  checkedin: 'Checked in',
+  withdrawn: 'Withdrawn',
+  disqualified: 'Disqualified',
+  submitted: 'Submitted',
+  rejected: 'Rejected',
+};
 
 type TabKey =
   | 'about'
@@ -122,6 +134,7 @@ const EventDetailPage = () => {
   const leaderboard = useSelector((state: RootState) => state.events.leaderboard);
   const myRegistration = useSelector((state: RootState) => state.events.myRegistration);
   const actions = useSelector((state: RootState) => state.events.actions);
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const [activeTab, setActiveTab] = useState<TabKey>('about');
   const [now, setNow] = useState(Date.now());
@@ -139,6 +152,7 @@ const EventDetailPage = () => {
   const tabContentRef = useRef<HTMLDivElement | null>(null);
 
   const event = detail.data;
+  const eventDetailPath = id ? paths.events.detail(id) : paths.events.list();
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -148,12 +162,16 @@ const EventDetailPage = () => {
   useEffect(() => {
     if (!id) return;
     const promise = dispatch(fetchEventById(id));
-    dispatch(fetchMyRegistration(id));
     return () => {
       promise.abort?.();
       dispatch(resetEventDetail());
     };
   }, [dispatch, id]);
+
+  useEffect(() => {
+    if (!id || !currentUser) return;
+    dispatch(fetchMyRegistration(id));
+  }, [dispatch, id, currentUser]);
 
   useEffect(() => {
     const hash = location.hash.replace('#', '').toLowerCase();
@@ -294,16 +312,18 @@ const EventDetailPage = () => {
 
   const leaderboardRows = useMemo(() => leaderboard.items ?? [], [leaderboard.items]);
 
+  const isAuthenticated = Boolean(currentUser);
   const isRegistered = Boolean(myRegistration.data && myRegistration.data.status !== 'withdrawn');
   const waitlisted = myRegistration.data?.status === 'waitlisted';
 
   const canRegister =
+    isAuthenticated &&
     registrationWindow.isOpen &&
     !capacityFull &&
     !isRegistered &&
     stage !== 'completed' &&
     event?.status !== 'canceled';
-  const canUnregister = isRegistered && stage === 'upcoming';
+  const canUnregister = isAuthenticated && isRegistered && stage === 'upcoming';
 
   const entryLabel = getEntryLabel(event);
 
@@ -481,12 +501,13 @@ const EventDetailPage = () => {
           <div className={styles.participantsGrid}>
             {participantList.map((participant) => {
               const name = participant.teamName || participant.user?.name || 'Unnamed team';
+              const statusLabel = PARTICIPANT_STATUS_LABELS[participant.status] ?? participant.status;
               return (
                 <div key={participant._id} className={styles.participantCard}>
                   <div className={styles.avatar}>{toInitials(name)}</div>
                   <div className={styles.participantMeta}>
                     <span className={styles.participantName}>{name}</span>
-                    <span className={styles.participantStatus}>{participant.status}</span>
+                    <span className={styles.participantStatus}>{statusLabel}</span>
                   </div>
                 </div>
               );
@@ -494,6 +515,13 @@ const EventDetailPage = () => {
           </div>
         );
       case 'updates':
+        if (!isAuthenticated) {
+          return (
+            <p className={styles.mutedText}>
+              Log in to receive live updates and announcements from the organizers.
+            </p>
+          );
+        }
         if (updates.loading) {
           return (
             <div className={styles.loadingState}>
@@ -557,7 +585,10 @@ const EventDetailPage = () => {
           );
         }
         if (leaderboardRows.length === 0) {
-          return <p className={styles.mutedText}>Leaderboard will appear once the event starts.</p>;
+          if (stage === 'upcoming') {
+            return <p className={styles.mutedText}>Leaderboard will appear once the event starts.</p>;
+          }
+          return <p className={styles.mutedText}>Results will be published soon.</p>;
         }
         return (
           <div className={styles.leaderboardTable}>
@@ -763,20 +794,30 @@ const EventDetailPage = () => {
             {waitlisted && <span className={styles.waitlistedChip}>Waitlisted</span>}
           </div>
           <div className={styles.actionButtons}>
-            {canRegister ? (
+            {isAuthenticated ? (
+              canRegister ? (
+                <button
+                  type="button"
+                  className={styles.primaryBtn}
+                onClick={() => navigate(paths.events.register(id))}
+                  disabled={actions.register === 'loading'}
+                >
+                  {actions.register === 'loading' ? <Loader2 className={styles.spin} /> : 'Register now'}
+                </button>
+              ) : !canUnregister && !registrationWindow.isOpen ? (
+                <button type="button" className={styles.secondaryBtn} disabled>
+                  Registrations closed
+                </button>
+              ) : null
+            ) : (
               <button
                 type="button"
                 className={styles.primaryBtn}
-                onClick={() => navigate(`/events/${id}/register`)}
-                disabled={actions.register === 'loading'}
+                onClick={() => navigate(paths.auth.login(), { state: { from: eventDetailPath } })}
               >
-                {actions.register === 'loading' ? <Loader2 className={styles.spin} /> : 'Register now'}
+                Log in to register
               </button>
-            ) : !canUnregister && !registrationWindow.isOpen ? (
-              <button type="button" className={styles.secondaryBtn} disabled>
-                Registrations closed
-              </button>
-            ) : null}
+            )}
             {canUnregister && (
               <button
                 type="button"
@@ -808,31 +849,41 @@ const EventDetailPage = () => {
           </span>
           <span className={styles.mobileHint}>Team size {event.teamSize}</span>
         </div>
-        {canRegister ? (
+        {isAuthenticated ? (
+          canRegister ? (
+            <button
+              type="button"
+              className={styles.primaryBtn}
+            onClick={() => navigate(paths.events.register(id))}
+              disabled={actions.register === 'loading'}
+            >
+              {actions.register === 'loading' ? <Loader2 className={styles.spin} /> : 'Register now'}
+            </button>
+          ) : canUnregister ? (
+            <button
+              type="button"
+              className={styles.secondaryBtn}
+              onClick={handleUnregister}
+              disabled={actions.unregister === 'loading'}
+            >
+              {actions.unregister === 'loading' ? <Loader2 className={styles.spin} /> : 'Unregister'}
+            </button>
+          ) : !registrationWindow.isOpen ? (
+            <button type="button" className={styles.secondaryBtn} disabled>
+              Registrations closed
+            </button>
+          ) : (
+            <button type="button" className={styles.secondaryBtn} onClick={() => goToTab('leaderboard')}>
+              View leaderboard
+            </button>
+          )
+        ) : (
           <button
             type="button"
             className={styles.primaryBtn}
-            onClick={() => navigate(`/events/${id}/register`)}
-            disabled={actions.register === 'loading'}
+            onClick={() => navigate(paths.auth.login(), { state: { from: eventDetailPath } })}
           >
-            {actions.register === 'loading' ? <Loader2 className={styles.spin} /> : 'Register now'}
-          </button>
-        ) : canUnregister ? (
-          <button
-            type="button"
-            className={styles.secondaryBtn}
-            onClick={handleUnregister}
-            disabled={actions.unregister === 'loading'}
-          >
-            {actions.unregister === 'loading' ? <Loader2 className={styles.spin} /> : 'Unregister'}
-          </button>
-        ) : !registrationWindow.isOpen ? (
-          <button type="button" className={styles.secondaryBtn} disabled>
-            Registrations closed
-          </button>
-        ) : (
-          <button type="button" className={styles.secondaryBtn} onClick={() => goToTab('leaderboard')}>
-            View leaderboard
+            Log in to register
           </button>
         )}
       </div>

@@ -56,6 +56,8 @@ const REGISTRATION_STATUS_LABELS: Record<string, string> = {
   checkedin: 'Checked in',
   withdrawn: 'Withdrawn',
   disqualified: 'Disqualified',
+  submitted: 'Submitted',
+  rejected: 'Rejected',
 };
 
 const isRegistered = (event: ExtendedEventSummary) => {
@@ -82,11 +84,17 @@ const EventsHub = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const eventsState = useSelector((state: RootState) => state.events.list);
+  const authUser = useSelector((state: RootState) => state.auth.user);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [q, setQ] = useState('');
+
+  const availableTabs = useMemo(
+    () => (authUser ? TABS : TABS.filter((tab) => tab.id !== 'registrations')),
+    [authUser],
+  );
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 60000);
@@ -107,6 +115,12 @@ const EventsHub = () => {
       setActiveTab(resolved);
     }
   }, [location.hash]);
+
+  useEffect(() => {
+    if (!authUser && activeTab === 'registrations') {
+      setActiveTab('all');
+    }
+  }, [authUser, activeTab]);
 
   const queryParams = useMemo(() => ({ page: 1, pageSize: 50 }), []);
   const queryKey = useMemo(() => createEventsQueryKey(queryParams), [queryParams]);
@@ -562,7 +576,7 @@ const EventsHub = () => {
       </div>
 
       <nav className={styles.tabs} aria-label="Events filters">
-        {TABS.map((tab) => (
+        {availableTabs.map((tab) => (
           <button
             key={tab.id}
             type="button"

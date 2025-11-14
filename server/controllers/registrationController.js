@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Event = require('../models/Event');
 const Registration = require('../models/Registration');
+const EventRegistration = require('../models/EventRegistration');
 const FormTemplate = require('../models/FormTemplate');
 const AppError = require('../utils/AppError');
 const {
@@ -23,6 +24,137 @@ const toPlainObject = (data) => {
     return Object.fromEntries(data.entries());
   }
   return data;
+};
+
+const normalizeParticipantStatus = (status) => {
+  const normalized = typeof status === 'string' ? status.toLowerCase() : '';
+  switch (normalized) {
+    case 'accepted':
+    case 'approved':
+    case 'confirmed':
+      return 'registered';
+    case 'waitlisted':
+      return 'waitlisted';
+    case 'checked_in':
+    case 'checkedin':
+      return 'checked_in';
+    case 'withdrawn':
+      return 'withdrawn';
+    case 'disqualified':
+      return 'disqualified';
+    case 'rejected':
+      return 'rejected';
+    case 'submitted':
+    default:
+      return normalized || 'submitted';
+  }
+};
+
+const toParticipantMembers = (value) => {
+  if (!Array.isArray(value)) return undefined;
+  const members = value
+    .map((entry) => {
+      if (!entry) return null;
+      if (typeof entry === 'string') {
+        const trimmed = entry.trim();
+        return trimmed.length ? { name: trimmed, contact: null } : null;
+      }
+      if (typeof entry === 'object') {
+        const record = entry;
+        const nameCandidate =
+          typeof record.name === 'string'
+            ? record.name
+            : typeof record.displayName === 'string'
+            ? record.displayName
+            : typeof record.player === 'string'
+            ? record.player
+            : null;
+        const contactCandidate =
+          typeof record.contact === 'string'
+            ? record.contact
+            : typeof record.phone === 'string'
+            ? record.phone
+            : typeof record.mobile === 'string'
+            ? record.mobile
+            : null;
+        if (nameCandidate && nameCandidate.trim().length > 0) {
+          return { name: nameCandidate, contact: contactCandidate ?? null };
+        }
+      }
+      return null;
+    })
+    .filter(Boolean);
+  return members.length ? members : undefined;
+};
+
+const resolveTeamName = (registration, data) => {
+  if (registration?.teamName) return registration.teamName;
+  const sources = [
+    data?.teamName,
+    data?.team_name,
+    data?.team,
+    data?.name,
+    data?.captain,
+  ];
+  for (const source of sources) {
+    if (typeof source === 'string' && source.trim().length > 0) {
+      return source;
+    }
+  }
+  return null;
+};
+
+const mapFormRegistration = (registration) => {
+  if (!registration) return null;
+  const data = toPlainObject(registration.data);
+  const teamName = resolveTeamName(registration, data);
+  const rawMembers = registration.members ?? data.members;
+  const members = toParticipantMembers(rawMembers);
+  const user = registration.user
+    ? {
+        _id: String(registration.user._id),
+        name: registration.user.name ?? registration.user.username ?? null,
+      }
+    : null;
+  const createdAt =
+    registration.createdAt instanceof Date
+      ? registration.createdAt.toISOString()
+      : registration.createdAt ?? null;
+  return {
+    _id: String(registration._id),
+    status: normalizeParticipantStatus(registration.status),
+    teamName: typeof teamName === 'string' ? teamName : undefined,
+    user,
+    members,
+    createdAt,
+  };
+};
+
+const mapLegacyRegistration = (registration) => {
+  if (!registration) return null;
+  const members = Array.isArray(registration.members)
+    ? toParticipantMembers(
+        registration.members.map((member) => ({
+          name: member?.ign || member?.name,
+          contact: member?.contact,
+        })),
+      )
+    : undefined;
+  const user = registration.user
+    ? { _id: String(registration.user._id), name: registration.user.name ?? registration.user.username ?? null }
+    : null;
+  const createdAt =
+    registration.createdAt instanceof Date
+      ? registration.createdAt.toISOString()
+      : registration.createdAt ?? null;
+  return {
+    _id: String(registration._id),
+    status: normalizeParticipantStatus(registration.status),
+    teamName: registration.teamName || undefined,
+    user,
+    members,
+    createdAt,
+  };
 };
 
 const isValidUrl = (value) => {
@@ -400,6 +532,71 @@ exports.listRegistrations = async (req, res, next) => {
         total,
         page,
         limit,
+        preview: !isPrivilegedViewer,
+      },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getParticipants = async (req, res, next) => {
+  try {
+    const event = await loadEventOrThrow(req.params.id);
+    const isPrivilegedViewer = isOrganizer(event, req.user);
+    const isPublicVisibility = ['public', null, undefined].includes(event.visibility);
+    const publicStatuses = ['published', 'ongoing', 'completed'];
+
+    if (!isPrivilegedViewer && (!isPublicVisibility || !publicStatuses.includes(event.status))) {
+      throw AppError.forbidden('NOT_ALLOWED', 'Participants are not available');
+    }
+
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+    const skip = (page - 1) * limit;
+
+    const [formRegistrations, legacyRegistrations] = await Promise.all([
+      Registration.aggregate([
+        { $match: { eventId: event._id } },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user',
+          },
+        },
+        { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+        { $sort: { createdAt: -1 } },
+      ]),
+      EventRegistration.find({ event: event._id })
+        .populate('user', 'name username')
+        .sort({ createdAt: -1 })
+        .lean(),
+    ]);
+
+    const combined = [
+      ...formRegistrations.map((doc) => mapFormRegistration(doc)).filter(Boolean),
+      ...legacyRegistrations.map((doc) => mapLegacyRegistration(doc)).filter(Boolean),
+    ];
+
+    combined.sort((a, b) => {
+      const aTime = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+
+    const total = combined.length;
+    const items = combined.slice(skip, skip + limit);
+
+    res.json({
+      ok: true,
+      data: {
+        items,
+        total,
+        page,
+        pageSize: limit,
         preview: !isPrivilegedViewer,
       },
       traceId: req.traceId,

@@ -35,6 +35,7 @@ const {
   getEventFormPreview,
   submitRegistration,
   listRegistrations,
+  getParticipants,
 } = require('../controllers/registrationController');
 
 const registerLimiter = rateLimit({
@@ -117,6 +118,7 @@ router.get('/:id/leaderboard', getLeaderboard);
 router.get('/:id/bracket', getBracket);
 router.get('/:id/form', getEventForm);
 router.get('/:id/form/preview', protect, getEventFormPreview);
+router.get('/:id/participants', optionalAuth, getParticipants);
 router.get('/:id/registrations', optionalAuth, listRegistrations);
 
 // Authenticated user

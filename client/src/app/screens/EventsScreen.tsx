@@ -8,9 +8,6 @@ import { Badge, Button, Card } from '@/app/components/primitives'
 import { formatDateTime } from '@/utils/date'
 import useCountdown from '@/app/hooks/useCountdown'
 import { paths } from '@/routes/paths'
-import { http } from '@/lib/http'
-import { toErrorMessage } from '@/lib/response'
-import showToast from '@/components/ui/Toast'
 
 const EventsScreen = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -39,19 +36,6 @@ const EventsScreen = () => {
   const handleViewCalendar = useCallback(() => {
     navigate(paths.events.list())
   }, [navigate])
-
-  const handleRegisterInterest = useCallback(
-    async (eventId: string | undefined) => {
-      if (!eventId) return
-      try {
-        await http.post(`/api/events/${eventId}/interest`)
-        showToast('Thanks for your interest! We will notify you.', 'success')
-      } catch (err) {
-        showToast(toErrorMessage(err) || 'Unable to register interest right now.', 'error')
-      }
-    },
-    [],
-  )
 
   const handleEventClick = useCallback(
     (eventId: string) => {
@@ -107,10 +91,10 @@ const EventsScreen = () => {
               <Button
                 variant="ghost"
                 className="text-white hover:bg-white/15"
-                onClick={() => void handleRegisterInterest(highlight?._id)}
+                onClick={() => highlight?._id && navigate(paths.events.register(highlight._id))}
                 disabled={!highlight?._id}
               >
-                Register interest
+                Register now
               </Button>
             </div>
           </div>

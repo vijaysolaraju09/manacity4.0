@@ -3,7 +3,12 @@ import type { ChangeEvent, FormEvent, ReactElement } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { AppDispatch, RootState } from '@/store';
-import { fetchEventById, resetEventDetail } from '@/store/events.slice';
+import {
+  fetchEventById,
+  fetchMyRegistration,
+  fetchRegistrations,
+  resetEventDetail,
+} from '@/store/events.slice';
 import {
   fetchEventForm as fetchRegistrationForm,
   resetSubmission,
@@ -12,6 +17,7 @@ import {
 import type { EventFormResolved, Field } from '@/types/forms';
 import showToast from '@/components/ui/Toast';
 import { http } from '@/lib/http';
+import { paths } from '@/routes/paths';
 import styles from './RegisterEvent.module.scss';
 
 const sanitizeUrl = (value: string) => {
@@ -320,6 +326,11 @@ const RegisterEventPage = () => {
         })
       ).unwrap();
       showToast('Registration submitted successfully.', 'success');
+      await Promise.all([
+        dispatch(fetchEventById(id)).unwrap().catch(() => undefined),
+        dispatch(fetchRegistrations({ eventId: id })).unwrap().catch(() => undefined),
+        dispatch(fetchMyRegistration(id)).unwrap().catch(() => undefined),
+      ]);
     } catch (error) {
       const message =
         typeof error === 'string'
@@ -410,7 +421,7 @@ const RegisterEventPage = () => {
             <button
               type="button"
               className={styles.primaryButton}
-              onClick={() => navigate(`/events/${id}`)}
+              onClick={() => id && navigate(paths.events.detail(id))}
             >
               View event details
             </button>
@@ -424,7 +435,7 @@ const RegisterEventPage = () => {
     return (
       <div className={styles.page}>
         <div className={styles.header}>
-          <button type="button" onClick={() => navigate(`/events/${id}`)} className={styles.backLink}>
+          <button type="button" onClick={() => id && navigate(paths.events.detail(id))} className={styles.backLink}>
             ← Back to event
           </button>
           <h1>Registration complete</h1>
@@ -450,7 +461,7 @@ const RegisterEventPage = () => {
             <button
               type="button"
               className={styles.primaryButton}
-              onClick={() => navigate(`/events/${id}`)}
+              onClick={() => id && navigate(paths.events.detail(id))}
             >
               View event details
             </button>

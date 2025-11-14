@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { BookmarkCheck, MapPin, Star } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -13,9 +13,6 @@ import type { Product } from '@/store/products'
 import { formatDateTime } from '@/utils/date'
 import { useCountdown } from '@/app/hooks/useCountdown'
 import { paths } from '@/routes/paths'
-import { http } from '@/lib/http'
-import { toErrorMessage } from '@/lib/response'
-import showToast from '@/components/ui/Toast'
 
 const toShopStatus = (shop: Shop): { tone: 'success' | 'neutral' | 'accent'; label: string } => {
   if (shop.isOpen === false) return { tone: 'neutral', label: 'Closed' }
@@ -67,16 +64,6 @@ const HomeScreen = () => {
     }
   }, [dispatch, eventsParams, eventsKey, eventsList.items?.length, eventsList.loading, eventsList.queryKey])
 
-  const handleRegisterInterest = useCallback(async (eventId: string) => {
-    if (!eventId) return
-    try {
-      await http.post(`/api/events/${eventId}/interest`)
-      showToast('Thanks for your interest! We will notify you.', 'success')
-    } catch (err) {
-      showToast(toErrorMessage(err) || 'Unable to register interest right now.', 'error')
-    }
-  }, [])
-
   const heroItems: HeroCarouselItem[] = useMemo(() => {
     const items = eventsList.items ?? []
     if (items.length === 0) {
@@ -90,17 +77,17 @@ const HomeScreen = () => {
         },
       ]
     }
-    return items.slice(0, 4).map((event) => ({
-      id: event._id,
-      highlight: event.highlightLabel ?? event.category,
-      title: event.title,
-      description:
-        event.shortDescription ||
-        `Starts ${formatDateTime(event.startAt, { dateStyle: 'medium', timeStyle: 'short' })}`,
-      primaryAction: { label: 'View details', to: paths.events.detail(event._id) },
-      secondaryAction: { label: 'Register interest', onClick: () => handleRegisterInterest(event._id) },
-    }))
-  }, [eventsList.items, handleRegisterInterest])
+      return items.slice(0, 4).map((event) => ({
+        id: event._id,
+        highlight: event.highlightLabel ?? event.category,
+        title: event.title,
+        description:
+          event.shortDescription ||
+          `Starts ${formatDateTime(event.startAt, { dateStyle: 'medium', timeStyle: 'short' })}`,
+        primaryAction: { label: 'View details', to: paths.events.detail(event._id) },
+        secondaryAction: { label: 'Register now', to: paths.events.register(event._id) },
+      }))
+  }, [eventsList.items])
 
   const sortedShops = useMemo(() => {
     const items = shopsState.items ?? []

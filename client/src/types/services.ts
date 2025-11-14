@@ -38,7 +38,16 @@ export interface ServiceProvider {
   source?: string;
 }
 
-export type ServiceRequestStatus = 'open' | 'offered' | 'assigned' | 'completed' | 'closed';
+export type ServiceRequestStatus =
+  | 'pending'
+  | 'accepted'
+  | 'assigned'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'open'
+  | 'offered'
+  | 'closed';
 
 export interface ServiceRequestOffer {
   _id: string;
@@ -115,6 +124,7 @@ export interface UpdateServiceRequestPayload {
   adminNotes?: string;
   assignedProviderIds?: string[];
   assignedProviderId?: string | null;
+  providerId?: string | null;
 }
 
 export interface SubmitServiceOfferPayload {

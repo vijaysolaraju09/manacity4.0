@@ -124,11 +124,17 @@ const ServiceRequestSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
-        'open',
-        'offered',
+        'pending',
+        'accepted',
         'assigned',
         'in_progress',
         'completed',
+        'cancelled',
+        // Legacy values are kept in the enum so that existing records continue to
+        // validate. The pre-save hooks normalise them into the modern status
+        // names.
+        'open',
+        'offered',
         'closed',
         'OPEN',
         'ASSIGNED',
@@ -136,7 +142,7 @@ const ServiceRequestSchema = new mongoose.Schema(
         'COMPLETED',
         'CLOSED',
       ],
-      default: 'open',
+      default: 'pending',
       index: true,
     },
     reopenedCount: {
@@ -185,23 +191,29 @@ const ServiceRequestSchema = new mongoose.Schema(
 );
 
 const normalizeStatusValue = (value) => {
-  if (!value) return 'open';
+  if (!value) return 'pending';
   const raw = String(value).trim();
-  if (!raw) return 'open';
-  const upper = raw.toUpperCase();
-  if (upper === 'IN_PROGRESS') return 'in_progress';
-  if (['OPEN', 'ASSIGNED', 'COMPLETED', 'CLOSED'].includes(upper)) {
-    return upper.toLowerCase();
-  }
+  if (!raw) return 'pending';
+
   const lower = raw.toLowerCase();
-  if (
-    ['open', 'offered', 'assigned', 'completed', 'closed', 'in_progress'].includes(
-      lower
-    )
-  ) {
+
+  if (['pending', 'accepted', 'assigned', 'in_progress', 'completed', 'cancelled'].includes(lower)) {
     return lower;
   }
-  return 'open';
+
+  if (lower === 'open' || lower === 'offered') return 'pending';
+  if (lower === 'closed') return 'cancelled';
+  if (lower === 'in-progress') return 'in_progress';
+  if (lower === 'complete') return 'completed';
+
+  const upper = raw.toUpperCase();
+  if (upper === 'IN_PROGRESS') return 'in_progress';
+  if (upper === 'COMPLETED') return 'completed';
+  if (upper === 'ASSIGNED') return 'assigned';
+  if (upper === 'OPEN' || upper === 'OFFERED') return 'pending';
+  if (upper === 'CLOSED') return 'cancelled';
+
+  return 'pending';
 };
 
 const syncRequestFields = (doc) => {

@@ -6,20 +6,67 @@ const { notifyUser } = require('../services/notificationService');
 
 const { Types } = mongoose;
 
+const STATUS = {
+  PENDING: 'pending',
+  ACCEPTED: 'accepted',
+  ASSIGNED: 'assigned',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+};
+
 const MAX_REOPEN_COUNT = 3;
-const OFFERABLE_STATUSES = new Set(['open', 'offered']);
-const ADMIN_STATUS_ALLOWED = new Set([
+const OFFERABLE_STATUSES = new Set([
+  STATUS.PENDING,
+  STATUS.ACCEPTED,
   'open',
   'offered',
-  'assigned',
-  'in_progress',
-  'completed',
-  'closed',
 ]);
+const ADMIN_STATUS_ALLOWED = new Set(Object.values(STATUS));
+
+const ALLOWED_TRANSITIONS = {
+  [STATUS.PENDING]: new Set([STATUS.ACCEPTED, STATUS.ASSIGNED, STATUS.CANCELLED]),
+  [STATUS.ACCEPTED]: new Set([
+    STATUS.ASSIGNED,
+    STATUS.IN_PROGRESS,
+    STATUS.COMPLETED,
+    STATUS.CANCELLED,
+  ]),
+  [STATUS.ASSIGNED]: new Set([
+    STATUS.IN_PROGRESS,
+    STATUS.COMPLETED,
+    STATUS.CANCELLED,
+  ]),
+  [STATUS.IN_PROGRESS]: new Set([STATUS.COMPLETED, STATUS.CANCELLED]),
+  [STATUS.COMPLETED]: new Set(),
+  [STATUS.CANCELLED]: new Set(),
+};
 
 const isAssignedStatus = (value) => {
   const normalized = sanitizeString(value).toLowerCase();
-  return normalized === 'assigned' || normalized === 'in_progress';
+  return (
+    normalized === STATUS.ASSIGNED ||
+    normalized === STATUS.ACCEPTED ||
+    normalized === STATUS.IN_PROGRESS
+  );
+};
+
+const normalizeStatus = (value) => {
+  if (!value) return STATUS.PENDING;
+  const raw = sanitizeString(value);
+  const lower = raw.toLowerCase();
+  if (ADMIN_STATUS_ALLOWED.has(lower)) return lower;
+  if (lower === 'open' || lower === 'offered') return STATUS.PENDING;
+  if (lower === 'closed') return STATUS.CANCELLED;
+  if (lower === 'complete') return STATUS.COMPLETED;
+  if (lower === 'in-progress') return STATUS.IN_PROGRESS;
+  const upper = raw.toUpperCase();
+  if (upper === 'OPEN' || upper === 'OFFERED') return STATUS.PENDING;
+  if (upper === 'CLOSED') return STATUS.CANCELLED;
+  if (upper === 'ASSIGNED') return STATUS.ASSIGNED;
+  if (upper === 'IN_PROGRESS') return STATUS.IN_PROGRESS;
+  if (upper === 'COMPLETED') return STATUS.COMPLETED;
+  return STATUS.PENDING;
 };
 
 const sanitizeString = (value) => {
@@ -180,7 +227,7 @@ const toRequestJson = (doc, options = {}) => {
     preferredDate: doc.preferredDate || '',
     preferredTime: doc.preferredTime || '',
     visibility: doc.visibility || 'public',
-    status: doc.status || 'open',
+    status: normalizeStatus(doc.status),
     adminNotes: doc.adminNotes || '',
     reopenedCount: typeof doc.reopenedCount === 'number' ? doc.reopenedCount : 0,
     assignedProviderId: doc.assignedProviderId ? toId(doc.assignedProviderId) : null,
@@ -208,17 +255,30 @@ const populateRequest = (query) => {
   return query.populate(paths);
 };
 
-const sendNotification = async (userIds, subType, message) => {
+const buildNotificationPayload = (request) => {
+  const entityId = toId(request?._id || request?.id);
+  const payload = { entityType: 'serviceRequest' };
+  if (!entityId) return payload;
+  return {
+    ...payload,
+    entityId,
+    redirectUrl: `/requests/${entityId}`,
+  };
+};
+
+const sendNotification = async (userIds, subType, message, request) => {
   const ids = (Array.isArray(userIds) ? userIds : [userIds])
     .map((id) => toId(id))
     .filter(Boolean);
   if (!ids.length) return;
+  const payload = buildNotificationPayload(request);
   await Promise.allSettled(
     ids.map((id) =>
       notifyUser(id, {
         type: 'service_request',
         subType,
         message,
+        payload,
       })
     )
   );
@@ -265,7 +325,7 @@ exports.createServiceRequest = async (req, res, next) => {
       preferredDate,
       preferredTime,
       visibility,
-      status: 'open',
+      status: STATUS.PENDING,
       isAnonymizedPublic: visibility === 'public',
     };
 
@@ -285,7 +345,8 @@ exports.createServiceRequest = async (req, res, next) => {
     await sendNotification(
       req.user._id,
       'created',
-      'Service request submitted successfully'
+      'Service request submitted successfully',
+      request
     );
 
     res.status(201).json({
@@ -320,6 +381,102 @@ exports.listMyServiceRequests = async (req, res, next) => {
   }
 };
 
+exports.getServiceRequestById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const request = await populateRequest(ServiceRequest.findById(id));
+    if (!request)
+      throw AppError.notFound('SERVICE_REQUEST_NOT_FOUND', 'Service request not found');
+
+    const currentUserId = req.user?._id ?? req.user?.userId ?? null;
+    const isOwner = currentUserId ? isSameId(request.userId, currentUserId) : false;
+    const isAdmin = req.user?.role === 'admin';
+
+    if (!isOwner && !isAdmin)
+      throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to view this request');
+
+    res.json({
+      ok: true,
+      data: {
+        request: toRequestJson(request.toObject(), {
+          currentUserId,
+          isAdmin,
+        }),
+      },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.cancelServiceRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const request = await populateRequest(ServiceRequest.findById(id));
+    if (!request)
+      throw AppError.notFound('SERVICE_REQUEST_NOT_FOUND', 'Service request not found');
+
+    if (!isSameId(request.userId, req.user._id))
+      throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to cancel this request');
+
+    const currentStatus = normalizeStatus(request.status);
+    if (![STATUS.PENDING, STATUS.ACCEPTED].includes(currentStatus))
+      throw AppError.badRequest(
+        'SERVICE_REQUEST_NOT_PENDING',
+        'Only pending requests can be cancelled'
+      );
+
+    const assignedProvider = request.assignedProviderId
+      ? toId(request.assignedProviderId)
+      : null;
+
+    request.status = STATUS.CANCELLED;
+    request.assignedProviderId = null;
+    request.assignedProviderIds = [];
+    if (Array.isArray(request.offers)) {
+      request.offers.forEach((offer) => {
+        if (offer.status === 'pending') offer.status = 'rejected';
+      });
+    }
+
+    appendHistory(request, {
+      by: req.user._id,
+      type: 'closed',
+      message: 'Request cancelled by requester',
+    });
+
+    await request.save();
+    await populateRequest(request);
+
+    await sendNotification(
+      req.user._id,
+      'closed',
+      'Service request cancelled',
+      request
+    );
+
+    if (assignedProvider) {
+      await sendNotification(
+        assignedProvider,
+        'closed',
+        'A service request you were assigned to has been cancelled',
+        request
+      );
+    }
+
+    res.json({
+      ok: true,
+      data: {
+        request: toRequestJson(request.toObject(), { currentUserId: req.user._id }),
+      },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.reopenServiceRequest = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -331,7 +488,9 @@ exports.reopenServiceRequest = async (req, res, next) => {
     if (!isSameId(request.userId, req.user._id))
       throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to reopen this request');
 
-    if (!['completed', 'closed'].includes(request.status))
+    const currentStatus = normalizeStatus(request.status);
+
+    if (![STATUS.COMPLETED, STATUS.CANCELLED].includes(currentStatus))
       throw AppError.badRequest('SERVICE_REQUEST_NOT_CLOSED', 'Request is not closed');
 
     if ((request.reopenedCount ?? 0) >= MAX_REOPEN_COUNT)
@@ -342,7 +501,7 @@ exports.reopenServiceRequest = async (req, res, next) => {
 
     const previousAssigned = request.assignedProviderId;
 
-    request.status = 'open';
+    request.status = STATUS.PENDING;
     request.reopenedCount = (request.reopenedCount ?? 0) + 1;
     request.assignedProviderId = null;
     request.assignedProviderIds = [];
@@ -361,12 +520,13 @@ exports.reopenServiceRequest = async (req, res, next) => {
     await request.save();
     await populateRequest(request);
 
-    await sendNotification(req.user._id, 'reopened', 'Service request reopened');
+    await sendNotification(req.user._id, 'reopened', 'Service request reopened', request);
     if (previousAssigned)
       await sendNotification(
         previousAssigned,
         'reopened',
-        'A service request you were assigned to has been reopened'
+        'A service request you were assigned to has been reopened',
+        request
       );
 
     res.json({
@@ -476,7 +636,9 @@ exports.submitOffer = async (req, res, next) => {
         'Offers are only allowed on public requests'
       );
 
-    if (!OFFERABLE_STATUSES.has(request.status || 'open'))
+    const currentStatus = normalizeStatus(request.status);
+
+    if (!OFFERABLE_STATUSES.has(currentStatus))
       throw AppError.badRequest(
         'SERVICE_REQUEST_NOT_OPEN',
         'This request is not accepting offers'
@@ -497,7 +659,7 @@ exports.submitOffer = async (req, res, next) => {
       status: 'pending',
     });
 
-    if (request.status === 'open') request.status = 'offered';
+    if (currentStatus === STATUS.PENDING) request.status = STATUS.ACCEPTED;
 
     appendHistory(request, {
       at: now,
@@ -512,7 +674,8 @@ exports.submitOffer = async (req, res, next) => {
     await sendNotification(
       request.userId,
       'offer',
-      'You received a new offer on your service request'
+      'You received a new offer on your service request',
+      request
     );
 
     res.status(201).json({
@@ -552,7 +715,7 @@ exports.updateOffer = async (req, res, next) => {
       offer.status = 'accepted';
       request.assignedProviderId = offer.providerId;
       request.assignedProviderIds = [offer.providerId];
-      request.status = 'assigned';
+      request.status = STATUS.ASSIGNED;
       if (Array.isArray(request.offers)) {
         request.offers.forEach((entry) => {
           if (entry._id && !entry._id.equals(offer._id) && entry.status === 'pending')
@@ -572,9 +735,15 @@ exports.updateOffer = async (req, res, next) => {
       await sendNotification(
         offer.providerId,
         'assigned',
-        'You have been assigned to a service request'
+        'You have been assigned to a service request',
+        request
       );
-      await sendNotification(request.userId, 'assigned', 'Service request assigned');
+      await sendNotification(
+        request.userId,
+        'assigned',
+        'Service request assigned',
+        request
+      );
     } else {
       offer.status = 'rejected';
       appendHistory(request, {
@@ -599,9 +768,9 @@ exports.updateOffer = async (req, res, next) => {
         ? request.offers.some((entry) => entry.status === 'pending')
         : false;
 
-      if (hasAccepted) request.status = 'assigned';
-      else if (hasPending) request.status = 'offered';
-      else request.status = 'open';
+      if (hasAccepted) request.status = STATUS.ASSIGNED;
+      else if (hasPending) request.status = STATUS.ACCEPTED;
+      else request.status = STATUS.PENDING;
 
       await request.save();
       await populateRequest(request);
@@ -609,7 +778,8 @@ exports.updateOffer = async (req, res, next) => {
       await sendNotification(
         [offer.providerId, request.userId],
         'offer',
-        'An offer was rejected on your service request'
+        'An offer was rejected on your service request',
+        request
       );
     }
 
@@ -636,7 +806,9 @@ exports.completeServiceRequest = async (req, res, next) => {
     if (!isSameId(request.userId, req.user._id))
       throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to update this request');
 
-    if (request.status === 'completed') {
+    const currentStatus = normalizeStatus(request.status);
+
+    if (currentStatus === STATUS.COMPLETED) {
       res.json({
         ok: true,
         data: {
@@ -647,7 +819,13 @@ exports.completeServiceRequest = async (req, res, next) => {
       return;
     }
 
-    request.status = 'completed';
+    if (!ALLOWED_TRANSITIONS[currentStatus]?.has(STATUS.COMPLETED) && currentStatus !== STATUS.COMPLETED)
+      throw AppError.badRequest(
+        'SERVICE_REQUEST_INVALID_STATE',
+        'Request cannot be marked completed from the current status'
+      );
+
+    request.status = STATUS.COMPLETED;
     appendHistory(request, {
       by: req.user._id,
       type: 'completed',
@@ -657,12 +835,18 @@ exports.completeServiceRequest = async (req, res, next) => {
     await request.save();
     await populateRequest(request);
 
-    await sendNotification(req.user._id, 'completed', 'Service request completed');
+    await sendNotification(
+      req.user._id,
+      'completed',
+      'Service request completed',
+      request
+    );
     if (request.assignedProviderId)
       await sendNotification(
         request.assignedProviderId,
         'completed',
-        'A service request you worked on was marked completed'
+        'A service request you worked on was marked completed',
+        request
       );
 
     res.json({
@@ -753,10 +937,21 @@ exports.adminListServiceRequests = async (req, res, next) => {
   }
 };
 
+const historyTypeForStatus = (status) => {
+  const normalized = normalizeStatus(status);
+  if (normalized === STATUS.COMPLETED) return 'completed';
+  if (normalized === STATUS.CANCELLED) return 'closed';
+  if (normalized === STATUS.PENDING) return 'reopened';
+  if (normalized === STATUS.ACCEPTED) return 'offer';
+  if (normalized === STATUS.ASSIGNED || normalized === STATUS.IN_PROGRESS) return 'assigned';
+  return 'admin_note';
+};
+
 exports.adminUpdateServiceRequest = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status, adminNotes, assignedProviderId, assignedProviderIds } = req.body || {};
+    const { status, adminNotes, assignedProviderId, assignedProviderIds, providerId } =
+      req.body || {};
 
     const request = await populateRequest(ServiceRequest.findById(id));
     if (!request)
@@ -764,32 +959,19 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
 
     const updates = { changed: false };
     const now = new Date();
+    const currentStatus = normalizeStatus(request.status);
+    request.status = currentStatus;
 
-    if (typeof status !== 'undefined') {
-      const normalized = sanitizeString(status).toLowerCase();
-      if (!ADMIN_STATUS_ALLOWED.has(normalized))
-        throw AppError.badRequest('INVALID_STATUS', 'Invalid service request status');
-      if (request.status !== normalized) {
-        request.status = normalized;
-        updates.changed = true;
-        updates.status = normalized;
-        const historyType =
-          normalized === 'assigned' || normalized === 'in_progress'
-            ? 'assigned'
-            : normalized === 'completed'
-            ? 'completed'
-            : normalized === 'closed'
-            ? 'closed'
-            : normalized === 'open'
-            ? 'reopened'
-            : 'offer';
-        appendHistory(request, {
-          at: now,
-          by: req.user?._id ?? null,
-          type: historyType,
-          message: `Status updated to ${normalized}`,
-        });
-      }
+    const statusToken = typeof status === 'undefined' ? '' : sanitizeString(status);
+    const statusProvided = Boolean(statusToken);
+    let nextStatus = statusProvided ? normalizeStatus(statusToken) : currentStatus;
+    if (statusProvided && !ADMIN_STATUS_ALLOWED.has(nextStatus))
+      throw AppError.badRequest('INVALID_STATUS', 'Invalid service request status');
+
+    if (statusProvided && nextStatus !== currentStatus) {
+      const allowed = ALLOWED_TRANSITIONS[currentStatus] || new Set();
+      if (!allowed.has(nextStatus))
+        throw AppError.badRequest('INVALID_TRANSITION', 'Status transition not allowed');
     }
 
     if (typeof adminNotes !== 'undefined') {
@@ -807,22 +989,25 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
       }
     }
 
-    if (typeof assignedProviderId !== 'undefined' || Array.isArray(assignedProviderIds)) {
-      const source = Array.isArray(assignedProviderIds)
-        ? assignedProviderIds.find((token) => sanitizeString(token))
-        : assignedProviderId;
-      const providerObjectId = source ? toObjectId(source) : null;
-      if (source && !providerObjectId)
+    let providerSource;
+    if (typeof providerId !== 'undefined') providerSource = providerId;
+    else if (typeof assignedProviderId !== 'undefined') providerSource = assignedProviderId;
+    else if (Array.isArray(assignedProviderIds))
+      providerSource = assignedProviderIds.find((token) => sanitizeString(token));
+
+    let providerObjectId = null;
+    if (typeof providerSource !== 'undefined') {
+      providerObjectId = providerSource ? toObjectId(providerSource) : null;
+      if (providerSource && !providerObjectId)
         throw AppError.badRequest('INVALID_PROVIDER', 'Invalid provider id');
 
-      const previousAssigned = request.assignedProviderId
-        ? toId(request.assignedProviderId)
-        : null;
+      const previousAssigned = request.assignedProviderId ? toId(request.assignedProviderId) : null;
       const nextAssigned = providerObjectId ? providerObjectId.toString() : null;
       if (previousAssigned !== nextAssigned) {
         request.assignedProviderId = providerObjectId;
         request.assignedProviderIds = providerObjectId ? [providerObjectId] : [];
         updates.changed = true;
+        updates.assignedProviderId = providerObjectId;
         appendHistory(request, {
           at: now,
           by: req.user?._id ?? null,
@@ -831,11 +1016,36 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
             ? 'Provider assigned by admin'
             : 'Assigned provider cleared',
         });
-        updates.assignedProviderId = providerObjectId;
-        if (providerObjectId && !isAssignedStatus(request.status)) {
-          request.status = 'assigned';
+
+        if (providerObjectId && nextStatus === currentStatus && currentStatus !== STATUS.ASSIGNED) {
+          const allowed = ALLOWED_TRANSITIONS[currentStatus] || new Set();
+          if (!allowed.has(STATUS.ASSIGNED))
+            throw AppError.badRequest(
+              'INVALID_TRANSITION',
+              'Cannot assign provider from the current status'
+            );
+          nextStatus = STATUS.ASSIGNED;
+        }
+
+        if (!providerObjectId && nextStatus === STATUS.ASSIGNED && !statusProvided) {
+          nextStatus = STATUS.PENDING;
         }
       }
+    }
+
+    if (nextStatus !== currentStatus) {
+      const allowed = ALLOWED_TRANSITIONS[currentStatus] || new Set();
+      if (!allowed.has(nextStatus))
+        throw AppError.badRequest('INVALID_TRANSITION', 'Status transition not allowed');
+      request.status = nextStatus;
+      updates.changed = true;
+      updates.status = nextStatus;
+      appendHistory(request, {
+        at: now,
+        by: req.user?._id ?? null,
+        type: historyTypeForStatus(nextStatus),
+        message: `Status updated to ${nextStatus}`,
+      });
     }
 
     if (!updates.changed)
@@ -848,26 +1058,35 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
       await sendNotification(
         updates.assignedProviderId,
         'assigned',
-        'You have been assigned to a service request'
+        'You have been assigned to a service request',
+        request
       );
-      await sendNotification(request.userId, 'assigned', 'Service request assigned');
+      await sendNotification(
+        request.userId,
+        'assigned',
+        'Service request assigned',
+        request
+      );
     }
 
-    if (updates.status && (!isAssignedStatus(updates.status) || !updates.assignedProviderId)) {
+    if (updates.status) {
       const statusSubType =
-        updates.status === 'completed'
+        updates.status === STATUS.COMPLETED
           ? 'completed'
-          : updates.status === 'closed'
+          : updates.status === STATUS.CANCELLED
           ? 'closed'
-          : updates.status === 'offered'
+          : updates.status === STATUS.ACCEPTED
           ? 'offer'
-          : updates.status === 'open'
-          ? 'reopened'
+          : updates.status === STATUS.IN_PROGRESS
+          ? 'in_progress'
+          : updates.status === STATUS.ASSIGNED
+          ? 'assigned'
           : 'service_request';
       await sendNotification(
         request.userId,
         statusSubType,
-        toStatusMessage(updates.status)
+        toStatusMessage(updates.status),
+        request
       );
     }
 
@@ -875,7 +1094,8 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
       await sendNotification(
         request.userId,
         'admin_note',
-        'Admin added a note to your service request'
+        'Admin added a note to your service request',
+        request
       );
     }
 

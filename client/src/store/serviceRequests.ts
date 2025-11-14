@@ -9,8 +9,8 @@ import type {
   ServiceRequestHistoryEntry,
   ServiceRequestOffer,
   ServiceProviderUser,
+  ServiceRequestStatus,
   SubmitServiceOfferPayload,
-  UpdateServiceRequestPayload,
 } from '@/types/services';
 
 type RequestStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
@@ -56,6 +56,23 @@ const normalizeUserSummary = (entry: any): ServiceProviderUser => ({
   location: entry?.location ?? '',
   address: entry?.address ?? '',
 });
+
+const normalizeStatusValue = (value: any): ServiceRequest['status'] => {
+  if (!value) return 'pending';
+  const raw = String(value).trim();
+  if (!raw) return 'pending';
+  const lower = raw.toLowerCase();
+  if (
+    ['pending', 'accepted', 'assigned', 'in_progress', 'completed', 'cancelled'].includes(lower)
+  ) {
+    return lower as ServiceRequest['status'];
+  }
+  if (lower === 'open' || lower === 'offered') return 'pending';
+  if (lower === 'closed') return 'cancelled';
+  if (lower === 'in-progress') return 'in_progress';
+  if (lower === 'complete') return 'completed';
+  return 'pending';
+};
 
 const normalizeOffer = (data: any): ServiceRequestOffer => ({
   _id: String(data?._id ?? data?.id ?? ''),
@@ -155,7 +172,7 @@ const normalizeRequest = (data: any): ServiceRequest => ({
   preferredDate: data.preferredDate ?? '',
   preferredTime: data.preferredTime ?? '',
   visibility: data.visibility === 'private' ? 'private' : 'public',
-  status: (data.status as ServiceRequest['status']) ?? 'open',
+  status: normalizeStatusValue(data.status),
   adminNotes: data.adminNotes ?? '',
   reopenedCount: typeof data.reopenedCount === 'number' ? data.reopenedCount : 0,
   assignedProviderId:
@@ -267,7 +284,7 @@ export const fetchMyServiceRequests = createAsyncThunk<
   'serviceRequests/fetchMine',
   async (_unused, thunkApi) => {
     try {
-      const res = await http.get('/service-requests/mine');
+      const res = await http.get('/service-requests/me');
       const items = (toItems(res) as any[]).map(normalizeRequest);
       return items as ServiceRequest[];
     } catch (error) {
@@ -399,13 +416,17 @@ export const adminFetchServiceRequests = createAsyncThunk<
 
 export const adminUpdateServiceRequest = createAsyncThunk<
   ServiceRequest,
-  { id: string; payload: UpdateServiceRequestPayload },
+  { id: string; status?: ServiceRequestStatus | string; notes?: string; providerId?: string | null },
   { rejectValue: string }
 >(
   'serviceRequests/adminUpdate',
-  async ({ id, payload }, thunkApi) => {
+  async ({ id, status, notes, providerId }, thunkApi) => {
     try {
-      const res = await adminHttp.patch(`/admin/service-requests/${id}`, payload);
+      const body: Record<string, unknown> = {};
+      if (typeof status !== 'undefined') body.status = status;
+      if (typeof notes !== 'undefined') body.adminNotes = notes;
+      if (typeof providerId !== 'undefined') body.providerId = providerId ?? null;
+      const res = await adminHttp.patch(`/service-requests/${id}`, body);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');

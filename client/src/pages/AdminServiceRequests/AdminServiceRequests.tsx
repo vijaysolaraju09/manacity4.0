@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import Button from '@/components/ui/button';
+import showToast from '@/components/ui/Toast';
 import './AdminServiceRequests.scss';
 import {
   adminFetchServiceRequests,
@@ -7,26 +9,28 @@ import {
 } from '@/store/serviceRequests';
 import type { AppDispatch, RootState } from '@/store';
 
-const statusOptions: Array<'all' | 'open' | 'offered' | 'assigned' | 'completed' | 'closed'> = [
-  'all',
-  'open',
-  'offered',
-  'assigned',
-  'completed',
-  'closed',
-];
+const statusOptions: Array<
+  'all' | 'pending' | 'accepted' | 'assigned' | 'in_progress' | 'completed' | 'cancelled'
+> = ['all', 'pending', 'accepted', 'assigned', 'in_progress', 'completed', 'cancelled'];
 
 type EditableState = {
   status: string;
   adminNotes: string;
-  assignedProviderIds: string;
+  providerId: string;
 };
+
+const formatStatus = (value: string) =>
+  value
+    .split('_')
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(' ');
 
 const AdminServiceRequests = () => {
   const dispatch = useDispatch<AppDispatch>();
   const adminState = useSelector((state: RootState) => state.serviceRequests.admin);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'offered' | 'assigned' | 'completed' | 'closed'>('all');
+  const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>('all');
   const [drafts, setDrafts] = useState<Record<string, EditableState>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     const params = statusFilter === 'all' ? {} : { status: statusFilter };
@@ -39,7 +43,7 @@ const AdminServiceRequests = () => {
       nextDrafts[request._id] = {
         status: request.status,
         adminNotes: request.adminNotes ?? '',
-        assignedProviderIds: (request.assignedProviderIds ?? []).join(', '),
+        providerId: request.assignedProviderId ?? '',
       };
     }
     setDrafts(nextDrafts);
@@ -53,29 +57,44 @@ const AdminServiceRequests = () => {
     setDrafts((prev) => ({
       ...prev,
       [id]: {
-        ...(prev[id] ?? { status: 'open', adminNotes: '', assignedProviderIds: '' }),
+        ...(prev[id] ?? { status: 'pending', adminNotes: '', providerId: '' }),
         [field]: value,
       },
     }));
   };
 
-  const handleSave = (id: string) => {
+  const handleSave = async (id: string) => {
     const draft = drafts[id];
     if (!draft) return;
-    const assigned = draft.assignedProviderIds
-      .split(',')
-      .map((token) => token.trim())
-      .filter(Boolean);
-    dispatch(
-      adminUpdateServiceRequest({
-        id,
-        payload: {
-          status: draft.status as any,
-          adminNotes: draft.adminNotes,
-          assignedProviderIds: assigned,
-        },
-      })
-    );
+
+    const trimmedProvider = draft.providerId.trim();
+    if (draft.status === 'assigned' && !trimmedProvider) {
+      showToast('Enter a provider ID before assigning the request.', 'error');
+      return;
+    }
+
+    setSavingId(id);
+    try {
+      await dispatch(
+        adminUpdateServiceRequest({
+          id,
+          status: draft.status,
+          notes: draft.adminNotes,
+          providerId: trimmedProvider || null,
+        })
+      ).unwrap();
+      showToast('Service request updated', 'success');
+    } catch (error) {
+      const message =
+        typeof error === 'string'
+          ? error
+          : error instanceof Error
+          ? error.message
+          : 'Failed to update service request';
+      showToast(message, 'error');
+    } finally {
+      setSavingId(null);
+    }
   };
 
   const items = useMemo(() => adminState.items ?? [], [adminState.items]);
@@ -85,10 +104,13 @@ const AdminServiceRequests = () => {
       <div className="admin-service-requests__filters">
         <label>
           Status
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as (typeof statusOptions)[number])}
+          >
             {statusOptions.map((option) => (
               <option key={option} value={option}>
-                {option.charAt(0).toUpperCase() + option.slice(1)}
+                {formatStatus(option)}
               </option>
             ))}
           </select>
@@ -116,9 +138,9 @@ const AdminServiceRequests = () => {
             const draft = drafts[request._id] ?? {
               status: request.status,
               adminNotes: request.adminNotes ?? '',
-              assignedProviderIds: (request.assignedProviderIds ?? []).join(', '),
+              providerId: request.assignedProviderId ?? '',
             };
-            const statusLabel = request.status.charAt(0).toUpperCase() + request.status.slice(1);
+            const statusLabel = formatStatus(request.status);
             return (
               <div key={request._id} className="admin-service-requests__item">
                 <div>
@@ -135,7 +157,7 @@ const AdminServiceRequests = () => {
                       .filter((option) => option !== 'all')
                       .map((option) => (
                         <option key={option} value={option}>
-                          {option.charAt(0).toUpperCase() + option.slice(1)}
+                          {formatStatus(option)}
                         </option>
                       ))}
                   </select>
@@ -148,20 +170,18 @@ const AdminServiceRequests = () => {
                   />
                 </label>
                 <label>
-                  Assigned provider IDs
+                  Assigned provider ID
                   <input
                     type="text"
-                    value={draft.assignedProviderIds}
-                    onChange={(event) =>
-                      handleDraftChange(request._id, 'assignedProviderIds', event.target.value)
-                    }
-                    placeholder="Comma separated user IDs"
+                    value={draft.providerId}
+                    onChange={(event) => handleDraftChange(request._id, 'providerId', event.target.value)}
+                    placeholder="User ID"
                   />
                 </label>
                 <div className="admin-service-requests__actions">
-                  <button type="button" onClick={() => handleSave(request._id)}>
-                    Save updates
-                  </button>
+                  <Button type="button" onClick={() => void handleSave(request._id)} disabled={savingId === request._id}>
+                    {savingId === request._id ? 'Saving…' : 'Save updates'}
+                  </Button>
                 </div>
               </div>
             );

@@ -74,6 +74,11 @@ const AdminServiceRequests = () => {
       return;
     }
 
+    if (trimmedProvider && !/^[a-fA-F\d]{24}$/u.test(trimmedProvider)) {
+      showToast('Enter a valid provider ID (24 hexadecimal characters).', 'error');
+      return;
+    }
+
     setSavingId(id);
     try {
       await dispatch(
@@ -85,6 +90,8 @@ const AdminServiceRequests = () => {
         })
       ).unwrap();
       showToast('Service request updated', 'success');
+      const params = statusFilter === 'all' ? {} : { status: statusFilter };
+      await dispatch(adminFetchServiceRequests(params)).unwrap();
     } catch (error) {
       const message =
         typeof error === 'string'

@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Eye, EyeOff } from 'lucide-react';
 import Loader from '@/components/Loader';
@@ -13,12 +13,24 @@ import { toErrorMessage } from '@/lib/response';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const loginState = (location.state as { from?: string; message?: string } | null) ?? null;
+  const redirectTo = loginState?.from || paths.home();
   const dispatch = useDispatch<AppDispatch>();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ phone?: string; password?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (loginState?.message) {
+      showToast(loginState.message, 'info');
+      const state = loginState.from ? { from: loginState.from } : {};
+      const url = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      window.history.replaceState(state, '', url);
+    }
+  }, [loginState]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -50,7 +62,7 @@ const Login = () => {
       setLoading(true);
       setErrors({});
       await dispatch(loginThunk({ phone: normalizedPhone, password })).unwrap();
-      navigate(paths.home());
+      navigate(redirectTo, { replace: true });
       showToast('Logged in successfully', 'success');
     } catch (err) {
       const message = toErrorMessage(err);

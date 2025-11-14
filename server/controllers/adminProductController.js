@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
+const Shop = require('../models/Shop');
 const AppError = require('../utils/AppError');
 
 const STATUS_TO_INTERNAL = {
@@ -57,6 +58,93 @@ const normalizeProduct = (doc) => {
     images,
     updatedAt: doc.updatedAt,
   };
+};
+
+exports.createProduct = async (req, res, next) => {
+  try {
+    const {
+      shopId,
+      name,
+      description,
+      category,
+      price,
+      mrp,
+      stock,
+      image,
+      images,
+    } = req.body || {};
+
+    if (!shopId || !mongoose.Types.ObjectId.isValid(shopId)) {
+      throw AppError.badRequest('INVALID_SHOP', 'Select a valid shop to continue');
+    }
+
+    const shop = await Shop.findOne({ _id: shopId, isDeleted: { $ne: true } });
+    if (!shop) {
+      throw AppError.notFound('SHOP_NOT_FOUND', 'Shop not found');
+    }
+
+    const trimmedName = typeof name === 'string' ? name.trim() : '';
+    const trimmedDescription = typeof description === 'string' ? description.trim() : '';
+    const trimmedCategory = typeof category === 'string' ? category.trim() : '';
+
+    if (trimmedName.length < 3)
+      throw AppError.badRequest('INVALID_NAME', 'Name must be at least 3 characters');
+    if (trimmedDescription.length < 10)
+      throw AppError.badRequest('INVALID_DESCRIPTION', 'Description must be at least 10 characters');
+    if (trimmedCategory.length < 2)
+      throw AppError.badRequest('INVALID_CATEGORY', 'Category must be at least 2 characters');
+
+    const priceValue = Number(price);
+    const mrpValue = Number(mrp);
+    const stockValue = Number(stock);
+
+    if (!Number.isFinite(priceValue) || priceValue <= 0)
+      throw AppError.badRequest('INVALID_PRICE', 'Price must be greater than zero');
+    if (!Number.isFinite(mrpValue) || mrpValue <= 0)
+      throw AppError.badRequest('INVALID_MRP', 'MRP must be greater than zero');
+    if (priceValue > mrpValue)
+      throw AppError.badRequest('PRICE_GT_MRP', 'Price cannot exceed MRP');
+    if (!Number.isFinite(stockValue) || stockValue < 0)
+      throw AppError.badRequest('INVALID_STOCK', 'Stock must be zero or a positive number');
+
+    const imageList = Array.isArray(images)
+      ? images.filter((img) => typeof img === 'string' && img.trim())
+      : [];
+    const imageSource =
+      typeof image === 'string' && image.trim() ? image.trim() : imageList[0] || undefined;
+    if (imageSource && !imageList.includes(imageSource)) {
+      imageList.unshift(imageSource);
+    }
+
+    const payload = {
+      shop: shop._id,
+      name: trimmedName,
+      description: trimmedDescription,
+      category: trimmedCategory,
+      price: priceValue,
+      mrp: mrpValue,
+      stock: stockValue,
+      status: 'active',
+      image: imageSource,
+      images: imageList,
+    };
+
+    if (req.user?._id) {
+      payload.createdBy = req.user._id;
+      payload.updatedBy = req.user._id;
+    }
+
+    const product = await Product.create(payload);
+    const populated = await Product.findById(product._id).populate('shop', 'name').lean();
+
+    res.status(201).json({
+      ok: true,
+      data: normalizeProduct(populated || product.toObject()),
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.listProducts = async (req, res, next) => {

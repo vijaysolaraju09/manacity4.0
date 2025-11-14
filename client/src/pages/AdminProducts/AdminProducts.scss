@@ -2,6 +2,42 @@
   padding: 1rem;
 }
 
+.admin-products__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-products__subtitle {
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  color: rgb(var(--mc-muted, 120, 131, 149));
+}
+
+.admin-products__createBtn {
+  align-self: center;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--mc-radius);
+  border: none;
+  background: rgb(var(--mc-primary, 32, 101, 209));
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.admin-products__createBtn:not(:disabled):hover {
+  background: rgba(var(--mc-primary, 32, 101, 209), 0.9);
+  transform: translateY(-1px);
+}
+
+.admin-products__createBtn:disabled {
+  cursor: not-allowed;
+  background: rgba(var(--mc-muted, 148, 163, 184), 0.5);
+}
+
 .admin-products .filters {
   display: flex;
   flex-wrap: wrap;
@@ -52,6 +88,71 @@
   border: 1px solid rgb(var(--mc-border));
   box-shadow: var(--mc-shadow-2);
   min-width: 300px;
+}
+
+.modal-content label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.modal-content input,
+.modal-content textarea,
+.modal-content select {
+  border-radius: var(--mc-radius-sm, 8px);
+  border: 1px solid rgb(var(--mc-border));
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  background: rgb(var(--mc-surface-1, 248, 250, 252));
+  color: inherit;
+}
+
+.modal-content textarea {
+  resize: vertical;
+}
+
+.modal-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.modal-error {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--mc-radius-sm, 8px);
+  background: rgba(220, 38, 38, 0.1);
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+.field-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+}
+
+.hint {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: rgb(var(--mc-muted, 120, 131, 149));
+}
+
+.file-upload {
+  gap: 0.35rem;
+}
+
+.file-upload input[type='file'] {
+  padding: 0.25rem 0;
+}
+
+.admin-products__imagePreview {
+  margin-top: 0.75rem;
+  max-height: 140px;
+  border-radius: var(--mc-radius-sm, 8px);
+  object-fit: cover;
+  border: 1px solid rgb(var(--mc-border));
 }
 
 .modal-actions {

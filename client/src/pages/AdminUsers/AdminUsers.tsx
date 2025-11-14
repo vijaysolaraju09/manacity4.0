@@ -22,6 +22,7 @@ import ErrorCard from '@/components/ui/ErrorCard';
 import Select from '@/components/ui/select';
 import SkeletonList from '@/components/ui/SkeletonList';
 import showToast from '@/components/ui/Toast';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import styles from './AdminUsers.module.scss';
 
 interface User {
@@ -46,11 +47,14 @@ const AdminUsers = () => {
   const [query, setQuery] = useState('');
   const [role, setRole] = useState('');
   const [verified, setVerified] = useState('');
+  const [status, setStatus] = useState('');
   const [sort, setSort] = useState('-createdAt');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const pageSize = 10;
   const [createdRange, setCreatedRange] = useState<DateRangeValue>({});
+  const [statusDialog, setStatusDialog] = useState<{ user: User; nextActive: boolean } | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<User | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -60,6 +64,7 @@ const AdminUsers = () => {
         query: query || undefined,
         role: role || undefined,
         verified: verified ? verified === 'true' : undefined,
+        status: status || undefined,
         sort,
         page,
         pageSize,
@@ -75,7 +80,7 @@ const AdminUsers = () => {
     } finally {
       setLoading(false);
     }
-  }, [createdRange, page, pageSize, query, role, sort, verified]);
+  }, [createdRange, page, pageSize, query, role, sort, status, verified]);
 
   useEffect(() => {
     load();
@@ -98,32 +103,38 @@ const AdminUsers = () => {
     }
   };
 
-  const handleToggleActive = async (user: User) => {
-    if (!confirm(user.isActive ? 'Deactivate user?' : 'Reactivate user?')) return;
+  const updateActiveStatus = async (user: User, nextActive: boolean) => {
     const prev = [...users];
     setUsers((list) =>
-      list.map((u) =>
-        u._id === user._id ? { ...u, isActive: !user.isActive } : u,
-      ),
+      list.map((u) => (u._id === user._id ? { ...u, isActive: nextActive } : u)),
     );
     try {
-      await updateUserStatus(user._id, !user.isActive);
+      await updateUserStatus(user._id, nextActive);
+      showToast(nextActive ? 'User reactivated' : 'User suspended', 'success');
     } catch {
       setUsers(prev);
       showToast('Failed to update status', 'error');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete user?')) return;
+  const requestToggleActive = (user: User) => {
+    setStatusDialog({ user, nextActive: !user.isActive });
+  };
+
+  const deleteUserAccount = async (id: string) => {
     const prev = [...users];
     setUsers((list) => list.filter((u) => u._id !== id));
     try {
       await apiDeleteUser(id);
+      showToast('User deleted', 'success');
     } catch {
       setUsers(prev);
       showToast('Failed to delete user', 'error');
     }
+  };
+
+  const requestDelete = (user: User) => {
+    setDeleteDialog(user);
   };
 
   const sortState = useMemo(() => {
@@ -140,6 +151,7 @@ const AdminUsers = () => {
     setQuery('');
     setRole('');
     setVerified('');
+    setStatus('');
     setCreatedRange({});
     setPage(1);
   };
@@ -252,7 +264,7 @@ const AdminUsers = () => {
               variant="outline"
               size="sm"
               className="rounded-full border-slate-200 text-xs text-slate-600 hover:border-[color:var(--brand-200)] hover:text-[color:var(--brand-600)] dark:border-slate-700 dark:text-slate-300 dark:hover:border-[color:var(--brand-400)] dark:hover:text-[color:var(--brand-200)]"
-              onClick={() => handleToggleActive(user)}
+              onClick={() => requestToggleActive(user)}
             >
               {user.isActive ? (
                 <>
@@ -271,7 +283,7 @@ const AdminUsers = () => {
               variant="destructive"
               size="sm"
               className="rounded-full text-xs"
-              onClick={() => handleDelete(user._id)}
+              onClick={() => requestDelete(user)}
             >
               <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
               Delete
@@ -280,11 +292,11 @@ const AdminUsers = () => {
         ),
       },
     ];
-  }, [formatDate, handleRoleChange, handleToggleActive, handleDelete]);
+  }, [formatDate, handleRoleChange, requestToggleActive, requestDelete]);
 
   const hasUsers = users.length > 0;
   const hasActiveFilters = Boolean(
-    query || role || verified || createdRange.from || createdRange.to,
+    query || role || verified || status || createdRange.from || createdRange.to,
   );
 
   return (
@@ -332,6 +344,20 @@ const AdminUsers = () => {
               ],
               onChange: (value) => {
                 setVerified(value);
+                setPage(1);
+              },
+            },
+            {
+              id: 'status',
+              label: 'Status',
+              value: status,
+              placeholder: 'All accounts',
+              options: [
+                { label: 'Active', value: 'active' },
+                { label: 'Suspended', value: 'inactive' },
+              ],
+              onChange: (value) => {
+                setStatus(value);
                 setPage(1);
               },
             },
@@ -411,6 +437,38 @@ const AdminUsers = () => {
         />
       ) : null}
     </div>
+      <ConfirmDialog
+        open={Boolean(statusDialog)}
+        title={statusDialog?.nextActive ? 'Activate user?' : 'Suspend user?'}
+        description={
+          statusDialog?.nextActive
+            ? 'The user will be able to sign in again.'
+            : 'The user will be signed out and prevented from logging in until reactivated.'
+        }
+        confirmLabel={statusDialog?.nextActive ? 'Activate' : 'Suspend'}
+        destructive={!statusDialog?.nextActive}
+        onConfirm={() => {
+          if (statusDialog) {
+            void updateActiveStatus(statusDialog.user, statusDialog.nextActive);
+            setStatusDialog(null);
+          }
+        }}
+        onCancel={() => setStatusDialog(null)}
+      />
+      <ConfirmDialog
+        open={Boolean(deleteDialog)}
+        title="Delete user?"
+        description="This action permanently removes the account and its order history cannot be restored."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deleteDialog) {
+            void deleteUserAccount(deleteDialog._id);
+            setDeleteDialog(null);
+          }
+        }}
+        onCancel={() => setDeleteDialog(null)}
+      />
   );
 };
 

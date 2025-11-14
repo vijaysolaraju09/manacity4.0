@@ -153,6 +153,11 @@ const EventDetailPage = () => {
 
   const event = detail.data;
   const eventDetailPath = id ? paths.events.detail(id) : paths.events.list();
+  const isAuthenticated = Boolean(currentUser);
+  const availableTabs = useMemo(
+    () => (isAuthenticated ? tabs : tabs.filter((tab) => tab.key === 'about')),
+    [isAuthenticated],
+  );
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -180,11 +185,17 @@ const EventDetailPage = () => {
       navigate(`/events/${id}/register`, { replace: true });
       return;
     }
-    const matched = tabs.find((tab) => tab.key === hash);
+    const matched = availableTabs.find((tab) => tab.key === hash);
     if (matched) {
       setActiveTab(matched.key);
     }
-  }, [location.hash, id, navigate]);
+  }, [location.hash, id, navigate, availableTabs]);
+
+  useEffect(() => {
+    if (!isAuthenticated && activeTab !== 'about') {
+      setActiveTab('about');
+    }
+  }, [isAuthenticated, activeTab]);
 
   useEffect(() => {
     if (!id) return;
@@ -311,8 +322,6 @@ const EventDetailPage = () => {
   const updatesList = useMemo(() => updates.items ?? [], [updates.items]);
 
   const leaderboardRows = useMemo(() => leaderboard.items ?? [], [leaderboard.items]);
-
-  const isAuthenticated = Boolean(currentUser);
   const isRegistered = Boolean(myRegistration.data && myRegistration.data.status !== 'withdrawn');
   const waitlisted = myRegistration.data?.status === 'waitlisted';
 
@@ -328,6 +337,10 @@ const EventDetailPage = () => {
   const entryLabel = getEntryLabel(event);
 
   const goToTab = (key: TabKey) => {
+    if (!availableTabs.some((tab) => tab.key === key)) {
+      setActiveTab('about');
+      return;
+    }
     setActiveTab(key);
     window.requestAnimationFrame(() => {
       const target = tabContentRef.current;
@@ -336,6 +349,16 @@ const EventDetailPage = () => {
       }
     });
   };
+
+  const promptLogin = useCallback(() => {
+    showToast('Sign in or create an account to register for events.', 'info');
+    navigate(paths.auth.login(), {
+      state: {
+        from: eventDetailPath,
+        message: 'Sign in or create an account to register for events.',
+      },
+    });
+  }, [eventDetailPath, navigate]);
 
   const handleUnregister = async () => {
     if (!id) return;
@@ -358,6 +381,9 @@ const EventDetailPage = () => {
   };
 
   const renderTabContent = () => {
+    if (!isAuthenticated && activeTab !== 'about') {
+      return null;
+    }
     if (!event) return null;
     switch (activeTab) {
       case 'about':
@@ -761,7 +787,7 @@ const EventDetailPage = () => {
       </section>
 
       <div className={styles.tabHeader}>
-        {tabs.map((tab) => (
+        {availableTabs.map((tab) => (
           <button
             key={tab.key}
             type="button"
@@ -810,11 +836,7 @@ const EventDetailPage = () => {
                 </button>
               ) : null
             ) : (
-              <button
-                type="button"
-                className={styles.primaryBtn}
-                onClick={() => navigate(paths.auth.login(), { state: { from: eventDetailPath } })}
-              >
+              <button type="button" className={styles.primaryBtn} onClick={promptLogin}>
                 Log in to register
               </button>
             )}
@@ -828,12 +850,12 @@ const EventDetailPage = () => {
                 {actions.unregister === 'loading' ? <Loader2 className={styles.spin} /> : 'Unregister'}
               </button>
             )}
-            {stage !== 'upcoming' && (
+            {isAuthenticated && stage !== 'upcoming' && (
               <button type="button" className={styles.secondaryBtn} onClick={() => goToTab('leaderboard')}>
                 View leaderboard
               </button>
             )}
-            {stage !== 'completed' && (
+            {isAuthenticated && stage !== 'completed' && (
               <button type="button" className={styles.ghostBtn} onClick={() => goToTab('structure')}>
                 View bracket
               </button>
@@ -878,11 +900,7 @@ const EventDetailPage = () => {
             </button>
           )
         ) : (
-          <button
-            type="button"
-            className={styles.primaryBtn}
-            onClick={() => navigate(paths.auth.login(), { state: { from: eventDetailPath } })}
-          >
+          <button type="button" className={styles.primaryBtn} onClick={promptLogin}>
             Log in to register
           </button>
         )}

@@ -8,12 +8,37 @@ exports.getUsers = async (req, res) => {
     const { limit, skip, sort, filters } = parseQuery(rest, [
       'role',
       'verified',
+      'status',
+      'createdFrom',
+      'createdTo',
     ]);
 
     const filter = {};
     if (filters.role) filter.role = filters.role;
     if (filters.verified !== undefined)
       filter.isVerified = filters.verified === 'true';
+    if (filters.status) {
+      if (filters.status === 'active') filter.isActive = true;
+      else if (filters.status === 'inactive') filter.isActive = false;
+    }
+    if (filters.createdFrom || filters.createdTo) {
+      const createdAt = {};
+      if (filters.createdFrom) {
+        const from = new Date(filters.createdFrom);
+        if (!Number.isNaN(from.getTime())) {
+          createdAt.$gte = from;
+        }
+      }
+      if (filters.createdTo) {
+        const to = new Date(filters.createdTo);
+        if (!Number.isNaN(to.getTime())) {
+          createdAt.$lte = to;
+        }
+      }
+      if (Object.keys(createdAt).length > 0) {
+        filter.createdAt = createdAt;
+      }
+    }
     if (query) {
       filter.$or = [
         { name: { $regex: query, $options: 'i' } },

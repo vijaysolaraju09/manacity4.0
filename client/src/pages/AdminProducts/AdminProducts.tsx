@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { useForm } from 'react-hook-form';
 import {
   fetchProducts,
+  fetchShops,
+  createProduct as apiCreateProduct,
   updateProduct as apiUpdateProduct,
   deleteProduct as apiDeleteProduct,
   type ProductQueryParams,
@@ -11,6 +14,7 @@ import ErrorCard from '../../components/ui/ErrorCard';
 import SkeletonList from '../../components/ui/SkeletonList';
 import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
+import { toErrorMessage } from '@/lib/response';
 import './AdminProducts.scss';
 
 interface Product {
@@ -39,6 +43,37 @@ const emptyForm = {
   images: '',
 };
 
+interface ShopSummary {
+  _id: string;
+  name: string;
+  status?: string;
+}
+
+type CreateProductFormValues = {
+  shopId: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  mrp: number;
+  stock: number;
+  imageUrl: string;
+};
+
+const readFileAsDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Unsupported image format'));
+      }
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+
 const focusableSelectors =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
 
@@ -60,8 +95,42 @@ const AdminProducts = () => {
   const [edit, setEdit] = useState<Product | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [shops, setShops] = useState<ShopSummary[]>([]);
+  const [shopsLoading, setShopsLoading] = useState(false);
   const modalRef = useRef<HTMLFormElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
+
+  const {
+    register: registerCreate,
+    handleSubmit: handleCreateSubmit,
+    reset: resetCreate,
+    watch: watchCreate,
+    setValue: setCreateValue,
+    formState: { errors: createErrors, isSubmitting: createSubmitting },
+  } = useForm<CreateProductFormValues>({
+    defaultValues: {
+      shopId: '',
+      name: '',
+      description: '',
+      category: '',
+      price: 0,
+      mrp: 0,
+      stock: 0,
+      imageUrl: '',
+    },
+  });
+  const createImagePreview = watchCreate('imageUrl');
+  const approvedShops = useMemo(
+    () =>
+      shops.filter((shop) => {
+        const statusValue = shop.status?.toLowerCase();
+        if (!statusValue) return true;
+        return statusValue === 'approved' || statusValue === 'active';
+      }),
+    [shops],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -92,6 +161,73 @@ const AdminProducts = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    let active = true;
+    const loadShopsList = async () => {
+      setShopsLoading(true);
+      try {
+        const data = await fetchShops({ status: 'approved', pageSize: 100 });
+        const items = Array.isArray(data.items) ? data.items : [];
+        if (!active) return;
+        setShops(
+          items.map((item: any) => ({
+            _id: String(item?._id ?? item?.id ?? ''),
+            name: item?.name ?? 'Unnamed shop',
+            status: item?.status ?? item?.approvalStatus ?? item?.state ?? '',
+          })),
+        );
+      } catch (err) {
+        if (active) {
+          showToast(toErrorMessage(err), 'error');
+        }
+      } finally {
+        if (active) {
+          setShopsLoading(false);
+        }
+      }
+    };
+
+    void loadShopsList();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const openCreateModal = () => {
+    const fallback = approvedShops[0] ?? shops[0];
+    resetCreate({
+      shopId: fallback?._id ?? '',
+      name: '',
+      description: '',
+      category: '',
+      price: 0,
+      mrp: 0,
+      stock: 0,
+      imageUrl: '',
+    });
+    setCreateError(null);
+    setCreateOpen(true);
+  };
+
+  const closeCreateModal = () => {
+    setCreateOpen(false);
+    setCreateError(null);
+  };
+
+  const handleCreateImageUpload = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const dataUrl = await readFileAsDataUrl(file);
+        setCreateValue('imageUrl', dataUrl, { shouldDirty: true, shouldTouch: true });
+      } catch (err) {
+        showToast(toErrorMessage(err), 'error');
+      }
+    },
+    [setCreateValue],
+  );
 
   useEffect(() => {
     if (!edit) return undefined;
@@ -197,6 +333,82 @@ const AdminProducts = () => {
     }
   };
 
+  const handleCreateProduct = handleCreateSubmit(async (values) => {
+    if (!values.shopId) {
+      setCreateError('Select a shop to continue');
+      return;
+    }
+
+    const trimmedName = values.name.trim();
+    const trimmedDescription = values.description.trim();
+    const trimmedCategory = values.category.trim();
+    const priceValue = Number(values.price);
+    const mrpValue = Number(values.mrp);
+    const stockValue = Number(values.stock);
+
+    if (trimmedName.length < 3) {
+      setCreateError('Name must be at least 3 characters long');
+      return;
+    }
+    if (trimmedDescription.length < 10) {
+      setCreateError('Description must be at least 10 characters long');
+      return;
+    }
+    if (trimmedCategory.length < 2) {
+      setCreateError('Category must be at least 2 characters long');
+      return;
+    }
+    if (!Number.isFinite(priceValue) || priceValue <= 0) {
+      setCreateError('Enter a valid price greater than zero');
+      return;
+    }
+    if (!Number.isFinite(mrpValue) || mrpValue <= 0) {
+      setCreateError('Enter a valid MRP greater than zero');
+      return;
+    }
+    if (priceValue > mrpValue) {
+      setCreateError('Price cannot exceed MRP');
+      return;
+    }
+    if (!Number.isFinite(stockValue) || stockValue < 0) {
+      setCreateError('Stock must be zero or a positive number');
+      return;
+    }
+
+    const imageSource = values.imageUrl.trim();
+
+    try {
+      setCreateError(null);
+      await apiCreateProduct({
+        shopId: values.shopId,
+        name: trimmedName,
+        description: trimmedDescription,
+        category: trimmedCategory,
+        price: priceValue,
+        mrp: mrpValue,
+        stock: stockValue,
+        image: imageSource || undefined,
+        images: imageSource ? [imageSource] : undefined,
+      });
+      showToast('Product created', 'success');
+      const fallbackShop = values.shopId || approvedShops[0]?._id || shops[0]?._id || '';
+      resetCreate({
+        shopId: fallbackShop,
+        name: '',
+        description: '',
+        category: '',
+        price: 0,
+        mrp: 0,
+        stock: 0,
+        imageUrl: '',
+      });
+      closeCreateModal();
+      await load();
+    } catch (err) {
+      setCreateError(toErrorMessage(err) || 'Failed to create product');
+    }
+  });
+
   const columns: Column<ProductRow>[] = [
     {
       key: 'image',
@@ -246,7 +458,24 @@ const AdminProducts = () => {
 
   return (
     <div className="admin-products">
-      <h2>Products</h2>
+      <div className="admin-products__header">
+        <div>
+          <h2>Products</h2>
+          <p className="admin-products__subtitle">
+            Monitor listings across shops and keep pricing accurate.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="admin-products__createBtn"
+          onClick={openCreateModal}
+          disabled={
+            shopsLoading || (approvedShops.length === 0 && shops.length === 0)
+          }
+        >
+          Add product
+        </button>
+      </div>
       <div className="filters">
         <input
           placeholder="Search name"
@@ -347,6 +576,180 @@ const AdminProducts = () => {
           />
         );
       })()}
+      {createOpen && (
+        <div
+          className="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-create-product-heading"
+          onClick={closeCreateModal}
+        >
+          <form
+            className="modal-content"
+            onSubmit={handleCreateProduct}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 id="admin-create-product-heading">Add product</h3>
+            <p className="hint">Create a catalog item tied to an approved shop.</p>
+            {createError ? (
+              <p className="modal-error" role="alert">
+                {createError}
+              </p>
+            ) : null}
+            <label>
+              Shop
+              <select
+                {...registerCreate('shopId', { required: 'Select a shop' })}
+                disabled={shopsLoading || shops.length === 0}
+              >
+                <option value="">Select shop</option>
+                {shops.map((shopItem) => {
+                  const disabled =
+                    shopItem.status &&
+                    !['approved', 'active'].includes(shopItem.status.toLowerCase());
+                  return (
+                    <option key={shopItem._id} value={shopItem._id} disabled={disabled}>
+                      {shopItem.name}
+                      {shopItem.status && shopItem.status.toLowerCase() !== 'approved'
+                        ? ` (${shopItem.status})`
+                        : ''}
+                    </option>
+                  );
+                })}
+              </select>
+              {createErrors.shopId ? (
+                <span className="field-error">{createErrors.shopId.message}</span>
+              ) : null}
+            </label>
+            <label>
+              Product name
+              <input
+                {...registerCreate('name', {
+                  required: 'Enter a product name',
+                  minLength: { value: 3, message: 'Name must be at least 3 characters' },
+                })}
+                placeholder="Signature dish"
+              />
+              {createErrors.name ? (
+                <span className="field-error">{createErrors.name.message}</span>
+              ) : null}
+            </label>
+            <label>
+              Description
+              <textarea
+                rows={3}
+                {...registerCreate('description', {
+                  required: 'Describe the product',
+                  minLength: { value: 10, message: 'Description must be at least 10 characters' },
+                })}
+                placeholder="Write a short summary"
+              />
+              {createErrors.description ? (
+                <span className="field-error">{createErrors.description.message}</span>
+              ) : null}
+            </label>
+            <label>
+              Category
+              <input
+                {...registerCreate('category', {
+                  required: 'Enter a category',
+                  minLength: { value: 2, message: 'Category must be at least 2 characters' },
+                })}
+                placeholder="Beverages, electronics, ..."
+              />
+              {createErrors.category ? (
+                <span className="field-error">{createErrors.category.message}</span>
+              ) : null}
+            </label>
+            <div className="modal-grid">
+              <label>
+                Price (₹)
+                <input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  {...registerCreate('price', {
+                    valueAsNumber: true,
+                    min: { value: 1, message: 'Enter a price greater than zero' },
+                  })}
+                />
+                {createErrors.price ? (
+                  <span className="field-error">{createErrors.price.message}</span>
+                ) : null}
+              </label>
+              <label>
+                MRP (₹)
+                <input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  {...registerCreate('mrp', {
+                    valueAsNumber: true,
+                    min: { value: 1, message: 'Enter an MRP greater than zero' },
+                  })}
+                />
+                {createErrors.mrp ? (
+                  <span className="field-error">{createErrors.mrp.message}</span>
+                ) : null}
+              </label>
+              <label>
+                Stock
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  {...registerCreate('stock', {
+                    valueAsNumber: true,
+                    min: { value: 0, message: 'Stock cannot be negative' },
+                  })}
+                />
+                {createErrors.stock ? (
+                  <span className="field-error">{createErrors.stock.message}</span>
+                ) : null}
+              </label>
+            </div>
+            <label>
+              Image URL
+              <input
+                {...registerCreate('imageUrl', {
+                  validate: (value) => {
+                    if (!value) return true;
+                    if (value.startsWith('data:')) return true;
+                    return (
+                      /^(https?:\/\/).*/iu.test(value) ||
+                      'Enter a full URL or upload an image'
+                    );
+                  },
+                })}
+                placeholder="https://example.com/image.jpg"
+              />
+              {createErrors.imageUrl ? (
+                <span className="field-error">{createErrors.imageUrl.message}</span>
+              ) : null}
+            </label>
+            <label className="file-upload">
+              Upload image
+              <input type="file" accept="image/*" onChange={handleCreateImageUpload} />
+              <span className="hint">JPEG or PNG up to 2 MB. Uploaded images override the URL.</span>
+            </label>
+            {createImagePreview ? (
+              <img
+                src={createImagePreview}
+                alt="Preview"
+                className="admin-products__imagePreview"
+              />
+            ) : null}
+            <div className="modal-actions">
+              <button type="submit" disabled={createSubmitting}>
+                {createSubmitting ? 'Creating…' : 'Create product'}
+              </button>
+              <button type="button" onClick={closeCreateModal} disabled={createSubmitting}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
       {edit && (
         <div
           className="modal"

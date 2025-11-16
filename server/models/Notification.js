@@ -24,6 +24,12 @@ const notificationSchema = new Schema(
     },
     entityId: { type: Schema.Types.ObjectId },
     redirectUrl: { type: String, trim: true },
+    targetType: {
+      type: String,
+      enum: ['order', 'serviceRequest', 'event', 'announcement'],
+    },
+    targetId: { type: Schema.Types.ObjectId },
+    targetLink: { type: String, trim: true },
     read: { type: Boolean, default: false },
     priority: {
       type: String,
@@ -44,4 +50,7 @@ notificationSchema.index(
   }
 );
 
-module.exports = model('Notification', notificationSchema);
+const NotificationModel = model('Notification', notificationSchema);
+
+module.exports = NotificationModel;
+module.exports.NotificationModel = NotificationModel;

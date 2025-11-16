@@ -272,12 +272,15 @@ const populateRequest = (query) => {
 
 const buildNotificationContext = (request) => {
   const entityId = toId(request?._id || request?.id);
-  const payload = { entityType: 'serviceRequest' };
+  const payload = { entityType: 'serviceRequest', targetType: 'serviceRequest' };
   if (!entityId) return payload;
+  const link = `/requests/${entityId}`;
   return {
     ...payload,
     entityId,
-    redirectUrl: `/requests/${entityId}`,
+    redirectUrl: link,
+    targetId: entityId,
+    targetLink: link,
   };
 };
 

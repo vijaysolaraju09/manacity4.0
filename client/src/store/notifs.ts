@@ -11,6 +11,11 @@ export interface Notif {
   entityType?: 'order' | 'serviceRequest' | 'event' | 'announcement' | null;
   entityId?: string | null;
   redirectUrl?: string | null;
+  targetType?: 'order' | 'serviceRequest' | 'event' | 'announcement' | null;
+  targetId?: string | null;
+  targetLink?: string | null;
+  metadata?: Record<string, unknown> | null;
+  payload?: Record<string, unknown> | null;
 }
 
 interface NotifState {
@@ -31,6 +36,59 @@ const initialState: NotifState = {
   unread: 0,
 };
 
+const toIdString = (value: unknown): string | null => {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'object') {
+    if ('_id' in (value as Record<string, unknown>) && (value as Record<string, unknown>)._id) {
+      const raw = (value as Record<string, unknown>)._id;
+      return typeof raw === 'string' ? raw : raw ? String(raw) : null;
+    }
+    if ('id' in (value as Record<string, unknown>) && (value as Record<string, unknown>).id) {
+      const raw = (value as Record<string, unknown>).id;
+      return typeof raw === 'string' ? raw : raw ? String(raw) : null;
+    }
+    if (typeof (value as { toString?: () => string }).toString === 'function') {
+      const str = (value as { toString?: () => string }).toString();
+      return str ? str : null;
+    }
+  }
+  return null;
+};
+
+const toRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object') return null;
+  return value as Record<string, unknown>;
+};
+
+const normalizeNotification = (entry: any): Notif => {
+  const payload = toRecord(entry?.payload);
+  const metadata = toRecord(entry?.metadata);
+  const entityId = toIdString(entry?.entityId ?? payload?.entityId);
+  const targetId = toIdString(entry?.targetId ?? payload?.targetId ?? entityId);
+  const redirectUrl = typeof entry?.redirectUrl === 'string' ? entry.redirectUrl : payload?.redirectUrl;
+  const targetLinkRaw = typeof entry?.targetLink === 'string' ? entry.targetLink : payload?.targetLink;
+  const targetLink = targetLinkRaw ?? redirectUrl ?? null;
+  const entityType = (entry?.entityType ?? payload?.entityType ?? null) as Notif['entityType'];
+  const targetType = (entry?.targetType ?? payload?.targetType ?? entityType ?? null) as Notif['targetType'];
+  return {
+    _id: String(entry?._id ?? ''),
+    type: entry?.type ?? 'system',
+    message: entry?.message ?? '',
+    read: Boolean(entry?.read),
+    createdAt: entry?.createdAt ?? new Date().toISOString(),
+    entityType,
+    entityId: entityId ?? null,
+    redirectUrl: redirectUrl ?? null,
+    targetType,
+    targetId: targetId ?? null,
+    targetLink,
+    metadata,
+    payload,
+  };
+};
+
 export const fetchNotifs = createAsyncThunk(
   'notifs/fetchAll',
   async (
@@ -41,12 +99,7 @@ export const fetchNotifs = createAsyncThunk(
       const page = params?.page ?? 1;
       const limit = params?.limit ?? 20;
       const res = await http.get('/api/notifications', { params: { page, limit } });
-      const items = (toItems(res) as Notif[]).map((item) => ({
-        ...item,
-        entityType: item.entityType ?? null,
-        entityId: item.entityId ?? null,
-        redirectUrl: item.redirectUrl ?? null,
-      }));
+      const items = (toItems(res) as Notif[]).map((item) => normalizeNotification(item));
       const payload = res.data?.data ?? res.data ?? {};
       const hasMore = Boolean(payload.hasMore);
       const unread =

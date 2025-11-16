@@ -7,11 +7,17 @@ const toNotificationResponse = (doc) => {
   const redirectUrl = doc.redirectUrl || payload.redirectUrl || null;
   const entityType = doc.entityType || payload.entityType || null;
   const entityId = doc.entityId || payload.entityId || null;
+  const targetType = doc.targetType || payload.targetType || entityType || null;
+  const targetId = doc.targetId || payload.targetId || entityId || null;
+  const targetLink = doc.targetLink || payload.targetLink || redirectUrl || null;
   return {
     ...doc,
     redirectUrl,
     entityType,
     entityId,
+    targetType,
+    targetId,
+    targetLink,
   };
 };
 

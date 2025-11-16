@@ -10,6 +10,7 @@ import SkeletonList from '@/components/ui/SkeletonList';
 import showToast from '@/components/ui/Toast';
 import styles from './Notifications.module.scss';
 import { useNavigate } from 'react-router-dom';
+import { goToNotificationTarget } from '@/utils/notifications';
 
 const filterLabels: Record<string, string> = {
   all: 'All',
@@ -128,9 +129,13 @@ const Notifications = () => {
       if (!notif.read) {
         void handleMarkRead(notif._id);
       }
-      if (notif.redirectUrl) {
-        navigate(notif.redirectUrl);
+      const destination = goToNotificationTarget(notif);
+      if (!destination) return;
+      if (destination.kind === 'external') {
+        window.open(destination.url, '_blank', 'noopener');
+        return;
       }
+      navigate(destination.path);
     },
     [handleMarkRead, navigate]
   );

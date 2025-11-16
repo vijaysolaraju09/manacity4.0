@@ -35,12 +35,16 @@ const orderCode = (order) =>
 
 const buildOrderNotificationContext = (order) => {
   const id = order?._id || order?.id;
-  if (!id) return { entityType: 'order' };
+  if (!id) return { entityType: 'order', targetType: 'order' };
   const idString = id.toString();
+  const link = `/orders/${idString}`;
   return {
     entityType: 'order',
     entityId: id,
-    redirectUrl: `/orders/${idString}`,
+    redirectUrl: link,
+    targetType: 'order',
+    targetId: id,
+    targetLink: link,
   };
 };
 

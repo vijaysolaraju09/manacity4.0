@@ -52,7 +52,7 @@ const ServiceRequestDetail = () => {
     if (!requestId) return;
     setLoading(true);
     try {
-      const response = await http.get(`/service-requests/${requestId}`);
+      const response = await http.get(`/requests/${requestId}`);
       const body: ServiceRequestResponse | undefined = response?.data?.data ?? response?.data;
       if (!body?.request) throw new Error('Service request not found');
       setRequest(body.request);
@@ -84,7 +84,7 @@ const ServiceRequestDetail = () => {
 
     setCanceling(true);
     try {
-      const response = await http.post(`/service-requests/${requestId}/cancel`);
+      const response = await http.post(`/requests/${requestId}/cancel`);
       const body: ServiceRequestResponse | undefined = response?.data?.data ?? response?.data;
       if (!body?.request) throw new Error('Failed to cancel request');
       setRequest(body.request);

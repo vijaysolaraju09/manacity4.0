@@ -34,7 +34,7 @@ interface PublicListState {
   pageSize: number;
 }
 
-interface ServiceRequestsState {
+export interface ServiceRequestsState {
   createStatus: RequestStatus;
   createError: string | null;
   mine: ListState;
@@ -301,7 +301,7 @@ export const createServiceRequest = createAsyncThunk<
   'serviceRequests/create',
   async (payload, thunkApi) => {
     try {
-      const res = await http.post('/service-requests', payload);
+      const res = await http.post('/requests', payload);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
@@ -320,7 +320,7 @@ export const fetchMyServiceRequests = createAsyncThunk<
   'serviceRequests/fetchMine',
   async (_unused, thunkApi) => {
     try {
-      const res = await http.get('/service-requests/me');
+      const res = await http.get('/requests/mine');
       const items = (toItems(res) as any[]).map(normalizeRequest);
       return items as ServiceRequest[];
     } catch (error) {
@@ -337,7 +337,7 @@ export const fetchPublicServiceRequests = createAsyncThunk<
   'serviceRequests/fetchPublic',
   async (params, thunkApi) => {
     try {
-      const res = await http.get('/service-requests/public', { params });
+      const res = await http.get('/requests/public', { params });
       const body = res?.data?.data ?? res?.data ?? {};
       const items = Array.isArray(body.items) ? body.items.map(normalizePublicRequest) : [];
       const page = typeof body.page === 'number' ? body.page : params?.page ?? 1;
@@ -359,7 +359,7 @@ export const submitServiceOffer = createAsyncThunk<
   'serviceRequests/submitOffer',
   async ({ requestId, payload }, thunkApi) => {
     try {
-      const res = await http.post(`/service-requests/${requestId}/offers`, payload);
+      const res = await http.post(`/requests/${requestId}/offers`, payload);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
@@ -378,7 +378,7 @@ export const actOnServiceOffer = createAsyncThunk<
   'serviceRequests/actOnOffer',
   async ({ requestId, offerId, payload }, thunkApi) => {
     try {
-      const res = await http.patch(`/service-requests/${requestId}/offers/${offerId}`, payload);
+      const res = await http.patch(`/requests/${requestId}/offers/${offerId}`, payload);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
@@ -398,7 +398,7 @@ export const completeServiceRequest = createAsyncThunk<
   async ({ id, message }, thunkApi) => {
     try {
       const body = message ? { message } : undefined;
-      const res = await http.post(`/service-requests/${id}/complete`, body);
+      const res = await http.post(`/requests/${id}/complete`, body);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
@@ -418,7 +418,7 @@ export const reopenServiceRequest = createAsyncThunk<
   async ({ id, message }, thunkApi) => {
     try {
       const body = message ? { message } : undefined;
-      const res = await http.post(`/service-requests/${id}/reopen`, body);
+      const res = await http.post(`/requests/${id}/reopen`, body);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
@@ -437,7 +437,7 @@ export const adminFetchServiceRequests = createAsyncThunk<
   'serviceRequests/adminFetch',
   async (params, thunkApi) => {
     try {
-      const res = await adminHttp.get('/admin/service-requests', { params });
+      const res = await adminHttp.get('/requests', { params });
       const body = res?.data?.data ?? res?.data ?? {};
       const items = Array.isArray(body.items) ? body.items.map(normalizeRequest) : [];
       const total = typeof body.total === 'number' ? body.total : items.length;
@@ -462,7 +462,7 @@ export const adminUpdateServiceRequest = createAsyncThunk<
       if (typeof status !== 'undefined') body.status = status;
       if (typeof notes !== 'undefined') body.adminNotes = notes;
       if (typeof providerId !== 'undefined') body.providerId = providerId ?? null;
-      const res = await adminHttp.patch(`/service-requests/${id}`, body);
+      const res = await adminHttp.patch(`/requests/${id}`, body);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
@@ -553,3 +553,13 @@ const serviceRequestsSlice = createSlice({
 });
 
 export default serviceRequestsSlice.reducer;
+
+export const selectServiceRequestsState = (state: { serviceRequests: ServiceRequestsState }) =>
+  state.serviceRequests;
+
+export const selectMyServiceRequests = (state: { serviceRequests: ServiceRequestsState }) =>
+  state.serviceRequests.mine.items;
+
+export const selectMyServiceRequestsStatus = (state: {
+  serviceRequests: ServiceRequestsState;
+}) => state.serviceRequests.mine.status;

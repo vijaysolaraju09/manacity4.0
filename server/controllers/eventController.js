@@ -27,11 +27,15 @@ const toObjectId = (value) => {
 const buildEventNotificationContext = (event) => {
   const eventId =
     event && typeof event === 'object' && event._id ? toObjectId(event._id) : toObjectId(event);
-  if (!eventId) return { entityType: 'event' };
+  if (!eventId) return { entityType: 'event', targetType: 'event' };
+  const link = `/events/${eventId.toString()}`;
   return {
     entityType: 'event',
     entityId: eventId,
-    redirectUrl: `/events/${eventId.toString()}`,
+    redirectUrl: link,
+    targetType: 'event',
+    targetId: eventId,
+    targetLink: link,
   };
 };
 

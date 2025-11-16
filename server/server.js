@@ -173,6 +173,7 @@ app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/pros", proRoutes);
 app.use("/api/services", standardLimiter, serviceRoutes);
 app.use("/api/service-requests", standardLimiter, serviceRequestRoutes);
+app.use("/api/requests", standardLimiter, serviceRequestRoutes);
 app.use("/api/admin/services", adminServiceRoutes);
 app.use("/api/admin/service-requests", adminServiceRequestRoutes);
 app.use("/api/admin/announcements", adminAnnouncementRoutes);

@@ -96,11 +96,15 @@ const toIdString = (value) => {
 
 const buildServiceRequestNotificationContext = (request) => {
   const id = toIdString(request?._id || request?.id || request);
-  if (!id) return { entityType: 'serviceRequest' };
+  if (!id) return { entityType: 'serviceRequest', targetType: 'serviceRequest' };
+  const link = `/requests/${id}`;
   return {
     entityType: 'serviceRequest',
     entityId: id,
-    redirectUrl: `/requests/${id}`,
+    redirectUrl: link,
+    targetType: 'serviceRequest',
+    targetId: id,
+    targetLink: link,
   };
 };
 

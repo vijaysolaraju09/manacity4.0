@@ -1,14 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Button from '@/components/ui/button';
-import showToast from '@/components/ui/Toast';
-import { http } from '@/lib/http';
 import { paths } from '@/routes/paths';
-import type { ServiceRequest } from '@/types/services';
-
-interface ServiceRequestsResponse {
-  items: ServiceRequest[];
-}
+import type { AppDispatch, RootState } from '@/store';
+import { fetchMyServiceRequests } from '@/store/serviceRequests';
 
 const formatStatus = (value: string) =>
   value
@@ -31,35 +27,21 @@ const formatDate = (value?: string | null) => {
 
 const MyRequestsPage = () => {
   const navigate = useNavigate();
-  const [requests, setRequests] = useState<ServiceRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchRequests = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await http.get('/service-requests/me');
-      const body: ServiceRequestsResponse | undefined = response?.data?.data ?? response?.data;
-      const items = Array.isArray(body?.items) ? body?.items : [];
-      setRequests(items);
-      setError(null);
-    } catch (err) {
-      const message =
-        typeof err === 'string'
-          ? err
-          : err instanceof Error
-          ? err.message
-          : 'Failed to load requests';
-      setError(message);
-      showToast(message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const dispatch = useDispatch<AppDispatch>();
+  const mine = useSelector((state: RootState) => state.serviceRequests.mine);
+  const requests = mine.items;
+  const loading = mine.status === 'loading';
+  const error = mine.error;
 
   useEffect(() => {
-    void fetchRequests();
-  }, [fetchRequests]);
+    if (mine.status === 'idle') {
+      void dispatch(fetchMyServiceRequests());
+    }
+  }, [dispatch, mine.status]);
+
+  const handleRefresh = useCallback(() => {
+    void dispatch(fetchMyServiceRequests());
+  }, [dispatch]);
 
   const hasRequests = useMemo(() => requests.length > 0, [requests.length]);
 
@@ -80,7 +62,7 @@ const MyRequestsPage = () => {
             : 'No requests yet'}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => void fetchRequests()} disabled={loading}>
+          <Button variant="outline" onClick={() => void handleRefresh()} disabled={loading}>
             {loading ? 'Refreshing…' : 'Refresh'}
           </Button>
           <Button onClick={() => navigate(paths.services.request())}>New request</Button>
@@ -101,7 +83,7 @@ const MyRequestsPage = () => {
         <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
           <div className="font-medium">{error}</div>
           <div className="mt-2 flex gap-2">
-            <Button variant="outline" onClick={() => void fetchRequests()}>
+            <Button variant="outline" onClick={() => void handleRefresh()}>
               Try again
             </Button>
           </div>

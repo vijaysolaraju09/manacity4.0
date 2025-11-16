@@ -51,7 +51,8 @@ const deactivateOtherAnnouncements = async (id) => {
 };
 
 const buildAnnouncementNotificationContext = (announcement) => {
-  if (!announcement) return { entityType: 'announcement' };
+  if (!announcement)
+    return { entityType: 'announcement', targetType: 'announcement' };
   const id = announcement._id;
   const idString = id ? id.toString() : null;
   let redirectUrl = '/announcements';
@@ -62,12 +63,20 @@ const buildAnnouncementNotificationContext = (announcement) => {
   if (cta) redirectUrl = cta;
   else if (idString) redirectUrl = `/announcements/${idString}`;
   if (!id) {
-    return { entityType: 'announcement', redirectUrl };
+    return {
+      entityType: 'announcement',
+      targetType: 'announcement',
+      redirectUrl,
+      targetLink: redirectUrl,
+    };
   }
   return {
     entityType: 'announcement',
     entityId: id,
     redirectUrl,
+    targetType: 'announcement',
+    targetId: id,
+    targetLink: redirectUrl,
   };
 };
 

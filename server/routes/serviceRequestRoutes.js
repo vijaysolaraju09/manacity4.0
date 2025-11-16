@@ -10,6 +10,7 @@ const {
   reopenServiceRequest,
   cancelServiceRequest,
   adminUpdateServiceRequest,
+  adminListServiceRequests,
 } = require('../controllers/serviceRequestsController');
 const protect = require('../middleware/authMiddleware');
 const optionalAuth = require('../middleware/optionalAuth');
@@ -17,6 +18,7 @@ const isAdmin = require('../middleware/isAdmin');
 
 const router = express.Router();
 
+router.get('/', protect, isAdmin, adminListServiceRequests);
 router.get('/public', optionalAuth, listPublicServiceRequests);
 router.post('/', protect, createServiceRequest);
 router.get('/mine', protect, listMyServiceRequests);

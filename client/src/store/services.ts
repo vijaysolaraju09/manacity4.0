@@ -196,7 +196,7 @@ export const createServiceRequest = createAsyncThunk(
   'services/createRequest',
   async (payload: CreateServiceRequestInput, { rejectWithValue }) => {
     try {
-      await http.post('/service-requests', payload);
+      await http.post('/requests', payload);
       return true;
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));

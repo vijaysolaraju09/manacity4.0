@@ -2,11 +2,19 @@ const { z } = require('zod');
 
 const phoneSchema = z.string().regex(/^\d{10,14}$/, 'Invalid phone');
 
+const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/u,
+    'Password must include uppercase, lowercase, and a number',
+  );
+
 const signupSchema = {
   body: z.object({
     name: z.string().min(2).max(80),
     phone: phoneSchema,
-    password: z.string().min(6, 'Password must be at least 6 characters'),
+    password: passwordSchema,
     location: z.string().min(2).optional(),
     role: z.enum(['customer', 'business']).optional(),
     email: z.string().email().optional().or(z.literal('')),
@@ -16,7 +24,7 @@ const signupSchema = {
 const loginSchema = {
   body: z.object({
     phone: phoneSchema,
-    password: z.string().min(6, 'Password must be at least 6 characters'),
+    password: passwordSchema,
   }),
 };
 
@@ -29,7 +37,7 @@ const forgotPasswordSchema = {
 const resetPasswordSchema = {
   body: z.object({
     phone: phoneSchema,
-    password: z.string().min(6, 'Password must be at least 6 characters'),
+    password: passwordSchema,
   }),
 };
 

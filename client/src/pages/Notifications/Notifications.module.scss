@@ -105,10 +105,10 @@
   border-radius: 1rem;
   box-shadow: var(--shadow-md);
   border: 1px solid color-mix(in srgb, var(--border-subtle) 70%, transparent);
-  padding: 1rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -133,6 +133,39 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+  border: 1px solid transparent;
+}
+
+.pinnedBadge {
+  background: color-mix(in srgb, var(--brand-500) 12%, white);
+  color: var(--brand-700);
+  border-color: color-mix(in srgb, var(--brand-500) 35%, transparent);
+}
+
+.priorityBadge {
+  background: color-mix(in srgb, #fecaca 40%, white);
+  color: #991b1b;
+  border-color: rgba(248, 113, 113, 0.7);
+}
+
+.promoBadge {
+  background: color-mix(in srgb, #fde68a 45%, white);
+  color: #92400e;
+  border-color: rgba(251, 191, 36, 0.7);
 }
 
 .pagination {

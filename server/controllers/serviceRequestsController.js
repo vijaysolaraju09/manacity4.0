@@ -409,11 +409,23 @@ exports.createServiceRequest = async (req, res, next) => {
 
 exports.listMyServiceRequests = async (req, res, next) => {
   try {
-    const requests = await populateRequest(
+    const { page = 1, pageSize, limit } = req.query;
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const sizeInput = limit ?? pageSize;
+    const safePageSize = Math.max(Math.min(Number(sizeInput) || 20, 50), 1);
+    const skip = (pageNumber - 1) * safePageSize;
+
+    const query = populateRequest(
       ServiceRequest.find({ userId: req.user._id })
         .sort({ createdAt: -1 })
-        .lean()
+        .skip(skip)
+        .limit(safePageSize),
     );
+
+    const [requests, total] = await Promise.all([
+      query.lean(),
+      ServiceRequest.countDocuments({ userId: req.user._id }),
+    ]);
 
     const items = Array.isArray(requests)
       ? requests.map((doc) => toRequestJson(doc, { currentUserId: req.user._id }))
@@ -421,7 +433,13 @@ exports.listMyServiceRequests = async (req, res, next) => {
 
     res.json({
       ok: true,
-      data: { items },
+      data: {
+        items,
+        total,
+        page: pageNumber,
+        pageSize: safePageSize,
+        hasMore: skip + items.length < total,
+      },
       traceId: req.traceId,
     });
   } catch (err) {

@@ -44,6 +44,7 @@ const sanitizeEntries = (entries = []) =>
       const priority = ['low', 'normal', 'high'].includes(String(entry.priority))
         ? String(entry.priority)
         : undefined;
+      const pinned = entry.pinned === true;
       const expiresAt = entry.expiresAt
         ? new Date(entry.expiresAt)
         : undefined;
@@ -70,6 +71,7 @@ const sanitizeEntries = (entries = []) =>
         entityType,
         entityId,
         priority: priority || undefined,
+        pinned,
         expiresAt: normalizedExpiresAt,
       };
     })

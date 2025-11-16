@@ -465,14 +465,31 @@ exports.checkoutOrders = async (req, res, next) => {
 exports.getMyOrders = async (req, res, next) => {
   try {
     const { status, page = 1, pageSize = 20 } = req.query;
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const safePageSize = Math.max(Math.min(Number(pageSize) || 20, 100), 1);
+    const skip = (pageNumber - 1) * safePageSize;
     const query = Order.find({ user: req.user._id });
     if (status) query.where('status').equals(status);
-    const orders = await query
+    const ordersPromise = query
       .sort({ createdAt: -1 })
-      .skip((Number(page) - 1) * Number(pageSize))
-      .limit(Number(pageSize))
+      .skip(skip)
+      .limit(safePageSize)
       .lean();
-    res.json({ ok: true, data: { items: orders }, traceId: req.traceId });
+    const countFilter = { user: req.user._id };
+    if (status) countFilter.status = status;
+    const countPromise = Order.countDocuments(countFilter);
+    const [orders, total] = await Promise.all([ordersPromise, countPromise]);
+    res.json({
+      ok: true,
+      data: {
+        items: orders,
+        total,
+        page: pageNumber,
+        pageSize: safePageSize,
+        hasMore: skip + orders.length < total,
+      },
+      traceId: req.traceId,
+    });
   } catch (err) {
     next(err);
   }
@@ -484,16 +501,33 @@ exports.getMyOrders = async (req, res, next) => {
 exports.getReceivedOrders = async (req, res, next) => {
   try {
     const { status, page = 1, pageSize = 20 } = req.query;
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const safePageSize = Math.max(Math.min(Number(pageSize) || 20, 100), 1);
+    const skip = (pageNumber - 1) * safePageSize;
     const shops = await Shop.find({ owner: req.user._id }).select('_id').lean();
     const shopIds = shops.map((s) => s._id);
     const query = Order.find({ shop: { $in: shopIds } });
     if (status) query.where('status').equals(status);
-    const orders = await query
+    const ordersPromise = query
       .sort({ createdAt: -1 })
-      .skip((Number(page) - 1) * Number(pageSize))
-      .limit(Number(pageSize))
+      .skip(skip)
+      .limit(safePageSize)
       .lean();
-    res.json({ ok: true, data: { items: orders }, traceId: req.traceId });
+    const countFilter = { shop: { $in: shopIds } };
+    if (status) countFilter.status = status;
+    const countPromise = Order.countDocuments(countFilter);
+    const [orders, total] = await Promise.all([ordersPromise, countPromise]);
+    res.json({
+      ok: true,
+      data: {
+        items: orders,
+        total,
+        page: pageNumber,
+        pageSize: safePageSize,
+        hasMore: skip + orders.length < total,
+      },
+      traceId: req.traceId,
+    });
   } catch (err) {
     next(err);
   }

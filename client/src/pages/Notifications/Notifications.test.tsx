@@ -60,12 +60,28 @@ describe('Notifications page', () => {
           targetId: 'order-99',
           targetLink: '/orders/order-99',
         },
+        {
+          _id: 'promo-1',
+          type: 'announcement',
+          title: 'Festival deals',
+          message: '50% off on essentials',
+          subtitle: 'Limited time announcement',
+          read: false,
+          createdAt: new Date().toISOString(),
+          entityType: 'announcement',
+          targetType: 'announcement',
+          targetLink: 'https://example.com/promo',
+          ctaText: 'Claim offer',
+          imageUrl: 'https://img.example.com/promo.png',
+          pinned: true,
+          priority: 'high',
+        },
       ],
       status: 'succeeded',
       error: null,
       hasMore: false,
       page: 1,
-      unread: 1,
+      unread: 2,
     },
   };
 
@@ -95,5 +111,16 @@ describe('Notifications page', () => {
 
     expect(markNotifReadMock).toHaveBeenCalledWith('notif-1');
     expect(navigateMock).toHaveBeenCalledWith('/orders/order-99');
+  });
+
+  it('opens promotion CTAs externally and marks them as read', async () => {
+    const user = userEvent.setup();
+    render(<Notifications />);
+
+    const ctaButton = await screen.findByRole('button', { name: /claim offer/i });
+    await user.click(ctaButton);
+
+    expect(markNotifReadMock).toHaveBeenCalledWith('promo-1');
+    expect(openSpy).toHaveBeenCalledWith('https://example.com/promo', '_blank', 'noopener');
   });
 });

@@ -42,7 +42,7 @@ const {
 
 const router = express.Router();
 
-router.get('/messages', getAdminMessages);
+router.get('/messages', protect, isAdmin, getAdminMessages);
 router.get('/users', protect, isAdmin, getUsers);
 router.patch('/users/:id', protect, isAdmin, adminUpdate);
 router.put(

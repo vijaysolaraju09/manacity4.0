@@ -14,6 +14,12 @@ import CartScreen from '@/app/screens/CartScreen'
 import CheckoutScreen from '@/app/screens/CheckoutScreen'
 import NotificationsScreen from '@/app/screens/NotificationsScreen'
 import ProfileScreen from '@/app/screens/ProfileScreen'
+import ProductDetails from '@/pages/ProductDetails/ProductDetails'
+import MyOrders from '@/pages/Orders/MyOrders'
+import OrderDetail from '@/pages/Orders/OrderDetail'
+import HistoryPage from '@/pages/Profile/History'
+import ServiceRequestListPage from '@/pages/ServiceRequests/MyRequests'
+import ServiceRequestDetailPage from '@/pages/ServiceRequests/ServiceRequestDetail'
 import Landing from '@/pages/Landing/Landing'
 import Login from '@/pages/auth/Login'
 import Signup from '@/pages/auth/Signup'
@@ -93,20 +99,26 @@ const AppRoutes = () => {
         <>
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Navigate to="/home" replace />} />
-            <Route path="home" element={<HomeScreen />} />
-            <Route path="shops" element={<ShopsScreen />} />
-            <Route path="shops/:id" element={<ShopDetailScreen />} />
-            <Route path="services" element={<ServicesScreen />} />
-            <Route path="services/request" element={<ServiceRequestScreen />} />
-            <Route path="services/:id" element={<ServiceProvidersScreen />} />
-            <Route path="events" element={<EventsScreen />} />
-            <Route path="events/:id" element={<EventDetailScreen />} />
-            <Route path="events/:id/register" element={<EventRegisterScreen />} />
-            <Route path="cart" element={<CartScreen />} />
-            <Route path="checkout" element={<CheckoutScreen />} />
-            <Route path="notifications" element={<NotificationsScreen />} />
-            <Route path="profile" element={<ProfileScreen />} />
-          </Route>
+          <Route path="home" element={<HomeScreen />} />
+          <Route path="shops" element={<ShopsScreen />} />
+          <Route path="shops/:id" element={<ShopDetailScreen />} />
+          <Route path="product/:id" element={<ProductDetails />} />
+          <Route path="services" element={<ServicesScreen />} />
+          <Route path="services/request" element={<ServiceRequestScreen />} />
+          <Route path="services/:id" element={<ServiceProvidersScreen />} />
+          <Route path="requests" element={<ServiceRequestListPage />} />
+          <Route path="requests/:requestId" element={<ServiceRequestDetailPage />} />
+          <Route path="events" element={<EventsScreen />} />
+          <Route path="events/:id" element={<EventDetailScreen />} />
+          <Route path="events/:id/register" element={<EventRegisterScreen />} />
+          <Route path="cart" element={<CartScreen />} />
+          <Route path="checkout" element={<CheckoutScreen />} />
+          <Route path="notifications" element={<NotificationsScreen />} />
+          <Route path="profile" element={<ProfileScreen />} />
+          <Route path="orders/mine" element={<MyOrders />} />
+          <Route path="orders/:id" element={<OrderDetail />} />
+          <Route path="history" element={<HistoryPage />} />
+        </Route>
           <Route path="/login" element={<Navigate to="/home" replace />} />
           <Route path="/signup" element={<Navigate to="/home" replace />} />
           <Route path="/auth/login" element={<Navigate to="/home" replace />} />

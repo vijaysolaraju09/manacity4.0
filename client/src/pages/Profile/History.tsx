@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { Loader2, MessageSquare, Star, X } from 'lucide-react';
 
 import {
@@ -20,6 +21,7 @@ import { paths } from '@/routes/paths';
 import { formatINR } from '@/utils/currency';
 import { formatLocaleDateTime } from '@/utils/date';
 import styles from '@/styles/PageShell.module.scss';
+import { selectCombinedHistoryEntries } from '@/store/historySelectors';
 
 const typeLabels: Record<HistoryEntryType, string> = {
   order: 'Order',
@@ -175,7 +177,8 @@ const FeedbackDialog = ({
 
 const HistoryPage = () => {
   const navigate = useNavigate();
-  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const derivedHistory = useSelector(selectCombinedHistoryEntries);
+  const [entries, setEntries] = useState<HistoryEntry[]>(derivedHistory);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [feedbackTarget, setFeedbackTarget] = useState<HistoryEntry | null>(null);
@@ -199,6 +202,23 @@ const HistoryPage = () => {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    if (derivedHistory.length === 0) return;
+    setEntries((current) => {
+      if (current.length === 0) {
+        return derivedHistory;
+      }
+      const existingIds = new Set(current.map((entry) => entry.id));
+      const additions = derivedHistory.filter((entry) => !existingIds.has(entry.id));
+      if (additions.length === 0) {
+        return current;
+      }
+      return [...additions, ...current].sort(
+        (a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
+      );
+    });
+  }, [derivedHistory]);
 
   const handleOpenFeedback = useCallback((entry: HistoryEntry) => {
     setFeedbackTarget(entry);

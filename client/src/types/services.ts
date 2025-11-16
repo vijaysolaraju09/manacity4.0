@@ -81,6 +81,7 @@ export interface ServiceRequest {
   service?: Pick<Service, '_id' | 'id' | 'name' | 'description' | 'icon'> | null;
   customName?: string;
   description?: string;
+  details?: string;
   location?: string;
   phone?: string;
   preferredDate?: string;
@@ -120,8 +121,10 @@ export interface CreateServiceRequestPayload {
   serviceId?: string;
   customName?: string;
   description?: string;
+  details?: string;
   location?: string;
   phone?: string;
+  contactPhone?: string;
   preferredDate?: string;
   preferredTime?: string;
   visibility?: 'public' | 'private';

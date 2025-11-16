@@ -236,6 +236,7 @@ const toRequestJson = (doc, options = {}) => {
     service: toServiceJson(service),
     customName: doc.customName || '',
     description: doc.description || '',
+    details: doc.details || doc.desc || doc.description || '',
     location: doc.location || '',
     phone: isOwner || isAdmin ? doc.phone || '' : '',
     preferredDate: doc.preferredDate || '',
@@ -257,6 +258,19 @@ const toRequestJson = (doc, options = {}) => {
     updatedAt: doc.updatedAt || null,
     feedback,
   };
+};
+
+const getAssignedProviderIds = (request) => {
+  const ids = new Set();
+  const direct = toId(request?.assignedProviderId);
+  if (direct) ids.add(direct);
+  if (Array.isArray(request?.assignedProviderIds)) {
+    request.assignedProviderIds.forEach((entry) => {
+      const value = toId(entry);
+      if (value) ids.add(value);
+    });
+  }
+  return Array.from(ids);
 };
 
 const populateRequest = (query) => {
@@ -309,14 +323,24 @@ const toStatusMessage = (status) => {
   return `Service request ${normalized}`;
 };
 
+const STATUS_NOTIFICATION_TYPES = {
+  [STATUS.PENDING]: 'service_request',
+  [STATUS.ACCEPTED]: 'accepted',
+  [STATUS.ASSIGNED]: 'assigned',
+  [STATUS.IN_PROGRESS]: 'in_progress',
+  [STATUS.COMPLETED]: 'completed',
+  [STATUS.CANCELLED]: 'closed',
+};
+
 exports.createServiceRequest = async (req, res, next) => {
   try {
     const body = req.body || {};
     const serviceId = sanitizeString(body.serviceId);
     const customName = sanitizeString(body.customName);
     const description = sanitizeString(body.description);
+    const details = sanitizeString(body.details || body.detail);
     const location = sanitizeString(body.location);
-    let phone = sanitizeString(body.phone);
+    let phone = sanitizeString(body.phone || body.contactPhone);
     const preferredDate = sanitizeString(body.preferredDate);
     const preferredTime = sanitizeString(body.preferredTime);
     const visibility = ensureVisibility(body.visibility);
@@ -350,6 +374,11 @@ exports.createServiceRequest = async (req, res, next) => {
 
     if (service) payload.serviceId = service._id;
     if (customName) payload.customName = customName;
+    if (details) {
+      payload.details = details;
+      payload.desc = details;
+      if (!description) payload.description = details;
+    }
 
     appendHistory(payload, {
       by: req.user?._id ?? null,
@@ -1130,24 +1159,12 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
     }
 
     if (updates.status) {
-      const statusSubType =
-        updates.status === STATUS.COMPLETED
-          ? 'completed'
-          : updates.status === STATUS.CANCELLED
-          ? 'closed'
-          : updates.status === STATUS.ACCEPTED
-          ? 'offer'
-          : updates.status === STATUS.IN_PROGRESS
-          ? 'in_progress'
-          : updates.status === STATUS.ASSIGNED
-          ? 'assigned'
-          : 'service_request';
-      await sendNotification(
-        request.userId,
-        statusSubType,
-        toStatusMessage(updates.status),
-        request
-      );
+      const statusSubType = STATUS_NOTIFICATION_TYPES[updates.status] || 'service_request';
+      const recipients = new Set();
+      const ownerId = toId(request.userId || request.user);
+      if (ownerId) recipients.add(ownerId);
+      getAssignedProviderIds(request).forEach((id) => recipients.add(id));
+      await sendNotification(Array.from(recipients), statusSubType, toStatusMessage(updates.status), request);
     }
 
     if (updates.adminNote) {

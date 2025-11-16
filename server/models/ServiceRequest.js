@@ -90,6 +90,11 @@ const ServiceRequestSchema = new mongoose.Schema(
       trim: true,
       maxlength: 1000,
     },
+    details: {
+      type: String,
+      trim: true,
+      maxlength: 2000,
+    },
     desc: {
       type: String,
       trim: true,

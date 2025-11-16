@@ -56,6 +56,7 @@ type CreateProductFormValues = {
   category: string;
   price: number;
   mrp: number;
+  discount: number;
   stock: number;
   imageUrl: string;
 };
@@ -101,6 +102,7 @@ const AdminProducts = () => {
   const [shopsLoading, setShopsLoading] = useState(false);
   const modalRef = useRef<HTMLFormElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
+  const lastPriceChangeSource = useRef<'price' | 'discount' | null>(null);
 
   const {
     register: registerCreate,
@@ -117,11 +119,59 @@ const AdminProducts = () => {
       category: '',
       price: 0,
       mrp: 0,
+      discount: 0,
       stock: 0,
       imageUrl: '',
     },
   });
   const createImagePreview = watchCreate('imageUrl');
+  const createPriceValue = watchCreate('price');
+  const createMrpValue = watchCreate('mrp');
+  const createDiscountValue = watchCreate('discount');
+
+  useEffect(() => {
+    if (
+      typeof createPriceValue !== 'number' ||
+      typeof createMrpValue !== 'number' ||
+      createMrpValue <= 0
+    ) {
+      return;
+    }
+    if (lastPriceChangeSource.current === 'discount') {
+      lastPriceChangeSource.current = null;
+      return;
+    }
+    const computed = Math.max(
+      0,
+      Math.min(100, Math.round(((createMrpValue - createPriceValue) / createMrpValue) * 100)),
+    );
+    if (!Number.isNaN(computed) && computed !== createDiscountValue) {
+      setCreateValue('discount', computed, { shouldDirty: true });
+    }
+    if (lastPriceChangeSource.current === 'price') {
+      lastPriceChangeSource.current = null;
+    }
+  }, [createDiscountValue, createMrpValue, createPriceValue, setCreateValue]);
+
+  useEffect(() => {
+    if (lastPriceChangeSource.current !== 'discount') {
+      return;
+    }
+    if (
+      typeof createDiscountValue !== 'number' ||
+      typeof createMrpValue !== 'number' ||
+      createMrpValue <= 0
+    ) {
+      lastPriceChangeSource.current = null;
+      return;
+    }
+    const nextPrice = Number((createMrpValue * (100 - createDiscountValue)) / 100);
+    if (!Number.isNaN(nextPrice)) {
+      setCreateValue('price', Number(nextPrice.toFixed(2)), { shouldDirty: true });
+    }
+    lastPriceChangeSource.current = null;
+  }, [createDiscountValue, createMrpValue, setCreateValue]);
+
   const approvedShops = useMemo(
     () =>
       shops.filter((shop) => {
@@ -203,6 +253,7 @@ const AdminProducts = () => {
       category: '',
       price: 0,
       mrp: 0,
+      discount: 0,
       stock: 0,
       imageUrl: '',
     });
@@ -344,6 +395,7 @@ const AdminProducts = () => {
     const trimmedCategory = values.category.trim();
     const priceValue = Number(values.price);
     const mrpValue = Number(values.mrp);
+    const discountValue = Number(values.discount);
     const stockValue = Number(values.stock);
 
     if (trimmedName.length < 3) {
@@ -374,6 +426,10 @@ const AdminProducts = () => {
       setCreateError('Stock must be zero or a positive number');
       return;
     }
+    if (!Number.isFinite(discountValue) || discountValue < 0 || discountValue > 100) {
+      setCreateError('Discount must be between 0 and 100');
+      return;
+    }
 
     const imageSource = values.imageUrl.trim();
 
@@ -399,6 +455,7 @@ const AdminProducts = () => {
         category: '',
         price: 0,
         mrp: 0,
+        discount: 0,
         stock: 0,
         imageUrl: '',
       });
@@ -407,6 +464,20 @@ const AdminProducts = () => {
     } catch (err) {
       setCreateError(toErrorMessage(err) || 'Failed to create product');
     }
+  });
+
+  const priceField = registerCreate('price', {
+    valueAsNumber: true,
+    min: { value: 1, message: 'Enter a price greater than zero' },
+  });
+  const mrpField = registerCreate('mrp', {
+    valueAsNumber: true,
+    min: { value: 1, message: 'Enter an MRP greater than zero' },
+  });
+  const discountField = registerCreate('discount', {
+    valueAsNumber: true,
+    min: { value: 0, message: 'Discount cannot be negative' },
+    max: { value: 100, message: 'Discount cannot exceed 100%' },
   });
 
   const columns: Column<ProductRow>[] = [
@@ -668,10 +739,11 @@ const AdminProducts = () => {
                   type="number"
                   step="0.01"
                   min={0}
-                  {...registerCreate('price', {
-                    valueAsNumber: true,
-                    min: { value: 1, message: 'Enter a price greater than zero' },
-                  })}
+                  {...priceField}
+                  onChange={(event) => {
+                    lastPriceChangeSource.current = 'price';
+                    priceField.onChange(event);
+                  }}
                 />
                 {createErrors.price ? (
                   <span className="field-error">{createErrors.price.message}</span>
@@ -683,13 +755,27 @@ const AdminProducts = () => {
                   type="number"
                   step="0.01"
                   min={0}
-                  {...registerCreate('mrp', {
-                    valueAsNumber: true,
-                    min: { value: 1, message: 'Enter an MRP greater than zero' },
-                  })}
+                  {...mrpField}
                 />
                 {createErrors.mrp ? (
                   <span className="field-error">{createErrors.mrp.message}</span>
+                ) : null}
+              </label>
+              <label>
+                Discount (%)
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={1}
+                  {...discountField}
+                  onChange={(event) => {
+                    lastPriceChangeSource.current = 'discount';
+                    discountField.onChange(event);
+                  }}
+                />
+                {createErrors.discount ? (
+                  <span className="field-error">{createErrors.discount.message}</span>
                 ) : null}
               </label>
               <label>

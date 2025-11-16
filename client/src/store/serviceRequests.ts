@@ -34,12 +34,20 @@ interface PublicListState {
   pageSize: number;
 }
 
+interface DetailState {
+  item: ServiceRequest | null;
+  status: RequestStatus;
+  error: string | null;
+  currentId: string | null;
+}
+
 export interface ServiceRequestsState {
   createStatus: RequestStatus;
   createError: string | null;
   mine: ListState;
   admin: ListState;
   publicList: PublicListState;
+  detail: DetailState;
 }
 
 const initialState: ServiceRequestsState = {
@@ -48,6 +56,7 @@ const initialState: ServiceRequestsState = {
   mine: { items: [], status: 'idle', error: null },
   admin: { items: [], status: 'idle', error: null, total: 0, page: 1, pageSize: 20 },
   publicList: { items: [], status: 'idle', error: null, total: 0, page: 1, pageSize: 20 },
+  detail: { item: null, status: 'idle', error: null, currentId: null },
 };
 
 const normalizeUserSummary = (entry: any): ServiceProviderUser => ({
@@ -191,8 +200,14 @@ const normalizeRequest = (data: any): ServiceRequest => ({
     : null,
   customName: data.customName ?? '',
   description: data.description ?? '',
+  details:
+    typeof data.details === 'string'
+      ? data.details
+      : typeof data.desc === 'string'
+      ? data.desc
+      : data.description ?? '',
   location: data.location ?? '',
-  phone: data.phone ?? '',
+  phone: data.phone ?? data.contactPhone ?? '',
   preferredDate: data.preferredDate ?? '',
   preferredTime: data.preferredTime ?? '',
   visibility: data.visibility === 'private' ? 'private' : 'public',
@@ -277,6 +292,11 @@ const applyRequestUpdate = (state: Draft<ServiceRequestsState>, updated: Service
         }
       : item
   );
+  if (state.detail.item && state.detail.item._id === updated._id) {
+    state.detail.item = merge(state.detail.item);
+  } else if (state.detail.currentId === updated._id) {
+    state.detail.item = merge(updated);
+  }
 };
 
 interface PublicRequestsResponse {
@@ -323,6 +343,25 @@ export const fetchMyServiceRequests = createAsyncThunk<
       const res = await http.get('/requests/mine');
       const items = (toItems(res) as any[]).map(normalizeRequest);
       return items as ServiceRequest[];
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
+    }
+  }
+);
+
+export const fetchServiceRequestById = createAsyncThunk<
+  ServiceRequest,
+  string,
+  { rejectValue: string }
+>(
+  'serviceRequests/fetchById',
+  async (id, thunkApi) => {
+    try {
+      const res = await http.get(`/requests/${id}`);
+      const data = res?.data?.data ?? res?.data ?? {};
+      const request = data.request ? normalizeRequest(data.request) : null;
+      if (!request) throw new Error('Service request not found');
+      return request;
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
     }
@@ -429,6 +468,25 @@ export const reopenServiceRequest = createAsyncThunk<
   }
 );
 
+export const cancelServiceRequest = createAsyncThunk<
+  ServiceRequest,
+  string,
+  { rejectValue: string }
+>(
+  'serviceRequests/cancel',
+  async (id, thunkApi) => {
+    try {
+      const res = await http.post(`/requests/${id}/cancel`);
+      const data = res?.data?.data ?? res?.data ?? {};
+      const request = data.request ? normalizeRequest(data.request) : null;
+      if (!request) throw new Error('Invalid request response');
+      return request;
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
+    }
+  }
+);
+
 export const adminFetchServiceRequests = createAsyncThunk<
   AdminRequestsResponse,
   Record<string, unknown> | undefined,
@@ -487,6 +545,7 @@ const serviceRequestsSlice = createSlice({
         state.createStatus = 'succeeded';
         state.createError = null;
         state.mine.items = [action.payload, ...state.mine.items];
+        applyRequestUpdate(state, action.payload);
       })
       .addCase(createServiceRequest.rejected, (state, action) => {
         state.createStatus = 'failed';
@@ -499,10 +558,35 @@ const serviceRequestsSlice = createSlice({
       .addCase(fetchMyServiceRequests.fulfilled, (state, action: PayloadAction<ServiceRequest[]>) => {
         state.mine.status = 'succeeded';
         state.mine.items = action.payload;
+        if (state.detail.item) {
+          const match = action.payload.find((item) => item._id === state.detail.item?._id);
+          if (match) state.detail.item = match;
+        }
       })
       .addCase(fetchMyServiceRequests.rejected, (state, action) => {
         state.mine.status = 'failed';
         state.mine.error = action.payload ?? action.error.message ?? 'Failed to load requests';
+      })
+      .addCase(fetchServiceRequestById.pending, (state, action) => {
+        state.detail.status = 'loading';
+        state.detail.error = null;
+        state.detail.currentId = action.meta.arg;
+      })
+      .addCase(fetchServiceRequestById.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
+        state.detail.status = 'succeeded';
+        state.detail.error = null;
+        state.detail.currentId = action.payload._id;
+        applyRequestUpdate(state, action.payload);
+        if (!state.detail.item || state.detail.item._id !== action.payload._id) {
+          state.detail.item = action.payload;
+        }
+      })
+      .addCase(fetchServiceRequestById.rejected, (state, action) => {
+        state.detail.status = 'failed';
+        state.detail.error = action.payload ?? action.error.message ?? 'Failed to load request';
+        if (state.detail.currentId === action.meta.arg) {
+          state.detail.item = null;
+        }
       })
       .addCase(fetchPublicServiceRequests.pending, (state) => {
         state.publicList.status = 'loading';
@@ -529,6 +613,10 @@ const serviceRequestsSlice = createSlice({
         state.admin.total = action.payload.total;
         state.admin.page = action.payload.page;
         state.admin.pageSize = action.payload.pageSize;
+        if (state.detail.item) {
+          const match = action.payload.items.find((item) => item._id === state.detail.item?._id);
+          if (match) state.detail.item = match;
+        }
       })
       .addCase(adminFetchServiceRequests.rejected, (state, action) => {
         state.admin.status = 'failed';
@@ -544,6 +632,9 @@ const serviceRequestsSlice = createSlice({
         applyRequestUpdate(state, action.payload);
       })
       .addCase(reopenServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
+        applyRequestUpdate(state, action.payload);
+      })
+      .addCase(cancelServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         applyRequestUpdate(state, action.payload);
       })
       .addCase(adminUpdateServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
@@ -563,3 +654,10 @@ export const selectMyServiceRequests = (state: { serviceRequests: ServiceRequest
 export const selectMyServiceRequestsStatus = (state: {
   serviceRequests: ServiceRequestsState;
 }) => state.serviceRequests.mine.status;
+
+export const selectServiceRequestDetailState = (state: {
+  serviceRequests: ServiceRequestsState;
+}) => state.serviceRequests.detail;
+
+export const selectServiceRequestDetail = (state: { serviceRequests: ServiceRequestsState }) =>
+  state.serviceRequests.detail.item;

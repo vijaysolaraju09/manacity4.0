@@ -114,12 +114,13 @@ const MyRequestsPage = () => {
               {requests.map((request) => {
                 const title = request.service?.name || request.customName || 'Service request';
                 const visibilityLabel = request.visibility === 'private' ? 'Private' : 'Public';
+                const summary = request.details || request.description || '';
                 return (
                   <tr key={request._id}>
                     <td className="px-4 py-3 font-medium text-slate-900">{title}</td>
                     <td className="px-4 py-3">
-                      {request.description ? request.description.slice(0, 120) : '—'}
-                      {request.description && request.description.length > 120 ? '…' : ''}
+                      {summary ? summary.slice(0, 120) : '—'}
+                      {summary.length > 120 ? '…' : ''}
                     </td>
                     <td className="px-4 py-3">{visibilityLabel}</td>
                     <td className="px-4 py-3">

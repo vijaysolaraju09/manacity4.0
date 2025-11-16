@@ -1,4 +1,6 @@
 import { http } from '@/lib/http';
+import { toItems } from '@/lib/response';
+import { normalizeOrder, type Order } from '@/store/orders';
 import type { User } from '@/types/user';
 
 export interface ProductData {
@@ -82,14 +84,93 @@ export const deleteProduct = async (id: string) => {
   await http.delete(`/products/${id}`);
 };
 
+export interface PaginatedOrders {
+  items: Order[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
+const resolveId = (value: unknown): string => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'object') {
+    const candidate = (value as { _id?: unknown; id?: unknown })._id ?? (value as { id?: unknown }).id;
+    return candidate ? resolveId(candidate) : '';
+  }
+  return '';
+};
+
 export const getBusinessOrders = async () => {
   const res = await http.get('/api/orders/received');
   return res.data;
 };
 
-export const getUserOrders = async () => {
-  const res = await http.get('/api/orders/me');
-  return res.data;
+export const getUserOrders = async (
+  params?: { page?: number; pageSize?: number },
+): Promise<PaginatedOrders> => {
+  const res = await http.get('/api/orders/me', { params });
+  const items = (toItems(res) as any[]).map((item) => normalizeOrder(item));
+  const payload = res.data?.data ?? {};
+  const total = typeof payload.total === 'number' ? payload.total : items.length;
+  const page = typeof payload.page === 'number' ? payload.page : params?.page ?? 1;
+  const pageSize = typeof payload.pageSize === 'number' ? payload.pageSize : params?.pageSize ?? items.length;
+  const hasMore = Boolean(payload.hasMore);
+  return { items, total, page, pageSize, hasMore };
+};
+
+export interface ServiceRequestSummary {
+  id: string;
+  title: string;
+  status: string;
+  createdAt: string;
+  location?: string | null;
+}
+
+export interface PaginatedServiceRequests {
+  items: ServiceRequestSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
+export const getMyServiceRequests = async (
+  params?: { page?: number; pageSize?: number },
+): Promise<PaginatedServiceRequests> => {
+  const res = await http.get('/requests/mine', { params });
+  const items = (toItems(res) as any[])
+    .map((entry) => {
+      const id = resolveId(entry?._id ?? entry?.id);
+      if (!id) return null;
+      const title =
+        (typeof entry?.title === 'string' && entry.title.trim()) ||
+        (entry?.service?.name as string) ||
+        'Service request';
+      const status = typeof entry?.status === 'string' ? entry.status : 'pending';
+      const createdAt =
+        typeof entry?.createdAt === 'string'
+          ? entry.createdAt
+          : entry?.createdAt instanceof Date
+          ? entry.createdAt.toISOString()
+          : new Date().toISOString();
+      const location =
+        typeof entry?.location === 'string'
+          ? entry.location
+          : typeof entry?.service?.location === 'string'
+          ? entry.service.location
+          : null;
+      return { id, title, status, createdAt, location } satisfies ServiceRequestSummary;
+    })
+    .filter((entry): entry is ServiceRequestSummary => Boolean(entry));
+  const payload = res.data?.data ?? {};
+  const total = typeof payload.total === 'number' ? payload.total : items.length;
+  const page = typeof payload.page === 'number' ? payload.page : params?.page ?? 1;
+  const pageSize = typeof payload.pageSize === 'number' ? payload.pageSize : params?.pageSize ?? items.length;
+  const hasMore = Boolean(payload.hasMore);
+  return { items, total, page, pageSize, hasMore };
 };
 
 export const getServiceHistory = async () => {

@@ -3,8 +3,15 @@ const Shop = require('../models/Shop');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
+const cache = require('../utils/cache');
 const { notifyUser } = require('../services/notificationService');
 const { normalizeProduct } = require('../utils/normalize');
+
+const SHOPS_CACHE_PREFIX = 'shops:list:';
+
+const buildShopsCacheKey = (params = {}) => `${SHOPS_CACHE_PREFIX}${JSON.stringify(params)}`;
+
+const invalidateShopsCache = () => cache.invalidatePrefix(SHOPS_CACHE_PREFIX);
 
 const ensurePaise = (value, field) => {
   if (typeof value !== 'number' || !Number.isInteger(value)) {
@@ -59,6 +66,7 @@ exports.createShop = async (req, res, next) => {
     if (req.user?._id) {
       await User.findByIdAndUpdate(req.user._id, { businessStatus: 'pending' });
     }
+    invalidateShopsCache();
     return res
       .status(201)
       .json({ ok: true, data: { shop: shop.toCardJSON() }, traceId: req.traceId });
@@ -145,22 +153,35 @@ exports.getAllShops = async (req, res, next) => {
     const sortField = sort === 'rating' ? '-ratingAvg' : sort;
     const skip = (Number(page) - 1) * Number(pageSize);
 
+    const cacheKey = buildShopsCacheKey({
+      q,
+      category,
+      location,
+      status,
+      sort,
+      page: Number(page),
+      pageSize: Number(pageSize),
+    });
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return res.json({ ok: true, data: cached, traceId: req.traceId });
+    }
+
     const query = Shop.find(filter).sort(sortField).skip(skip).limit(Number(pageSize));
     const [shops, total] = await Promise.all([
       query,
       Shop.countDocuments(filter),
     ]);
 
-    return res.json({
-      ok: true,
-      data: {
-        items: shops.map((s) => s.toCardJSON()),
-        total,
-        page: Number(page),
-        pageSize: Number(pageSize),
-      },
-      traceId: req.traceId,
-    });
+    const responseData = {
+      items: shops.map((s) => s.toCardJSON()),
+      total,
+      page: Number(page),
+      pageSize: Number(pageSize),
+      hasMore: skip + shops.length < total,
+    };
+    cache.set(cacheKey, responseData, 60_000);
+    return res.json({ ok: true, data: responseData, traceId: req.traceId });
   } catch (err) {
     return next(err);
   }
@@ -319,6 +340,7 @@ exports.updateShop = async (req, res, next) => {
     }
 
     await shop.save();
+    invalidateShopsCache();
     return res.json({ ok: true, data: { shop: shop.toCardJSON() }, traceId: req.traceId });
   } catch (err) {
     return next(err);
@@ -338,6 +360,7 @@ exports.deleteShop = async (req, res, next) => {
 
     await Product.deleteMany({ shop: shop._id });
     await shop.deleteOne();
+    invalidateShopsCache();
     return res.json({ ok: true, data: { message: 'Shop deleted' }, traceId: req.traceId });
   } catch (err) {
     return next(err);
@@ -359,6 +382,7 @@ exports.approveShop = async (req, res, next) => {
       });
       await notifyUser(shop.owner, { type: 'system', message: 'Your request has been approved' });
     }
+    invalidateShopsCache();
     return res.json({ ok: true, data: { shop: shop.toCardJSON() }, traceId: req.traceId });
   } catch (err) {
     return next(err);
@@ -376,6 +400,7 @@ exports.rejectShop = async (req, res, next) => {
     if (shop.owner) {
       await User.findByIdAndUpdate(shop.owner, { businessStatus: 'rejected' });
     }
+    invalidateShopsCache();
     return res.json({ ok: true, data: { shop: shop.toCardJSON() }, traceId: req.traceId });
   } catch (err) {
     return next(err);

@@ -5,7 +5,7 @@ const notificationSchema = new Schema(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     type: {
       type: String,
-      enum: ['order', 'system', 'offer', 'event', 'service_request'],
+      enum: ['order', 'system', 'offer', 'event', 'service_request', 'announcement'],
       required: true,
     },
     subType: { type: String, trim: true },
@@ -35,6 +35,11 @@ const notificationSchema = new Schema(
       type: String,
       enum: ['low', 'normal', 'high'],
       default: 'normal',
+    },
+    pinned: {
+      type: Boolean,
+      default: false,
+      index: true,
     },
     expiresAt: { type: Date },
   },

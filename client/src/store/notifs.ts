@@ -8,6 +8,12 @@ export interface Notif {
   message: string;
   read: boolean;
   createdAt: string;
+  title?: string | null;
+  subtitle?: string | null;
+  imageUrl?: string | null;
+  ctaText?: string | null;
+  priority?: 'low' | 'normal' | 'high';
+  pinned?: boolean;
   entityType?: 'order' | 'serviceRequest' | 'event' | 'announcement' | null;
   entityId?: string | null;
   redirectUrl?: string | null;
@@ -72,12 +78,53 @@ const normalizeNotification = (entry: any): Notif => {
   const targetLink = targetLinkRaw ?? redirectUrl ?? null;
   const entityType = (entry?.entityType ?? payload?.entityType ?? null) as Notif['entityType'];
   const targetType = (entry?.targetType ?? payload?.targetType ?? entityType ?? null) as Notif['targetType'];
+  const title = typeof entry?.title === 'string' && entry.title.trim()
+    ? entry.title.trim()
+    : typeof payload?.title === 'string'
+    ? payload.title
+    : typeof metadata?.title === 'string'
+    ? metadata.title
+    : null;
+  const subtitle = typeof entry?.subtitle === 'string' && entry.subtitle.trim()
+    ? entry.subtitle.trim()
+    : typeof payload?.subtitle === 'string'
+    ? payload.subtitle
+    : typeof metadata?.subtitle === 'string'
+    ? metadata.subtitle
+    : null;
+  const imageUrl =
+    typeof entry?.imageUrl === 'string'
+      ? entry.imageUrl
+      : typeof payload?.imageUrl === 'string'
+      ? payload.imageUrl
+      : typeof metadata?.imageUrl === 'string'
+      ? metadata.imageUrl
+      : null;
+  const ctaText =
+    typeof payload?.ctaText === 'string'
+      ? payload.ctaText
+      : typeof entry?.ctaText === 'string'
+      ? entry.ctaText
+      : typeof metadata?.ctaText === 'string'
+      ? metadata.ctaText
+      : null;
+  const priority =
+    (entry?.priority as Notif['priority']) ??
+    ((typeof payload?.priority === 'string' ? (payload.priority as Notif['priority']) : undefined) ??
+      'normal');
+  const pinned = Boolean(entry?.pinned ?? payload?.pinned ?? metadata?.pinned);
   return {
     _id: String(entry?._id ?? ''),
     type: entry?.type ?? 'system',
     message: entry?.message ?? '',
     read: Boolean(entry?.read),
     createdAt: entry?.createdAt ?? new Date().toISOString(),
+    title,
+    subtitle,
+    imageUrl,
+    ctaText,
+    priority,
+    pinned,
     entityType,
     entityId: entityId ?? null,
     redirectUrl: redirectUrl ?? null,

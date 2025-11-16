@@ -14,13 +14,22 @@ import { goToNotificationTarget } from '@/utils/notifications';
 
 const filterLabels: Record<string, string> = {
   all: 'All',
+  promotion: 'Promotions',
   order: 'Orders',
-  offer: 'Offers',
-  system: 'System',
   event: 'Events',
+  system: 'System',
 };
 
-const filters = Object.keys(filterLabels);
+const filters: Array<keyof typeof filterLabels> = ['all', 'promotion', 'order', 'event', 'system'];
+
+const isPromotionType = (notif: Notif) => {
+  const type = notif?.type;
+  return (
+    type === 'announcement' ||
+    notif.entityType === 'announcement' ||
+    type === 'offer'
+  );
+};
 
 const PAGE_SIZE = 50;
 
@@ -30,7 +39,7 @@ const Notifications = () => {
   const { items, status, error, hasMore, page } = useSelector(
     (state: RootState) => state.notifs
   );
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState<keyof typeof filterLabels>('all');
   const [pageIndex, setPageIndex] = useState(0);
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
@@ -56,6 +65,8 @@ const Notifications = () => {
   const sortedItems = useMemo(() => {
     if (!Array.isArray(items)) return [] as Notif[];
     return [...items].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
       const timeA = Date.parse(a.createdAt ?? '') || 0;
       const timeB = Date.parse(b.createdAt ?? '') || 0;
       return timeB - timeA;
@@ -64,6 +75,9 @@ const Notifications = () => {
 
   const filtered = useMemo(() => {
     if (activeFilter === 'all') return sortedItems;
+    if (activeFilter === 'promotion') {
+      return sortedItems.filter((notif) => isPromotionType(notif));
+    }
     return sortedItems.filter((notif) => notif.type === activeFilter);
   }, [sortedItems, activeFilter]);
 
@@ -87,7 +101,8 @@ const Notifications = () => {
   const grouped = useMemo(() => {
     const groups = new Map<string, Notif[]>();
     pageItems.forEach((notif) => {
-      const date = new Date(notif.createdAt).toDateString();
+      const dateValue = notif.createdAt ? new Date(notif.createdAt) : new Date();
+      const date = dateValue.toDateString();
       const existing = groups.get(date) ?? [];
       existing.push(notif);
       groups.set(date, existing);
@@ -208,37 +223,61 @@ const Notifications = () => {
           {grouped.map(([date, dayItems]) => (
             <div key={date} className={styles.group}>
               <h4 className={cn(styles.title, 'text-gray-700')}>{date}</h4>
-              {dayItems.map((notif) => (
-                <div key={notif._id} className={styles.card}>
-                  <div className={styles.content}>
-                    <NotificationCard
-                      message={notif.message}
-                      timestamp={notif.createdAt}
-                      read={notif.read}
-                      onClick={() => handleOpen(notif)}
-                      onSwipeLeft={() => handleMarkRead(notif._id)}
-                    />
-                  </div>
-                  <div className={cn(styles.meta, styles.actions)}>
-                    {!notif.read && (
+              {dayItems.map((notif) => {
+                const isAnnouncement = notif.type === 'announcement' || notif.entityType === 'announcement';
+                const promotionBadge = isPromotionType(notif);
+                const ctaLabel = isAnnouncement ? notif.ctaText || 'View details' : undefined;
+                return (
+                  <div key={notif._id} className={styles.card}>
+                    {(notif.pinned || notif.priority === 'high' || promotionBadge) && (
+                      <div className={styles.badges}>
+                        {notif.pinned ? (
+                          <span className={cn(styles.badge, styles.pinnedBadge)}>Pinned</span>
+                        ) : null}
+                        {notif.priority === 'high' ? (
+                          <span className={cn(styles.badge, styles.priorityBadge)}>High priority</span>
+                        ) : null}
+                        {promotionBadge ? (
+                          <span className={cn(styles.badge, styles.promoBadge)}>Promotion</span>
+                        ) : null}
+                      </div>
+                    )}
+                    <div className={styles.content}>
+                      <NotificationCard
+                        title={notif.title || undefined}
+                        subtitle={notif.subtitle || undefined}
+                        message={notif.message}
+                        timestamp={notif.createdAt}
+                        read={notif.read}
+                        imageUrl={isAnnouncement ? notif.imageUrl : undefined}
+                        ctaLabel={ctaLabel}
+                        variant={isAnnouncement ? 'promotion' : 'default'}
+                        onClick={() => handleOpen(notif)}
+                        onCtaClick={isAnnouncement ? () => handleOpen(notif) : undefined}
+                        onSwipeLeft={() => handleMarkRead(notif._id)}
+                      />
+                    </div>
+                    <div className={cn(styles.meta, styles.actions)}>
+                      {!notif.read && (
+                        <button
+                          type="button"
+                          className={cn(styles.actionButton, styles.markReadButton)}
+                          onClick={() => handleMarkRead(notif._id)}
+                        >
+                          Mark read
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className={cn(styles.actionButton, styles.markReadButton)}
-                        onClick={() => handleMarkRead(notif._id)}
+                        className={cn(styles.actionButton, styles.deleteButton)}
+                        onClick={() => handleDelete(notif._id)}
                       >
-                        Mark read
+                        Delete
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      className={cn(styles.actionButton, styles.deleteButton)}
-                      onClick={() => handleDelete(notif._id)}
-                    >
-                      Delete
-                    </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ))}
           {isLoading && hasNotifications && <SkeletonList count={1} lines={2} withAvatar />}

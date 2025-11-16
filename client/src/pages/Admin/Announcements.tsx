@@ -19,6 +19,7 @@ type Announcement = {
   ctaLink?: string | null;
   active: boolean;
   createdAt?: string;
+  highPriority?: boolean;
 };
 
 type FormValues = {
@@ -28,6 +29,7 @@ type FormValues = {
   ctaText: string;
   ctaLink: string;
   active: boolean;
+  highPriority: boolean;
 };
 
 const defaultValues: FormValues = {
@@ -37,6 +39,7 @@ const defaultValues: FormValues = {
   ctaText: '',
   ctaLink: '',
   active: true,
+  highPriority: false,
 };
 
 const normalizeAnnouncement = (item: Announcement): FormValues => ({
@@ -46,6 +49,7 @@ const normalizeAnnouncement = (item: Announcement): FormValues => ({
   ctaText: item.ctaText ?? '',
   ctaLink: item.ctaLink ?? '',
   active: Boolean(item.active),
+  highPriority: Boolean(item.highPriority),
 });
 
 const AdminAnnouncements = () => {
@@ -65,6 +69,7 @@ const AdminAnnouncements = () => {
   } = useForm<FormValues>({ defaultValues });
 
   const activeValue = watch('active');
+  const highPriorityValue = watch('highPriority');
 
   const sortedAnnouncements = useMemo(
     () =>
@@ -111,6 +116,7 @@ const AdminAnnouncements = () => {
         ctaText: values.ctaText.trim() || null,
         ctaLink: values.ctaLink.trim() || null,
         active: values.active,
+        highPriority: values.highPriority,
       };
 
       if (!payload.title || !payload.text) {
@@ -136,6 +142,7 @@ const AdminAnnouncements = () => {
             ctaText: payload.ctaText ?? '',
             ctaLink: payload.ctaLink ?? '',
             active: payload.active,
+            highPriority: payload.highPriority ?? false,
           });
         } else {
           reset(defaultValues);
@@ -309,6 +316,19 @@ const AdminAnnouncements = () => {
             />
             Active
           </label>
+          <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+            <input
+              type="checkbox"
+              {...register('highPriority')}
+              checked={highPriorityValue}
+              onChange={(event) => {
+                const { checked } = event.target;
+                setValue('highPriority', checked, { shouldDirty: true, shouldTouch: true });
+              }}
+              className="h-4 w-4 rounded border-red-300 text-red-600 focus:ring-red-500"
+            />
+            Pin as high priority
+          </label>
 
           <div className="flex flex-wrap gap-3">
             <Button type="submit" disabled={isSubmitting || saving}>
@@ -383,6 +403,11 @@ const AdminAnnouncements = () => {
                     {item.active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
+                {item.highPriority ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+                    High priority • pinned
+                  </span>
+                ) : null}
                 <p className="text-sm text-slate-600">{item.text}</p>
                 <div className="flex flex-wrap gap-2 pt-2">
                   <Button

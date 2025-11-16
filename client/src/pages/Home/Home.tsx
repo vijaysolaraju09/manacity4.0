@@ -39,6 +39,7 @@ interface Announcement {
   ctaText?: string | null;
   ctaLink?: string | null;
   active: boolean;
+  highPriority?: boolean;
 }
 
 const Home = () => {
@@ -174,9 +175,14 @@ const Home = () => {
             </div>
             <div className="flex flex-1 flex-col justify-center gap-4 p-6 text-hi">
               <div className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-brand-500">
-                  Announcement
-                </span>
+                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide">
+                  <span className="text-brand-500">Announcement</span>
+                  {announcement.highPriority ? (
+                    <span className="rounded-full bg-red-100 px-3 py-1 text-[10px] font-bold text-red-700">
+                      High priority
+                    </span>
+                  ) : null}
+                </div>
                 <h2 className="text-2xl font-extrabold text-hi">{announcement.title}</h2>
                 <p className="text-sm text-md">{announcement.text}</p>
               </div>

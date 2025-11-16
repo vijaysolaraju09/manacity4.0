@@ -36,6 +36,10 @@ const buildUpdate = (payload = {}) => {
     updates.active = payload.active;
   }
 
+  if (typeof payload.highPriority === 'boolean') {
+    updates.highPriority = payload.highPriority;
+  }
+
   return updates;
 };
 
@@ -50,24 +54,34 @@ const deactivateOtherAnnouncements = async (id) => {
   );
 };
 
+const normalizeLink = (value) => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//iu.test(trimmed)) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('/')) {
+    return trimmed;
+  }
+  return `/${trimmed}`;
+};
+
 const buildAnnouncementNotificationContext = (announcement) => {
   if (!announcement)
     return { entityType: 'announcement', targetType: 'announcement' };
   const id = announcement._id;
   const idString = id ? id.toString() : null;
-  let redirectUrl = '/announcements';
-  const cta =
-    typeof announcement.ctaLink === 'string' && announcement.ctaLink.trim().startsWith('/')
-      ? announcement.ctaLink.trim()
-      : null;
-  if (cta) redirectUrl = cta;
-  else if (idString) redirectUrl = `/announcements/${idString}`;
+  const fallbackLink = idString ? `/announcements/${idString}` : '/announcements';
+  const ctaLink = normalizeLink(announcement.ctaLink);
+  const redirectUrl = ctaLink && ctaLink.startsWith('/') ? ctaLink : fallbackLink;
+  const targetLink = ctaLink || fallbackLink;
   if (!id) {
     return {
       entityType: 'announcement',
       targetType: 'announcement',
       redirectUrl,
-      targetLink: redirectUrl,
+      targetLink,
     };
   }
   return {
@@ -76,7 +90,7 @@ const buildAnnouncementNotificationContext = (announcement) => {
     redirectUrl,
     targetType: 'announcement',
     targetId: id,
-    targetLink: redirectUrl,
+    targetLink,
   };
 };
 
@@ -90,13 +104,24 @@ const broadcastAnnouncementNotification = async (announcement) => {
   const userIds = users.map((user) => user._id).filter(Boolean);
   if (!userIds.length) return;
   const context = buildAnnouncementNotificationContext(announcement);
+  const promoPayload = {
+    ...context,
+    ctaText: announcement?.ctaText ?? null,
+    imageUrl: announcement?.image ?? null,
+    ctaLink: normalizeLink(announcement?.ctaLink),
+    highPriority: Boolean(announcement?.highPriority),
+  };
   await notifyUsers(userIds, {
-    type: 'system',
+    type: 'announcement',
     subType: 'announcement',
     title: announcement.title,
     message: messageBase,
+    imageUrl: announcement.image || undefined,
     ...context,
-    payload: context,
+    priority: announcement.highPriority ? 'high' : 'normal',
+    pinned: Boolean(announcement.highPriority),
+    payload: promoPayload,
+    metadata: promoPayload,
   });
 };
 

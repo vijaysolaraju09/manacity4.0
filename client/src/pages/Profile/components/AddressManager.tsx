@@ -85,7 +85,11 @@ const sortAddresses = (entries: Address[]) => {
   });
 };
 
-const AddressManager = () => {
+interface AddressManagerProps {
+  onChange?: (addresses: Address[]) => void;
+}
+
+const AddressManager = ({ onChange }: AddressManagerProps) => {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [status, setStatus] = useState<RequestState>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -100,18 +104,29 @@ const AddressManager = () => {
     resolver: createZodResolver(addressSchema),
   });
 
+  const updateAddresses = useCallback(
+    (updater: Address[] | ((current: Address[]) => Address[])) => {
+      setAddresses((current) => {
+        const next = typeof updater === 'function' ? (updater as (curr: Address[]) => Address[])(current) : updater;
+        onChange?.(next);
+        return next;
+      });
+    },
+    [onChange],
+  );
+
   const handleFetch = useCallback(async () => {
     setStatus('loading');
     setError(null);
     try {
       const items = await listMyAddresses();
-      setAddresses(sortAddresses(items));
+      updateAddresses(sortAddresses(items));
       setStatus('success');
     } catch (err) {
       setStatus('error');
       setError(toErrorMessage(err));
     }
-  }, []);
+  }, [updateAddresses]);
 
   useEffect(() => {
     if (status === 'idle') {
@@ -163,7 +178,7 @@ const AddressManager = () => {
       if (editingAddress) {
         const payload = toPayload(values);
         const updated = await updateAddress(editingAddress.id, payload);
-        setAddresses((current) =>
+        updateAddresses((current) =>
           sortAddresses(
             current.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)),
           ),
@@ -174,7 +189,7 @@ const AddressManager = () => {
         const created = await createAddress(
           addresses.length === 0 ? { ...payload, isDefault: true } : payload,
         );
-        setAddresses((current) => sortAddresses([created, ...current.filter((item) => item.id !== created.id)]));
+        updateAddresses((current) => sortAddresses([created, ...current.filter((item) => item.id !== created.id)]));
         showToast('Address added', 'success');
       }
       closeSheet();
@@ -191,7 +206,7 @@ const AddressManager = () => {
     setPendingDefaultId(address.id);
     try {
       const updated = await setDefaultAddress(address.id);
-      setAddresses((current) =>
+      updateAddresses((current) =>
         sortAddresses(
           current.map((item) =>
             item.id === updated.id ? { ...item, ...updated } : { ...item, isDefault: false },
@@ -214,7 +229,7 @@ const AddressManager = () => {
     setPendingDeleteId(address.id);
     try {
       await deleteAddress(address.id);
-      setAddresses((current) => current.filter((item) => item.id !== address.id));
+      updateAddresses((current) => current.filter((item) => item.id !== address.id));
       showToast('Address removed', 'success');
     } catch (err) {
       showToast(toErrorMessage(err), 'error');

@@ -1,6 +1,13 @@
 const Product = require('../models/Product');
 const Shop = require('../models/Shop');
+const cache = require('../utils/cache');
 const { normalizeProduct } = require('../utils/normalize');
+
+const PRODUCTS_CACHE_PREFIX = 'products:';
+
+const buildProductsCacheKey = (params = {}) => `${PRODUCTS_CACHE_PREFIX}${JSON.stringify(params)}`;
+
+const invalidateProductCache = () => cache.invalidatePrefix(PRODUCTS_CACHE_PREFIX);
 
 const ensurePaise = (value, field) => {
   if (typeof value !== 'number' || !Number.isInteger(value)) {
@@ -84,6 +91,7 @@ exports.createProduct = async (req, res, next) => {
     });
 
     const payload = normalizeProduct(product);
+    invalidateProductCache();
     return res.status(201).json({ ok: true, data: { product: payload } });
   } catch (err) {
     if (err?.statusCode) {
@@ -210,6 +218,7 @@ exports.updateProduct = async (req, res, next) => {
     product.updatedBy = req.user._id;
     await product.save();
     const payload = normalizeProduct(product);
+    invalidateProductCache();
     return res.json({ ok: true, data: { product: payload } });
   } catch (err) {
     return next(err);
@@ -229,31 +238,99 @@ exports.deleteProduct = async (req, res, next) => {
     product.deletedAt = new Date();
     product.updatedBy = req.user._id;
     await product.save();
+    invalidateProductCache();
     res.json({ message: 'Product deleted' });
   } catch (err) {
     return next(err);
   }
 };
 
+const toBooleanQuery = (value) => {
+  if (value === undefined) return undefined;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (['true', '1', 'yes'].includes(normalized)) return true;
+    if (['false', '0', 'no'].includes(normalized)) return false;
+  }
+  return undefined;
+};
+
 exports.getProducts = async (req, res, next) => {
   try {
-    const { shopId, query, category, status, minPrice, maxPrice, city, available, isSpecial } = req.query;
+    const {
+      shopId,
+      query,
+      q,
+      category,
+      status,
+      minPrice,
+      maxPrice,
+      city,
+      available,
+      isSpecial,
+      page = 1,
+      pageSize,
+      limit,
+    } = req.query;
+
     const filter = { isDeleted: false };
+    const searchTerm = typeof query === 'string' && query.trim() ? query.trim() : typeof q === 'string' ? q.trim() : '';
     if (shopId) filter.shop = shopId;
     if (category) filter.category = category;
     if (status) filter.status = status;
     if (city) filter.city = city;
-    if (available !== undefined) filter.available = available === 'true';
-    if (isSpecial !== undefined) filter.isSpecial = isSpecial === 'true';
+    const availableFlag = toBooleanQuery(available);
+    if (availableFlag !== undefined) filter.available = availableFlag;
+    const specialFlag = toBooleanQuery(isSpecial);
+    if (specialFlag !== undefined) filter.isSpecial = specialFlag;
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
-    if (query) filter.name = { $regex: query, $options: 'i' };
+    if (searchTerm) filter.name = { $regex: searchTerm, $options: 'i' };
 
-    const items = await Product.find(filter).populate('shop', 'name image location').lean();
-    res.json(items.map((item) => normalizeProduct(item)));
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const sizeInput = limit ?? pageSize;
+    const resolvedPageSize = Math.max(Math.min(Number(sizeInput) || 20, 100), 1);
+    const skip = (pageNumber - 1) * resolvedPageSize;
+
+    const priceFilter = filter.price || {};
+    const cacheKey = buildProductsCacheKey({
+      shopId: filter.shop || null,
+      category: filter.category || null,
+      status: filter.status || null,
+      city: filter.city || null,
+      available: availableFlag,
+      isSpecial: specialFlag,
+      minPrice: priceFilter.$gte ?? null,
+      maxPrice: priceFilter.$lte ?? null,
+      searchTerm,
+      page: pageNumber,
+      pageSize: resolvedPageSize,
+    });
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return res.json({ ok: true, data: cached, traceId: req.traceId });
+    }
+
+    const queryBuilder = Product.find(filter)
+      .populate('shop', 'name image location')
+      .sort({ isSpecial: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(resolvedPageSize);
+    const [itemsRaw, total] = await Promise.all([queryBuilder.lean(), Product.countDocuments(filter)]);
+    const items = itemsRaw.map((item) => normalizeProduct(item));
+    const responseData = {
+      items,
+      total,
+      page: pageNumber,
+      pageSize: resolvedPageSize,
+      hasMore: skip + items.length < total,
+    };
+    cache.set(cacheKey, responseData, 60_000);
+    res.json({ ok: true, data: responseData, traceId: req.traceId });
   } catch (err) {
     return next(err);
   }

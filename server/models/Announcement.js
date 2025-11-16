@@ -36,6 +36,10 @@ const announcementSchema = new Schema(
       default: false,
       index: true,
     },
+    highPriority: {
+      type: Boolean,
+      default: false,
+    },
     deletedAt: {
       type: Date,
       default: null,

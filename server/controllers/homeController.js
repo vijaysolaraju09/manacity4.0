@@ -13,6 +13,7 @@ const serializeAnnouncement = (doc) => {
     ctaText: announcement.ctaText,
     ctaLink: announcement.ctaLink,
     active: announcement.active,
+    highPriority: Boolean(announcement.highPriority),
     createdAt: announcement.createdAt,
     updatedAt: announcement.updatedAt,
   };

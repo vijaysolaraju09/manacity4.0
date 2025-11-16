@@ -67,12 +67,27 @@ const sanitizePaise = (value: unknown): number => {
 };
 
 const toIdString = (value: unknown): string | undefined => {
-  if (typeof value === "string") return value;
-  if (typeof value === "number") return String(value);
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : undefined;
+  }
+  if (typeof value === "object") {
+    const source = value as Record<string, unknown>;
+    return (
+      toIdString(source._id) ||
+      toIdString(source.id) ||
+      toIdString(source.value) ||
+      undefined
+    );
+  }
   return undefined;
 };
 
-const normalizeShopProduct = (
+export const normalizeShopProduct = (
   input: any,
   context?: { shopId?: string; shopName?: string },
 ): Product => {
@@ -100,15 +115,39 @@ const normalizeShopProduct = (
 
   const resolvedShopId = rawShopId || context?.shopId;
 
+  const candidateProductRef =
+    (typeof input.product === "object" && input.product ? (input.product as Record<string, unknown>) : undefined) ||
+    (typeof input.productSnapshot === "object" && input.productSnapshot
+      ? (input.productSnapshot as Record<string, unknown>)
+      : undefined);
+
+  const resolvedProductId =
+    toIdString(input._id) ||
+    toIdString(input.id) ||
+    toIdString(input.productId) ||
+    toIdString((input as Record<string, unknown> | undefined)?.product_id) ||
+    (candidateProductRef ? toIdString(candidateProductRef) : undefined) ||
+    toIdString((input as Record<string, unknown> | undefined)?.slug) ||
+    toIdString((input as Record<string, unknown> | undefined)?.sku) ||
+    toIdString((input as Record<string, unknown> | undefined)?.uuid);
+
+  const normalizedId = resolvedProductId ?? "";
+
   const normalized: Product & Record<string, unknown> = {
     ...input,
-    _id: String(input._id ?? input.id ?? ""),
+    _id: normalizedId,
     name: String(input.name ?? input.title ?? "Product"),
     pricePaise,
     image: typeof input.image === "string" ? input.image : undefined,
     available: typeof input.available === "boolean" ? input.available : undefined,
     shopId: resolvedShopId,
   };
+
+  if (!normalized._id) {
+    throw new Error("Product identifier is missing");
+  }
+
+  normalized.id = normalized._id;
 
   ["price", "pricePaise", "priceInPaise", "price_in_paise"].forEach((key) => {
     Reflect.deleteProperty(normalized, key);
@@ -146,12 +185,22 @@ const normalizeShop = (input: any): Shop => {
   const normalizedName = String(input.name ?? input.title ?? "Shop");
 
   const products = Array.isArray(input.products)
-    ? (input.products.map((product: any) =>
-        normalizeShopProduct(product, {
-          shopId: normalizedId || undefined,
-          shopName: normalizedName,
-        }),
-      ) as Product[])
+    ? (input.products
+        .map((product: any) => {
+          try {
+            return normalizeShopProduct(product, {
+              shopId: normalizedId || undefined,
+              shopName: normalizedName,
+            });
+          } catch (err) {
+            if (process.env.NODE_ENV !== "production") {
+              // eslint-disable-next-line no-console
+              console.warn("Skipping product without a valid identifier", err);
+            }
+            return null;
+          }
+        })
+        .filter((item): item is Product => Boolean(item)))
     : undefined;
 
   const normalized: Shop & Record<string, unknown> = {
@@ -204,9 +253,22 @@ export const fetchProductsByShop = createAsyncThunk(
     try {
       const res = await http.get(`/shops/${id}/products`);
       const items = toItems(res) as any[];
+      const normalizedItems = items
+        .map((product) => {
+          try {
+            return normalizeShopProduct(product, { shopId: id });
+          } catch (err) {
+            if (process.env.NODE_ENV !== "production") {
+              // eslint-disable-next-line no-console
+              console.warn("Skipping product without a valid identifier", err);
+            }
+            return null;
+          }
+        })
+        .filter((item): item is Product => Boolean(item));
       return {
         id,
-        items: items.map((product) => normalizeShopProduct(product, { shopId: id })),
+        items: normalizedItems,
       };
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));

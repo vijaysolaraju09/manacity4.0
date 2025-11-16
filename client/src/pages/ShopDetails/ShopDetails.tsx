@@ -256,6 +256,9 @@ const ShopDetails = () => {
         ) : (
           filtered.map((product) => {
             const cardProduct = buildCardProduct(product);
+            if (!cardProduct) {
+              return null;
+            }
             const quantity = cartQuantities[cardProduct._id] ?? 0;
             const variantId =
               typeof (product as { variantId?: unknown }).variantId === 'string'
@@ -304,7 +307,7 @@ const ShopDetails = () => {
               ) : undefined;
             return (
               <ProductCard
-                key={product._id}
+                key={cardProduct._id}
                 product={cardProduct}
                 actions={actions}
                 onClick={() => navigate(paths.products.detail(cardProduct._id))}
@@ -317,7 +320,45 @@ const ShopDetails = () => {
   );
 };
 
-const buildCardProduct = (product: any): ProductCardProduct => {
+const resolveProductId = (product: any): string | undefined => {
+  const candidates: unknown[] = [
+    product?._id,
+    product?.id,
+    product?.productId,
+    product?.product_id,
+    product?.product?.id,
+    product?.product?._id,
+    product?.productSnapshot?.id,
+    product?.productSnapshot?._id,
+    product?.sku,
+    product?.slug,
+    product?.uuid,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate === null || candidate === undefined) continue;
+    if (typeof candidate === 'string') {
+      const trimmed = candidate.trim();
+      if (trimmed) return trimmed;
+      continue;
+    }
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+      return String(candidate);
+    }
+    if (typeof candidate === 'object') {
+      const nested = resolveProductId(candidate);
+      if (nested) return nested;
+    }
+  }
+
+  return undefined;
+};
+
+const buildCardProduct = (product: any): ProductCardProduct | null => {
+  const resolvedId = resolveProductId(product);
+  if (!resolvedId) {
+    return null;
+  }
   const pricePaise =
     typeof product?.pricePaise === 'number' && Number.isFinite(product.pricePaise)
       ? Math.max(0, Math.round(product.pricePaise))
@@ -340,6 +381,8 @@ const buildCardProduct = (product: any): ProductCardProduct => {
 
   return {
     ...product,
+    _id: resolvedId,
+    id: resolvedId,
     pricePaise,
     mrpPaise,
     discountPercent,

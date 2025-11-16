@@ -37,7 +37,7 @@ const ServiceRequestForm = ({
 
   const [serviceId, setServiceId] = useState<string>(initialSelection);
   const [customName, setCustomName] = useState('');
-  const [description, setDescription] = useState('');
+  const [details, setDetails] = useState('');
   const [location, setLocation] = useState('');
   const [phone, setPhone] = useState(initialPhone ?? '');
   const [preferredDate, setPreferredDate] = useState('');
@@ -51,7 +51,7 @@ const ServiceRequestForm = ({
     if (successMessage) {
       setServiceId(initialSelection);
       setCustomName('');
-      setDescription('');
+      setDetails('');
       setLocation('');
       setPhone(initialPhone ?? '');
       setPreferredDate('');
@@ -92,13 +92,21 @@ const ServiceRequestForm = ({
     }
     setLocalError(null);
 
+    const trimmedDetails = details.trim();
+    const trimmedPhone = phone.trim();
     const payload: CreateServiceRequestPayload = {
-      description: description.trim() || undefined,
       location: location.trim() || undefined,
-      phone: phone.trim() || undefined,
       preferredDate: preferredDate || undefined,
       preferredTime: preferredTime || undefined,
     };
+    if (trimmedDetails) {
+      payload.description = trimmedDetails;
+      payload.details = trimmedDetails;
+    }
+    if (trimmedPhone) {
+      payload.phone = trimmedPhone;
+      payload.contactPhone = trimmedPhone;
+    }
 
     if (!showCustomField && serviceId) payload.serviceId = serviceId;
     if (showCustomField && trimmedCustom) payload.customName = trimmedCustom;
@@ -160,8 +168,8 @@ const ServiceRequestForm = ({
           name="description"
           className={styles.textarea}
           placeholder="Share details that help us find the right provider"
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
+          value={details}
+          onChange={(event) => setDetails(event.target.value)}
           disabled={submitting}
         />
       </div>

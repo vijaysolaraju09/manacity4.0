@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { Star } from 'lucide-react';
 import Button from '@/components/ui/button';
 import showToast from '@/components/ui/Toast';
-import { http } from '@/lib/http';
 import { paths } from '@/routes/paths';
+import { cancelServiceRequest, fetchServiceRequestById, selectServiceRequestDetailState } from '@/store/serviceRequests';
+import type { AppDispatch } from '@/store';
 import type { ServiceRequest, ServiceRequestHistoryEntry } from '@/types/services';
-
-interface ServiceRequestResponse {
-  request?: ServiceRequest;
-}
 
 const historyLabels: Record<ServiceRequestHistoryEntry['type'], string> = {
   created: 'Created',
@@ -42,52 +40,36 @@ const formatDate = (value?: string | null) => {
 
 const ServiceRequestDetail = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const { requestId } = useParams<{ requestId: string }>();
-  const [request, setRequest] = useState<ServiceRequest | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const detailState = useSelector(selectServiceRequestDetailState);
+  const request = detailState.item;
+  const loading = detailState.status === 'loading';
+  const error = detailState.error;
   const [canceling, setCanceling] = useState(false);
 
-  const fetchRequest = useCallback(async () => {
-    if (!requestId) return;
-    setLoading(true);
-    try {
-      const response = await http.get(`/requests/${requestId}`);
-      const body: ServiceRequestResponse | undefined = response?.data?.data ?? response?.data;
-      if (!body?.request) throw new Error('Service request not found');
-      setRequest(body.request);
-      setError(null);
-    } catch (err) {
-      const message =
-        typeof err === 'string'
-          ? err
-          : err instanceof Error
-          ? err.message
-          : 'Failed to load request';
-      setError(message);
-      showToast(message, 'error');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (requestId) {
+      void dispatch(fetchServiceRequestById(requestId));
     }
-  }, [requestId]);
+  }, [dispatch, requestId]);
 
   useEffect(() => {
-    void fetchRequest();
-  }, [fetchRequest]);
+    if (detailState.status === 'failed' && detailState.error) {
+      showToast(detailState.error, 'error');
+    }
+  }, [detailState.status, detailState.error]);
 
   const canCancel = useMemo(() => request?.status === 'pending', [request?.status]);
 
-  const handleCancel = async () => {
+  const handleCancel = useCallback(async () => {
     if (!requestId || !request) return;
     const confirmed = window.confirm('Cancel this service request? This action cannot be undone.');
     if (!confirmed) return;
 
     setCanceling(true);
     try {
-      const response = await http.post(`/requests/${requestId}/cancel`);
-      const body: ServiceRequestResponse | undefined = response?.data?.data ?? response?.data;
-      if (!body?.request) throw new Error('Failed to cancel request');
-      setRequest(body.request);
+      await dispatch(cancelServiceRequest(requestId)).unwrap();
       showToast('Request cancelled', 'success');
     } catch (err) {
       const message =
@@ -100,9 +82,13 @@ const ServiceRequestDetail = () => {
     } finally {
       setCanceling(false);
     }
-  };
+  }, [dispatch, requestId, request]);
 
   const history = useMemo(() => request?.history ?? [], [request?.history]);
+  const detailText = useMemo(
+    () => (request ? request.details || request.description || '' : ''),
+    [request]
+  );
   const preferredSchedule = useMemo(() => {
     if (!request) return 'Not specified';
     if (!request.preferredDate && !request.preferredTime) return 'Not specified';
@@ -155,8 +141,8 @@ const ServiceRequestDetail = () => {
               </div>
             </div>
 
-            {request.description ? (
-              <p className="mt-4 whitespace-pre-wrap text-sm text-slate-700">{request.description}</p>
+            {detailText ? (
+              <p className="mt-4 whitespace-pre-wrap text-sm text-slate-700">{detailText}</p>
             ) : null}
 
             <dl className="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-600 md:grid-cols-2">

@@ -7,7 +7,7 @@ import showToast from '@/components/ui/Toast';
 import { paths } from '@/routes/paths';
 import { cancelServiceRequest, fetchServiceRequestById, selectServiceRequestDetailState } from '@/store/serviceRequests';
 import type { AppDispatch } from '@/store';
-import type { ServiceRequest, ServiceRequestHistoryEntry } from '@/types/services';
+import type { ServiceRequestHistoryEntry } from '@/types/services';
 
 const historyLabels: Record<ServiceRequestHistoryEntry['type'], string> = {
   created: 'Created',

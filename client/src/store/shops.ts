@@ -26,6 +26,7 @@ export interface Shop {
 
 interface Product {
   _id: string;
+  id: string;
   name: string;
   pricePaise: number;
   image?: string;
@@ -186,12 +187,12 @@ const normalizeShop = (input: any): Shop => {
 
   const products = Array.isArray(input.products)
     ? (input.products
-        .map((product: any) => {
-          try {
-            return normalizeShopProduct(product, {
-              shopId: normalizedId || undefined,
-              shopName: normalizedName,
-            });
+          .map((product: any) => {
+            try {
+              return normalizeShopProduct(product, {
+                shopId: normalizedId || undefined,
+                shopName: normalizedName,
+              });
           } catch (err) {
             if (process.env.NODE_ENV !== "production") {
               // eslint-disable-next-line no-console
@@ -199,9 +200,9 @@ const normalizeShop = (input: any): Shop => {
             }
             return null;
           }
-        })
-        .filter((item): item is Product => Boolean(item)))
-    : undefined;
+          })
+          .filter((item: Product | null): item is Product => Boolean(item)))
+      : undefined;
 
   const normalized: Shop & Record<string, unknown> = {
     ...input,

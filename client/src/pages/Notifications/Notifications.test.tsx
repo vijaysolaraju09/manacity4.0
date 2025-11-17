@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock, MockInstance } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Notifications from './Notifications';
@@ -29,9 +30,9 @@ vi.mock('@/store/notifs', () => ({
   removeNotif: removeNotifMock,
 }));
 
-const useDispatchMock = useDispatch as unknown as vi.Mock;
-const useSelectorMock = useSelector as unknown as vi.Mock;
-const useNavigateMock = useNavigate as unknown as vi.Mock;
+const useDispatchMock = useDispatch as unknown as Mock;
+const useSelectorMock = useSelector as unknown as Mock;
+const useNavigateMock = useNavigate as unknown as Mock;
 
 beforeAll(() => {
   class MockIntersectionObserver {
@@ -45,7 +46,10 @@ beforeAll(() => {
 describe('Notifications page', () => {
   const dispatchMock = vi.fn(() => ({ unwrap: () => Promise.resolve() }));
   const navigateMock = vi.fn();
-  let openSpy: ReturnType<typeof vi.spyOn>;
+  let openSpy: MockInstance<
+    [url?: string | URL | undefined, target?: string | undefined, features?: string | undefined],
+    Window | null
+  >;
   const mockState = {
     notifs: {
       items: [

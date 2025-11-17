@@ -142,7 +142,7 @@ export const getMyServiceRequests = async (
 ): Promise<PaginatedServiceRequests> => {
   const res = await http.get('/requests/mine', { params });
   const items = (toItems(res) as any[])
-    .map((entry) => {
+    .map<ServiceRequestSummary | null>((entry) => {
       const id = resolveId(entry?._id ?? entry?.id);
       if (!id) return null;
       const title =
@@ -164,7 +164,7 @@ export const getMyServiceRequests = async (
           : null;
       return { id, title, status, createdAt, location } satisfies ServiceRequestSummary;
     })
-    .filter((entry): entry is ServiceRequestSummary => Boolean(entry));
+    .filter((entry): entry is ServiceRequestSummary => entry !== null);
   const payload = res.data?.data ?? {};
   const total = typeof payload.total === 'number' ? payload.total : items.length;
   const page = typeof payload.page === 'number' ? payload.page : params?.page ?? 1;

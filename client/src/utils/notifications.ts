@@ -18,8 +18,9 @@ const toIdString = (value: unknown): string | null => {
       const raw = (value as Record<string, unknown>).id;
       return typeof raw === 'string' ? raw : raw ? String(raw) : null;
     }
-    if (typeof (value as { toString?: () => string }).toString === 'function') {
-      const str = (value as { toString?: () => string }).toString();
+    const stringifier = (value as { toString?: () => string }).toString;
+    if (typeof stringifier === 'function') {
+      const str = stringifier.call(value as { toString?: () => string });
       return str ? str : null;
     }
   }

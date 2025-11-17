@@ -46,6 +46,7 @@ export interface OrderTotals {
 
 export interface OrderParty {
   id: string;
+  _id?: string;
   name?: string;
   phone?: string;
   location?: string;

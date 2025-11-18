@@ -708,24 +708,83 @@
     display: none;
   }
 
-  .mobileActions {
-    position: sticky;
-    bottom: 0;
-    inset-inline: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.85rem clamp(1rem, 4vw, 1.5rem);
-    background: rgba(255, 255, 255, 0.92);
-    border-top: 1px solid rgba(148, 163, 184, 0.25);
-    box-shadow: 0 -12px 24px rgba(15, 23, 42, 0.12);
-  }
+.mobileActions {
+  position: sticky;
+  bottom: 0;
+  inset-inline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem clamp(1rem, 4vw, 1.5rem);
+  background: rgba(255, 255, 255, 0.92);
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 -12px 24px rgba(15, 23, 42, 0.12);
+}
 
-  .heroSummary,
-  .heroInsights {
-    grid-template-columns: 1fr;
-  }
+.heroSummary,
+.heroInsights {
+  grid-template-columns: 1fr;
+}
+}
+
+.leaderboardSection {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.collapseButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.85);
+  color: rgba(15, 23, 42, 0.7);
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.collapseButton:hover {
+  background: rgba(var(--color-primary-rgb), 0.1);
+  border-color: rgba(var(--color-primary-rgb), 0.35);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.leaderboardTable {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 0.6fr 2fr 1fr;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+  font-weight: 600;
+}
+
+.tableRow:nth-child(even) {
+  background: rgba(248, 250, 255, 0.7);
+}
+
+.tableRow span:last-child {
+  text-align: right;
+}
+
+.tableRow:first-child {
+  background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.08), rgba(79, 70, 229, 0.12));
+  color: rgba(15, 23, 42, 0.75);
+}
+
+.tableRow:last-child {
+  border-bottom: none;
 }
 
 @media (max-width: 640px) {

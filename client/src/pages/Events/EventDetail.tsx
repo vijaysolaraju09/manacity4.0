@@ -148,16 +148,43 @@ const EventDetailPage = () => {
     updates: false,
     leaderboard: false,
   });
+  const [leaderboardExpanded, setLeaderboardExpanded] = useState(true);
 
   const tabContentRef = useRef<HTMLDivElement | null>(null);
 
   const event = detail.data;
   const eventDetailPath = id ? paths.events.detail(id) : paths.events.list();
   const isAuthenticated = Boolean(currentUser);
-  const availableTabs = useMemo(
-    () => (isAuthenticated ? tabs : tabs.filter((tab) => tab.key === 'about')),
-    [isAuthenticated],
+  const stage: Stage = useMemo(() => {
+    if (!event) return 'upcoming';
+    return determineStage(event, now);
+  }, [event, now]);
+  const isRegistered = useMemo(
+    () => Boolean(myRegistration.data && myRegistration.data.status !== 'withdrawn'),
+    [myRegistration.data],
   );
+  const availableTabs = useMemo(() => {
+    const baseTabs: Array<{ key: TabKey; label: string }> = tabs.filter((tab) =>
+      ['about', 'rules', 'rewards', 'structure'].includes(tab.key),
+    );
+    const participantTabs: Array<{ key: TabKey; label: string }> = [
+      ...baseTabs,
+      ...tabs.filter((tab) => tab.key === 'participants'),
+    ];
+    const registeredTabs: Array<{ key: TabKey; label: string }> = [
+      ...participantTabs,
+      ...tabs.filter((tab) => tab.key === 'updates'),
+    ];
+    const leaderboardTabs: Array<{ key: TabKey; label: string }> = [
+      ...registeredTabs,
+      ...tabs.filter((tab) => tab.key === 'leaderboard'),
+    ];
+
+    if (isRegistered) return leaderboardTabs;
+    if (stage === 'completed') return [...participantTabs, ...tabs.filter((tab) => tab.key === 'leaderboard')];
+    if (isAuthenticated) return participantTabs;
+    return baseTabs;
+  }, [isAuthenticated, isRegistered, stage]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -192,10 +219,10 @@ const EventDetailPage = () => {
   }, [location.hash, id, navigate, availableTabs]);
 
   useEffect(() => {
-    if (!isAuthenticated && activeTab !== 'about') {
-      setActiveTab('about');
+    if (!availableTabs.some((tab) => tab.key === activeTab)) {
+      setActiveTab(availableTabs[0]?.key ?? 'about');
     }
-  }, [isAuthenticated, activeTab]);
+  }, [availableTabs, activeTab]);
 
   useEffect(() => {
     if (!id) return;
@@ -231,11 +258,6 @@ const EventDetailPage = () => {
     }, 25000);
     return () => window.clearInterval(interval);
   }, [dispatch, id, event, activeTab]);
-
-  const stage: Stage = useMemo(() => {
-    if (!event) return 'upcoming';
-    return determineStage(event, now);
-  }, [event, now]);
 
   const countdown = useMemo(() => {
     if (!event) return { kind: 'none' as CountdownKind, label: '' };
@@ -322,7 +344,6 @@ const EventDetailPage = () => {
   const updatesList = useMemo(() => updates.items ?? [], [updates.items]);
 
   const leaderboardRows = useMemo(() => leaderboard.items ?? [], [leaderboard.items]);
-  const isRegistered = Boolean(myRegistration.data && myRegistration.data.status !== 'withdrawn');
   const waitlisted = myRegistration.data?.status === 'waitlisted';
 
   const canRegister =
@@ -610,26 +631,41 @@ const EventDetailPage = () => {
             />
           );
         }
+        if (stage !== 'completed') {
+          return <p className={styles.mutedText}>Results will be available after the event ends.</p>;
+        }
         if (leaderboardRows.length === 0) {
-          if (stage === 'upcoming') {
-            return <p className={styles.mutedText}>Leaderboard will appear once the event starts.</p>;
-          }
           return <p className={styles.mutedText}>Results will be published soon.</p>;
         }
         return (
-          <div className={styles.leaderboardTable}>
-            <div className={styles.tableRow}>
-              <span>Rank</span>
-              <span>Name / Team</span>
-              <span>Points</span>
-            </div>
-            {leaderboardRows.map((entry, index) => (
-              <div key={entry.participantId ?? `${index}-${entry.teamName ?? entry.user}`} className={styles.tableRow}>
-                <span>{entry.rank ?? index + 1}</span>
-                <span>{entry.teamName ?? entry.user ?? 'Participant'}</span>
-                <span>{entry.score ?? entry.points ?? 0}</span>
+          <div className={styles.leaderboardSection}>
+            <button
+              type="button"
+              className={styles.collapseButton}
+              onClick={() => setLeaderboardExpanded((prev) => !prev)}
+            >
+              {leaderboardExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />} 
+              {leaderboardExpanded ? 'Hide leaderboard' : 'Show leaderboard'}
+            </button>
+            {leaderboardExpanded && (
+              <div className={styles.leaderboardTable}>
+                <div className={styles.tableRow}>
+                  <span>Rank</span>
+                  <span>Name / Team</span>
+                  <span>Points</span>
+                </div>
+                {leaderboardRows.map((entry, index) => (
+                  <div
+                    key={entry.participantId ?? `${index}-${entry.teamName ?? entry.user}`}
+                    className={styles.tableRow}
+                  >
+                    <span>{entry.rank ?? index + 1}</span>
+                    <span>{entry.teamName ?? entry.user ?? 'Participant'}</span>
+                    <span>{entry.score ?? entry.points ?? 0}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         );
       default:
@@ -663,7 +699,7 @@ const EventDetailPage = () => {
 
   return (
     <div className={styles.page}>
-      <button type="button" className={styles.backLink} onClick={() => navigate(-1)}>
+      <button type="button" className={styles.backLink} onClick={() => navigate(paths.events.list())}>
         <ArrowLeft size={16} aria-hidden="true" /> Back to events
       </button>
       <section className={styles.hero}>

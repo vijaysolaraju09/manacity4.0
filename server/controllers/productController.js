@@ -91,8 +91,12 @@ exports.createProduct = async (req, res, next) => {
     });
 
     const payload = normalizeProduct(product);
+    const normalizedId = payload?._id || (product?._id ? product._id.toString() : undefined);
+    const responseProduct = normalizedId
+      ? { ...payload, _id: normalizedId, id: normalizedId }
+      : payload;
     invalidateProductCache();
-    return res.status(201).json({ ok: true, data: { product: payload } });
+    return res.status(201).json({ ok: true, data: { product: responseProduct } });
   } catch (err) {
     if (err?.statusCode) {
       return res.status(err.statusCode).json({ error: err.message });

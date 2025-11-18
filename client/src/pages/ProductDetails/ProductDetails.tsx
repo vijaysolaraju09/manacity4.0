@@ -54,6 +54,11 @@ const ProductDetails = () => {
   if (status === 'succeeded' && !product) return <Empty msg="No product found." />;
   if (!product) return null;
 
+  const normalizedProduct = {
+    ...product,
+    _id: product._id || product.id || (product as { productId?: string }).productId,
+  };
+
   const images = product.images?.length
     ? product.images
     : product.image
@@ -117,15 +122,15 @@ const ProductDetails = () => {
               <p>No reviews yet.</p>
             </details>
           </div>
-          <div className={detailStyles.actions}>
-            <div className={detailStyles.quantityWrapper}>
-              <QuantityStepper value={qty} onChange={setQty} min={1} />
+            <div className={detailStyles.actions}>
+              <div className={detailStyles.quantityWrapper}>
+                <QuantityStepper value={qty} onChange={setQty} min={1} />
+              </div>
+              <AddToCartButton product={normalizedProduct} qty={qty}>
+                Add to Cart
+              </AddToCartButton>
             </div>
-            <AddToCartButton product={product} qty={qty}>
-              Add to Cart
-            </AddToCartButton>
           </div>
-        </div>
       </div>
 
       <section className={detailStyles.related}>

@@ -6,6 +6,7 @@ import { z } from 'zod';
 import {
   BriefcaseBusiness,
   ClipboardList,
+  History,
   Home,
   LogOut,
   Mail,
@@ -542,22 +543,26 @@ const Profile = () => {
                   ) : null}
                 </div>
                 <div className={styles.divider} />
-                {user.role === 'business' ? (
-                  <>
-                    <div className={styles.divider} />
-                    <div>
-                      <h2 className={styles.sectionTitle}>Quick navigation</h2>
-                      <div className="grid gap-3">
-                        <QuickAction
-                          title="Service Orders"
-                          subtitle="Manage and track assigned service requests"
-                          to="/business/service-orders"
-                          icon={ClipboardList}
-                        />
-                      </div>
-                    </div>
-                  </>
-                ) : null}
+                <div className={styles.divider} />
+                <div>
+                  <h2 className={styles.sectionTitle}>Quick navigation</h2>
+                  <div className="grid gap-3">
+                    <QuickAction
+                      title="Activity history"
+                      subtitle="Orders, service requests and events in one place"
+                      to={paths.history()}
+                      icon={History}
+                    />
+                    {user.role === 'business' ? (
+                      <QuickAction
+                        title="Service Orders"
+                        subtitle="Manage and track assigned service requests"
+                        to="/business/service-orders"
+                        icon={ClipboardList}
+                      />
+                    ) : null}
+                  </div>
+                </div>
                 <div className={styles.divider} />
                 <div className={styles.actionRow}>
                   <Button className="flex-1 sm:flex-none" onClick={() => setIsEditOpen(true)}>

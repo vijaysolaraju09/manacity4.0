@@ -13,6 +13,8 @@ interface OTPPhoneFirebaseProps {
 type RecaptchaMode = 'invisible' | 'normal';
 
 const RECAPTCHA_CONTAINER_ID = 'recaptcha-container';
+const STUB_CODE = (import.meta.env.VITE_OTP_STUB_CODE as string | undefined)?.trim() || '000000';
+const OTP_STUB_ENABLED = import.meta.env.VITE_ENABLE_OTP_STUB === 'true';
 
 const OTPPhoneFirebase = ({ phone, onVerifySuccess }: OTPPhoneFirebaseProps) => {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
@@ -23,6 +25,7 @@ const OTPPhoneFirebase = ({ phone, onVerifySuccess }: OTPPhoneFirebaseProps) => 
   const recaptchaContainerRef = useRef<HTMLDivElement | null>(null);
   const verifierRef = useRef<RecaptchaVerifier | null>(null);
   const isMountedRef = useRef(true);
+  const expectedLength = OTP_STUB_ENABLED ? STUB_CODE.length || 6 : 6;
 
   const resetVerifier = useCallback(async () => {
     const current = verifierRef.current;
@@ -132,7 +135,7 @@ const OTPPhoneFirebase = ({ phone, onVerifySuccess }: OTPPhoneFirebaseProps) => 
   }, []);
 
   useEffect(() => {
-    if (!phone) {
+    if (!phone || OTP_STUB_ENABLED) {
       return;
     }
 
@@ -153,6 +156,18 @@ const OTPPhoneFirebase = ({ phone, onVerifySuccess }: OTPPhoneFirebaseProps) => 
     event.preventDefault();
     setError('');
 
+    if (OTP_STUB_ENABLED) {
+      if (code === STUB_CODE) {
+        showToast('Phone number verified in test mode.', 'success');
+        onVerifySuccess();
+      } else {
+        const message = `Use the test code ${STUB_CODE} to verify.`;
+        setError(message);
+        showToast(message, 'error');
+      }
+      return;
+    }
+
     if (!confirmationResult) {
       const message = 'Unable to verify at this time. Please try again.';
       setError(message);
@@ -160,8 +175,9 @@ const OTPPhoneFirebase = ({ phone, onVerifySuccess }: OTPPhoneFirebaseProps) => 
       return;
     }
 
-    if (!/^\d{6}$/.test(code)) {
-      const message = 'Enter the 6-digit OTP sent to your phone.';
+    const requiredLengthPattern = new RegExp(`^\\d{${expectedLength}}$`);
+    if (!requiredLengthPattern.test(code)) {
+      const message = `Enter the ${expectedLength}-digit OTP sent to your phone.`;
       setError(message);
       showToast(message, 'error');
       return;
@@ -194,7 +210,7 @@ const OTPPhoneFirebase = ({ phone, onVerifySuccess }: OTPPhoneFirebaseProps) => 
             type="tel"
             inputMode="numeric"
             pattern="\d*"
-            maxLength={6}
+            maxLength={expectedLength}
             value={code}
             onChange={(event) => {
               setCode(event.target.value.replace(/\D/g, ''));
@@ -202,24 +218,31 @@ const OTPPhoneFirebase = ({ phone, onVerifySuccess }: OTPPhoneFirebaseProps) => 
                 setError('');
               }
             }}
-            placeholder="Enter 6-digit code"
+            placeholder={`Enter ${expectedLength}-digit code`}
             required
             autoComplete="one-time-code"
           />
         </div>
         {error && <div className="error">{error}</div>}
-        <div
-          id={RECAPTCHA_CONTAINER_ID}
-          ref={recaptchaContainerRef}
-          aria-hidden={recaptchaMode === 'invisible'}
-          style={{ display: recaptchaMode === 'normal' ? 'block' : 'none' }}
-        />
+        {!OTP_STUB_ENABLED ? (
+          <div
+            id={RECAPTCHA_CONTAINER_ID}
+            ref={recaptchaContainerRef}
+            aria-hidden={recaptchaMode === 'invisible'}
+            style={{ display: recaptchaMode === 'normal' ? 'block' : 'none' }}
+          />
+        ) : null}
+        {OTP_STUB_ENABLED ? (
+          <p className="mt-3 text-sm text-slate-500">
+            Testing? Enter the code <span className="font-semibold">{STUB_CODE}</span> to verify instantly.
+          </p>
+        ) : null}
         <div className="actions">
           <motion.button
             type="submit"
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
-            disabled={loading || code.length !== 6}
+            disabled={loading || code.length !== expectedLength}
           >
             {loading ? <Loader /> : 'Verify'}
           </motion.button>

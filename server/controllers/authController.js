@@ -85,6 +85,16 @@ exports.signup = async (req, res, next) => {
   try {
     const { name, phone, password, location, role, email } = req.body;
 
+    const trimmedName = typeof name === 'string' ? name.trim() : '';
+    if (!trimmedName) {
+      throw AppError.badRequest('MISSING_NAME', 'Name is required');
+    }
+
+    const normalizedLocation = typeof location === 'string' ? location.trim() : '';
+    if (!normalizedLocation) {
+      throw AppError.badRequest('MISSING_LOCATION', 'Location is required');
+    }
+
     if (!phone) {
       throw AppError.badRequest('MISSING_CONTACT', 'Phone is required');
     }
@@ -106,12 +116,16 @@ exports.signup = async (req, res, next) => {
       }
     }
 
+    if (!password || String(password).length < 6) {
+      throw AppError.badRequest('WEAK_PASSWORD', 'Password must be at least 6 characters long');
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
-      name,
+      name: trimmedName,
       phone: normalizedPhone,
       password: hashedPassword,
-      location,
+      location: normalizedLocation,
       role,
       email,
       address: '',

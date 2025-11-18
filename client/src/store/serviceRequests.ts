@@ -41,6 +41,12 @@ interface DetailState {
   currentId: string | null;
 }
 
+interface ProvidersState {
+  items: ServiceProviderUser[];
+  status: RequestStatus;
+  error: string | null;
+}
+
 export interface ServiceRequestsState {
   createStatus: RequestStatus;
   createError: string | null;
@@ -48,6 +54,7 @@ export interface ServiceRequestsState {
   admin: ListState;
   publicList: PublicListState;
   detail: DetailState;
+  providers: ProvidersState;
 }
 
 const initialState: ServiceRequestsState = {
@@ -57,6 +64,7 @@ const initialState: ServiceRequestsState = {
   admin: { items: [], status: 'idle', error: null, total: 0, page: 1, pageSize: 20 },
   publicList: { items: [], status: 'idle', error: null, total: 0, page: 1, pageSize: 20 },
   detail: { item: null, status: 'idle', error: null, currentId: null },
+  providers: { items: [], status: 'idle', error: null },
 };
 
 const normalizeUserSummary = (entry: any): ServiceProviderUser => ({
@@ -508,6 +516,25 @@ export const adminFetchServiceRequests = createAsyncThunk<
   }
 );
 
+export const adminFetchProviders = createAsyncThunk<
+  ServiceProviderUser[],
+  void,
+  { rejectValue: string }
+>(
+  'serviceRequests/adminFetchProviders',
+  async (_unused, thunkApi) => {
+    try {
+      const res = await adminHttp.get('/admin/users', {
+        params: { role: 'business', pageSize: 200 },
+      });
+      const items = toItems(res).map(normalizeUserSummary);
+      return items;
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
+    }
+  }
+);
+
 export const adminUpdateServiceRequest = createAsyncThunk<
   ServiceRequest,
   { id: string; status?: ServiceRequestStatus | string; notes?: string; providerId?: string | null },
@@ -621,6 +648,18 @@ const serviceRequestsSlice = createSlice({
       .addCase(adminFetchServiceRequests.rejected, (state, action) => {
         state.admin.status = 'failed';
         state.admin.error = action.payload ?? action.error.message ?? 'Failed to load service requests';
+      })
+      .addCase(adminFetchProviders.pending, (state) => {
+        state.providers.status = 'loading';
+        state.providers.error = null;
+      })
+      .addCase(adminFetchProviders.fulfilled, (state, action: PayloadAction<ServiceProviderUser[]>) => {
+        state.providers.status = 'succeeded';
+        state.providers.items = action.payload;
+      })
+      .addCase(adminFetchProviders.rejected, (state, action) => {
+        state.providers.status = 'failed';
+        state.providers.error = action.payload ?? action.error.message ?? 'Failed to load providers';
       })
       .addCase(submitServiceOffer.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         applyRequestUpdate(state, action.payload);

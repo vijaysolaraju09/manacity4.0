@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Service = require('../models/Service');
 const ServiceRequest = require('../models/ServiceRequest');
 const Feedback = require('../models/Feedback');
+const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const { notifyUser } = require('../services/notificationService');
 
@@ -1108,6 +1109,14 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
       if (providerSource && !providerObjectId)
         throw AppError.badRequest('INVALID_PROVIDER', 'Invalid provider id');
 
+      if (providerObjectId) {
+        const providerDoc = await User.findOne({ _id: providerObjectId, role: 'business' })
+          .select('_id role')
+          .lean();
+        if (!providerDoc)
+          throw AppError.badRequest('INVALID_PROVIDER', 'Provider must be a registered business user');
+      }
+
       const previousAssigned = request.assignedProviderId ? toId(request.assignedProviderId) : null;
       const nextAssigned = providerObjectId ? providerObjectId.toString() : null;
       if (previousAssigned !== nextAssigned) {
@@ -1139,6 +1148,10 @@ exports.adminUpdateServiceRequest = async (req, res, next) => {
         }
       }
     }
+
+    const effectiveProviderId = providerObjectId || request.assignedProviderId;
+    if (nextStatus === STATUS.ASSIGNED && !effectiveProviderId)
+      throw AppError.badRequest('INVALID_PROVIDER_ASSIGNMENT', 'Assign a provider before marking as assigned');
 
     if (nextStatus !== currentStatus) {
       const allowed = ALLOWED_TRANSITIONS[currentStatus] || new Set();

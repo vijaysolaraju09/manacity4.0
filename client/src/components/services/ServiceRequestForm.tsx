@@ -239,7 +239,7 @@ const ServiceRequestForm = ({
 
       <div className={styles.field}>
         <label className={styles.label}>Preferred time</label>
-        <div className={styles.actions}>
+        <div className={styles.datetimeRow}>
           <input
             type="date"
             className={styles.input}
@@ -261,7 +261,7 @@ const ServiceRequestForm = ({
       {error ? <div className={styles.error}>{error}</div> : null}
       {successMessage ? <div className={styles.success}>{successMessage}</div> : null}
 
-      <div className={styles.actions}>
+      <div className={styles.submitRow}>
         <Button type="submit" disabled={submitting}>
           {submitting ? 'Submitting...' : 'Submit request'}
         </Button>

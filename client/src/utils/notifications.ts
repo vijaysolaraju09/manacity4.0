@@ -74,11 +74,14 @@ export const goToNotificationTarget = (notification: Notif): NotificationTarget 
   if (!notification) return null;
   const payload = notification.payload ?? {};
   const metadata = notification.metadata ?? {};
-  const fallbackLink = notification.targetLink || notification.redirectUrl || null;
-  const targetType = notification.targetType || notification.entityType || notification.type;
+  const fallbackLink =
+    notification.resourceLink || notification.targetLink || notification.redirectUrl || null;
+  const targetType =
+    notification.resourceType || notification.targetType || notification.entityType || notification.type;
 
   if (targetType === 'order') {
     const id = coalesceId([
+      notification.resourceId,
       notification.targetId,
       notification.entityId,
       (metadata as Record<string, unknown>).orderId,
@@ -89,6 +92,7 @@ export const goToNotificationTarget = (notification: Notif): NotificationTarget 
 
   if (targetType === 'serviceRequest' || targetType === 'service_request') {
     const id = coalesceId([
+      notification.resourceId,
       notification.targetId,
       notification.entityId,
       (metadata as Record<string, unknown>).requestId,
@@ -99,6 +103,7 @@ export const goToNotificationTarget = (notification: Notif): NotificationTarget 
 
   if (targetType === 'event') {
     const id = coalesceId([
+      notification.resourceId,
       notification.targetId,
       notification.entityId,
       (metadata as Record<string, unknown>).eventId,
@@ -115,6 +120,13 @@ export const goToNotificationTarget = (notification: Notif): NotificationTarget 
 
   if (targetType === 'announcement') {
     return toLinkTarget(fallbackLink) ?? { kind: 'internal', path: '/announcements' };
+  }
+
+  if (targetType === 'system') {
+    const linkFromPayload =
+      (payload as Record<string, unknown>).link || (metadata as Record<string, unknown>).link;
+    const systemLink = toLinkTarget(typeof linkFromPayload === 'string' ? linkFromPayload : fallbackLink);
+    if (systemLink) return systemLink;
   }
 
   return toLinkTarget(fallbackLink);

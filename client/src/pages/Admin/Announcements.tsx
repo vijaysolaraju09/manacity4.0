@@ -230,35 +230,19 @@ const AdminAnnouncements = () => {
         </div>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="space-y-2 text-sm">
-              <span className="font-medium text-slate-700">Title *</span>
-              <Input
-                {...register('title', {
-                  required: 'Title is required',
-                  minLength: { value: 3, message: 'Title must be at least 3 characters' },
-                })}
-                name="title"
-                placeholder="City-wide update"
-                autoComplete="off"
-              />
-              {errors.title ? (
-                <span className="text-xs text-red-600">{errors.title.message}</span>
-              ) : null}
-            </label>
-            <label className="space-y-2 text-sm">
-              <span className="font-medium text-slate-700">CTA text</span>
-              <Input
-                {...register('ctaText', {
-                  maxLength: { value: 80, message: 'CTA text must be under 80 characters' },
-                })}
-                placeholder="Learn more"
-              />
-              {errors.ctaText ? (
-                <span className="text-xs text-red-600">{errors.ctaText.message}</span>
-              ) : null}
-            </label>
-          </div>
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-slate-700">Title *</span>
+            <Input
+              {...register('title', {
+                required: 'Title is required',
+                minLength: { value: 3, message: 'Title must be at least 3 characters' },
+              })}
+              name="title"
+              placeholder="City-wide update"
+              autoComplete="off"
+            />
+            {errors.title ? <span className="text-xs text-red-600">{errors.title.message}</span> : null}
+          </label>
 
           <label className="space-y-2 text-sm">
             <span className="font-medium text-slate-700">Message *</span>
@@ -273,34 +257,69 @@ const AdminAnnouncements = () => {
             {errors.text ? <span className="text-xs text-red-600">{errors.text.message}</span> : null}
           </label>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="space-y-2 text-sm">
-              <span className="font-medium text-slate-700">Image URL</span>
-              <Input
-                {...register('image', {
-                  pattern: {
-                    value: /^(https?:\/\/).*/iu,
-                    message: 'Enter a valid URL starting with http or https',
-                  },
-                })}
-                placeholder="https://..."
-              />
-              {errors.image ? <span className="text-xs text-red-600">{errors.image.message}</span> : null}
-            </label>
-            <label className="space-y-2 text-sm">
-              <span className="font-medium text-slate-700">CTA link</span>
-              <Input
-                {...register('ctaLink', {
-                  validate: (value) => {
-                    if (!value) return true;
-                    if (value.startsWith('/')) return true;
-                    return /^(https?:\/\/).*/iu.test(value) || 'Enter an internal path or full URL';
-                  },
-                })}
-                placeholder="/specials or https://"
-              />
-              {errors.ctaLink ? <span className="text-xs text-red-600">{errors.ctaLink.message}</span> : null}
-            </label>
+          <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Call to action</p>
+                <p className="text-xs text-slate-600">
+                  Optional button text and destination for the announcement.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2 text-sm">
+                <span className="font-medium text-slate-700">CTA text</span>
+                <Input
+                  {...register('ctaText', {
+                    maxLength: { value: 80, message: 'CTA text must be under 80 characters' },
+                  })}
+                  placeholder="Learn more"
+                  autoComplete="off"
+                />
+                {errors.ctaText ? (
+                  <span className="text-xs text-red-600">{errors.ctaText.message}</span>
+                ) : null}
+              </label>
+              <label className="space-y-2 text-sm">
+                <span className="font-medium text-slate-700">CTA link</span>
+                <Input
+                  {...register('ctaLink', {
+                    validate: (value) => {
+                      if (!value) return true;
+                      if (value.startsWith('/')) return true;
+                      try {
+                        // eslint-disable-next-line no-new
+                        new URL(value);
+                        return true;
+                      } catch (err) {
+                        return 'Enter a valid URL starting with http or https, or an internal path like /news';
+                      }
+                    },
+                  })}
+                  placeholder="/updates or https://..."
+                  autoComplete="off"
+                />
+                {errors.ctaLink ? (
+                  <span className="text-xs text-red-600">{errors.ctaLink.message}</span>
+                ) : null}
+              </label>
+            </div>
+          </div>
+
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-slate-700">Image URL</span>
+            <Input
+              {...register('image', {
+                pattern: {
+                  value: /^(https?:\/\/).*/iu,
+                  message: 'Enter a valid URL starting with http or https',
+                },
+              })}
+              placeholder="https://..."
+              autoComplete="off"
+            />
+            {errors.image ? <span className="text-xs text-red-600">{errors.image.message}</span> : null}
+          </label>
           </div>
 
           <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">

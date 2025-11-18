@@ -36,6 +36,9 @@ const buildEventNotificationContext = (event) => {
     targetType: 'event',
     targetId: eventId,
     targetLink: link,
+    resourceType: 'event',
+    resourceId: eventId,
+    resourceLink: link,
   };
 };
 

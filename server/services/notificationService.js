@@ -20,6 +20,14 @@ const normalizeEntityType = (value) => {
   return undefined;
 };
 
+const normalizeResourceLink = (value) => {
+  if (!value || typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//iu.test(trimmed)) return trimmed;
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+};
+
 const sanitizeEntries = (entries = []) =>
   entries
     .map((entry) => {
@@ -41,6 +49,9 @@ const sanitizeEntries = (entries = []) =>
       const entityId = toObjectId(entry.entityId);
       const targetType = normalizeEntityType(entry.targetType) || entityType;
       const targetId = toObjectId(entry.targetId) || entityId;
+      const resourceType = normalizeEntityType(entry.resourceType) || targetType;
+      const resourceId = toObjectId(entry.resourceId) || targetId;
+      const resourceLink = normalizeResourceLink(entry.resourceLink) || targetLink;
       const priority = ['low', 'normal', 'high'].includes(String(entry.priority))
         ? String(entry.priority)
         : undefined;
@@ -66,6 +77,9 @@ const sanitizeEntries = (entries = []) =>
         targetType,
         targetId,
         targetLink,
+        resourceType,
+        resourceId,
+        resourceLink,
         payload: entry.payload,
         metadata: entry.metadata,
         entityType,

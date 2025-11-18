@@ -30,6 +30,12 @@ const notificationSchema = new Schema(
     },
     targetId: { type: Schema.Types.ObjectId },
     targetLink: { type: String, trim: true },
+    resourceType: {
+      type: String,
+      enum: ['order', 'serviceRequest', 'event', 'announcement'],
+    },
+    resourceId: { type: Schema.Types.ObjectId },
+    resourceLink: { type: String, trim: true },
     read: { type: Boolean, default: false },
     priority: {
       type: String,

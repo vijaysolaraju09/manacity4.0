@@ -45,6 +45,9 @@ const buildOrderNotificationContext = (order) => {
     targetType: 'order',
     targetId: id,
     targetLink: link,
+    resourceType: 'order',
+    resourceId: id,
+    resourceLink: link,
   };
 };
 

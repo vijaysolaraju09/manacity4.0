@@ -78,6 +78,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 40;
 }
 
 .modal-content {
@@ -88,6 +89,7 @@
   border: 1px solid rgb(var(--mc-border));
   box-shadow: var(--mc-shadow-2);
   min-width: 300px;
+  max-width: min(90vw, 720px);
 }
 
 .modal-content label {
@@ -96,6 +98,27 @@
   gap: 0.25rem;
   margin-top: 0.75rem;
   font-size: 0.875rem;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.modal-header .ghost {
+  border: none;
+  background: transparent;
+  font-size: 1.25rem;
+  color: rgb(var(--mc-muted, 120, 131, 149));
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-header .ghost:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .modal-content input,

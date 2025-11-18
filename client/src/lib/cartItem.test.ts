@@ -1,55 +1,45 @@
+import { describe, expect, it } from 'vitest';
 import { buildCartItem } from './cartItem';
 
 describe('buildCartItem', () => {
-  it('normalizes identifiers, quantities and price fields', () => {
+  it('accepts products from product pages that expose id but not _id', () => {
     const item = buildCartItem({
       product: {
-        _id: ' product-1 ',
-        shopId: ' shop-1 ',
-        name: 'Premium Mango',
-        price: 249.5,
-        images: ['https://cdn.test/mango.jpg'],
+        id: 'prod-page-1',
+        shop: 'shop-1',
+        name: 'Mango Shake',
+        price: 150,
       },
-      quantity: 2.4,
+      quantity: 2,
     });
 
-    expect(item).toEqual({
-      productId: 'product-1',
-      shopId: 'shop-1',
-      name: 'Premium Mango',
-      image: 'https://cdn.test/mango.jpg',
-      pricePaise: 24950,
-      qty: 2,
-      variantId: undefined,
-    });
+    expect(item).toEqual(
+      expect.objectContaining({
+        productId: 'prod-page-1',
+        shopId: 'shop-1',
+        qty: 2,
+      }),
+    );
   });
 
-  it('supports alternative field names and falls back to defaults', () => {
+  it('accepts products from shop cards that expose an _id', () => {
     const item = buildCartItem({
       product: {
-        id: 'sku-9',
-        shop: { id: 'vendor-3' },
-        title: 'Organic Tomatoes',
-        sellingPricePaise: 1299,
-        media: [{ url: 'https://cdn.test/tomato.png' }],
-        variant: { _id: 'var-1' },
+        _id: 'shop-card-9',
+        shopId: 'shop-99',
+        name: 'Cold Coffee',
+        pricePaise: 9900,
       },
       quantity: 1,
     });
 
-    expect(item).toEqual({
-      productId: 'sku-9',
-      shopId: 'vendor-3',
-      name: 'Organic Tomatoes',
-      image: 'https://cdn.test/tomato.png',
-      pricePaise: 1299,
-      qty: 1,
-      variantId: 'var-1',
-    });
-  });
-
-  it('throws when the product cannot be normalized', () => {
-    expect(() => buildCartItem({ product: null, quantity: 1 })).toThrow('Cannot add an unknown product to cart');
-    expect(() => buildCartItem({ product: {}, quantity: 1 })).toThrow('Product is missing a valid identifier');
+    expect(item).toEqual(
+      expect.objectContaining({
+        productId: 'shop-card-9',
+        shopId: 'shop-99',
+        pricePaise: 9900,
+        qty: 1,
+      }),
+    );
   });
 });

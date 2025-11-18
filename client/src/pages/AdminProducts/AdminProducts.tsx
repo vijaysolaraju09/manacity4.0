@@ -660,8 +660,21 @@ const AdminProducts = () => {
             onSubmit={handleCreateProduct}
             onClick={(event) => event.stopPropagation()}
           >
-            <h3 id="admin-create-product-heading">Add product</h3>
-            <p className="hint">Create a catalog item tied to an approved shop.</p>
+            <div className="modal-header">
+              <div>
+                <h3 id="admin-create-product-heading">Add product</h3>
+                <p className="hint">Create a catalog item tied to an approved shop.</p>
+              </div>
+              <button
+                type="button"
+                className="ghost"
+                aria-label="Close"
+                onClick={closeCreateModal}
+                disabled={createSubmitting}
+              >
+                ×
+              </button>
+            </div>
             {createError ? (
               <p className="modal-error" role="alert">
                 {createError}
@@ -827,7 +840,7 @@ const AdminProducts = () => {
             ) : null}
             <div className="modal-actions">
               <button type="submit" disabled={createSubmitting}>
-                {createSubmitting ? 'Creating…' : 'Create product'}
+                {createSubmitting ? 'Saving…' : 'Save product'}
               </button>
               <button type="button" onClick={closeCreateModal} disabled={createSubmitting}>
                 Cancel

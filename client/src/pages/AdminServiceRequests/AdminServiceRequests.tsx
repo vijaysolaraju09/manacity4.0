@@ -7,6 +7,7 @@ import './AdminServiceRequests.scss';
 import {
   adminFetchServiceRequests,
   adminUpdateServiceRequest,
+  adminFetchProviders,
 } from '@/store/serviceRequests';
 import type { AppDispatch, RootState } from '@/store';
 
@@ -29,6 +30,7 @@ const formatStatus = (value: string) =>
 const AdminServiceRequests = () => {
   const dispatch = useDispatch<AppDispatch>();
   const adminState = useSelector((state: RootState) => state.serviceRequests.admin);
+  const providersState = useSelector((state: RootState) => state.serviceRequests.providers);
   const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>('all');
   const [drafts, setDrafts] = useState<Record<string, EditableState>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -37,6 +39,12 @@ const AdminServiceRequests = () => {
     const params = statusFilter === 'all' ? {} : { status: statusFilter };
     dispatch(adminFetchServiceRequests(params));
   }, [dispatch, statusFilter]);
+
+  useEffect(() => {
+    if (providersState.status === 'idle') {
+      dispatch(adminFetchProviders());
+    }
+  }, [dispatch, providersState.status]);
 
   useEffect(() => {
     const nextDrafts: Record<string, EditableState> = {};
@@ -69,7 +77,12 @@ const AdminServiceRequests = () => {
     if (!draft) return;
 
     const trimmedProvider = draft.providerId.trim();
-    if (draft.status === 'assigned' && !trimmedProvider) {
+    const existingProviderId =
+      drafts[id]?.providerId ||
+      adminState.items.find((item) => item._id === id)?.assignedProviderId ||
+      '';
+    const requiresProvider = draft.status === 'assigned' && !(trimmedProvider || existingProviderId);
+    if (requiresProvider) {
       showToast('Enter a provider ID before assigning the request.', 'error');
       return;
     }
@@ -152,6 +165,7 @@ const AdminServiceRequests = () => {
             const feedbackUpdatedLabel = request.feedback?.updatedAt
               ? new Date(request.feedback.updatedAt).toLocaleDateString()
               : null;
+            const providerOptions = providersState.items;
             return (
               <div key={request._id} className="admin-service-requests__item">
                 <div>
@@ -209,13 +223,22 @@ const AdminServiceRequests = () => {
                   />
                 </label>
                 <label>
-                  Assigned provider ID
-                  <input
-                    type="text"
+                  Assigned provider
+                  <select
                     value={draft.providerId}
                     onChange={(event) => handleDraftChange(request._id, 'providerId', event.target.value)}
-                    placeholder="User ID"
-                  />
+                    disabled={providersState.status === 'loading'}
+                  >
+                    <option value="">Select a provider</option>
+                    {providerOptions.map((provider) => (
+                      <option key={provider._id} value={provider._id}>
+                        {provider.name} {provider.phone ? `• ${provider.phone}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  {providersState.status === 'failed' && providersState.error ? (
+                    <span className="admin-service-requests__error">{providersState.error}</span>
+                  ) : null}
                 </label>
                 <div className="admin-service-requests__actions">
                   <Button type="button" onClick={() => void handleSave(request._id)} disabled={savingId === request._id}>

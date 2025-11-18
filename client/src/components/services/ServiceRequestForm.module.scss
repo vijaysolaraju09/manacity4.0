@@ -65,6 +65,21 @@
   align-items: center;
 }
 
+.datetimeRow {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.submitRow {
+  display: flex;
+  justify-content: flex-start;
+  position: sticky;
+  bottom: 0;
+  padding: 0.5rem 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, #ffffff 40%);
+}
+
 .error {
   color: #dc2626;
   font-size: 0.85rem;

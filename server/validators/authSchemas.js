@@ -24,7 +24,9 @@ const signupSchema = {
 const loginSchema = {
   body: z.object({
     phone: phoneSchema,
-    password: passwordSchema,
+    // Login should accept any existing password hash (including legacy weak ones),
+    // so only require a non-empty string here.
+    password: z.string().min(1, 'Password is required'),
   }),
 };
 

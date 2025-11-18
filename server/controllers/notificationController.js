@@ -1,4 +1,5 @@
 const Notification = require('../models/Notification');
+const Notification = require('../models/Notification');
 const AppError = require('../utils/AppError');
 
 const toNotificationResponse = (doc) => {
@@ -10,6 +11,9 @@ const toNotificationResponse = (doc) => {
   const targetType = doc.targetType || payload.targetType || entityType || null;
   const targetId = doc.targetId || payload.targetId || entityId || null;
   const targetLink = doc.targetLink || payload.targetLink || redirectUrl || null;
+  const resourceType = doc.resourceType || payload.resourceType || targetType || null;
+  const resourceId = doc.resourceId || payload.resourceId || targetId || null;
+  const resourceLink = doc.resourceLink || payload.resourceLink || targetLink || redirectUrl || null;
   return {
     ...doc,
     redirectUrl,
@@ -18,6 +22,9 @@ const toNotificationResponse = (doc) => {
     targetType,
     targetId,
     targetLink,
+    resourceType,
+    resourceId,
+    resourceLink,
   };
 };
 

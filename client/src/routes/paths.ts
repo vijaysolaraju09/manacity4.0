@@ -5,6 +5,10 @@ export const paths = {
   cart: () => '/cart',
   checkout: () => '/checkout',
   notifications: () => '/notifications',
+  announcements: {
+    list: () => '/announcements',
+    detail: (id: string = ':id') => `/announcements/${id}`,
+  },
   profile: () => '/profile',
   history: () => '/history',
   profileHistory: () => '/history',

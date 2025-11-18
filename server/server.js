@@ -38,6 +38,7 @@ const adminServiceRequestRoutes = require("./routes/adminServiceRequestRoutes");
 const AppError = require("./utils/AppError");
 const logger = require("./utils/logger");
 const adminAnnouncementRoutes = require("./routes/adminAnnouncementRoutes");
+const announcementRoutes = require("./routes/announcementRoutes");
 
 const env = process.env.NODE_ENV || "development";
 const isDevelopment = env === "development";
@@ -177,6 +178,7 @@ app.use("/api/requests", standardLimiter, serviceRequestRoutes);
 app.use("/api/admin/services", adminServiceRoutes);
 app.use("/api/admin/service-requests", adminServiceRequestRoutes);
 app.use("/api/admin/announcements", adminAnnouncementRoutes);
+app.use("/api/announcements", announcementRoutes);
 
 if (process.env.NODE_ENV === "production") {
   const clientPath = path.join(__dirname, "..", "client", "dist");

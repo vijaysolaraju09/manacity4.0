@@ -46,6 +46,7 @@ import BusinessRequests from '@/pages/BusinessRequests'
 import VerificationRequests from '@/pages/VerificationRequests'
 import AdminUsers from '@/pages/AdminUsers'
 import AdminAnalytics from '@/pages/AdminAnalytics'
+import AnnouncementDetail from '@/pages/Announcements/AnnouncementDetail'
 import type { RootState } from '@/store'
 
 const AppRoutes = () => {
@@ -111,6 +112,7 @@ const AppRoutes = () => {
           <Route path="events" element={<EventsScreen />} />
           <Route path="events/:id" element={<EventDetailScreen />} />
           <Route path="events/:id/register" element={<EventRegisterScreen />} />
+          <Route path="announcements/:id" element={<AnnouncementDetail />} />
           <Route path="cart" element={<CartScreen />} />
           <Route path="checkout" element={<CheckoutScreen />} />
           <Route path="notifications" element={<NotificationsScreen />} />

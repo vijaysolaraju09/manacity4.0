@@ -296,6 +296,9 @@ const buildNotificationContext = (request) => {
     redirectUrl: link,
     targetId: entityId,
     targetLink: link,
+    resourceType: 'serviceRequest',
+    resourceId: entityId,
+    resourceLink: link,
   };
 };
 

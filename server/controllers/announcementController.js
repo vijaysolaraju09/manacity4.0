@@ -82,6 +82,8 @@ const buildAnnouncementNotificationContext = (announcement) => {
       targetType: 'announcement',
       redirectUrl,
       targetLink,
+      resourceType: 'announcement',
+      resourceLink: targetLink,
     };
   }
   return {
@@ -91,6 +93,9 @@ const buildAnnouncementNotificationContext = (announcement) => {
     targetType: 'announcement',
     targetId: id,
     targetLink,
+    resourceType: 'announcement',
+    resourceId: id,
+    resourceLink: targetLink,
   };
 };
 
@@ -123,6 +128,30 @@ const broadcastAnnouncementNotification = async (announcement) => {
     payload: promoPayload,
     metadata: promoPayload,
   });
+};
+
+exports.getAnnouncementById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const announcement = await Announcement.findOne({ _id: id, deletedAt: null });
+    if (!announcement) {
+      throw AppError.notFound('ANNOUNCEMENT_NOT_FOUND', 'Announcement not found');
+    }
+    res.json({ announcement });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.listActiveAnnouncements = async (_req, res, next) => {
+  try {
+    const items = await Announcement.find({ deletedAt: null })
+      .sort({ active: -1, createdAt: -1 })
+      .lean();
+    res.json({ items });
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.listAnnouncements = async (_req, res, next) => {

@@ -20,6 +20,9 @@ export interface Notif {
   targetType?: 'order' | 'serviceRequest' | 'event' | 'announcement' | null;
   targetId?: string | null;
   targetLink?: string | null;
+  resourceType?: 'order' | 'serviceRequest' | 'event' | 'announcement' | null;
+  resourceId?: string | null;
+  resourceLink?: string | null;
   metadata?: Record<string, unknown> | null;
   payload?: Record<string, unknown> | null;
 }
@@ -114,6 +117,15 @@ const normalizeNotification = (entry: any): Notif => {
     ((typeof payload?.priority === 'string' ? (payload.priority as Notif['priority']) : undefined) ??
       'normal');
   const pinned = Boolean(entry?.pinned ?? payload?.pinned ?? metadata?.pinned);
+  const resourceType =
+    (entry?.resourceType ?? payload?.resourceType ?? targetType ?? null) as Notif['resourceType'];
+  const resourceId = toIdString(entry?.resourceId ?? payload?.resourceId ?? targetId);
+  const resourceLink =
+    typeof entry?.resourceLink === 'string'
+      ? entry.resourceLink
+      : typeof payload?.resourceLink === 'string'
+      ? payload.resourceLink
+      : targetLink;
   return {
     _id: String(entry?._id ?? ''),
     type: entry?.type ?? 'system',
@@ -132,6 +144,9 @@ const normalizeNotification = (entry: any): Notif => {
     targetType,
     targetId: targetId ?? null,
     targetLink,
+    resourceType,
+    resourceId: resourceId ?? null,
+    resourceLink: resourceLink ?? null,
     metadata,
     payload,
   };

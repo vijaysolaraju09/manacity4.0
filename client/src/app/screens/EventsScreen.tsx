@@ -192,18 +192,6 @@ const EventsScreen = () => {
           </div>
         </Card>
       </section>
-
-      <Card className="rounded-3xl p-6">
-        <h2 className="text-xl font-semibold text-primary">Concierge notes</h2>
-        <div className="mt-4 space-y-3 text-sm text-muted">
-          <p className="inline-flex items-center gap-2">
-            <Gift className="h-4 w-4" /> Members receive curated perks for attending featured events.
-          </p>
-          <p className="inline-flex items-center gap-2">
-            <Heart className="h-4 w-4" /> Early RSVPs unlock additional hospitality benefits.
-          </p>
-        </div>
-      </Card>
     </div>
   )
 }

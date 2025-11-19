@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { CalendarDays, Gift, Heart, MapPin, Ticket, Trophy } from 'lucide-react'
+import { CalendarDays, MapPin, Ticket } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { AppDispatch, RootState } from '@/store'
 import { createEventsQueryKey, fetchEvents, fetchLeaderboard } from '@/store/events.slice'
@@ -13,7 +13,7 @@ const EventsScreen = () => {
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   const eventsList = useSelector((state: RootState) => state.events.list)
-  const leaderboard = useSelector((state: RootState) => state.events.leaderboard)
+  // const leaderboard = useSelector((state: RootState) => state.events.leaderboard)
 
   const params = useMemo(() => ({ pageSize: 8, status: 'published' }), [])
   const queryKey = useMemo(() => createEventsQueryKey(params), [params])

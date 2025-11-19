@@ -117,48 +117,6 @@ const EventsScreen = () => {
 
       <section className="grid gap-4 md:grid-cols-[1.4fr_0.8fr]">
         <Card className="rounded-3xl p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-primary">Leaderboard</h2>
-            <Badge tone="accent">Live updates</Badge>
-          </div>
-          <div className="mt-4 overflow-x-auto scroll-card">
-            {leaderboard.loading ? (
-              <p className="px-4 py-6 text-sm text-muted">Loading leaderboard...</p>
-            ) : (leaderboard.items?.length ?? 0) === 0 ? (
-              <p className="px-4 py-6 text-sm text-muted">Leaderboard data will appear once available.</p>
-            ) : (
-              <table className="w-full min-w-[480px] table-fixed border-separate border-spacing-y-3 text-left text-sm">
-                <thead className="text-muted">
-                  <tr>
-                    <th className="px-4 py-2 font-medium">Participant</th>
-                    <th className="px-4 py-2 font-medium">Score</th>
-                    <th className="px-4 py-2 font-medium">Rank</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaderboard.items?.map((entry) => (
-                    <tr
-                      key={entry._id ?? `${entry.participantId}-${entry.teamName}`}
-                      className="rounded-2xl border border-default bg-surface-1/70 text-primary shadow-sm-theme"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-[var(--accent)]">
-                            <Trophy className="h-5 w-5" />
-                          </div>
-                          <span>{entry.teamName || entry.user || 'Participant'}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm font-semibold">{entry.score ?? entry.points ?? '—'}</td>
-                      <td className="px-4 py-3 text-sm">{entry.rank ?? '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </Card>
-        <Card className="rounded-3xl p-6">
           <h2 className="text-xl font-semibold text-primary">Upcoming experiences</h2>
           <div className="mt-4 space-y-4 text-sm">
             {otherEvents.length === 0 ? (

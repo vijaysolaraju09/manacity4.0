@@ -246,6 +246,7 @@ const ServiceRequestForm = ({
             value={preferredDate}
             onChange={(event) => setPreferredDate(event.target.value)}
             disabled={submitting}
+            required
           />
           <input
             type="time"
@@ -253,6 +254,7 @@ const ServiceRequestForm = ({
             value={preferredTime}
             onChange={(event) => setPreferredTime(event.target.value)}
             disabled={submitting}
+            required
           />
         </div>
       </div>

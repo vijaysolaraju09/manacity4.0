@@ -320,7 +320,6 @@ const AdminAnnouncements = () => {
             />
             {errors.image ? <span className="text-xs text-red-600">{errors.image.message}</span> : null}
           </label>
-          </div>
 
           <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
             <input

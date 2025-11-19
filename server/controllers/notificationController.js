@@ -1,5 +1,4 @@
 const Notification = require('../models/Notification');
-const Notification = require('../models/Notification');
 const AppError = require('../utils/AppError');
 
 const toNotificationResponse = (doc) => {

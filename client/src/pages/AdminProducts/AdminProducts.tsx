@@ -636,15 +636,17 @@ const AdminProducts = () => {
           );
         }
         return (
-          <DataTable<ProductRow>
-            columns={columns}
-            rows={(products ?? []) as ProductRow[]}
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={setPage}
-            loading={loading}
-          />
+          <div className="table-container">
+            <DataTable<ProductRow>
+              columns={columns}
+              rows={(products ?? []) as ProductRow[]}
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              loading={loading}
+            />
+          </div>
         );
       })()}
       {createOpen && (
@@ -656,7 +658,7 @@ const AdminProducts = () => {
           onClick={closeCreateModal}
         >
           <form
-            className="modal-content"
+            className="modal-content modal-form"
             onSubmit={handleCreateProduct}
             onClick={(event) => event.stopPropagation()}
           >
@@ -859,7 +861,7 @@ const AdminProducts = () => {
         >
           <form
             ref={modalRef}
-            className="modal-content"
+            className="modal-content modal-form"
             onSubmit={handleSave}
             tabIndex={-1}
             onClick={(event) => event.stopPropagation()}

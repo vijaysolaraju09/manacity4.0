@@ -48,6 +48,20 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  align-items: center;
+}
+
+.admin-products .filters input,
+.admin-products .filters select {
+  min-height: 42px;
+  border-radius: var(--mc-radius-sm, 8px);
+}
+
+.table-container {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--mc-radius);
+  background: #ffffff;
 }
 
 .products-table {
@@ -99,6 +113,9 @@
   max-width: 90vw;
   max-height: 90vh;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .modal-content label {
@@ -143,6 +160,17 @@
 
 .modal-content textarea {
   resize: vertical;
+}
+
+.modal-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .modal-form {
+    gap: 1rem;
+  }
 }
 
 .modal-grid {

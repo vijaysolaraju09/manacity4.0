@@ -36,11 +36,16 @@ interface Product {
 
 type ProductRow = Product & { actions?: string };
 
-const emptyForm = {
+const emptyForm: CreateProductFormValues & { images: string } = {
+  shopId: '',
   name: '',
-  mrp: 0,
+  description: '',
+  category: '',
   price: 0,
+  mrp: 0,
+  discount: 0,
   stock: 0,
+  imageUrl: '',
   images: '',
 };
 
@@ -95,12 +100,7 @@ const AdminProducts = () => {
   const pageSize = 10;
 
   const [edit, setEdit] = useState<Product | null>(null);
-  const [form, setForm] = useState({
-    ...emptyForm,
-    description: '',
-    category: '',
-    imageUrl: '',
-  } as CreateProductFormValues & { images: string });
+  const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -329,6 +329,7 @@ const AdminProducts = () => {
   const openEdit = (p: Product) => {
     setEdit(p);
     setForm({
+      shopId: p.shopId,
       name: p.name,
       description: p.description ?? '',
       category: p.category,
@@ -337,6 +338,7 @@ const AdminProducts = () => {
       stock: p.stock,
       imageUrl: p.image ?? '',
       images: p.images?.join(',') || '',
+      discount: p.discount ?? 0,
     });
   };
 

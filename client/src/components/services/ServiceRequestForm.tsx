@@ -195,38 +195,42 @@ const ServiceRequestForm = ({
         />
       </div>
 
-      <div className={styles.field}>
-        <label htmlFor="location" className={styles.label}>
-          Location / Landmark
-        </label>
-        <input
-          id="location"
-          name="location"
-          className={styles.input}
-          type="text"
-          placeholder="Apartment, street or area"
-          value={location}
-          onChange={(event) => setLocation(event.target.value)}
-          disabled={submitting}
-        />
-      </div>
+      <div className={styles.inlineGrid}>
+        <div className={styles.field}>
+          <label htmlFor="location" className={styles.label}>
+            Location / Landmark
+          </label>
+          <input
+            id="location"
+            name="location"
+            className={styles.input}
+            type="text"
+            placeholder="Apartment, street or area"
+            value={location}
+            onChange={(event) => setLocation(event.target.value)}
+            disabled={submitting}
+            autoComplete="street-address"
+            inputMode="text"
+          />
+        </div>
 
-      <div className={styles.field}>
-        <label htmlFor="phone" className={styles.label}>
-          Contact phone
-        </label>
-        <input
-          id="phone"
-          name="phone"
-          className={styles.input}
-          type="tel"
-          placeholder="We&apos;ll share this with assigned providers"
-          value={phone}
-          onChange={(event) => setPhone(event.target.value)}
-          disabled={submitting}
-          autoComplete="tel"
-          inputMode="tel"
-        />
+        <div className={styles.field}>
+          <label htmlFor="phone" className={styles.label}>
+            Contact phone
+          </label>
+          <input
+            id="phone"
+            name="phone"
+            className={styles.input}
+            type="tel"
+            placeholder="We&apos;ll share this with assigned providers"
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            disabled={submitting}
+            autoComplete="tel"
+            inputMode="tel"
+          />
+        </div>
       </div>
 
       <div className={styles.field}>
@@ -272,6 +276,7 @@ const ServiceRequestForm = ({
             required
             min={defaultDate}
             aria-label="Preferred date"
+            inputMode="numeric"
           />
           <input
             type="time"
@@ -281,6 +286,7 @@ const ServiceRequestForm = ({
             disabled={submitting}
             required
             aria-label="Preferred time"
+            inputMode="numeric"
           />
         </div>
         <div className={styles.quickTimes}>

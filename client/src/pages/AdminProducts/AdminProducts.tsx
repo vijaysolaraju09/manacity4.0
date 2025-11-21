@@ -20,6 +20,7 @@ import './AdminProducts.scss';
 interface Product {
   _id: string;
   name: string;
+  description?: string;
   shopId: string;
   shopName?: string;
   category: string;
@@ -94,7 +95,12 @@ const AdminProducts = () => {
   const pageSize = 10;
 
   const [edit, setEdit] = useState<Product | null>(null);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState({
+    ...emptyForm,
+    description: '',
+    category: '',
+    imageUrl: '',
+  } as CreateProductFormValues & { images: string });
   const [saving, setSaving] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -324,9 +330,12 @@ const AdminProducts = () => {
     setEdit(p);
     setForm({
       name: p.name,
+      description: p.description ?? '',
+      category: p.category,
       mrp: p.mrp,
       price: p.price,
       stock: p.stock,
+      imageUrl: p.image ?? '',
       images: p.images?.join(',') || '',
     });
   };
@@ -342,11 +351,13 @@ const AdminProducts = () => {
     const updated: Product = {
       ...edit,
       name: form.name,
+      description: form.description,
       mrp: form.mrp,
       price: form.price,
       stock: form.stock,
+      category: form.category,
       images: imagesArr,
-      image: imagesArr[0],
+      image: form.imageUrl || imagesArr[0],
       discount: form.mrp ? Math.round(((form.mrp - form.price) / form.mrp) * 100) : 0,
     };
     setSaving(true);
@@ -356,10 +367,13 @@ const AdminProducts = () => {
     try {
       await apiUpdateProduct(edit._id, {
         name: updated.name,
+        description: updated.description,
         mrp: updated.mrp,
         price: updated.price,
         stock: updated.stock,
+        category: updated.category,
         images: imagesArr,
+        image: updated.image,
       });
       setEdit(null);
     } catch {
@@ -872,6 +886,27 @@ const AdminProducts = () => {
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+                minLength={3}
+              />
+            </label>
+            <label>
+              Description
+              <textarea
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                required
+                minLength={10}
+              />
+            </label>
+            <label>
+              Category
+              <input
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                required
               />
             </label>
             <label>
@@ -882,6 +917,9 @@ const AdminProducts = () => {
                 onChange={(e) =>
                   setForm({ ...form, mrp: Number(e.target.value) })
                 }
+                min={0}
+                step={0.01}
+                required
               />
             </label>
             <label>
@@ -892,6 +930,9 @@ const AdminProducts = () => {
                 onChange={(e) =>
                   setForm({ ...form, price: Number(e.target.value) })
                 }
+                min={0}
+                step={0.01}
+                required
               />
             </label>
             <div>Discount: {form.mrp ? Math.round(((form.mrp - form.price) / form.mrp) * 100) : 0}%</div>
@@ -903,6 +944,15 @@ const AdminProducts = () => {
                 onChange={(e) =>
                   setForm({ ...form, stock: Number(e.target.value) })
                 }
+                min={0}
+              />
+            </label>
+            <label>
+              Image URL
+              <input
+                value={form.imageUrl}
+                onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                placeholder="https://example.com/image.jpg"
               />
             </label>
             <label>

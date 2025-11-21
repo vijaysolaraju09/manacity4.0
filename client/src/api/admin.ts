@@ -395,12 +395,14 @@ export const updateProduct = async (
   id: string,
   data: Partial<{
     name: string;
+    description: string;
     mrp: number;
     price: number;
     stock: number;
     images: string[];
     status: string;
     category: string;
+    image: string;
   }>,
 ) => {
   const res = await adminApi.put(withAdminPrefix(`products/${id}`), data);

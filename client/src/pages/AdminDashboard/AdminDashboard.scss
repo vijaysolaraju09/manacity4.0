@@ -1,3 +1,45 @@
 .admin-dashboard {
   padding: 2rem;
 }
+
+.admin-dashboard__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-dashboard__card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.admin-dashboard__label {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.admin-dashboard__value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.admin-dashboard__links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-dashboard__links a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.admin-dashboard__links a:hover {
+  text-decoration: underline;
+}

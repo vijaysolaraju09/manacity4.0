@@ -8,6 +8,11 @@
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .admin-products__subtitle {
@@ -79,6 +84,7 @@
   align-items: center;
   justify-content: center;
   z-index: 40;
+  padding: 1rem;
 }
 
 .modal-content {
@@ -88,8 +94,11 @@
   border-radius: var(--mc-radius);
   border: 1px solid rgb(var(--mc-border));
   box-shadow: var(--mc-shadow-2);
-  min-width: 300px;
-  max-width: min(90vw, 720px);
+  width: min(100%, 760px);
+  min-width: min(100%, 320px);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-content label {
@@ -139,7 +148,7 @@
 .modal-grid {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 .modal-error {
@@ -183,4 +192,9 @@
   gap: 0.5rem;
   justify-content: flex-end;
   margin-top: 1rem;
+
+  @media (max-width: 600px) {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
 }

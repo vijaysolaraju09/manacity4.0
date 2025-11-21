@@ -29,6 +29,18 @@ const ServiceRequestForm = ({
   initialVisibility = 'public',
 }: ServiceRequestFormProps) => {
   const serviceOptions = useMemo(() => services ?? [], [services]);
+  const defaultDate = useMemo(() => {
+    const today = new Date();
+    const iso = today.toISOString().slice(0, 10);
+    return iso;
+  }, []);
+  const defaultTime = useMemo(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 60);
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }, []);
   const initialSelection = useMemo(() => {
     if (!initialServiceId) return '';
     const exists = serviceOptions.some((service) => service._id === initialServiceId || service.id === initialServiceId);
@@ -40,8 +52,8 @@ const ServiceRequestForm = ({
   const [details, setDetails] = useState('');
   const [location, setLocation] = useState('');
   const [phone, setPhone] = useState(initialPhone ?? '');
-  const [preferredDate, setPreferredDate] = useState('');
-  const [preferredTime, setPreferredTime] = useState('');
+  const [preferredDate, setPreferredDate] = useState(defaultDate);
+  const [preferredTime, setPreferredTime] = useState(defaultTime);
   const [visibility, setVisibility] = useState<'public' | 'private'>(initialVisibility);
   const [localError, setLocalError] = useState<string | null>(null);
   const [hasAppliedInitialService, setHasAppliedInitialService] = useState(false);
@@ -54,12 +66,12 @@ const ServiceRequestForm = ({
       setDetails('');
       setLocation('');
       setPhone(initialPhone ?? '');
-      setPreferredDate('');
-      setPreferredTime('');
+      setPreferredDate(defaultDate);
+      setPreferredTime(defaultTime);
       setVisibility(initialVisibility);
       setLocalError(null);
     }
-  }, [successMessage, initialSelection, initialPhone, initialVisibility]);
+  }, [defaultDate, defaultTime, initialSelection, initialPhone, initialVisibility, successMessage]);
 
   useEffect(() => {
     if (initialSelection && !hasAppliedInitialService) {
@@ -80,6 +92,12 @@ const ServiceRequestForm = ({
       setPhone((prev) => (prev ? prev : initialPhone));
     }
   }, [initialPhone]);
+
+  useEffect(() => {
+    if (serviceOptions.length === 1 && !serviceId) {
+      setServiceId(serviceOptions[0]._id ?? serviceOptions[0].id ?? '');
+    }
+  }, [serviceId, serviceOptions]);
 
   const showCustomField = !serviceId || serviceId === OTHER_OPTION;
 
@@ -128,6 +146,7 @@ const ServiceRequestForm = ({
           value={serviceId}
           onChange={(event) => setServiceId(event.target.value)}
           disabled={submitting}
+          aria-invalid={showCustomField && !customName}
         >
           <option value="">Select a service</option>
           {serviceOptions.map((service) => (
@@ -155,6 +174,8 @@ const ServiceRequestForm = ({
             onChange={(event) => setCustomName(event.target.value)}
             disabled={submitting}
             required
+            autoComplete="off"
+            inputMode="text"
           />
         </div>
       ) : null}
@@ -203,6 +224,8 @@ const ServiceRequestForm = ({
           value={phone}
           onChange={(event) => setPhone(event.target.value)}
           disabled={submitting}
+          autoComplete="tel"
+          inputMode="tel"
         />
       </div>
 
@@ -247,6 +270,8 @@ const ServiceRequestForm = ({
             onChange={(event) => setPreferredDate(event.target.value)}
             disabled={submitting}
             required
+            min={defaultDate}
+            aria-label="Preferred date"
           />
           <input
             type="time"
@@ -255,13 +280,31 @@ const ServiceRequestForm = ({
             onChange={(event) => setPreferredTime(event.target.value)}
             disabled={submitting}
             required
+            aria-label="Preferred time"
           />
+        </div>
+        <div className={styles.quickTimes}>
+          {[{ label: 'Morning', value: '09:00' }, { label: 'Afternoon', value: '13:00' }, { label: 'Evening', value: '18:00' }].map(
+            (preset) => (
+              <button
+                key={preset.value}
+                type="button"
+                className={styles.chipButton}
+                onClick={() => setPreferredTime(preset.value)}
+                disabled={submitting}
+              >
+                {preset.label}
+              </button>
+            ),
+          )}
         </div>
       </div>
 
-      {localError ? <div className={styles.error}>{localError}</div> : null}
-      {error ? <div className={styles.error}>{error}</div> : null}
-      {successMessage ? <div className={styles.success}>{successMessage}</div> : null}
+      <div className={styles.feedback} aria-live="polite">
+        {localError ? <div className={styles.error}>{localError}</div> : null}
+        {error ? <div className={styles.error}>{error}</div> : null}
+        {successMessage ? <div className={styles.success}>{successMessage}</div> : null}
+      </div>
 
       <div className={styles.submitRow}>
         <Button type="submit" disabled={submitting}>

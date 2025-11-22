@@ -62,10 +62,7 @@ const ShopsScreen = () => {
       <Card className="rounded-[2rem] p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-primary">Explore curated shops</h1>
-            <p className="text-sm text-muted">
-              Browse verified partners and independent businesses offering concierge-grade service.
-            </p>
+            <h1 className="text-2xl font-semibold text-primary">Explore shops</h1>
           </div>
           <div className="flex w-full flex-col gap-3 md:w-auto md:items-end">
             <Input

@@ -10,7 +10,7 @@ const Chip = ({ active = false, className, children, ...props }: ChipProps) => (
   <button
     type="button"
     className={cn(
-      'rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-0 focus-visible:[box-shadow:var(--ring)]',
+      'inline-flex items-center whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-0 focus-visible:[box-shadow:var(--ring)]',
       active ? 'chip-active' : 'chip-inactive',
       className,
     )}

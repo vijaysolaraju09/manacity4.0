@@ -59,32 +59,30 @@ const ShopsScreen = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card className="rounded-[2rem] p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-primary">Explore shops</h1>
-          </div>
-          <div className="flex w-full flex-col gap-3 md:w-auto md:items-end">
-            <Input
-              icon={Search}
-              value={query}
-              onChange={handleSearchChange}
-              placeholder="Search shops…"
-              className="w-full md:w-[260px]"
-              inputClassName="text-sm"
-              aria-label="Search shops"
-              type="search"
-            />
-            <div className="flex flex-wrap justify-start gap-3 md:justify-end">
-              {categories.map((name) => (
-                <Chip key={name} active={filter === name} onClick={() => setFilter(name)}>
-                  {name}
-                </Chip>
-              ))}
-            </div>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-primary">Explore shops</h1>
+        </div>
+        <div className="flex w-full flex-col gap-3 md:w-auto md:items-end">
+          <Input
+            icon={Search}
+            value={query}
+            onChange={handleSearchChange}
+            placeholder="Search shops…"
+            className="w-full md:w-[260px]"
+            inputClassName="text-sm"
+            aria-label="Search shops"
+            type="search"
+          />
+          <div className="flex w-full flex-nowrap gap-3 overflow-x-auto md:flex-wrap md:justify-end">
+            {categories.map((name) => (
+              <Chip key={name} active={filter === name} onClick={() => setFilter(name)}>
+                {name}
+              </Chip>
+            ))}
           </div>
         </div>
-      </Card>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filtered.length === 0 ? (

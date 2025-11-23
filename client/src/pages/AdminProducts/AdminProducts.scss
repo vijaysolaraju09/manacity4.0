@@ -226,3 +226,48 @@
     align-items: stretch;
   }
 }
+
+.admin-products__modal .ant-modal-content {
+  border-radius: var(--mc-radius, 12px);
+}
+
+.admin-products__modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-products__modalForm label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.admin-products__modalForm input,
+.admin-products__modalForm textarea,
+.admin-products__modalForm select {
+  border-radius: var(--mc-radius-sm, 8px);
+  border: 1px solid rgb(var(--mc-border));
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  background: rgb(var(--mc-surface-1, 248, 250, 252));
+  color: inherit;
+}
+
+.admin-products__modalForm textarea {
+  resize: vertical;
+}
+
+.admin-products__modalGrid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.admin-products__modalActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}

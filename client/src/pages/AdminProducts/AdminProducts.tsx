@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { Modal } from 'antd';
 import { useForm } from 'react-hook-form';
 import {
   fetchProducts,
@@ -665,208 +666,185 @@ const AdminProducts = () => {
           </div>
         );
       })()}
-      {createOpen && (
-        <div
-          className="modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="admin-create-product-heading"
-          onClick={closeCreateModal}
-        >
-          <form
-            className="modal-content modal-form"
-            onSubmit={handleCreateProduct}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal-header">
-              <div>
-                <h3 id="admin-create-product-heading">Add product</h3>
-                <p className="hint">Create a catalog item tied to an approved shop.</p>
-              </div>
-              <button
-                type="button"
-                className="ghost"
-                aria-label="Close"
-                onClick={closeCreateModal}
-                disabled={createSubmitting}
-              >
-                ×
-              </button>
-            </div>
-            {createError ? (
-              <p className="modal-error" role="alert">
-                {createError}
-              </p>
+      <Modal
+        title="Add product"
+        open={createOpen}
+        onCancel={closeCreateModal}
+        footer={null}
+        destroyOnClose
+        className="admin-products__modal"
+        bodyStyle={{ maxHeight: '70vh', overflowY: 'auto' }}
+      >
+        <form className="admin-products__modalForm" onSubmit={handleCreateProduct}>
+          <p className="hint">Create a catalog item tied to an approved shop.</p>
+          {createError ? (
+            <p className="modal-error" role="alert">
+              {createError}
+            </p>
+          ) : null}
+          <label>
+            Shop
+            <select
+              {...registerCreate('shopId', { required: 'Select a shop' })}
+              disabled={shopsLoading || shops.length === 0}
+            >
+              <option value="">Select shop</option>
+              {shops.map((shopItem) => {
+                const statusValue = shopItem.status?.toLowerCase();
+                const disabled =
+                  statusValue !== undefined && !['approved', 'active'].includes(statusValue);
+                return (
+                  <option key={shopItem._id} value={shopItem._id} disabled={disabled}>
+                    {shopItem.name}
+                    {statusValue && statusValue !== 'approved'
+                      ? ` (${shopItem.status})`
+                      : ''}
+                  </option>
+                );
+              })}
+            </select>
+            {createErrors.shopId ? (
+              <span className="field-error">{createErrors.shopId.message}</span>
             ) : null}
+          </label>
+          <label>
+            Product name
+            <input
+              {...registerCreate('name', {
+                required: 'Enter a product name',
+                minLength: { value: 3, message: 'Name must be at least 3 characters' },
+              })}
+              placeholder="Iced latte, headphones, ..."
+            />
+            {createErrors.name ? (
+              <span className="field-error">{createErrors.name.message}</span>
+            ) : null}
+          </label>
+          <label>
+            Description
+            <textarea
+              rows={3}
+              {...registerCreate('description', {
+                required: 'Describe the item',
+                minLength: { value: 10, message: 'Description must be at least 10 characters' },
+              })}
+              placeholder="What makes this item special?"
+            />
+            {createErrors.description ? (
+              <span className="field-error">{createErrors.description.message}</span>
+            ) : null}
+          </label>
+          <label>
+            Category
+            <input
+              {...registerCreate('category', {
+                required: 'Enter a category',
+                minLength: { value: 2, message: 'Category must be at least 2 characters' },
+              })}
+              placeholder="Beverages, electronics, ..."
+            />
+            {createErrors.category ? (
+              <span className="field-error">{createErrors.category.message}</span>
+            ) : null}
+          </label>
+          <div className="admin-products__modalGrid">
             <label>
-              Shop
-              <select
-                {...registerCreate('shopId', { required: 'Select a shop' })}
-                disabled={shopsLoading || shops.length === 0}
-              >
-                <option value="">Select shop</option>
-                {shops.map((shopItem) => {
-                  const status = shopItem.status?.toLowerCase();
-                  const disabled =
-                    status !== undefined && !['approved', 'active'].includes(status);
+              Price (₹)
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                {...priceField}
+                onChange={(event) => {
+                  lastPriceChangeSource.current = 'price';
+                  priceField.onChange(event);
+                }}
+              />
+              {createErrors.price ? (
+                <span className="field-error">{createErrors.price.message}</span>
+              ) : null}
+            </label>
+            <label>
+              MRP (₹)
+              <input type="number" step="0.01" min={0} {...mrpField} />
+              {createErrors.mrp ? (
+                <span className="field-error">{createErrors.mrp.message}</span>
+              ) : null}
+            </label>
+            <label>
+              Discount (%)
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                {...discountField}
+                onChange={(event) => {
+                  lastPriceChangeSource.current = 'discount';
+                  discountField.onChange(event);
+                }}
+              />
+              {createErrors.discount ? (
+                <span className="field-error">{createErrors.discount.message}</span>
+              ) : null}
+            </label>
+            <label>
+              Stock
+              <input
+                type="number"
+                min={0}
+                step={1}
+                {...registerCreate('stock', {
+                  valueAsNumber: true,
+                  min: { value: 0, message: 'Stock cannot be negative' },
+                })}
+              />
+              {createErrors.stock ? (
+                <span className="field-error">{createErrors.stock.message}</span>
+              ) : null}
+            </label>
+          </div>
+          <label>
+            Image URL
+            <input
+              {...registerCreate('imageUrl', {
+                validate: (value) => {
+                  if (!value) return true;
+                  if (value.startsWith('data:')) return true;
                   return (
-                    <option key={shopItem._id} value={shopItem._id} disabled={disabled}>
-                      {shopItem.name}
-                      {status && status !== 'approved'
-                        ? ` (${shopItem.status})`
-                        : ''}
-                    </option>
+                    /^(https?:\/\/).*/iu.test(value) ||
+                    'Enter a full URL or upload an image'
                   );
-                })}
-              </select>
-              {createErrors.shopId ? (
-                <span className="field-error">{createErrors.shopId.message}</span>
-              ) : null}
-            </label>
-            <label>
-              Product name
-              <input
-                {...registerCreate('name', {
-                  required: 'Enter a product name',
-                  minLength: { value: 3, message: 'Name must be at least 3 characters' },
-                })}
-                placeholder="Signature dish"
-              />
-              {createErrors.name ? (
-                <span className="field-error">{createErrors.name.message}</span>
-              ) : null}
-            </label>
-            <label>
-              Description
-              <textarea
-                rows={3}
-                {...registerCreate('description', {
-                  required: 'Describe the product',
-                  minLength: { value: 10, message: 'Description must be at least 10 characters' },
-                })}
-                placeholder="Write a short summary"
-              />
-              {createErrors.description ? (
-                <span className="field-error">{createErrors.description.message}</span>
-              ) : null}
-            </label>
-            <label>
-              Category
-              <input
-                {...registerCreate('category', {
-                  required: 'Enter a category',
-                  minLength: { value: 2, message: 'Category must be at least 2 characters' },
-                })}
-                placeholder="Beverages, electronics, ..."
-              />
-              {createErrors.category ? (
-                <span className="field-error">{createErrors.category.message}</span>
-              ) : null}
-            </label>
-            <div className="modal-grid">
-              <label>
-                Price (₹)
-                <input
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  {...priceField}
-                  onChange={(event) => {
-                    lastPriceChangeSource.current = 'price';
-                    priceField.onChange(event);
-                  }}
-                />
-                {createErrors.price ? (
-                  <span className="field-error">{createErrors.price.message}</span>
-                ) : null}
-              </label>
-              <label>
-                MRP (₹)
-                <input
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  {...mrpField}
-                />
-                {createErrors.mrp ? (
-                  <span className="field-error">{createErrors.mrp.message}</span>
-                ) : null}
-              </label>
-              <label>
-                Discount (%)
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={1}
-                  {...discountField}
-                  onChange={(event) => {
-                    lastPriceChangeSource.current = 'discount';
-                    discountField.onChange(event);
-                  }}
-                />
-                {createErrors.discount ? (
-                  <span className="field-error">{createErrors.discount.message}</span>
-                ) : null}
-              </label>
-              <label>
-                Stock
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  {...registerCreate('stock', {
-                    valueAsNumber: true,
-                    min: { value: 0, message: 'Stock cannot be negative' },
-                  })}
-                />
-                {createErrors.stock ? (
-                  <span className="field-error">{createErrors.stock.message}</span>
-                ) : null}
-              </label>
-            </div>
-            <label>
-              Image URL
-              <input
-                {...registerCreate('imageUrl', {
-                  validate: (value) => {
-                    if (!value) return true;
-                    if (value.startsWith('data:')) return true;
-                    return (
-                      /^(https?:\/\/).*/iu.test(value) ||
-                      'Enter a full URL or upload an image'
-                    );
-                  },
-                })}
-                placeholder="https://example.com/image.jpg"
-              />
-              {createErrors.imageUrl ? (
-                <span className="field-error">{createErrors.imageUrl.message}</span>
-              ) : null}
-            </label>
-            <label className="file-upload">
-              Upload image
-              <input type="file" accept="image/*" onChange={handleCreateImageUpload} />
-              <span className="hint">JPEG or PNG up to 2 MB. Uploaded images override the URL.</span>
-            </label>
-            {createImagePreview ? (
-              <img
-                src={createImagePreview}
-                alt="Preview"
-                className="admin-products__imagePreview"
-              />
+                },
+              })}
+              placeholder="https://example.com/image.jpg"
+            />
+            {createErrors.imageUrl ? (
+              <span className="field-error">{createErrors.imageUrl.message}</span>
             ) : null}
-            <div className="modal-actions">
-              <button type="submit" disabled={createSubmitting}>
-                {createSubmitting ? 'Saving…' : 'Save product'}
-              </button>
-              <button type="button" onClick={closeCreateModal} disabled={createSubmitting}>
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+          </label>
+          <label className="file-upload">
+            Upload image
+            <input type="file" accept="image/*" onChange={handleCreateImageUpload} />
+            <span className="hint">JPEG or PNG up to 2 MB. Uploaded images override the URL.</span>
+          </label>
+          {createImagePreview ? (
+            <img
+              src={createImagePreview}
+              alt="Preview"
+              className="admin-products__imagePreview"
+            />
+          ) : null}
+          <div className="admin-products__modalActions">
+            <button type="submit" disabled={createSubmitting}>
+              {createSubmitting ? 'Saving…' : 'Save product'}
+            </button>
+            <button type="button" onClick={closeCreateModal} disabled={createSubmitting}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </Modal>
       {edit && (
         <div
           className="modal"

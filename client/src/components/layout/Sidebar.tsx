@@ -1,21 +1,59 @@
 /* A responsive, mini→expanded sidebar. Mobile uses your existing bottom nav; we only render this on md+ */
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Bell, Store, PackageOpen, Users, CalendarDays, Settings } from 'lucide-react'; // or your existing icon set
+import {
+  Home,
+  Bell,
+  Store,
+  PackageOpen,
+  Users,
+  CalendarDays,
+  Settings,
+  Package,
+  ClipboardList,
+} from 'lucide-react'; // or your existing icon set
+import { useSelector } from 'react-redux';
 import { paths } from '@/routes/paths';
+import type { RootState } from '@/store';
 
 type Item = { to: string; label: string; icon: React.ReactNode; badge?: number };
 
-const items: Item[] = [
-  { to: paths.home(), label: 'Home', icon: <Home className="mc-item__icon" /> },
-  { to: paths.shops(), label: 'Shops', icon: <Store className="mc-item__icon" /> },
-  { to: paths.services.catalog(), label: 'Services', icon: <PackageOpen className="mc-item__icon" /> },
-  { to: paths.events.list(), label: 'Events', icon: <CalendarDays className="mc-item__icon" /> },
-  { to: paths.notifications(), label: 'Notifications', icon: <Bell className="mc-item__icon" />, badge: 0 },
-  { to: paths.profile(), label: 'Profile', icon: <Users className="mc-item__icon" /> },
-];
-
 export default function Sidebar() {
+  const role = useSelector((state: RootState) => state.auth.user?.role?.toLowerCase());
+  const businessNavVisible = role === 'business' || role === 'provider';
+
+  const items: Item[] = [
+    { to: paths.home(), label: 'Home', icon: <Home className="mc-item__icon" /> },
+    { to: paths.shops(), label: 'Shops', icon: <Store className="mc-item__icon" /> },
+    {
+      to: paths.services.catalog(),
+      label: 'Services',
+      icon: <PackageOpen className="mc-item__icon" />,
+    },
+    { to: paths.events.list(), label: 'Events', icon: <CalendarDays className="mc-item__icon" /> },
+    {
+      to: paths.notifications(),
+      label: 'Notifications',
+      icon: <Bell className="mc-item__icon" />,
+      badge: 0,
+    },
+    { to: paths.profile(), label: 'Profile', icon: <Users className="mc-item__icon" /> },
+    ...(businessNavVisible
+      ? [
+          {
+            to: paths.manageProducts(),
+            label: 'Manage products',
+            icon: <Package className="mc-item__icon" />,
+          },
+          {
+            to: paths.orders.received(),
+            label: 'Orders received',
+            icon: <ClipboardList className="mc-item__icon" />,
+          },
+        ]
+      : []),
+  ];
+
   const [open, setOpen] = React.useState(false);
   return (
     <aside

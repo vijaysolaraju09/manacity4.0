@@ -245,6 +245,70 @@ exports.listShops = async (req, res, next) => {
   }
 };
 
+exports.createShop = async (req, res, next) => {
+  try {
+    const { name, category, location, ownerId, owner, status } = req.body || {};
+
+    const trimmedName = typeof name === 'string' ? name.trim() : '';
+    const trimmedCategory = typeof category === 'string' ? category.trim() : '';
+    const trimmedLocation = typeof location === 'string' ? location.trim() : '';
+
+    if (!trimmedName || trimmedName.length < 2) {
+      throw AppError.badRequest('INVALID_SHOP_NAME', 'Shop name is required');
+    }
+    if (!trimmedCategory) {
+      throw AppError.badRequest('INVALID_SHOP_CATEGORY', 'Category is required');
+    }
+    if (!trimmedLocation) {
+      throw AppError.badRequest('INVALID_SHOP_LOCATION', 'Location is required');
+    }
+
+    const ownerValue = ownerId || owner;
+    if (!ownerValue || !mongoose.Types.ObjectId.isValid(ownerValue)) {
+      throw AppError.badRequest('INVALID_OWNER', 'Valid owner id is required');
+    }
+
+    const ownerDoc = await User.findById(ownerValue);
+    if (!ownerDoc) {
+      throw AppError.notFound('OWNER_NOT_FOUND', 'Owner not found');
+    }
+    if (ownerDoc.role && ownerDoc.role !== 'business' && ownerDoc.role !== 'provider') {
+      throw AppError.badRequest('OWNER_NOT_BUSINESS', 'Owner must have a business profile');
+    }
+
+    const normalizedStatus = typeof status === 'string' ? status.toLowerCase() : 'active';
+    const mappedStatus = STATUS_TO_INTERNAL[normalizedStatus] || 'approved';
+
+    const shop = await Shop.create({
+      owner: ownerDoc._id,
+      name: trimmedName,
+      category: trimmedCategory,
+      location: trimmedLocation,
+      status: mappedStatus,
+    });
+
+    if (mappedStatus === 'approved') {
+      await User.findByIdAndUpdate(ownerDoc._id, {
+        businessStatus: 'approved',
+        role: ownerDoc.role || 'business',
+      });
+    }
+
+    const [withOwner] = await Shop.aggregate([
+      ...buildShopPipeline({ match: { _id: shop._id }, search: null }),
+      { $limit: 1 },
+    ]);
+
+    res.status(201).json({
+      ok: true,
+      data: { shop: mapShop(withOwner || shop) },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.updateShop = async (req, res, next) => {
   try {
     const { id } = req.params;

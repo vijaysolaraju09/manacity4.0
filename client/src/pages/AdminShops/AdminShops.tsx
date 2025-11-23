@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   fetchShops,
+  fetchUsers,
+  createShop as apiCreateShop,
   updateShop as apiUpdateShop,
   deleteShop as apiDeleteShop,
   type ShopQueryParams,
@@ -16,6 +18,7 @@ interface Shop {
   _id: string;
   name: string;
   owner: string;
+  ownerId?: string;
   category: string;
   location: string;
   status: 'active' | 'pending' | 'suspended';
@@ -24,6 +27,13 @@ interface Shop {
 }
 
 type ShopRow = Shop & { actions?: string };
+
+type Owner = {
+  _id: string;
+  name: string;
+  phone?: string;
+  role?: string;
+};
 
 const statusLabels: Record<Shop['status'], string> = {
   active: 'Active',
@@ -45,6 +55,18 @@ const AdminShops = () => {
 
   const [edit, setEdit] = useState<Shop | null>(null);
   const [saving, setSaving] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createSaving, setCreateSaving] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    category: '',
+    location: '',
+    ownerId: '',
+    status: 'active' as Shop['status'],
+  });
+  const [owners, setOwners] = useState<Owner[]>([]);
+  const [ownersLoading, setOwnersLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -73,6 +95,47 @@ const AdminShops = () => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    let active = true;
+    const loadOwners = async () => {
+      setOwnersLoading(true);
+      try {
+        const data = await fetchUsers({ role: 'business', pageSize: 100 });
+        if (!active) return;
+        const items = Array.isArray(data.items) ? (data.items as Owner[]) : [];
+        setOwners(items);
+      } catch {
+        if (active) {
+          showToast('Failed to load owners', 'error');
+        }
+      } finally {
+        if (active) {
+          setOwnersLoading(false);
+        }
+      }
+    };
+
+    void loadOwners();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const categoryOptions = useMemo(
+    () => {
+      const unique = new Set(
+        (shops ?? [])
+          .map((shopItem) => shopItem.category)
+          .filter((cat) => typeof cat === 'string' && cat.trim().length > 0),
+      );
+      if (unique.size === 0) {
+        unique.add('General');
+      }
+      return Array.from(unique);
+    },
+    [shops],
+  );
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!edit) return;
@@ -82,6 +145,7 @@ const AdminShops = () => {
         name: edit.name,
         category: edit.category,
         location: edit.location,
+        status: edit.status,
       });
       showToast('Shop updated');
       setEdit(null);
@@ -175,6 +239,69 @@ const AdminShops = () => {
   const hasShops = rows.length > 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
+  const openCreateModal = () => {
+    const defaultCategory = categoryOptions[0] ?? '';
+    const defaultOwner = owners[0]?._id ?? '';
+    setCreateForm({
+      name: '',
+      category: defaultCategory,
+      location: '',
+      ownerId: defaultOwner,
+      status: 'active',
+    });
+    setCreateError(null);
+    setCreateOpen(true);
+  };
+
+  const handleCreateShop = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const name = createForm.name.trim();
+    const categoryValue = createForm.category.trim();
+    const locationValue = createForm.location.trim();
+    const ownerId = createForm.ownerId;
+
+    if (name.length < 2) {
+      setCreateError('Name must be at least 2 characters long');
+      return;
+    }
+    if (!categoryValue) {
+      setCreateError('Select a category');
+      return;
+    }
+    if (!locationValue) {
+      setCreateError('Location is required');
+      return;
+    }
+    if (!ownerId) {
+      setCreateError('Select an owner');
+      return;
+    }
+
+    try {
+      setCreateSaving(true);
+      setCreateError(null);
+      const payload = {
+        name,
+        category: categoryValue,
+        location: locationValue,
+        ownerId,
+        status: createForm.status,
+      };
+      const result = await apiCreateShop(payload);
+      const newShop = (result?.shop || result?.data?.shop || result?.data) as Shop | undefined;
+      if (newShop) {
+        setShops((prev) => [newShop, ...prev]);
+      }
+      showToast('Shop created');
+      setCreateOpen(false);
+      load();
+    } catch {
+      setCreateError('Failed to create shop');
+    } finally {
+      setCreateSaving(false);
+    }
+  };
+
   return (
     <div className={`${styles.page} space-y-6 px-4`}>
       <div className="space-y-1">
@@ -226,7 +353,17 @@ const AdminShops = () => {
             <option value="createdAt">Oldest</option>
           </select>
         </div>
-        <span className="text-sm text-gray-500">Total shops: {total}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">Total shops: {total}</span>
+          <button
+            type="button"
+            className="rounded-md bg-gray-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800"
+            onClick={openCreateModal}
+            disabled={ownersLoading}
+          >
+            Create Shop
+          </button>
+        </div>
       </div>
 
       {(() => {
@@ -316,10 +453,20 @@ const AdminShops = () => {
             </label>
             <label className={styles.formField}>
               Category
-              <input
+              <select
                 value={edit.category}
                 onChange={(e) => setEdit({ ...edit, category: e.target.value })}
-              />
+              >
+                <option value="">Select category</option>
+                {categoryOptions.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+                {edit.category && !categoryOptions.includes(edit.category) ? (
+                  <option value={edit.category}>{edit.category}</option>
+                ) : null}
+              </select>
             </label>
             <label className={styles.formField}>
               Location
@@ -327,6 +474,19 @@ const AdminShops = () => {
                 value={edit.location}
                 onChange={(e) => setEdit({ ...edit, location: e.target.value })}
               />
+            </label>
+            <label className={styles.formField}>
+              Status
+              <select
+                value={edit.status}
+                onChange={(e) =>
+                  setEdit({ ...edit, status: e.target.value as Shop['status'] })
+                }
+              >
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="suspended">Suspended</option>
+              </select>
             </label>
             <div className={styles.modalActions}>
               <button type="submit" disabled={saving}>
@@ -336,6 +496,95 @@ const AdminShops = () => {
                 type="button"
                 onClick={() => setEdit(null)}
                 disabled={saving}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {createOpen && (
+        <div className={styles.modal}>
+          <form className={styles.modalContent} onSubmit={handleCreateShop}>
+            <h3 className="text-lg font-semibold text-gray-900">Create Shop</h3>
+            {createError ? (
+              <p className="text-sm text-red-600" role="alert">
+                {createError}
+              </p>
+            ) : null}
+            <label className={styles.formField}>
+              Name
+              <input
+                value={createForm.name}
+                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                required
+                minLength={2}
+              />
+            </label>
+            <label className={styles.formField}>
+              Category
+              <select
+                value={createForm.category}
+                onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
+                required
+              >
+                <option value="">Select category</option>
+                {categoryOptions.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.formField}>
+              Location
+              <input
+                value={createForm.location}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, location: e.target.value })
+                }
+                required
+              />
+            </label>
+            <label className={styles.formField}>
+              Owner
+              <select
+                value={createForm.ownerId}
+                onChange={(e) => setCreateForm({ ...createForm, ownerId: e.target.value })}
+                disabled={ownersLoading}
+                required
+              >
+                <option value="">Select owner</option>
+                {owners.map((owner) => (
+                  <option key={owner._id} value={owner._id}>
+                    {owner.name || owner._id}
+                    {owner.phone ? ` (${owner.phone})` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.formField}>
+              Status
+              <select
+                value={createForm.status}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, status: e.target.value as Shop['status'] })
+                }
+              >
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="suspended">Suspended</option>
+              </select>
+            </label>
+            <div className={styles.modalActions}>
+              <button type="submit" disabled={createSaving}>
+                {createSaving ? 'Creating...' : 'Create'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCreateOpen(false)}
+                disabled={createSaving}
               >
                 Cancel
               </button>

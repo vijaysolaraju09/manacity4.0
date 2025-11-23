@@ -17,6 +17,7 @@ const { getAdminAnalytics } = require('../controllers/adminAnalyticsController')
 const {
   listShopRequests,
   listShops,
+  createShop,
   updateShop,
   deleteShop,
   approveShop,
@@ -69,6 +70,7 @@ router.get('/analytics', protect, isAdmin, getAdminAnalytics);
 
 router.get('/shops/requests', protect, isAdmin, listShopRequests);
 router.get('/shops', protect, isAdmin, listShops);
+router.post('/shops', protect, isAdmin, createShop);
 router.put('/shops/:id', protect, isAdmin, updateShop);
 router.delete('/shops/:id', protect, isAdmin, deleteShop);
 router.post('/shops/approve/:id', protect, isAdmin, approveShop);

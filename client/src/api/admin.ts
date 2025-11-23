@@ -345,6 +345,17 @@ export const fetchShops = async (params: ShopQueryParams = {}) => {
   return extractPaginatedResult<any>(res.data);
 };
 
+export const createShop = async (data: {
+  name: string;
+  category: string;
+  location: string;
+  ownerId: string;
+  status?: string;
+}) => {
+  const res = await adminApi.post(withAdminPrefix('shops'), data);
+  return extractEntity<any>(res.data);
+};
+
 export const updateShop = async (
   id: string,
   data: Partial<{ name: string; category: string; location: string; status: string }>,

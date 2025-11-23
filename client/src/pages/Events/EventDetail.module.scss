@@ -1,6 +1,5 @@
 .page {
   min-height: 100dvh;
-  padding: clamp(1.25rem, 4vw, 3rem);
   background: linear-gradient(180deg, var(--background) 0%, #f3f6ff 55%, #eef3ff 100%);
   color: var(--color-text);
   display: flex;

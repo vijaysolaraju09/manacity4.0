@@ -1,19 +1,19 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CalendarDays, MapPin, Ticket } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { AppDispatch, RootState } from '@/store'
-import { createEventsQueryKey, fetchEvents, fetchLeaderboard } from '@/store/events.slice'
-import { Badge, Button, Card } from '@/app/components/primitives'
+import { createEventsQueryKey, fetchEvents } from '@/store/events.slice'
+import { Badge, Button, Card, Chip } from '@/app/components/primitives'
+import type { EventSummary } from '@/types/events'
 import { formatDateTime } from '@/utils/date'
-import useCountdown from '@/app/hooks/useCountdown'
 import { paths } from '@/routes/paths'
 
 const EventsScreen = () => {
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   const eventsList = useSelector((state: RootState) => state.events.list)
-  // const leaderboard = useSelector((state: RootState) => state.events.leaderboard)
+  const [filter, setFilter] = useState<'all' | 'events' | 'tournaments' | 'registrations'>('all')
 
   const params = useMemo(() => ({ pageSize: 8, status: 'published' }), [])
   const queryKey = useMemo(() => createEventsQueryKey(params), [params])
@@ -26,130 +26,124 @@ const EventsScreen = () => {
     }
   }, [dispatch, eventsList.loading, eventsList.items?.length, eventsList.queryKey, params, queryKey])
 
-  const highlight = eventsList.items?.[0] ?? null
+  const isRegistered = useCallback((event: EventSummary) => {
+    const status = event?.myRegistrationStatus ?? event?.registrationStatus ?? event?.registration?.status
+    if (!status) return false
+    return status !== 'withdrawn' && status !== 'canceled'
+  }, [])
 
-  useEffect(() => {
-    if (!highlight?._id) return
-    void dispatch(fetchLeaderboard(highlight._id))
-  }, [dispatch, highlight?._id])
+  const filteredEvents = useMemo(() => {
+    const items = (eventsList.items ?? []) as EventSummary[]
 
-  const handleViewCalendar = useCallback(() => {
-    navigate(paths.events.list())
-  }, [navigate])
+    if (filter === 'events') {
+      return items.filter((event) => event.type !== 'tournament')
+    }
+    if (filter === 'tournaments') {
+      return items.filter((event) => event.type === 'tournament')
+    }
+    if (filter === 'registrations') {
+      return items.filter((event) => isRegistered(event))
+    }
 
-  const handleEventClick = useCallback(
+    return items
+  }, [eventsList.items, filter, isRegistered])
+
+  const handleViewEvent = useCallback(
     (eventId: string) => {
       navigate(paths.events.detail(eventId))
     },
     [navigate],
   )
 
-  const countdown = useCountdown(highlight?.startAt ?? null)
-  const otherEvents = useMemo(() => (eventsList.items ?? []).slice(1, 5), [eventsList.items])
+  const handleRegister = useCallback(
+    (eventId: string) => {
+      navigate(paths.events.register(eventId))
+    },
+    [navigate],
+  )
 
   return (
     <div className="flex flex-col gap-6">
-      <Card className="gradient-card overflow-hidden rounded-[2rem] p-6 text-white shadow-lg-theme md:p-8">
-        <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-4">
-            <Badge tone="accent">Upcoming highlight</Badge>
-            <h1 className="text-3xl font-semibold">{highlight?.title ?? 'Events are being curated'}</h1>
-            <p className="text-sm text-white/80">
-              {highlight?.shortDescription ||
-                highlight?.category ||
-                'Stay tuned for upcoming experiences curated by the Manacity concierge team.'}
-            </p>
-            <div className="flex flex-wrap gap-4 text-sm text-white/85">
-              {highlight ? (
-                <>
-                  <span className="inline-flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4" />
-                    {formatDateTime(highlight.startAt, { dateStyle: 'medium', timeStyle: 'short' })}
-                  </span>
-                  {highlight.venue ? (
-                    <span className="inline-flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      {highlight.venue}
-                    </span>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-primary">Events</h1>
+        </div>
+        <div className="flex w-full flex-nowrap gap-3 overflow-x-auto md:w-auto md:flex-wrap md:justify-end">
+          <Chip active={filter === 'all'} onClick={() => setFilter('all')}>
+            All
+          </Chip>
+          <Chip active={filter === 'events'} onClick={() => setFilter('events')}>
+            Events
+          </Chip>
+          <Chip active={filter === 'tournaments'} onClick={() => setFilter('tournaments')}>
+            Tournaments
+          </Chip>
+          <Chip active={filter === 'registrations'} onClick={() => setFilter('registrations')}>
+            My registrations
+          </Chip>
+        </div>
+      </div>
+
+      {eventsList.loading ? (
+        <Card className="rounded-3xl p-6">
+          <p className="text-sm text-muted">Loading…</p>
+        </Card>
+      ) : eventsList.error ? (
+        <Card className="rounded-3xl p-6">
+          <p className="text-sm text-danger">{eventsList.error}</p>
+        </Card>
+      ) : filteredEvents.length === 0 ? (
+        <Card className="rounded-3xl p-6">
+          <p className="text-sm text-muted">No events are available right now.</p>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {filteredEvents.map((event) => (
+            <Card
+              key={event._id}
+              className="rounded-3xl p-5 transition hover:-translate-y-0.5 hover:shadow-lg-theme focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_45%,transparent)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-primary">{event.title}</p>
+                  {event.shortDescription ? (
+                    <p className="mt-2 text-sm text-default">{event.shortDescription}</p>
                   ) : null}
-                </>
-              ) : (
+                </div>
+                {isRegistered(event) ? (
+                  <Badge tone="success">Registered</Badge>
+                ) : event.highlightLabel ? (
+                  <Badge tone="accent">{event.highlightLabel}</Badge>
+                ) : null}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted">
                 <span className="inline-flex items-center gap-2">
                   <CalendarDays className="h-4 w-4" />
-                  New events will be announced soon
+                  {formatDateTime(event.startAt, { dateStyle: 'medium', timeStyle: 'short' })}
                 </span>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button
-                variant="primary"
-                className="bg-white text-[var(--primary)] shadow-lg-theme"
-                onClick={handleViewCalendar}
-              >
-                View calendar
-              </Button>
-              <Button
-                variant="ghost"
-                className="text-white hover:bg-white/15"
-                onClick={() => highlight?._id && navigate(paths.events.register(highlight._id))}
-                disabled={!highlight?._id}
-              >
-                Register now
-              </Button>
-            </div>
-          </div>
-          <Card className="rounded-[2rem] border border-white/25 bg-white/10 p-6 text-center text-white/85 shadow-sm-theme">
-            <p className="text-sm uppercase tracking-[0.2em]">Event begins in</p>
-            <div className="mt-4 grid grid-cols-4 gap-3 text-sm">
-              {Object.entries(countdown).map(([key, value]) => (
-                <div key={key} className="rounded-2xl bg-white/15 p-3">
-                  <p className="text-2xl font-semibold text-white">{value.toString().padStart(2, '0')}</p>
-                  <p className="mt-1 text-xs capitalize text-white/80">{key}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-5 text-xs text-white/70">
-              Concierge will share updates and logistics once registrations open.
-            </p>
-          </Card>
+                {event.venue ? (
+                  <span className="inline-flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    {event.venue}
+                  </span>
+                ) : null}
+                <span className="inline-flex items-center gap-2">
+                  <Ticket className="h-4 w-4" />
+                  {event.type === 'tournament' ? 'Tournament' : 'Event'}
+                </span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Button variant="primary" onClick={() => handleViewEvent(event._id)}>
+                  View details
+                </Button>
+                <Button variant="ghost" onClick={() => handleRegister(event._id)}>
+                  Register
+                </Button>
+              </div>
+            </Card>
+          ))}
         </div>
-      </Card>
-
-      <section className="grid gap-4 md:grid-cols-[1.4fr_0.8fr]">
-        <Card className="rounded-3xl p-6">
-          <h2 className="text-xl font-semibold text-primary">Upcoming experiences</h2>
-          <div className="mt-4 space-y-4 text-sm">
-            {otherEvents.length === 0 ? (
-              <p className="text-sm text-muted">Additional events will be listed once published.</p>
-            ) : (
-              otherEvents.map((event) => (
-                <div
-                  key={event._id}
-                  className="rounded-2xl border border-default p-4 transition hover:-translate-y-0.5 hover:shadow-lg-theme focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_45%,transparent)]"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleEventClick(event._id)}
-                  onKeyDown={(keyboardEvent) => {
-                    if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
-                      keyboardEvent.preventDefault()
-                      handleEventClick(event._id)
-                    }
-                  }}
-                >
-                  <p className="text-sm font-semibold text-primary">{event.title}</p>
-                  <p className="mt-1 text-xs text-muted">
-                    {formatDateTime(event.startAt, { dateStyle: 'medium', timeStyle: 'short' })}
-                    {event.venue ? ` · ${event.venue}` : ''}
-                  </p>
-                  <p className="mt-3 inline-flex items-center gap-2 text-xs text-muted">
-                    <Ticket className="h-3.5 w-3.5" /> {event.highlightLabel || 'Limited seats'}
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
-      </section>
+      )}
     </div>
   )
 }

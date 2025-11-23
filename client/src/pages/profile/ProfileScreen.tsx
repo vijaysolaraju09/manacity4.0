@@ -206,18 +206,9 @@ const ProfileScreen = () => {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">Saved addresses</h3>
-              <p className="text-sm text-slate-600">Use default addresses at checkout or add new ones below.</p>
-            </div>
-            <span className="text-sm font-semibold text-slate-700">{addressCount} saved</span>
-          </div>
-          <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-4">
+        <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-4">
             <AddressManager onChange={(items: Address[]) => setAddressCount(items.length)} />
           </div>
-        </div>
       </div>
     )
   }

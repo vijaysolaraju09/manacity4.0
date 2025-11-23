@@ -145,22 +145,27 @@ const ServicesScreen = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold text-primary">Services</h1>
+          <Button size="sm" onClick={() => openServiceRequest()}>
+            Request Service
+          </Button>
         </div>
-        <div className="flex w-full flex-col gap-3 md:w-auto md:items-end">
-          <Input
-            icon={Search}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search services…"
-            className="w-full md:w-[260px]"
-            inputClassName="text-sm"
-            aria-label="Search services"
-            type="search"
-          />
-          <div className="flex w-full flex-nowrap gap-3 overflow-x-auto md:flex-wrap md:justify-end">
+        <div className="flex w-full flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="md:w-[260px]">
+            <Input
+              icon={Search}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search services…"
+              className="w-full"
+              inputClassName="text-sm"
+              aria-label="Search services"
+              type="search"
+            />
+          </div>
+          <div className="flex w-full flex-nowrap gap-3 overflow-x-auto md:flex-1 md:flex-wrap md:justify-end">
             <Chip active={filter === 'all'} onClick={() => setFilter('all')}>
               All
             </Chip>

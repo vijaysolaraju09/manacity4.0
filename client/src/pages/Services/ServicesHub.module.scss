@@ -76,6 +76,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .createIcon {
@@ -99,12 +100,9 @@
     padding-inline: 0;
   }
 
-  .createButton {
-    width: 100%;
-    justify-content: center;
-  }
-
   .titleRow {
-    align-items: stretch;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.75rem;
   }
 }

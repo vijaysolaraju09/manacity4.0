@@ -48,7 +48,7 @@ const ServicesHub = () => {
           <h1 className={styles.title}>Services</h1>
           <Button className={styles.createButton} onClick={handleCreateRequest}>
             <Plus aria-hidden="true" className={styles.createIcon} />
-            Create
+            Request Service
           </Button>
         </div>
         <div className={styles.navRow}>

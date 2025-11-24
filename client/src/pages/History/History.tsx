@@ -1,1 +1,1 @@
-export { default } from '../Profile/History';
+export { default } from './index';

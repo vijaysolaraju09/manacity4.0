@@ -12,6 +12,7 @@ export interface Service {
   startingPricePaise?: number;
   title?: string;
   images?: string[];
+  providers?: string[];
 }
 
 export interface ServiceProviderUser {
@@ -32,6 +33,7 @@ export interface ServiceProvider {
   user?: ServiceProviderUser | null;
   ratingAvg?: number;
   ratingCount?: number;
+  completedCount?: number;
   notes?: string;
   bio?: string;
   profession?: string;
@@ -152,4 +154,5 @@ export interface UpsertServicePayload {
   description?: string;
   icon?: string;
   isActive?: boolean;
+  providers?: string[];
 }

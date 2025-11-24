@@ -371,7 +371,13 @@ export const fetchServiceRequestById = createAsyncThunk<
       if (!request) throw new Error('Service request not found');
       return request;
     } catch (error) {
-      return thunkApi.rejectWithValue(toErrorMessage(error));
+      const message = toErrorMessage(error);
+      if (message && message.toLowerCase().includes('not authorized')) {
+        return thunkApi.rejectWithValue(
+          'You can only view your own service requests. Please sign in with the account that created this request.'
+        );
+      }
+      return thunkApi.rejectWithValue(message);
     }
   }
 );

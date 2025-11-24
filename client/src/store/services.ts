@@ -62,6 +62,9 @@ const normalizeService = (data: any): Service => ({
   description: data.description ?? '',
   icon: data.icon ?? '',
   isActive: data.isActive !== false,
+  providers: Array.isArray(data.providers)
+    ? data.providers.map((value: any) => String(value)).filter(Boolean)
+    : undefined,
   createdBy: data.createdBy ?? undefined,
   createdAt: data.createdAt,
   updatedAt: data.updatedAt,
@@ -98,6 +101,12 @@ const normalizeProvider = (data: any): ServiceProvider => ({
       ? data.ratingCount
       : typeof data.rating_count === 'number'
       ? data.rating_count
+      : undefined,
+  completedCount:
+    typeof data.completedCount === 'number'
+      ? data.completedCount
+      : typeof data.completed === 'number'
+      ? data.completed
       : undefined,
   notes: data.notes ?? '',
   bio: data.bio ?? '',

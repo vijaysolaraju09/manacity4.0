@@ -33,7 +33,9 @@ const ServiceDetails = () => {
     detail.currentService ?? entry?.service ?? null;
   const providerCandidates: ServiceProvider[] = detail.providers.length > 0
     ? detail.providers
-    : entry?.items ?? [];
+    : entry?.items && entry.items.length > 0
+    ? entry.items
+    : entry?.fallback ?? [];
   const providerList = useMemo(
     () => (Array.isArray(providerCandidates) ? providerCandidates : []),
     [providerCandidates],
@@ -41,6 +43,13 @@ const ServiceDetails = () => {
 
   const loading = (detail.loading || entry?.status === 'loading') && !svc;
   const error = detail.error ?? entry?.error ?? null;
+  const hasProviders = providerList.length > 0;
+
+  const selectProviderAndScroll = (id: string) => {
+    setSelectedProviderId(id);
+    const formEl = document.getElementById('service-request-form');
+    if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const onSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
@@ -94,10 +103,53 @@ const ServiceDetails = () => {
 
         <form
           onSubmit={onSubmit}
+          id="service-request-form"
           className="space-y-4 rounded-2xl border border-borderc/40 bg-surface-1 p-4 shadow-inner-card"
         >
           <h2 className="text-lg font-semibold">Choose a provider</h2>
-          <div className="max-h-64 space-y-2 overflow-auto pr-1">
+          <div className="space-y-2">
+            {providerList.map((provider) => {
+              const providerName = provider.user?.name || provider.profession || 'Service provider';
+              const providerCategory = provider.profession || provider.user?.profession;
+              const completed = provider.completedCount ?? provider.ratingCount ?? 0;
+              return (
+                <div
+                  key={provider.id}
+                  className="flex flex-col gap-3 rounded-xl border border-borderc/60 bg-white/70 p-3 shadow-sm"
+                >
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="provider"
+                      value={provider.id}
+                      checked={selectedProviderId === provider.id}
+                      onChange={() => setSelectedProviderId(provider.id)}
+                    />
+                    <div className="truncate">
+                      <div className="font-medium">{providerName}</div>
+                      {providerCategory ? (
+                        <div className="text-sm text-text-muted">{providerCategory}</div>
+                      ) : null}
+                      <div className="text-sm text-text-secondary">
+                        Completed {completed} service{completed === 1 ? '' : 's'}
+                      </div>
+                    </div>
+                  </label>
+                  <button
+                    type="button"
+                    className="w-full rounded-lg border border-borderc/50 px-3 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50"
+                    onClick={() => selectProviderAndScroll(provider.id)}
+                  >
+                    Request this provider
+                  </button>
+                </div>
+              );
+            })}
+            {!hasProviders ? (
+              <div className="rounded-lg border border-dashed border-borderc/60 p-3 text-sm text-text-secondary">
+                No providers found for this service yet. You can still submit a request and an admin will assign one.
+              </div>
+            ) : null}
             <label className="flex items-center gap-3">
               <input
                 type="radio"
@@ -108,27 +160,6 @@ const ServiceDetails = () => {
               />
               <span className="text-text-secondary">Assign later (Admin will match a provider)</span>
             </label>
-            {providerList.map((provider) => {
-              const providerName = provider.user?.name || provider.profession || 'Service provider';
-              const providerCategory = provider.profession || provider.user?.profession;
-              return (
-                <label key={provider.id} className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="provider"
-                    value={provider.id}
-                    checked={selectedProviderId === provider.id}
-                    onChange={() => setSelectedProviderId(provider.id)}
-                  />
-                  <span className="truncate">
-                    <span className="font-medium">{providerName}</span>
-                    {providerCategory ? (
-                      <span className="ml-2 text-text-muted">{providerCategory}</span>
-                    ) : null}
-                  </span>
-                </label>
-              );
-            })}
           </div>
 
           <div>

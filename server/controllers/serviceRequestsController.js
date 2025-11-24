@@ -345,6 +345,7 @@ exports.createServiceRequest = async (req, res, next) => {
     const details = sanitizeString(body.details || body.detail);
     const location = sanitizeString(body.location);
     let phone = sanitizeString(body.phone || body.contactPhone);
+    const providerId = sanitizeString(body.providerId);
     const preferredDate = sanitizeString(body.preferredDate);
     const preferredTime = sanitizeString(body.preferredTime);
     const visibility = ensureVisibility(body.visibility);
@@ -364,6 +365,36 @@ exports.createServiceRequest = async (req, res, next) => {
 
     if (!phone && req.user?.phone) phone = sanitizeString(req.user.phone);
 
+    const providerObjectId = providerId ? toObjectId(providerId) : null;
+    let providerUser = null;
+    if (providerId && !providerObjectId)
+      return next(
+        AppError.unprocessable('INVALID_PROVIDER', 'Please select a valid provider')
+      );
+    if (providerObjectId) {
+      providerUser = await User.findOne({
+        _id: providerObjectId,
+        role: { $in: Array.from(PROVIDER_ROLES) },
+      }).lean();
+
+      if (!providerUser)
+        return next(
+          AppError.unprocessable('INVALID_PROVIDER', 'Selected provider is unavailable')
+        );
+      if (
+        Array.isArray(service?.providers) &&
+        service.providers.length > 0 &&
+        !service.providers.some((entry) => isSameId(entry, providerObjectId))
+      ) {
+        return next(
+          AppError.unprocessable(
+            'PROVIDER_NOT_ASSIGNED',
+            'Selected provider is not assigned to this service',
+          )
+        );
+      }
+    }
+
     const payload = {
       userId: req.user._id,
       description,
@@ -372,7 +403,7 @@ exports.createServiceRequest = async (req, res, next) => {
       preferredDate,
       preferredTime,
       visibility,
-      status: STATUS.PENDING,
+      status: providerUser ? STATUS.ASSIGNED : STATUS.PENDING,
       isAnonymizedPublic: visibility === 'public',
     };
 
@@ -389,6 +420,16 @@ exports.createServiceRequest = async (req, res, next) => {
       type: 'created',
       message: customName || (service?.name ? `Requested ${service.name}` : ''),
     });
+
+    if (providerUser && providerObjectId) {
+      payload.assignedProviderId = providerObjectId;
+      payload.assignedProviderIds = [providerObjectId];
+      appendHistory(payload, {
+        by: req.user?._id ?? null,
+        type: 'assigned',
+        message: `Assigned to ${providerUser.name || 'provider'}`,
+      });
+    }
 
     const request = new ServiceRequest(payload);
     await request.save();
@@ -458,7 +499,7 @@ exports.getServiceRequestById = async (req, res, next) => {
     if (!request)
       throw AppError.notFound('SERVICE_REQUEST_NOT_FOUND', 'Service request not found');
 
-    const currentUserId = req.user?._id ?? req.user?.userId ?? null;
+    const currentUserId = toId(req.user?._id ?? req.user?.userId ?? req.user?.id);
     const isOwner = currentUserId ? isSameId(request.userId, currentUserId) : false;
     const isAdmin = req.user?.role === 'admin';
 

@@ -20,7 +20,7 @@ type Item = { to: string; label: string; icon: React.ReactNode; badge?: number }
 
 export default function Sidebar() {
   const role = useSelector((state: RootState) => state.auth.user?.role?.toLowerCase());
-  const businessNavVisible = role === 'business' || role === 'provider';
+  const businessNavVisible = ['business', 'provider'].includes(role ?? '');
 
   const items: Item[] = [
     { to: paths.home(), label: 'Home', icon: <Home className="mc-item__icon" /> },

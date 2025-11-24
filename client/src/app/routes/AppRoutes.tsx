@@ -26,6 +26,7 @@ import Signup from '@/pages/auth/Signup'
 import ForgotPassword from '@/pages/auth/ForgotPassword'
 import ResetPassword from '@/pages/auth/ResetPassword/ResetPassword'
 import AdminProtectedRoute from '@/components/AdminProtectedRoute'
+import RoleGuardRoute from '@/components/RoleGuardRoute'
 import AdminLayout from '@/layouts/AdminLayout'
 import AdminLogin from '@/pages/AdminLogin/AdminLogin'
 import AdminDashboard from '@/pages/AdminDashboard'
@@ -100,27 +101,29 @@ const AppRoutes = () => {
         <>
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Navigate to="/home" replace />} />
-          <Route path="home" element={<HomeScreen />} />
-          <Route path="shops" element={<ShopsScreen />} />
-          <Route path="shops/:id" element={<ShopDetailScreen />} />
-          <Route path="product/:id" element={<ProductDetails />} />
-          <Route path="services" element={<ServicesScreen />} />
-          <Route path="services/request" element={<ServiceRequestScreen />} />
-          <Route path="services/:id" element={<ServiceProvidersScreen />} />
-          <Route path="requests" element={<ServiceRequestListPage />} />
-          <Route path="requests/:requestId" element={<ServiceRequestDetailPage />} />
-          <Route path="events" element={<EventsScreen />} />
-          <Route path="events/:id" element={<EventDetailScreen />} />
-          <Route path="events/:id/register" element={<EventRegisterScreen />} />
-          <Route path="announcements/:id" element={<AnnouncementDetail />} />
-          <Route path="cart" element={<CartScreen />} />
-          <Route path="checkout" element={<CheckoutScreen />} />
-          <Route path="notifications" element={<NotificationsScreen />} />
-          <Route path="profile" element={<ProfileScreen />} />
-          <Route path="orders/mine" element={<MyOrders />} />
-          <Route path="orders/:id" element={<OrderDetail />} />
-          <Route path="history" element={<HistoryPage />} />
-        </Route>
+            <Route path="home" element={<HomeScreen />} />
+            <Route path="shops" element={<ShopsScreen />} />
+            <Route path="shops/:id" element={<ShopDetailScreen />} />
+            <Route path="product/:id" element={<ProductDetails />} />
+            <Route path="services" element={<ServicesScreen />} />
+            <Route element={<RoleGuardRoute allowedRoles={["customer", "business"]} />}>
+              <Route path="services/request" element={<ServiceRequestScreen />} />
+              <Route path="requests" element={<ServiceRequestListPage />} />
+              <Route path="requests/:requestId" element={<ServiceRequestDetailPage />} />
+              <Route path="cart" element={<CartScreen />} />
+              <Route path="checkout" element={<CheckoutScreen />} />
+              <Route path="orders/mine" element={<MyOrders />} />
+            </Route>
+            <Route path="services/:id" element={<ServiceProvidersScreen />} />
+            <Route path="events" element={<EventsScreen />} />
+            <Route path="events/:id" element={<EventDetailScreen />} />
+            <Route path="events/:id/register" element={<EventRegisterScreen />} />
+            <Route path="announcements/:id" element={<AnnouncementDetail />} />
+            <Route path="notifications" element={<NotificationsScreen />} />
+            <Route path="profile" element={<ProfileScreen />} />
+            <Route path="orders/:id" element={<OrderDetail />} />
+            <Route path="history" element={<HistoryPage />} />
+          </Route>
           <Route path="/login" element={<Navigate to="/home" replace />} />
           <Route path="/signup" element={<Navigate to="/home" replace />} />
           <Route path="/auth/login" element={<Navigate to="/home" replace />} />

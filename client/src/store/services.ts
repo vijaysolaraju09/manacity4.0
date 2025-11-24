@@ -333,13 +333,22 @@ const servicesSlice = createSlice({
       .addCase(updateService.fulfilled, (state, action) => {
         state.updateStatus = 'succeeded';
         const updated = action.payload;
-        state.items = state.items.map((item) =>
-          item._id === updated._id ? updated : item
-        );
+        state.items = state.items.map((item) => {
+          if (item._id !== updated._id) return item;
+          return {
+            ...item,
+            ...updated,
+            isActive: updated.isActive ?? item.isActive,
+          };
+        });
         Object.keys(state.providers).forEach((serviceId) => {
           const entry = state.providers[serviceId];
           if (entry?.service && entry.service._id === updated._id) {
-            entry.service = updated;
+            entry.service = {
+              ...entry.service,
+              ...updated,
+              isActive: updated.isActive ?? entry.service.isActive,
+            };
           }
         });
       })

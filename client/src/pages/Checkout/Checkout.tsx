@@ -10,6 +10,7 @@ import {
   Home,
   MapPin,
   Pencil,
+  ShieldCheck,
   Truck,
 } from 'lucide-react';
 
@@ -815,12 +816,14 @@ const Checkout = () => {
             </dl>
 
             <Button
+              icon={ShieldCheck}
               className="w-full rounded-full text-base font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
               onClick={handleConfirmOrder}
               disabled={!canSubmit}
               aria-busy={isSubmitting}
+              aria-label="Confirm order and place your request"
             >
-              {isSubmitting ? 'Placing orders…' : 'Confirm order'}
+              {isSubmitting ? 'Placing orders…' : 'Confirm order securely'}
             </Button>
 
             {submitError && (

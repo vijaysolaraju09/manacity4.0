@@ -74,6 +74,14 @@ const ModalSheet = ({ open, onClose, children }: ModalSheetProps) => {
             onDragEnd={(_, info) => info.offset.y > 100 && onClose()}
             onClick={(e) => e.stopPropagation()}
           >
+            <button
+              type="button"
+              className={styles.closeButton}
+              aria-label="Close dialog"
+              onClick={onClose}
+            >
+              ×
+            </button>
             <div className={styles.handle} />
             {children}
           </motion.div>

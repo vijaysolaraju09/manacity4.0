@@ -152,7 +152,7 @@ const AdminProducts = () => {
     if (lastPriceChangeSource.current === 'price') {
       lastPriceChangeSource.current = null;
     }
-  }, [createDiscountValue, createForm, createMrpValue, createPriceValue]);
+  }, [createDiscountValue, createMrpValue, createPriceValue]);
 
   useEffect(() => {
     if (lastPriceChangeSource.current !== 'discount') {

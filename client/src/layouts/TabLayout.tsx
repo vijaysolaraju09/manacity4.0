@@ -2,7 +2,20 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
-import { Bell, CalendarDays, Gift, Home, Monitor, Moon, ShoppingCart, Store, Sun, UserRound, Users } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  Gift,
+  History,
+  Home,
+  Monitor,
+  Moon,
+  ShoppingCart,
+  Store,
+  Sun,
+  UserRound,
+  Users,
+} from "lucide-react";
 import NavItem from "@/components/navigation/NavItem";
 import Sidebar from "@/components/layout/Sidebar";
 import type { RootState, AppDispatch } from "../store";
@@ -74,6 +87,7 @@ const TabLayout = () => {
       path: paths.services.catalog(),
     },
     { name: "Events", icon: CalendarDays, path: paths.events.list() },
+    { name: "History", icon: History, path: paths.history() },
     { name: "Profile", icon: UserRound, path: paths.profile() },
   ];
 

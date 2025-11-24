@@ -8,6 +8,7 @@ import {
   PackageOpen,
   Users,
   CalendarDays,
+  History,
   Settings,
   Package,
   ClipboardList,
@@ -30,6 +31,7 @@ export default function Sidebar() {
       label: 'Services',
       icon: <PackageOpen className="mc-item__icon" />,
     },
+    { to: paths.history(), label: 'History', icon: <History className="mc-item__icon" /> },
     { to: paths.events.list(), label: 'Events', icon: <CalendarDays className="mc-item__icon" /> },
     {
       to: paths.notifications(),

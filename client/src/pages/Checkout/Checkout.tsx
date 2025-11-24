@@ -816,14 +816,14 @@ const Checkout = () => {
             </dl>
 
             <Button
-              icon={ShieldCheck}
-              className="w-full rounded-full text-base font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+              className="flex w-full items-center justify-center gap-2 rounded-full text-base font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
               onClick={handleConfirmOrder}
               disabled={!canSubmit}
               aria-busy={isSubmitting}
               aria-label="Confirm order and place your request"
             >
-              {isSubmitting ? 'Placing orders…' : 'Confirm order securely'}
+              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+              <span>{isSubmitting ? 'Placing orders…' : 'Confirm order securely'}</span>
             </Button>
 
             {submitError && (

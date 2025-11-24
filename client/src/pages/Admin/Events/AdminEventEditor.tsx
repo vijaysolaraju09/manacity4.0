@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { createEvent, updateEvent } from '@/api/admin';
+import { createEvent, publishEvent, updateEvent } from '@/api/admin';
 import type { AdminEventPayload } from '@/api/admin';
 import showToast from '@/components/ui/Toast';
 import { toErrorMessage } from '@/lib/response';
@@ -31,8 +31,11 @@ type FormState = {
   venue: string;
   description: string;
   rules: string;
+  rewards: string;
+  structure: string;
   bannerUrl: string;
   coverUrl: string;
+  location: string;
 };
 
 const defaultFormState = (): FormState => {
@@ -57,11 +60,14 @@ const defaultFormState = (): FormState => {
     entryFee: '0',
     prizePool: '',
     mode: 'online',
-    venue: '',
+    venue: 'Online',
     description: '',
-    rules: '',
+    rules: 'Rules will be shared closer to the start date.',
+    rewards: 'Prizes will be announced soon.',
+    structure: 'Standard format',
     bannerUrl: '',
     coverUrl: '',
+    location: 'Online',
   };
 };
 
@@ -114,6 +120,8 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [submitIntent, setSubmitIntent] = useState<'draft' | 'publish'>('draft');
+  const isPublishing = submitIntent === 'publish';
 
   const templatesState = useSelector((state: RootState) => state.forms.templates);
   const templates = templatesState.items;
@@ -172,9 +180,12 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
       mode: event.mode === 'venue' ? 'venue' : 'online',
       venue: event.mode === 'venue' ? event.venue ?? '' : '',
       description: event.description ?? '',
-      rules: event.rules ?? '',
+      rules: event.rules ?? 'Rules will be shared closer to the start date.',
+      rewards: Array.isArray(event.rewards) ? event.rewards.join('\n') : form.rewards,
+      structure: event.structure ?? form.structure,
       bannerUrl: event.bannerUrl ?? '',
       coverUrl: event.coverUrl ?? '',
+      location: event.venue ?? form.location,
     });
   }, [context?.event, mode]);
 
@@ -195,6 +206,15 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
     setSaving(true);
     setError(null);
     try {
+      const intent = submitIntent;
+      const venueValue = (form.location || form.venue).trim();
+      const rewardLines = form.rewards
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+      const structureValue = form.structure.trim() || 'Standard format';
+      const maxParticipants = Math.max(1, Math.round(Number(form.capacity) || 0));
+
       const payload: AdminEventPayload = {
         title: form.title.trim(),
         category: form.category.trim() || 'other',
@@ -205,13 +225,16 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
         registrationOpenAt: toISO(form.registrationOpenAt),
         registrationCloseAt: toISO(form.registrationCloseAt),
         teamSize: Number(form.teamSize) || 1,
-        capacity: Math.max(0, Math.round(Number(form.capacity) || 0)),
+        capacity: maxParticipants,
+        maxParticipants,
         entryFeePaise: Math.max(0, Math.round(Number(form.entryFee || 0) * 100)),
         prizePool: form.prizePool.trim() || undefined,
         mode: form.mode,
-        venue: form.mode === 'venue' ? form.venue.trim() : undefined,
+        venue: venueValue,
         description: form.description.trim(),
-        rules: form.rules.trim(),
+        rules: form.rules.trim() || 'Rules will be shared closer to the start date.',
+        rewards: rewardLines.length ? rewardLines : ['Prizes will be announced soon.'],
+        structure: structureValue,
         bannerUrl: form.bannerUrl.trim() || undefined,
         coverUrl: form.coverUrl.trim() || undefined,
       };
@@ -223,8 +246,12 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
       if (mode === 'create') {
         const created = await createEvent(payload);
         const createdId = resolveEventId(created);
-        showToast('Event created', 'success');
-        if (createdId) {
+        if (intent === 'publish' && createdId) {
+          await publishEvent(createdId);
+          showToast('Event published', 'success');
+          navigate(paths.admin.events.detail(createdId));
+        } else if (createdId) {
+          showToast('Event saved as draft', 'success');
           navigate(paths.admin.events.detail(createdId));
         } else {
           showToast('Event created but missing identifier. Refresh the list to continue.', 'info');
@@ -232,16 +259,20 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
         }
       } else if (eventId) {
         await updateEvent(eventId, payload);
-        showToast('Event updated', 'success');
-        if (context?.refresh) {
-          await context.refresh();
+        if (intent === 'publish' && context?.event?.status === 'draft') {
+          await publishEvent(eventId);
+          showToast('Event published', 'success');
+        } else {
+          showToast('Event updated', 'success');
         }
+        if (context?.refresh) await context.refresh();
       }
     } catch (err) {
       const message = toErrorMessage(err);
       setError(message);
       showToast(message, 'error');
     } finally {
+      setSubmitIntent('draft');
       setSaving(false);
     }
   };
@@ -287,7 +318,9 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
           </div>
           <div className={styles.grid}>
             <label className={styles.field}>
-              <span>Title</span>
+              <span>
+                Title <span className={styles.requiredMark}>*</span>
+              </span>
               <input
                 type="text"
                 value={form.title}
@@ -347,19 +380,25 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
               />
             </label>
             <label className={styles.field}>
-              <span>Event starts</span>
+              <span>
+                Event starts <span className={styles.requiredMark}>*</span>
+              </span>
               <input
                 type="datetime-local"
                 value={form.startAt}
                 onChange={(eventObj) => handleChange('startAt', eventObj.target.value)}
+                required
               />
             </label>
             <label className={styles.field}>
-              <span>Event ends</span>
+              <span>
+                Event ends <span className={styles.requiredMark}>*</span>
+              </span>
               <input
                 type="datetime-local"
                 value={form.endAt}
                 onChange={(eventObj) => handleChange('endAt', eventObj.target.value)}
+                required
               />
             </label>
           </div>
@@ -422,16 +461,24 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
                 <option value="venue">On-ground</option>
               </select>
             </label>
-            {form.mode === 'venue' && (
-              <label className={styles.field}>
-                <span>Venue</span>
-                <input
-                  type="text"
-                  value={form.venue}
-                  onChange={(eventObj) => handleChange('venue', eventObj.target.value)}
-                />
-              </label>
-            )}
+            <label className={styles.field}>
+              <span>
+                Location <span className={styles.requiredMark}>*</span>
+              </span>
+              <input
+                type="text"
+                value={form.location}
+                onChange={(eventObj) => {
+                  handleChange('location', eventObj.target.value);
+                  handleChange('venue', eventObj.target.value);
+                }}
+                required
+                placeholder={form.mode === 'venue' ? 'Venue name or address' : 'Online event link or platform'}
+              />
+              <small className={styles.hintText}>
+                Tell participants where to show up. Use "Online" for virtual events.
+              </small>
+            </label>
             <label className={styles.field}>
               <span>Banner URL</span>
               <input
@@ -523,6 +570,24 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
               <span>Rules</span>
               <textarea rows={4} value={form.rules} onChange={(eventObj) => handleChange('rules', eventObj.target.value)} />
             </label>
+            <label className={styles.field}>
+              <span>Rewards</span>
+              <textarea
+                rows={3}
+                value={form.rewards}
+                onChange={(eventObj) => handleChange('rewards', eventObj.target.value)}
+                placeholder={'Add one reward per line'}
+              />
+            </label>
+            <label className={styles.field}>
+              <span>Structure</span>
+              <textarea
+                rows={2}
+                value={form.structure}
+                onChange={(eventObj) => handleChange('structure', eventObj.target.value)}
+                placeholder="How the rounds or matches will be organized"
+              />
+            </label>
           </div>
         </section>
 
@@ -538,8 +603,21 @@ const AdminEventEditor = ({ mode = 'edit' }: AdminEventEditorProps) => {
               Refresh
             </button>
           )}
-          <button type="submit" className={styles.primaryBtn} disabled={saving}>
-            {saving ? <Loader2 className={styles.spin} /> : mode === 'create' ? 'Create event' : 'Save changes'}
+          <button
+            type="submit"
+            className={styles.secondaryBtn}
+            disabled={saving}
+            onClick={() => setSubmitIntent('draft')}
+          >
+            {saving && !isPublishing ? <Loader2 className={styles.spin} /> : 'Save draft'}
+          </button>
+          <button
+            type="submit"
+            className={styles.primaryBtn}
+            disabled={saving}
+            onClick={() => setSubmitIntent('publish')}
+          >
+            {saving && isPublishing ? <Loader2 className={styles.spin} /> : 'Publish'}
           </button>
         </div>
       </form>

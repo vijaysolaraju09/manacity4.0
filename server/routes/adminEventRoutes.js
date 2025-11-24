@@ -24,7 +24,7 @@ router.get('/:id', getEvent);
 router.post('/', validate(createEventSchema), createEvent);
 router.put('/:id', validate(updateEventSchema), updateEvent);
 router.delete('/:id', deleteEvent);
-router.post('/:id/publish', publishEvent);
+router.put('/:id/publish', publishEvent);
 router.post('/:id/start', startEvent);
 router.post('/:id/complete', completeEvent);
 router.post('/:id/cancel', cancelEvent);

@@ -302,7 +302,7 @@ export const adaptEventDetail = (raw: any): EventDetail | null => {
     coverUrl: raw.coverUrl || raw.cover || null,
     updatesCount: raw.updatesCount ?? 0,
     leaderboardVersion: raw.leaderboardVersion ?? 0,
-    isRegistrationOpen: !!raw.isRegistrationOpen,
+    isRegistrationOpen: typeof raw.isRegistrationOpen === 'boolean' ? raw.isRegistrationOpen : undefined,
     registration: raw.registration || null,
     rewards: Array.isArray(raw.rewards)
       ? raw.rewards

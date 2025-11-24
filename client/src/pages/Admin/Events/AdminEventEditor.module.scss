@@ -252,6 +252,17 @@
   animation: spin 1s linear infinite;
 }
 
+.requiredMark {
+  color: #fca5a5;
+}
+
+.hintText {
+  display: block;
+  margin-top: 0.35rem;
+  color: rgba(226, 232, 240, 0.7);
+  font-size: 0.85rem;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

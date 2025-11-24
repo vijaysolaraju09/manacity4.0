@@ -452,6 +452,8 @@ export interface AdminEventPayload {
   venue?: string | null;
   description?: string;
   rules?: string;
+  rewards?: string[];
+  structure?: string;
   bannerUrl?: string | null;
   coverUrl?: string | null;
   templateId?: string;
@@ -482,7 +484,7 @@ export const deleteEvent = async (id: string) => {
 };
 
 const eventLifecycleEndpoint = async (id: string, action: 'publish' | 'start' | 'complete' | 'cancel') => {
-  const res = await adminApi.post(withAdminPrefix(`events/${id}/${action}`));
+  const res = await adminApi.put(withAdminPrefix(`events/${id}/${action}`));
   return extractEntity<any>(res.data);
 };
 

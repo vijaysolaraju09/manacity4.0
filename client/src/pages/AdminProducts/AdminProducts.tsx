@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { Form, Input, InputNumber, Modal, Select } from 'antd';
+import React, { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import {
   fetchProducts,
   fetchShops,
@@ -67,6 +66,8 @@ type CreateProductFormValues = {
   imageUrl: string;
 };
 
+type CreateFieldErrors = Partial<Record<keyof CreateProductFormValues, string>>;
+
 const readFileAsDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -105,16 +106,27 @@ const AdminProducts = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [createForm] = Form.useForm<CreateProductFormValues>();
+  const [createFormValues, setCreateFormValues] = useState<CreateProductFormValues>({
+    shopId: '',
+    name: '',
+    description: '',
+    category: '',
+    price: 0,
+    mrp: 0,
+    discount: 0,
+    stock: 0,
+    imageUrl: '',
+  });
+  const [createFieldErrors, setCreateFieldErrors] = useState<CreateFieldErrors>({});
   const [shops, setShops] = useState<ShopSummary[]>([]);
   const [shopsLoading, setShopsLoading] = useState(false);
   const modalRef = useRef<HTMLFormElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const lastPriceChangeSource = useRef<'price' | 'discount' | null>(null);
-  const createImagePreview = Form.useWatch('imageUrl', createForm);
-  const createPriceValue = Form.useWatch('price', createForm);
-  const createMrpValue = Form.useWatch('mrp', createForm);
-  const createDiscountValue = Form.useWatch('discount', createForm);
+  const createImagePreview = createFormValues.imageUrl;
+  const createPriceValue = createFormValues.price;
+  const createMrpValue = createFormValues.mrp;
+  const createDiscountValue = createFormValues.discount;
 
   useEffect(() => {
     if (
@@ -133,7 +145,9 @@ const AdminProducts = () => {
       Math.min(100, Math.round(((createMrpValue - createPriceValue) / createMrpValue) * 100)),
     );
     if (!Number.isNaN(computed) && computed !== createDiscountValue) {
-      createForm.setFieldsValue({ discount: computed });
+      setCreateFormValues((prev) =>
+        prev.discount === computed ? prev : { ...prev, discount: computed },
+      );
     }
     if (lastPriceChangeSource.current === 'price') {
       lastPriceChangeSource.current = null;
@@ -154,10 +168,10 @@ const AdminProducts = () => {
     }
     const nextPrice = Number((createMrpValue * (100 - createDiscountValue)) / 100);
     if (!Number.isNaN(nextPrice)) {
-      createForm.setFieldsValue({ price: Number(nextPrice.toFixed(2)) });
+      setCreateFormValues((prev) => ({ ...prev, price: Number(nextPrice.toFixed(2)) }));
     }
     lastPriceChangeSource.current = null;
-  }, [createDiscountValue, createForm, createMrpValue]);
+  }, [createDiscountValue, createMrpValue]);
 
   const approvedShops = useMemo(
     () =>
@@ -233,7 +247,7 @@ const AdminProducts = () => {
 
   const openCreateModal = () => {
     const fallback = approvedShops[0] ?? shops[0];
-    createForm.setFieldsValue({
+    setCreateFormValues({
       shopId: fallback?._id ?? '',
       name: '',
       description: '',
@@ -244,6 +258,7 @@ const AdminProducts = () => {
       stock: 0,
       imageUrl: '',
     });
+    setCreateFieldErrors({});
     setCreateError(null);
     setCreateOpen(true);
   };
@@ -251,7 +266,7 @@ const AdminProducts = () => {
   const closeCreateModal = () => {
     setCreateOpen(false);
     setCreateError(null);
-    createForm.resetFields();
+    setCreateFieldErrors({});
   };
 
   const handleCreateImageUpload = useCallback(
@@ -260,12 +275,12 @@ const AdminProducts = () => {
       if (!file) return;
       try {
         const dataUrl = await readFileAsDataUrl(file);
-        createForm.setFieldsValue({ imageUrl: dataUrl });
+        setCreateFormValues((prev) => ({ ...prev, imageUrl: dataUrl }));
       } catch (err) {
         showToast(toErrorMessage(err), 'error');
       }
     },
-    [createForm],
+    [],
   );
 
   useEffect(() => {
@@ -383,37 +398,67 @@ const AdminProducts = () => {
   };
 
   const handleCreateProduct = async () => {
+    const errors: CreateFieldErrors = {};
+    const trimmedName = createFormValues.name.trim();
+    const trimmedDescription = createFormValues.description.trim();
+    const trimmedCategory = createFormValues.category.trim();
+    const priceValue = Number(createFormValues.price);
+    const mrpValue = Number(createFormValues.mrp);
+    const discountValue = Number(createFormValues.discount);
+    const stockValue = Number(createFormValues.stock);
+
+    if (!createFormValues.shopId) {
+      errors.shopId = 'Select a shop to continue';
+    }
+    if (!trimmedName || trimmedName.length < 3) {
+      errors.name = 'Name must be at least 3 characters';
+    }
+    if (!trimmedDescription || trimmedDescription.length < 10) {
+      errors.description = 'Description must be at least 10 characters';
+    }
+    if (!trimmedCategory || trimmedCategory.length < 2) {
+      errors.category = 'Category must be at least 2 characters';
+    }
+    if (!Number.isFinite(priceValue) || priceValue < 0.01) {
+      errors.price = 'Enter a valid price';
+    }
+    if (!Number.isFinite(mrpValue) || mrpValue < 0.01) {
+      errors.mrp = 'Enter a valid MRP';
+    }
+    if (!Number.isFinite(discountValue) || discountValue < 0 || discountValue > 100) {
+      errors.discount = 'Discount must be between 0 and 100';
+    }
+    if (!Number.isFinite(stockValue) || stockValue < 0) {
+      errors.stock = 'Stock cannot be negative';
+    }
+    if (createFormValues.imageUrl) {
+      const isDataUrl = createFormValues.imageUrl.startsWith('data:');
+      const isHttpUrl = /^(https?:\/\/).*/iu.test(createFormValues.imageUrl);
+      if (!isDataUrl && !isHttpUrl) {
+        errors.imageUrl = 'Enter a full URL or upload an image';
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setCreateFieldErrors(errors);
+      setCreateError('Please correct the highlighted fields');
+      return;
+    }
+
+    if (priceValue > mrpValue) {
+      setCreateError('Price cannot exceed MRP');
+      return;
+    }
+
+    setCreateFieldErrors({});
+
+    const imageSource = createFormValues.imageUrl.trim();
+
     try {
-      const values = await createForm.validateFields();
-      if (!values.shopId) {
-        setCreateError('Select a shop to continue');
-        return;
-      }
-
-      const trimmedName = values.name.trim();
-      const trimmedDescription = values.description.trim();
-      const trimmedCategory = values.category.trim();
-      const priceValue = Number(values.price);
-      const mrpValue = Number(values.mrp);
-      const discountValue = Number(values.discount);
-      const stockValue = Number(values.stock);
-
-      if (priceValue > mrpValue) {
-        setCreateError('Price cannot exceed MRP');
-        return;
-      }
-
-      if (!Number.isFinite(discountValue) || discountValue < 0 || discountValue > 100) {
-        setCreateError('Discount must be between 0 and 100');
-        return;
-      }
-
-      const imageSource = values.imageUrl.trim();
-
       setCreating(true);
       setCreateError(null);
       await apiCreateProduct({
-        shopId: values.shopId,
+        shopId: createFormValues.shopId,
         name: trimmedName,
         description: trimmedDescription,
         category: trimmedCategory,
@@ -424,8 +469,9 @@ const AdminProducts = () => {
         images: imageSource ? [imageSource] : undefined,
       });
       showToast('Product created', 'success');
-      const fallbackShop = values.shopId || approvedShops[0]?._id || shops[0]?._id || '';
-      createForm.setFieldsValue({
+      const fallbackShop =
+        createFormValues.shopId || approvedShops[0]?._id || shops[0]?._id || '';
+      setCreateFormValues({
         shopId: fallbackShop,
         name: '',
         description: '',
@@ -439,10 +485,6 @@ const AdminProducts = () => {
       closeCreateModal();
       await load();
     } catch (err) {
-      if ((err as any)?.errorFields) {
-        setCreateError('Please correct the highlighted fields');
-        return;
-      }
       setCreateError(toErrorMessage(err) || 'Failed to create product');
     } finally {
       setCreating(false);
@@ -618,189 +660,256 @@ const AdminProducts = () => {
           </div>
         );
       })()}
-      <Modal
-        title="Add product"
-        open={createOpen}
-        onCancel={closeCreateModal}
-        footer={null}
-        destroyOnClose
-        className="admin-products__modal"
-        bodyStyle={{ maxHeight: '70vh', overflowY: 'auto' }}
-        maskClosable
-        closable
-      >
-        <Form
-          layout="vertical"
-          form={createForm}
-          onFinish={handleCreateProduct}
-          className="admin-products__modalForm"
+
+      {createOpen && (
+        <div
+          className="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-create-product-heading"
+          onClick={closeCreateModal}
         >
-          <p className="hint">Create a catalog item tied to an approved shop.</p>
-          {createError ? (
-            <p className="modal-error" role="alert">
-              {createError}
-            </p>
-          ) : null}
-          <Form.Item
-            name="shopId"
-            label="Shop"
-            rules={[{ required: true, message: 'Select a shop' }]}
+          <form
+            className="modal-content admin-products__modalForm"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleCreateProduct();
+            }}
+            onClick={(event) => event.stopPropagation()}
           >
-            <Select
-              placeholder="Select shop"
-              loading={shopsLoading}
-              disabled={shopsLoading || shops.length === 0}
-              optionFilterProp="label"
-              showSearch
-              filterOption={(input, option) =>
-                (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
-              }
-              options={shops.map((shopItem) => {
-                const statusValue = shopItem.status?.toLowerCase();
-                const disabled =
-                  statusValue !== undefined && !['approved', 'active'].includes(statusValue);
-                const label = `${shopItem.name}${
-                  statusValue && statusValue !== 'approved' ? ` (${shopItem.status})` : ''
-                }`;
-                return { label, value: shopItem._id, disabled };
-              })}
-            />
-          </Form.Item>
-          <Form.Item
-            name="name"
-            label="Product name"
-            rules={[
-              { required: true, message: 'Enter a product name' },
-              { min: 3, message: 'Name must be at least 3 characters' },
-              {
-                validator: (_, value) =>
-                  value && value.trim().length >= 3
-                    ? Promise.resolve()
-                    : Promise.reject(new Error('Name must be at least 3 characters')),
-              },
-            ]}
-          >
-            <Input placeholder="Iced latte, headphones, ..." />
-          </Form.Item>
-          <Form.Item
-            name="description"
-            label="Description"
-            rules={[
-              { required: true, message: 'Describe the item' },
-              { min: 10, message: 'Description must be at least 10 characters' },
-              {
-                validator: (_, value) =>
-                  value && value.trim().length >= 10
-                    ? Promise.resolve()
-                    : Promise.reject(new Error('Description must be at least 10 characters')),
-              },
-            ]}
-          >
-            <Input.TextArea rows={3} placeholder="What makes this item special?" />
-          </Form.Item>
-          <Form.Item
-            name="category"
-            label="Category"
-            rules={[
-              { required: true, message: 'Enter a category' },
-              { min: 2, message: 'Category must be at least 2 characters' },
-              {
-                validator: (_, value) =>
-                  value && value.trim().length >= 2
-                    ? Promise.resolve()
-                    : Promise.reject(new Error('Category must be at least 2 characters')),
-              },
-            ]}
-          >
-            <Input placeholder="Beverages, electronics, ..." />
-          </Form.Item>
-          <div className="admin-products__modalGrid">
-            <Form.Item
-              name="price"
-              label="Price (₹)"
-              rules={[{ required: true, type: 'number', min: 0.01, message: 'Enter a price' }]}
-            >
-              <InputNumber
-                min={0}
-                step={0.01}
-                className="w-full"
-                onChange={() => {
-                  lastPriceChangeSource.current = 'price';
-                }}
+            <div className="modal-header">
+              <div>
+                <h3 id="admin-create-product-heading">Add Product</h3>
+                <p className="admin-products__subtitle">
+                  Provide details to list a new product for sale.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="ghost"
+                onClick={closeCreateModal}
+                aria-label="Close create product modal"
+                disabled={creating}
+              >
+                ×
+              </button>
+            </div>
+
+            <label>
+              Shop
+              <select
+                value={createFormValues.shopId}
+                onChange={(event) =>
+                  setCreateFormValues((prev) => ({
+                    ...prev,
+                    shopId: event.target.value,
+                  }))
+                }
+                required
+                disabled={shopsLoading || approvedShops.length === 0}
+              >
+                <option value="">
+                  {shopsLoading
+                    ? 'Loading shops...'
+                    : approvedShops.length > 0
+                      ? 'Select shop'
+                      : 'No approved shops available'}
+                </option>
+                {approvedShops.map((s) => (
+                  <option key={s._id} value={s._id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              {createFieldErrors.shopId ? (
+                <span className="field-error">{createFieldErrors.shopId}</span>
+              ) : null}
+            </label>
+
+            <label>
+              Product name
+              <input
+                placeholder="Iced latte, headphones, ..."
+                value={createFormValues.name}
+                onChange={(event) =>
+                  setCreateFormValues((prev) => ({
+                    ...prev,
+                    name: event.target.value,
+                  }))
+                }
+                required
+                minLength={3}
               />
-            </Form.Item>
-            <Form.Item
-              name="mrp"
-              label="MRP (₹)"
-              rules={[
-                { required: true, type: 'number', min: 0.01, message: 'Enter an MRP' },
-              ]}
-            >
-              <InputNumber min={0} step={0.01} className="w-full" />
-            </Form.Item>
-            <Form.Item
-              name="discount"
-              label="Discount (%)"
-              rules={[{ type: 'number', min: 0, max: 100, message: '0 - 100' }]}
-            >
-              <InputNumber
-                min={0}
-                max={100}
-                step={1}
-                className="w-full"
-                onChange={() => {
-                  lastPriceChangeSource.current = 'discount';
-                }}
+              {createFieldErrors.name ? (
+                <span className="field-error">{createFieldErrors.name}</span>
+              ) : null}
+            </label>
+
+            <label>
+              Description
+              <textarea
+                rows={3}
+                placeholder="What makes this item special?"
+                value={createFormValues.description}
+                onChange={(event) =>
+                  setCreateFormValues((prev) => ({
+                    ...prev,
+                    description: event.target.value,
+                  }))
+                }
+                required
+                minLength={10}
               />
-            </Form.Item>
-            <Form.Item
-              name="stock"
-              label="Stock"
-              rules={[{ type: 'number', min: 0, message: 'Stock cannot be negative' }]}
-            >
-              <InputNumber min={0} step={1} className="w-full" />
-            </Form.Item>
-          </div>
-          <Form.Item
-            name="imageUrl"
-            label="Image URL"
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  if (typeof value === 'string' && value.startsWith('data:'))
-                    return Promise.resolve();
-                  return /^(https?:\/\/).*/iu.test(value)
-                    ? Promise.resolve()
-                    : Promise.reject(new Error('Enter a full URL or upload an image'));
-                },
-              },
-            ]}
-          >
-            <Input placeholder="https://example.com/image.jpg" />
-          </Form.Item>
-          <label className="file-upload">
-            Upload image
-            <input type="file" accept="image/*" onChange={handleCreateImageUpload} />
-            <span className="hint">JPEG or PNG up to 2 MB. Uploaded images override the URL.</span>
-          </label>
-          {createImagePreview ? (
-            <img
-              src={createImagePreview}
-              alt="Preview"
-              className="admin-products__imagePreview"
-            />
-          ) : null}
-          <div className="admin-products__modalActions">
-            <button type="submit" disabled={creating}>
-              {creating ? 'Saving…' : 'Save product'}
-            </button>
-            <button type="button" onClick={closeCreateModal} disabled={creating}>
-              Cancel
-            </button>
-          </div>
-        </Form>
-      </Modal>
+              {createFieldErrors.description ? (
+                <span className="field-error">{createFieldErrors.description}</span>
+              ) : null}
+            </label>
+
+            <label>
+              Category
+              <input
+                placeholder="Beverages, electronics, ..."
+                value={createFormValues.category}
+                onChange={(event) =>
+                  setCreateFormValues((prev) => ({
+                    ...prev,
+                    category: event.target.value,
+                  }))
+                }
+                required
+                minLength={2}
+              />
+              {createFieldErrors.category ? (
+                <span className="field-error">{createFieldErrors.category}</span>
+              ) : null}
+            </label>
+
+            <div className="admin-products__modalGrid">
+              <label>
+                Price (₹)
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={createFormValues.price}
+                  onChange={(event) => {
+                    lastPriceChangeSource.current = 'price';
+                    setCreateFormValues((prev) => ({
+                      ...prev,
+                      price: Number(event.target.value),
+                    }));
+                  }}
+                  required
+                />
+                {createFieldErrors.price ? (
+                  <span className="field-error">{createFieldErrors.price}</span>
+                ) : null}
+              </label>
+
+              <label>
+                MRP (₹)
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={createFormValues.mrp}
+                  onChange={(event) =>
+                    setCreateFormValues((prev) => ({
+                      ...prev,
+                      mrp: Number(event.target.value),
+                    }))
+                  }
+                  required
+                />
+                {createFieldErrors.mrp ? (
+                  <span className="field-error">{createFieldErrors.mrp}</span>
+                ) : null}
+              </label>
+
+              <label>
+                Discount (%)
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={createFormValues.discount}
+                  onChange={(event) => {
+                    lastPriceChangeSource.current = 'discount';
+                    setCreateFormValues((prev) => ({
+                      ...prev,
+                      discount: Number(event.target.value),
+                    }));
+                  }}
+                />
+                {createFieldErrors.discount ? (
+                  <span className="field-error">{createFieldErrors.discount}</span>
+                ) : null}
+              </label>
+
+              <label>
+                Stock
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={createFormValues.stock}
+                  onChange={(event) =>
+                    setCreateFormValues((prev) => ({
+                      ...prev,
+                      stock: Number(event.target.value),
+                    }))
+                  }
+                />
+                {createFieldErrors.stock ? (
+                  <span className="field-error">{createFieldErrors.stock}</span>
+                ) : null}
+              </label>
+            </div>
+
+            <label>
+              Image URL
+              <input
+                placeholder="https://example.com/image.jpg"
+                value={createFormValues.imageUrl}
+                onChange={(event) =>
+                  setCreateFormValues((prev) => ({
+                    ...prev,
+                    imageUrl: event.target.value,
+                  }))
+                }
+              />
+              {createFieldErrors.imageUrl ? (
+                <span className="field-error">{createFieldErrors.imageUrl}</span>
+              ) : null}
+            </label>
+
+            <label className="file-upload">
+              Upload image
+              <input type="file" accept="image/*" onChange={handleCreateImageUpload} />
+              <span className="hint">
+                JPEG or PNG up to 2 MB. Uploaded images override the URL.
+              </span>
+            </label>
+            {createImagePreview ? (
+              <img
+                src={createImagePreview}
+                alt="Preview"
+                className="admin-products__imagePreview"
+              />
+            ) : null}
+            <div className="admin-products__modalActions">
+              <button type="submit" disabled={creating}>
+                {creating ? 'Saving…' : 'Save product'}
+              </button>
+              <button type="button" onClick={closeCreateModal} disabled={creating}>
+                Cancel
+              </button>
+            </div>
+            {createError ? <div className="modal-error">{createError}</div> : null}
+          </form>
+        </div>
+      )}
       {edit && (
         <div
           className="modal"

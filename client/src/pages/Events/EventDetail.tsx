@@ -296,8 +296,14 @@ const EventDetailPage = () => {
     const isAfterOpen = Number.isFinite(openTime) ? openTime <= now : true;
     const isBeforeClose = Number.isFinite(closeTime) ? closeTime >= now : true;
     const rawOpen = isAfterOpen && isBeforeClose;
-    const computedOpen =
-      typeof event.isRegistrationOpen === 'boolean' ? event.isRegistrationOpen && rawOpen : rawOpen;
+    const statusAllowsRegistration = ['published', 'ongoing'].includes(
+      (event.status ?? '').toLowerCase(),
+    );
+    const computedOpen = statusAllowsRegistration
+      ? typeof event.isRegistrationOpen === 'boolean'
+        ? event.isRegistrationOpen && rawOpen
+        : rawOpen
+      : false;
     const closesInLabel = Number.isFinite(closeTime) && closeTime >= now
       ? (() => {
           const parts = formatCountdown(closeTime);

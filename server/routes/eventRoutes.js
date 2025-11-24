@@ -130,7 +130,7 @@ router.post('/matches/:matchId/report', protect, reportMatch);
 // Organizer/Admin
 router.post('/', protect, createEvent);
 router.patch('/:id', protect, updateEvent);
-router.post('/:id/publish', protect, publishEvent);
+router.put('/:id/publish', protect, publishEvent);
 router.post('/:id/start', protect, startEvent);
 router.post('/:id/complete', protect, completeEvent);
 router.post('/:id/cancel', protect, cancelEvent);

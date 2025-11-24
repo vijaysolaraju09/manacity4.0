@@ -175,6 +175,28 @@ const toDateSafe = (value) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+const coercePositiveInteger = (value, fallback = 1) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.max(1, Math.round(num));
+};
+
+const normalizeRewards = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter((item) => item.length > 0);
+  }
+  if (typeof value === 'string') {
+    return value
+      .split(/\n+/)
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+  return [];
+};
+
 const deriveLifecycleStatus = (event) => {
   if (!event) return 'upcoming';
   if (event.status === 'canceled' || event.status === 'completed') return 'past';
@@ -381,6 +403,21 @@ exports.listEvents = async (req, res, next) => {
 exports.createEvent = async (req, res, next) => {
   try {
     const payload = { ...req.body, createdBy: req.user?._id }; // organizer or admin
+    const now = new Date();
+    const startAt = toDateSafe(payload.startAt) ?? new Date(now.getTime() + 60 * 60 * 1000);
+    const endAt = toDateSafe(payload.endAt) ?? new Date(startAt.getTime() + 60 * 60 * 1000);
+    const regOpenAt =
+      toDateSafe(payload.registrationOpenAt ?? payload.regOpenAt) ?? new Date(now.getTime());
+    const regCloseAt =
+      toDateSafe(payload.registrationCloseAt ?? payload.regCloseAt) ?? new Date(startAt.getTime());
+
+    if (regOpenAt >= regCloseAt)
+      throw AppError.badRequest('INVALID_WINDOW', 'Registration open time must be before close time');
+    if (regCloseAt > startAt)
+      throw AppError.badRequest('INVALID_WINDOW', 'Registration must close before the event starts');
+    if (startAt >= endAt)
+      throw AppError.badRequest('INVALID_SCHEDULE', 'Event end time must be after start time');
+
     const templateId = typeof req.body.templateId === 'string' ? req.body.templateId.trim() : '';
     if (templateId) {
       const template = await FormTemplate.findById(templateId).lean();
@@ -395,10 +432,38 @@ exports.createEvent = async (req, res, next) => {
       };
     }
     delete payload.templateId;
+    payload.title = typeof payload.title === 'string' ? payload.title.trim() : '';
+    payload.category = payload.category || 'other';
+    payload.type = payload.type || 'tournament';
+    payload.format = payload.format || 'single_match';
+    payload.teamSize = coercePositiveInteger(payload.teamSize, 1);
+    payload.maxParticipants = coercePositiveInteger(payload.maxParticipants ?? payload.capacity ?? 32, 32);
+    payload.registrationOpenAt = regOpenAt;
+    payload.registrationCloseAt = regCloseAt;
+    payload.regOpenAt = regOpenAt;
+    payload.regCloseAt = regCloseAt;
+    payload.startAt = startAt;
+    payload.endAt = endAt;
+    payload.mode = payload.mode === 'venue' ? 'venue' : 'online';
+    payload.venue =
+      payload.mode === 'venue'
+        ? payload.venue || payload.location || payload.place || ''
+        : payload.venue || 'Online';
+    payload.rules = payload.rules || 'Rules will be shared soon.';
+    payload.structure = payload.structure || 'Standard format';
+    payload.rewards = normalizeRewards(payload.rewards);
+
+    if (!payload.title)
+      throw AppError.badRequest('TITLE_REQUIRED', 'Title is required to create an event');
+    if (!payload.venue)
+      throw AppError.badRequest('VENUE_REQUIRED', 'Location or venue is required for the event');
     if (!payload.createdBy)
       throw AppError.forbidden('NOT_ALLOWED', 'Only authenticated users can create events');
+
     const event = await Event.create(payload);
-    res.status(201).json({ ok: true, data: event.toDetailJSON(), traceId: req.traceId });
+    const data = event.toDetailJSON();
+    data.isRegistrationOpen = computeIsRegistrationOpen(event);
+    res.status(201).json({ ok: true, data, traceId: req.traceId });
   } catch (err) {
     next(err);
   }
@@ -432,14 +497,52 @@ exports.updateEvent = async (req, res, next) => {
       'entryFeePaise',
       'bannerUrl',
       'coverUrl',
+      'structure',
+      'rewards',
     ];
     const update = {};
     for (const key of updatable) {
       if (Object.prototype.hasOwnProperty.call(req.body, key)) update[key] = req.body[key];
     }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'capacity')) {
+      update.maxParticipants = req.body.capacity;
+    }
+
+    if (update.startAt || update.endAt || update.registrationCloseAt || update.registrationOpenAt) {
+      const startAt = toDateSafe(update.startAt ?? event.startAt);
+      const endAt = toDateSafe(update.endAt ?? event.endAt ?? startAt);
+      const regOpenAt = toDateSafe(update.registrationOpenAt ?? event.registrationOpenAt);
+      const regCloseAt = toDateSafe(update.registrationCloseAt ?? event.registrationCloseAt ?? startAt);
+
+      if (!startAt || !regOpenAt || !regCloseAt)
+        throw AppError.badRequest('INVALID_SCHEDULE', 'Provide valid dates for the event');
+      if (startAt >= endAt)
+        throw AppError.badRequest('INVALID_SCHEDULE', 'Event end time must be after start time');
+      if (regOpenAt >= regCloseAt)
+        throw AppError.badRequest('INVALID_WINDOW', 'Registration open time must be before close time');
+      if (regCloseAt > startAt)
+        throw AppError.badRequest('INVALID_WINDOW', 'Registration must close before the event starts');
+
+      update.startAt = startAt;
+      update.endAt = endAt;
+      update.registrationOpenAt = regOpenAt;
+      update.registrationCloseAt = regCloseAt;
+      update.regOpenAt = regOpenAt;
+      update.regCloseAt = regCloseAt;
+    }
+
+    if (update.teamSize) update.teamSize = coercePositiveInteger(update.teamSize, event.teamSize);
+    if (update.maxParticipants)
+      update.maxParticipants = coercePositiveInteger(update.maxParticipants, event.maxParticipants);
+    if (update.structure) update.structure = update.structure || event.structure || 'Standard format';
+    if (update.rewards) update.rewards = normalizeRewards(update.rewards);
+
     Object.assign(event, update);
     await event.save();
-    res.json({ ok: true, data: event.toDetailJSON(), traceId: req.traceId });
+    const data = event.toDetailJSON();
+    data.isRegistrationOpen = computeIsRegistrationOpen(event);
+    res.json({ ok: true, data, traceId: req.traceId });
   } catch (err) {
     next(err);
   }
@@ -452,8 +555,22 @@ exports.publishEvent = async (req, res, next) => {
       throw AppError.forbidden('NOT_ALLOWED', 'Only organizers can publish events');
     if (event.status !== 'draft')
       throw AppError.badRequest('INVALID_STATUS', 'Event cannot be published');
-    if (event.registrationOpenAt >= event.registrationCloseAt)
+    const startAt = toDateSafe(event.startAt);
+    const endAt = toDateSafe(event.endAt ?? event.startAt);
+    const regOpenAt = toDateSafe(event.registrationOpenAt ?? event.regOpenAt);
+    const regCloseAt = toDateSafe(event.registrationCloseAt ?? event.regCloseAt ?? event.startAt);
+    if (!startAt || !endAt || !regOpenAt || !regCloseAt)
+      throw AppError.badRequest('INVALID_WINDOW', 'Schedule and registration window are required');
+    if (startAt >= endAt)
+      throw AppError.badRequest('INVALID_SCHEDULE', 'Event end time must be after start time');
+    if (regOpenAt >= regCloseAt)
       throw AppError.badRequest('INVALID_WINDOW', 'Registration window is invalid');
+    if (regCloseAt > startAt)
+      throw AppError.badRequest('INVALID_WINDOW', 'Registration must close before the event starts');
+    event.registrationOpenAt = regOpenAt;
+    event.registrationCloseAt = regCloseAt;
+    event.regOpenAt = regOpenAt;
+    event.regCloseAt = regCloseAt;
     event.status = 'published';
     await event.save();
     await notifyUsers(event.createdBy, `${event.title} is now published`, event);

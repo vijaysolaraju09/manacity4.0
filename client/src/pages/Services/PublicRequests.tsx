@@ -136,7 +136,18 @@ const PublicRequests = () => {
 
       <ModalSheet open={Boolean(selectedRequest)} onClose={closeModal}>
         <div className={styles.modal}>
-          <h2>{selectedRequest?.title ?? 'Offer to help'}</h2>
+          <div className={styles.modalHeader}>
+            <h2>{selectedRequest?.title ?? 'Offer to help'}</h2>
+            <button
+              type="button"
+              className={styles.closeButton}
+              aria-label="Close offer dialog"
+              onClick={closeModal}
+              disabled={submitting}
+            >
+              ×
+            </button>
+          </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="offer-note">
               Note (optional)

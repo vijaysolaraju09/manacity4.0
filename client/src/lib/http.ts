@@ -143,7 +143,15 @@ const createHttpClient = ({
         }
       }
 
-      const fallbackMessage = envelopeMessage ?? toErrorMessage(error);
+      const status = error.response?.status;
+      const contextualMessage =
+        status === 403
+          ? 'You do not have permission to view this request.'
+          : status === 401
+            ? 'Your session has expired. Please sign in again.'
+            : envelopeMessage;
+
+      const fallbackMessage = contextualMessage ?? toErrorMessage(error);
 
       if (isDev && fallbackMessage) {
         const method = (error.config?.method || 'GET').toUpperCase();

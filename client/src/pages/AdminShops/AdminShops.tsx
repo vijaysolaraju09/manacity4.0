@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   fetchShops,
   fetchUsers,
@@ -13,6 +13,7 @@ import ErrorCard from '../../components/ui/ErrorCard';
 import SkeletonList from '../../components/ui/SkeletonList';
 import showToast from '../../components/ui/Toast';
 import styles from './AdminShops.module.scss';
+import useFocusTrap from '@/hooks/useFocusTrap';
 
 interface Shop {
   _id: string;
@@ -67,6 +68,11 @@ const AdminShops = () => {
   });
   const [owners, setOwners] = useState<Owner[]>([]);
   const [ownersLoading, setOwnersLoading] = useState(false);
+  const editModalRef = useRef<HTMLFormElement | null>(null);
+  const createModalRef = useRef<HTMLFormElement | null>(null);
+
+  useFocusTrap(editModalRef, { active: Boolean(edit), onEscape: () => setEdit(null) });
+  useFocusTrap(createModalRef, { active: createOpen, onEscape: () => setCreateOpen(false) });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -442,8 +448,18 @@ const AdminShops = () => {
 
       {edit && (
         <div className={styles.modal}>
-          <form className={styles.modalContent} onSubmit={handleSave}>
-            <h3 className="text-lg font-semibold text-gray-900">Edit Shop</h3>
+          <form ref={editModalRef} className={styles.modalContent} onSubmit={handleSave}>
+            <div className={styles.modalHeader}>
+              <h3 className="text-lg font-semibold text-gray-900">Edit Shop</h3>
+              <button
+                type="button"
+                className={styles.closeButton}
+                aria-label="Close edit shop dialog"
+                onClick={() => setEdit(null)}
+              >
+                ×
+              </button>
+            </div>
             <label className={styles.formField}>
               Name
               <input
@@ -506,8 +522,19 @@ const AdminShops = () => {
 
       {createOpen && (
         <div className={styles.modal}>
-          <form className={styles.modalContent} onSubmit={handleCreateShop}>
-            <h3 className="text-lg font-semibold text-gray-900">Create Shop</h3>
+          <form ref={createModalRef} className={styles.modalContent} onSubmit={handleCreateShop}>
+            <div className={styles.modalHeader}>
+              <h3 className="text-lg font-semibold text-gray-900">Create Shop</h3>
+              <button
+                type="button"
+                className={styles.closeButton}
+                aria-label="Close create shop dialog"
+                onClick={() => setCreateOpen(false)}
+                disabled={createSaving}
+              >
+                ×
+              </button>
+            </div>
             {createError ? (
               <p className="text-sm text-red-600" role="alert">
                 {createError}

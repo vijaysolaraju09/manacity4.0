@@ -15,6 +15,8 @@ import StatusChip from '../../components/ui/StatusChip';
 import showToast from '../../components/ui/Toast';
 import { toErrorMessage } from '@/lib/response';
 import './AdminProducts.scss';
+import useFocusTrap from '@/hooks/useFocusTrap';
+import { mergePreservingStatus } from '@/utils/status';
 
 interface Product {
   _id: string;
@@ -82,9 +84,6 @@ const readFileAsDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-const focusableSelectors =
-  'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
-
 const AdminProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -121,7 +120,7 @@ const AdminProducts = () => {
   const [shops, setShops] = useState<ShopSummary[]>([]);
   const [shopsLoading, setShopsLoading] = useState(false);
   const modalRef = useRef<HTMLFormElement | null>(null);
-  const lastFocusedRef = useRef<HTMLElement | null>(null);
+  const createModalRef = useRef<HTMLFormElement | null>(null);
   const lastPriceChangeSource = useRef<'price' | 'discount' | null>(null);
   const createImagePreview = createFormValues.imageUrl;
   const createPriceValue = createFormValues.price;
@@ -283,45 +282,8 @@ const AdminProducts = () => {
     [],
   );
 
-  useEffect(() => {
-    if (!edit) return undefined;
-    const node = modalRef.current;
-    if (!node) return undefined;
-
-    lastFocusedRef.current = document.activeElement as HTMLElement | null;
-    const focusable = node.querySelectorAll<HTMLElement>(focusableSelectors);
-    const first = focusable[0];
-    (first ?? node).focus();
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setEdit(null);
-        return;
-      }
-      if (event.key !== 'Tab' || focusable.length === 0) return;
-      const nodes = Array.from(node.querySelectorAll<HTMLElement>(focusableSelectors));
-      if (nodes.length === 0) return;
-      const firstNode = nodes[0];
-      const lastNode = nodes[nodes.length - 1];
-      if (event.shiftKey) {
-        if (document.activeElement === firstNode) {
-          event.preventDefault();
-          lastNode.focus();
-        }
-      } else if (document.activeElement === lastNode) {
-        event.preventDefault();
-        firstNode.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      lastFocusedRef.current?.focus();
-    };
-  }, [edit]);
+  useFocusTrap(createModalRef, { active: createOpen, onEscape: closeCreateModal });
+  useFocusTrap(modalRef, { active: Boolean(edit), onEscape: () => setEdit(null) });
 
   const openEdit = (p: Product) => {
     setEdit(p);
@@ -347,18 +309,20 @@ const AdminProducts = () => {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
-    const updated: Product = {
-      ...edit,
-      name: form.name,
-      description: form.description,
-      mrp: form.mrp,
-      price: form.price,
-      stock: form.stock,
-      category: form.category,
-      images: imagesArr,
-      image: form.imageUrl || imagesArr[0],
-      discount: form.mrp ? Math.round(((form.mrp - form.price) / form.mrp) * 100) : 0,
-    };
+    const updated: Product = mergePreservingStatus<Product>({
+      existing: edit,
+      incoming: {
+        name: form.name,
+        description: form.description,
+        mrp: form.mrp,
+        price: form.price,
+        stock: form.stock,
+        category: form.category,
+        images: imagesArr,
+        image: form.imageUrl || imagesArr[0],
+        discount: form.mrp ? Math.round(((form.mrp - form.price) / form.mrp) * 100) : 0,
+      },
+    });
     setSaving(true);
     setProducts((prevList) =>
       prevList.map((p) => (p._id === edit._id ? updated : p)),
@@ -670,6 +634,7 @@ const AdminProducts = () => {
           onClick={closeCreateModal}
         >
           <form
+            ref={createModalRef}
             className="modal-content admin-products__modalForm"
             onSubmit={(event) => {
               event.preventDefault();
@@ -925,7 +890,20 @@ const AdminProducts = () => {
             tabIndex={-1}
             onClick={(event) => event.stopPropagation()}
           >
-            <h3 id="admin-edit-product-heading">Edit Product</h3>
+            <div className="modal-header">
+              <div>
+                <h3 id="admin-edit-product-heading">Edit Product</h3>
+                <p className="admin-products__subtitle">Update product details without changing its status.</p>
+              </div>
+              <button
+                type="button"
+                className="ghost"
+                onClick={() => setEdit(null)}
+                aria-label="Close edit product modal"
+              >
+                ×
+              </button>
+            </div>
             <label>
               Name
               <input

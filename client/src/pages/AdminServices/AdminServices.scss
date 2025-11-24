@@ -76,3 +76,49 @@
 .admin-services__success {
   color: #047857;
 }
+
+.admin-services__provider-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-services__provider-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.admin-services__provider-list {
+  display: grid;
+  gap: 0.35rem;
+  max-height: 280px;
+  overflow: auto;
+  padding: 0.25rem 0.1rem;
+}
+
+.admin-services__provider-option {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.admin-services__provider-option input {
+  margin: 0;
+}
+
+.admin-services__provider-name {
+  font-weight: 600;
+}
+
+.admin-services__provider-sub,
+.admin-services__hint,
+.admin-services__provider-meta {
+  color: #6b7280;
+  font-size: 0.9rem;
+}

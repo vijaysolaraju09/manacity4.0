@@ -33,6 +33,9 @@ const toServiceJson = (service) => {
     createdBy: service.createdBy ? String(service.createdBy) : undefined,
     createdAt: service.createdAt,
     updatedAt: service.updatedAt,
+    providers: Array.isArray(service.providers)
+      ? service.providers.map((id) => String(id)).filter(Boolean)
+      : [],
   };
 };
 
@@ -70,6 +73,12 @@ const toProviderJson = (doc) => {
       doc.rating_count,
       normalizedUser?.ratingCount,
     ]),
+    completedCount:
+      typeof doc.completedCount === 'number'
+        ? doc.completedCount
+        : doc.completed
+        ? Number(doc.completed)
+        : undefined,
     notes: doc.notes || '',
     bio: doc.bio || normalizedUser?.bio || '',
     profession: doc.profession || normalizedUser?.profession || '',
@@ -271,6 +280,43 @@ exports.getServiceProviders = async (req, res, next) => {
     if (!service || service.isActive === false)
       throw AppError.notFound('SERVICE_NOT_FOUND', 'Service not found');
 
+    const providerObjectIds = Array.isArray(service.providers)
+      ? service.providers.map((entry) => toObjectId(entry)).filter(Boolean)
+      : [];
+    const providersByUserId = new Map();
+
+    const completionCounts = providerObjectIds.length
+      ? await ServiceRequest.aggregate([
+          {
+            $match: {
+              serviceId: service._id,
+              status: 'completed',
+              $or: [
+                { assignedProviderId: { $in: providerObjectIds } },
+                { assignedProviderIds: { $elemMatch: { $in: providerObjectIds } } },
+              ],
+            },
+          },
+          {
+            $project: {
+              providerIds: {
+                $setUnion: [
+                  { $ifNull: ['$assignedProviderIds', []] },
+                  ['$assignedProviderId'],
+                ],
+              },
+            },
+          },
+          { $unwind: '$providerIds' },
+          { $match: { providerIds: { $in: providerObjectIds } } },
+          { $group: { _id: '$providerIds', count: { $sum: 1 } } },
+        ])
+      : [];
+
+    const completionMap = new Map(
+      completionCounts.map((entry) => [String(entry._id), entry.count || 0])
+    );
+
     const mappings = await ServiceProviderMap.find({
       serviceId: service._id,
       isActive: { $ne: false },
@@ -281,17 +327,57 @@ exports.getServiceProviders = async (req, res, next) => {
 
     const providers = mappings
       .filter((doc) => doc && doc.userId)
-      .map((doc) =>
-        toProviderJson({
+      .map((doc) => {
+        const userId = toIdString(doc.userId);
+        const completedCount = userId ? completionMap.get(userId) : undefined;
+        const normalized = toProviderJson({
           ...doc,
           userId: doc.userId,
           serviceId: doc.serviceId,
+          completedCount,
           source: 'service-provider-map',
-        })
-      );
+        });
+        if (userId) normalized.id = userId;
+        if (doc._id) normalized.mapId = String(doc._id);
+        if (typeof completedCount === 'number') normalized.completedCount = completedCount;
+        return normalized;
+      });
+
+    providers.forEach((provider) => {
+      const key = provider.user?._id || provider.id;
+      if (key && !providersByUserId.has(key)) providersByUserId.set(key, provider);
+    });
+
+    if (providerObjectIds.length) {
+      const providerUsers = await User.find({
+        _id: { $in: providerObjectIds },
+        role: { $in: Array.from(PROVIDER_ROLES) },
+      })
+        .select('name phone location address avatarUrl profession bio ratingAvg ratingCount role')
+        .lean();
+
+      providerUsers.forEach((user) => {
+        const idString = toIdString(user._id);
+        if (!idString) return;
+        const completedCount = completionMap.get(idString);
+        const normalized = toProviderJson({
+          _id: user._id,
+          userId: user,
+          userInfo: user,
+          serviceId: service._id,
+          ratingAvg: user.ratingAvg,
+          ratingCount: user.ratingCount,
+          completedCount,
+          source: 'service-provider',
+        });
+        normalized.id = idString;
+        normalized.completedCount = typeof completedCount === 'number' ? completedCount : 0;
+        providersByUserId.set(idString, normalized);
+      });
+    }
 
     let fallbackProviders = [];
-    if (providers.length === 0) {
+    if (providersByUserId.size === 0) {
       const regex = new RegExp(`^${escapeRegex(service.name)}$`, 'i');
       const verifiedList = await Verified.find({
         profession: regex,
@@ -316,11 +402,13 @@ exports.getServiceProviders = async (req, res, next) => {
       );
     }
 
+    const mergedProviders = Array.from(providersByUserId.values());
+
     res.json({
       ok: true,
       data: {
         service: toServiceJson(service),
-        providers,
+        providers: mergedProviders,
         fallbackProviders,
       },
       traceId: req.traceId,
@@ -332,7 +420,7 @@ exports.getServiceProviders = async (req, res, next) => {
 
 exports.createService = async (req, res, next) => {
   try {
-    const { name, description, icon, isActive, active } = req.body || {};
+    const { name, description, icon, isActive, active, providers } = req.body || {};
     if (!name || !String(name).trim())
       throw AppError.badRequest('INVALID_SERVICE', 'Service name is required');
 
@@ -343,6 +431,17 @@ exports.createService = async (req, res, next) => {
         ? isActive
         : undefined;
 
+    const providerIds = Array.isArray(providers)
+      ? Array.from(
+          new Set(
+            providers
+              .map((id) => toObjectId(id))
+              .filter(Boolean)
+              .map((id) => id.toString()),
+          ),
+        )
+      : [];
+
     const payload = {
       name: String(name).trim(),
       description: description ? String(description).trim() : undefined,
@@ -350,6 +449,7 @@ exports.createService = async (req, res, next) => {
       isActive: typeof normalizedActive === 'boolean' ? normalizedActive : undefined,
       active: typeof normalizedActive === 'boolean' ? normalizedActive : undefined,
       createdBy: req.user?._id,
+      providers: providerIds,
     };
 
     const service = await Service.create(payload);
@@ -371,7 +471,7 @@ exports.createService = async (req, res, next) => {
 exports.updateService = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, description, icon, isActive, active } = req.body || {};
+    const { name, description, icon, isActive, active, providers } = req.body || {};
 
     const update = {};
     if (typeof name !== 'undefined') {
@@ -382,6 +482,16 @@ exports.updateService = async (req, res, next) => {
     if (typeof description !== 'undefined')
       update.description = String(description || '').trim();
     if (typeof icon !== 'undefined') update.icon = String(icon || '').trim();
+    if (Array.isArray(providers)) {
+      update.providers = Array.from(
+        new Set(
+          providers
+            .map((id) => toObjectId(id))
+            .filter(Boolean)
+            .map((id) => id.toString()),
+        ),
+      );
+    }
     const normalizedActive =
       typeof active === 'boolean'
         ? active

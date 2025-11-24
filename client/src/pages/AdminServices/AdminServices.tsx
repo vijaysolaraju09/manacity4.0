@@ -3,8 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import './AdminServices.scss';
 import { fetchServices, createService, updateService } from '@/store/services';
 import type { AppDispatch, RootState } from '@/store';
+import { adminHttp } from '@/lib/http';
+import { toItems } from '@/lib/response';
+import type { ServiceProviderUser } from '@/types/services';
 
-const emptyForm = { name: '', description: '', icon: '', isActive: true };
+const emptyForm = { name: '', description: '', icon: '', isActive: true, providers: [] as string[] };
 
 type FormState = typeof emptyForm;
 
@@ -14,6 +17,7 @@ type ServiceItem = {
   description?: string;
   icon?: string;
   isActive?: boolean;
+  providers?: string[];
 };
 
 const AdminServices = () => {
@@ -21,12 +25,33 @@ const AdminServices = () => {
   const servicesState = useSelector((state: RootState) => state.services);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [providerOptions, setProviderOptions] = useState<ServiceProviderUser[]>([]);
+  const [providerError, setProviderError] = useState<string | null>(null);
 
   useEffect(() => {
     if (servicesState.status === 'idle') {
       dispatch(fetchServices({ isActive: 'all' }));
     }
   }, [dispatch, servicesState.status]);
+
+  useEffect(() => {
+    const loadProviders = async () => {
+      try {
+        const res = await adminHttp.get('/admin/users', { params: { role: 'business', pageSize: 200 } });
+        const items = (toItems(res) as any[]).map((user) => ({
+          _id: String(user._id ?? user.id ?? ''),
+          name: user.name ?? 'Business owner',
+          phone: user.phone ?? '',
+          profession: user.profession ?? '',
+        })) as ServiceProviderUser[];
+        setProviderOptions(items);
+      } catch (error) {
+        setProviderError('Failed to load providers');
+      }
+    };
+
+    void loadProviders();
+  }, []);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement;
@@ -45,6 +70,18 @@ const AdminServices = () => {
   const resetForm = () => {
     setForm(emptyForm);
     setEditingId(null);
+  };
+
+  const toggleProvider = (id: string) => {
+    setForm((prev) => {
+      const hasId = prev.providers.includes(id);
+      return {
+        ...prev,
+        providers: hasId
+          ? prev.providers.filter((entry) => entry !== id)
+          : [...prev.providers, id],
+      };
+    });
   };
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -68,6 +105,9 @@ const AdminServices = () => {
       description: service.description ?? '',
       icon: service.icon ?? '',
       isActive: service.isActive !== false,
+      providers: Array.isArray(service.providers)
+        ? service.providers.map((id) => String(id)).filter(Boolean)
+        : [],
     });
   };
 
@@ -103,6 +143,35 @@ const AdminServices = () => {
           Icon / Emoji
           <input name="icon" value={form.icon} onChange={handleChange} placeholder="e.g. 🔧" />
         </label>
+        <div className="admin-services__provider-picker">
+          <div className="admin-services__provider-header">
+            <span>Assigned providers</span>
+            <span className="admin-services__hint">Business owners who can fulfil this service</span>
+          </div>
+          {providerError ? <p className="admin-services__error">{providerError}</p> : null}
+          <div className="admin-services__provider-list">
+            {providerOptions.length === 0 && !providerError ? (
+              <p className="admin-services__hint">No providers available yet.</p>
+            ) : (
+              providerOptions.map((provider) => {
+                const subtitle = provider.profession || provider.phone;
+                return (
+                  <label key={provider._id} className="admin-services__provider-option">
+                    <input
+                      type="checkbox"
+                      checked={form.providers.includes(provider._id)}
+                      onChange={() => toggleProvider(provider._id)}
+                    />
+                    <div>
+                      <div className="admin-services__provider-name">{provider.name}</div>
+                      {subtitle ? <div className="admin-services__provider-sub">{subtitle}</div> : null}
+                    </div>
+                  </label>
+                );
+              })
+            )}
+          </div>
+        </div>
         <label>
           <span>Active</span>
           <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} />
@@ -138,6 +207,9 @@ const AdminServices = () => {
                 <strong>{service.name}</strong>
                 <div className="admin-services__status">
                   {service.isActive === false ? 'Inactive' : 'Active'}
+                </div>
+                <div className="admin-services__provider-meta">
+                  Providers: {Array.isArray(service.providers) ? service.providers.length : 0}
                 </div>
               </div>
               <div className="admin-services__actions">

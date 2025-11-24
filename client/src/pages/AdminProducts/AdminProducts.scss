@@ -231,6 +231,12 @@
   border-radius: var(--mc-radius, 12px);
 }
 
+.admin-products__modal .ant-modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
 .admin-products__modalForm {
   display: flex;
   flex-direction: column;
@@ -253,6 +259,12 @@
   font-size: 0.9rem;
   background: rgb(var(--mc-surface-1, 248, 250, 252));
   color: inherit;
+}
+
+.admin-products__modalForm .ant-input-number,
+.admin-products__modalForm .ant-select,
+.admin-products__modalForm .ant-input {
+  width: 100%;
 }
 
 .admin-products__modalForm textarea {

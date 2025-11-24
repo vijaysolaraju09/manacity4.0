@@ -322,12 +322,30 @@ exports.updateShop = async (req, res, next) => {
     }
 
     const { name, category, location, status } = req.body || {};
-    if (name !== undefined) shop.name = name;
-    if (category !== undefined) shop.category = category;
-    if (location !== undefined) shop.location = location;
+
+    if (typeof name === 'string') {
+      const trimmed = name.trim();
+      if (trimmed) {
+        shop.name = trimmed;
+      }
+    }
+
+    if (typeof category === 'string') {
+      const trimmedCategory = category.trim();
+      if (trimmedCategory) {
+        shop.category = trimmedCategory;
+      }
+    }
+
+    if (typeof location === 'string') {
+      const trimmedLocation = location.trim();
+      if (trimmedLocation) {
+        shop.location = trimmedLocation;
+      }
+    }
+
     if (status !== undefined) {
-      const normalizedStatus =
-        typeof status === 'string' ? status.toLowerCase() : status;
+      const normalizedStatus = typeof status === 'string' ? status.toLowerCase() : status;
       const mappedStatus =
         STATUS_TO_INTERNAL[normalizedStatus] || STATUS_TO_INTERNAL[status] || normalizedStatus;
       if (mappedStatus && ['pending', 'approved', 'rejected'].includes(mappedStatus)) {

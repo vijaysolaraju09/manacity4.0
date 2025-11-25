@@ -58,7 +58,10 @@ const ShopDetails = () => {
     const bySearch = products.filter((p) =>
       p.name.toLowerCase().includes(search.toLowerCase()),
     );
-    const byTab = tab === 'available' ? bySearch.filter((p) => p.available) : bySearch;
+    const byTab =
+      tab === 'available'
+        ? bySearch.filter((p) => p.available !== false)
+        : bySearch;
     const sorted = [...byTab];
     const getPricePaise = (product: any): number => {
       const value = typeof product.pricePaise === 'number' ? product.pricePaise : 0;
@@ -359,14 +362,25 @@ const buildCardProduct = (product: any): ProductCardProduct | null => {
   if (!resolvedId) {
     return null;
   }
-  const pricePaise =
-    typeof product?.pricePaise === 'number' && Number.isFinite(product.pricePaise)
-      ? Math.max(0, Math.round(product.pricePaise))
-      : 0;
-  const mrpPaise =
-    typeof product?.mrpPaise === 'number' && Number.isFinite(product.mrpPaise)
-      ? Math.max(0, Math.round(product.mrpPaise))
-      : undefined;
+  const pricePaise = (() => {
+    if (typeof product?.pricePaise === 'number' && Number.isFinite(product.pricePaise)) {
+      return Math.max(0, Math.round(product.pricePaise));
+    }
+    if (typeof product?.price === 'number' && Number.isFinite(product.price)) {
+      return Math.max(0, Math.round(product.price * 100));
+    }
+    return 0;
+  })();
+
+  const mrpPaise = (() => {
+    if (typeof product?.mrpPaise === 'number' && Number.isFinite(product.mrpPaise)) {
+      return Math.max(0, Math.round(product.mrpPaise));
+    }
+    if (typeof product?.mrp === 'number' && Number.isFinite(product.mrp)) {
+      return Math.max(0, Math.round(product.mrp * 100));
+    }
+    return undefined;
+  })();
   const discountPercent =
     typeof product?.discountPercent === 'number' && Number.isFinite(product.discountPercent)
       ? Math.max(0, Math.round(product.discountPercent))
@@ -386,6 +400,11 @@ const buildCardProduct = (product: any): ProductCardProduct | null => {
     pricePaise,
     mrpPaise,
     discountPercent,
+    available: typeof product?.available === 'boolean' ? product.available : true,
+    stock:
+      typeof product?.stock === 'number' && Number.isFinite(product.stock)
+        ? Math.max(0, Math.round(product.stock))
+        : product?.stock,
   } as ProductCardProduct;
 };
 

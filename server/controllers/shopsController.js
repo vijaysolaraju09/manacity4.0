@@ -193,7 +193,22 @@ exports.getShopById = async (req, res, next) => {
     if (!shop) {
       return next(AppError.notFound('SHOP_NOT_FOUND', 'Shop not found'));
     }
-    return res.json({ ok: true, data: { shop: shop.toCardJSON() }, traceId: req.traceId });
+
+    const products = await Product.find({
+      shop: req.params.id,
+      isDeleted: false,
+      available: { $ne: false },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const normalizedProducts = products.map((product) => normalizeProduct(product));
+
+    return res.json({
+      ok: true,
+      data: { shop: { ...shop.toCardJSON(), products: normalizedProducts } },
+      traceId: req.traceId,
+    });
   } catch (err) {
     return next(err);
   }
@@ -201,8 +216,15 @@ exports.getShopById = async (req, res, next) => {
 
 exports.getProductsByShop = async (req, res, next) => {
   try {
-    const products = await Product.find({ shop: req.params.id, isDeleted: false }).lean();
-    return res.json({ ok: true, data: { items: products }, traceId: req.traceId });
+    const products = await Product.find({
+      shop: req.params.id,
+      isDeleted: false,
+      available: { $ne: false },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+    const normalizedProducts = products.map((product) => normalizeProduct(product));
+    return res.json({ ok: true, data: { items: normalizedProducts }, traceId: req.traceId });
   } catch (err) {
     return next(err);
   }

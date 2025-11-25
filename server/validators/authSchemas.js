@@ -15,7 +15,11 @@ const signupSchema = {
     name: z.string().min(2).max(80),
     phone: phoneSchema,
     password: passwordSchema,
-    location: z.string().min(2).optional(),
+    location: z
+      .string()
+      .min(2, 'Location must be at least 2 characters')
+      .optional()
+      .or(z.literal('')),
     role: z.enum(['customer', 'business']).optional(),
     email: z.string().email().optional().or(z.literal('')),
   }),

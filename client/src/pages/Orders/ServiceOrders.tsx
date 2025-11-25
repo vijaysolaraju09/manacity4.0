@@ -217,7 +217,7 @@ const ServiceOrders = () => {
           <span>Refresh</span>
         </button>
       </header>
-      {userRole !== 'business' ? (
+      {!isBusiness ? (
         <div className={styles.notice} role="note">
           <p>
             Service orders are available for approved business accounts. You can update your profile to request business

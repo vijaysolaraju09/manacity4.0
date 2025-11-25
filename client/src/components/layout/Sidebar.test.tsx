@@ -1,6 +1,5 @@
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { vi } from 'vitest';
 import '@testing-library/jest-dom';
 import Sidebar from './Sidebar';

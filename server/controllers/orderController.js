@@ -121,9 +121,12 @@ const createShopOrder = async ({
   }
 
   const shop = await Shop.findById(shopId)
-    .select('name location address owner')
+    .select('name location address owner status isOpen')
     .lean();
   if (!shop) throw AppError.notFound('SHOP_NOT_FOUND', 'Shop not found');
+  if (shop.status !== 'approved' || shop.isOpen === false) {
+    throw AppError.badRequest('SHOP_NOT_AVAILABLE', 'Shop is currently unavailable for orders');
+  }
 
   const productIds = items.map((i) => {
     const id = i?.productId ?? i?.product;

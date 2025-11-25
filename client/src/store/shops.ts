@@ -308,10 +308,17 @@ const shopsSlice = createSlice({
     });
     b.addCase(fetchShopById.fulfilled, (s, a) => {
       s.status = "succeeded";
-      s.item = a.payload as Shop;
-      const shopId = s.item?._id || s.item?.id || null;
+      const shop = a.payload as Shop;
+      s.item = shop;
+      const shopId = shop?._id || shop?.id || null;
       s.currentProductsShopId = shopId ?? null;
-      if (shopId && s.productsByShop[shopId]) {
+      if (shop?.products && shopId) {
+        const normalizedProducts = (shop.products as Product[]).map((product) =>
+          normalizeShopProduct(product, { shopId }),
+        );
+        s.productsByShop[shopId] = normalizedProducts;
+        s.products = normalizedProducts;
+      } else if (shopId && s.productsByShop[shopId]) {
         s.products = s.productsByShop[shopId];
       }
     });

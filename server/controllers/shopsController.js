@@ -127,7 +127,7 @@ exports.getAllShops = async (req, res, next) => {
       pageSize = 10,
     } = req.query;
 
-    const filter = {};
+    const filter = { status: 'approved', isOpen: { $ne: false } };
     const excludeOwnerRaw = req.user?._id || req.user?.userId;
     if (excludeOwnerRaw) {
       const ownerId =
@@ -173,8 +173,30 @@ exports.getAllShops = async (req, res, next) => {
       Shop.countDocuments(filter),
     ]);
 
+    const shopIds = shops.map((shop) => shop._id);
+    const products = await Product.find({
+      shop: { $in: shopIds },
+      isDeleted: false,
+      available: { $ne: false },
+      status: { $ne: 'archived' },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const productsByShop = products.reduce((acc, product) => {
+      const shopId = product.shop?.toString?.();
+      if (!shopId) return acc;
+      const normalized = normalizeProduct(product);
+      acc[shopId] = acc[shopId] || [];
+      acc[shopId].push(normalized);
+      return acc;
+    }, {});
+
     const responseData = {
-      items: shops.map((s) => s.toCardJSON()),
+      items: shops.map((s) => ({
+        ...s.toCardJSON(),
+        products: productsByShop[s._id.toString()] || [],
+      })),
       total,
       page: Number(page),
       pageSize: Number(pageSize),
@@ -190,7 +212,7 @@ exports.getAllShops = async (req, res, next) => {
 exports.getShopById = async (req, res, next) => {
   try {
     const shop = await Shop.findById(req.params.id);
-    if (!shop) {
+    if (!shop || shop.status !== 'approved' || shop.isOpen === false) {
       return next(AppError.notFound('SHOP_NOT_FOUND', 'Shop not found'));
     }
 
@@ -198,6 +220,7 @@ exports.getShopById = async (req, res, next) => {
       shop: req.params.id,
       isDeleted: false,
       available: { $ne: false },
+      status: { $ne: 'archived' },
     })
       .sort({ createdAt: -1 })
       .lean();
@@ -216,10 +239,15 @@ exports.getShopById = async (req, res, next) => {
 
 exports.getProductsByShop = async (req, res, next) => {
   try {
+    const shop = await Shop.findById(req.params.id).select('status isOpen');
+    if (!shop || shop.status !== 'approved' || shop.isOpen === false) {
+      return next(AppError.notFound('SHOP_NOT_FOUND', 'Shop not found'));
+    }
     const products = await Product.find({
       shop: req.params.id,
       isDeleted: false,
       available: { $ne: false },
+      status: { $ne: 'archived' },
     })
       .sort({ createdAt: -1 })
       .lean();

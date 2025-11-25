@@ -47,6 +47,16 @@ vi.mock('@/pages/ServiceRequests/ServiceRequestDetail', () => ({
   default: () => <div data-testid="request-detail-page">Request detail</div>,
 }));
 
+vi.mock('@/pages/ManageProducts/ManageProducts', () => ({
+  __esModule: true,
+  default: () => <div data-testid="manage-products-page">Manage products</div>,
+}));
+
+vi.mock('@/pages/Orders/ReceivedOrders', () => ({
+  __esModule: true,
+  default: () => <div data-testid="orders-received-page">Orders received</div>,
+}));
+
 describe('AppRoutes (authenticated routes)', () => {
   const renderAt = async (path: string) => {
     const { default: AppRoutes } = await import('./AppRoutes');
@@ -96,5 +106,15 @@ describe('AppRoutes (authenticated routes)', () => {
     router = await renderAt('/requests/req-9');
     await waitFor(() => expect(screen.getByTestId('request-detail-page')).toBeInTheDocument());
     expect(router.state.location.pathname).toBe('/requests/req-9');
+  });
+
+  it('renders manage products and received orders routes', async () => {
+    let router = await renderAt('/manage-products');
+    await waitFor(() => expect(screen.getByTestId('manage-products-page')).toBeInTheDocument());
+    expect(router.state.location.pathname).toBe('/manage-products');
+
+    router = await renderAt('/orders/received');
+    await waitFor(() => expect(screen.getByTestId('orders-received-page')).toBeInTheDocument());
+    expect(router.state.location.pathname).toBe('/orders/received');
   });
 });

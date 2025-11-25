@@ -25,7 +25,11 @@ describe('notifications slice', () => {
     const items = [createNotif()];
     const state = reducer(
       initialState,
-      fetchNotifs.fulfilled({ items, hasMore: false, unread: 1, page: 1 }, '' as any),
+      fetchNotifs.fulfilled(
+        { items, hasMore: false, unread: 1, page: 1 },
+        'request-1',
+        { page: 1, limit: 20 },
+      ),
     );
 
     expect(state.items).toHaveLength(1);
@@ -38,7 +42,7 @@ describe('notifications slice', () => {
   it('marks a notification as read and updates the unread counter', () => {
     const state = reducer(
       { ...initialState, status: 'succeeded', unread: 1, items: [createNotif()], hasMore: false, page: 1, error: null },
-      markNotifRead.fulfilled('notif-1', '' as any),
+      markNotifRead.fulfilled('notif-1', 'request-2', 'notif-1'),
     );
 
     expect(state.items[0]?.read).toBe(true);

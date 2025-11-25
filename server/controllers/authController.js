@@ -167,9 +167,9 @@ exports.login = async (req, res, next) => {
       return next(AppError.badRequest('PASSWORD_LOGIN_NOT_AVAILABLE', 'This account is not configured for password login.'));
     }
 
-    if (!user.isVerified) {
-      return next(AppError.forbidden('PHONE_NOT_VERIFIED', 'Please verify your phone to continue.'));
-    }
+    // if (!user.isVerified) {
+    //   return next(AppError.forbidden('PHONE_NOT_VERIFIED', 'Please verify your phone to continue.'));
+    // }
 
     // 3) Compare
     const ok = await bcrypt.compare(String(password || ''), user.password);

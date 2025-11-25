@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Mail, MapPin, Phone } from 'lucide-react'
+import { Building2, LogOut, Mail, MapPin, PencilLine, Phone } from 'lucide-react'
 
 import AddressManager from '@/pages/Profile/components/AddressManager'
 import Button from '@/components/ui/button'
@@ -61,6 +61,14 @@ const ProfileScreen = () => {
   const [requestsStatus, setRequestsStatus] = useState<RequestState>('idle')
   const [requestsError, setRequestsError] = useState<string | null>(null)
   const [requestsMeta, setRequestsMeta] = useState<ListMeta>({ page: 1, hasMore: false })
+
+  const handleEditProfile = useCallback(() => {
+    navigate(paths.settings())
+  }, [navigate])
+
+  const handleRequestBusiness = useCallback(() => {
+    navigate(paths.verification.requests())
+  }, [navigate])
 
   const handleLogout = useCallback(() => {
     void dispatch(logoutUser()).finally(() => {
@@ -399,9 +407,26 @@ const ProfileScreen = () => {
     <div className="space-y-6">
       <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
+          <div className="space-y-2">
             <p className="text-sm text-slate-500">Manage your identity, saved locations, orders, and concierge activity.</p>
             <h1 className="text-3xl font-semibold text-slate-900">Profile overview</h1>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="rounded-full px-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                onClick={handleEditProfile}
+              >
+                <PencilLine className="h-4 w-4" aria-hidden="true" /> Edit profile
+              </Button>
+              <Button
+                size="sm"
+                className="rounded-full px-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                onClick={handleRequestBusiness}
+              >
+                <Building2 className="h-4 w-4" aria-hidden="true" /> Request business verification
+              </Button>
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {stats.map((stat) => (
@@ -421,12 +446,13 @@ const ProfileScreen = () => {
               key={tab.key}
               type="button"
               className={cn(
-                'flex-1 border-b-2 px-4 py-3 text-sm font-semibold uppercase tracking-wide transition',
+                'flex-1 rounded-t-2xl border-b-2 px-4 py-3 text-sm font-semibold uppercase tracking-wide transition',
                 activeTab === tab.key
-                  ? 'border-[color:var(--brand-500)] text-[color:var(--brand-600)]'
-                  : 'border-transparent text-slate-500 hover:text-slate-700',
+                  ? 'border-[color:var(--brand-500)] bg-gradient-to-br from-[color:var(--brand-50)] to-white text-[color:var(--brand-700)] shadow-inner'
+                  : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700',
               )}
               onClick={() => setActiveTab(tab.key)}
+              aria-pressed={activeTab === tab.key}
             >
               {tab.label}
             </button>

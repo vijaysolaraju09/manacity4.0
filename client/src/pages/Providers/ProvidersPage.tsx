@@ -145,8 +145,11 @@ const ProvidersPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { items, status, error } = useSelector((state: RootState) => state.verified);
-  const userRole = useSelector((state: RootState) => state.auth.user?.role);
-  const isBusiness = userRole === 'business';
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+  const isBusiness =
+    currentUser?.role === 'business' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.businessStatus === 'approved';
   const [profession, setProfession] = useState('');
   const [city, setCity] = useState('');
 

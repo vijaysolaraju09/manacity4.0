@@ -124,6 +124,10 @@ const ProfileScreen = () => {
     setIsBusinessSheetOpen(true)
   }, [businessForm, profile?.address, profile?.location])
 
+  const handleManageBusiness = useCallback(() => {
+    navigate(paths.manageProducts())
+  }, [navigate])
+
   const closeBusinessSheet = useCallback(() => {
     setBusinessRequestStatus('idle')
     setIsBusinessSheetOpen(false)
@@ -529,16 +533,36 @@ const ProfileScreen = () => {
                 <Button
                   size="sm"
                   className="rounded-full px-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                  onClick={handleRequestBusiness}
-                  disabled={businessStatus === 'pending' || businessStatus === 'approved'}
+                  onClick={businessStatus === 'approved' ? handleManageBusiness : handleRequestBusiness}
+                  disabled={businessStatus === 'pending'}
                 >
                   <Building2 className="h-4 w-4" aria-hidden="true" />
                   {businessStatus === 'pending'
                     ? 'Request submitted'
                     : businessStatus === 'approved'
-                    ? 'Business approved'
+                    ? 'Manage business tools'
                     : 'Request business verification'}
                 </Button>
+                {businessStatus === 'approved' ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full px-4 shadow-sm"
+                      onClick={handleManageBusiness}
+                    >
+                      Manage products & shops
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full px-4 shadow-sm"
+                      onClick={() => navigate(paths.orders.received())}
+                    >
+                      Manage orders
+                    </Button>
+                  </div>
+                ) : null}
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${businessStatusClass}`}
                 >

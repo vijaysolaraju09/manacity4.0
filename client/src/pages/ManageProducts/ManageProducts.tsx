@@ -137,8 +137,11 @@ const toCardProduct = (product: Product): ProductCardProduct => {
 const ManageProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { items, loading } = useSelector((s: RootState) => s.products);
-  const userRole = useSelector((s: RootState) => s.auth.user?.role);
-  const isPrivileged = userRole === 'business' || userRole === 'admin';
+  const currentUser = useSelector((s: RootState) => s.auth.user);
+  const isPrivileged =
+    currentUser?.role === 'business' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.businessStatus === 'approved';
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<ProductFormState>(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);

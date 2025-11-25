@@ -70,8 +70,11 @@ const ReceivedOrders = () => {
       ? selectReceivedOrders(state)
       : selectOrdersByStatus(state, 'received', activeStatus as OrderStatus)
   );
-  const userRole = useSelector((state: RootState) => state.auth.user?.role);
-  const canManageOrders = userRole === 'business' || userRole === 'admin';
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+  const canManageOrders =
+    currentUser?.role === 'business' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.businessStatus === 'approved';
 
   useEffect(() => {
     if (receivedState.status === 'idle') {

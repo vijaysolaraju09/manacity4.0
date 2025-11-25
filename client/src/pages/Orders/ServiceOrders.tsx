@@ -40,8 +40,11 @@ const ServiceOrders = () => {
   const { items, status, error, updating } = useSelector(
     (state: RootState) => state.providerServiceRequests,
   );
-  const userRole = useSelector((state: RootState) => state.auth.user?.role);
-  const isBusiness = userRole === 'business';
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+  const isBusiness =
+    currentUser?.role === 'business' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.businessStatus === 'approved';
   const isLoading = status === 'loading';
   const hasItems = items.length > 0;
 

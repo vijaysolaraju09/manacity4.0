@@ -1,14 +1,10 @@
 const { z } = require('zod');
 
-const phoneSchema = z.string().regex(/^\d{10,14}$/, 'Invalid phone');
+const phoneSchema = z.string().regex(/^\+?\d{10,14}$/, 'Invalid phone');
 
-const passwordSchema = z
-  .string()
-  .min(8, 'Password must be at least 8 characters')
-  .regex(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/u,
-    'Password must include uppercase, lowercase, and a number',
-  );
+// Keep server-side validation aligned with the controller requirements (>= 6 chars)
+// to avoid rejecting valid signups after OTP verification.
+const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 
 const signupSchema = {
   body: z.object({

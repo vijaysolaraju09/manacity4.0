@@ -48,6 +48,8 @@ import VerificationRequests from '@/pages/VerificationRequests'
 import AdminUsers from '@/pages/AdminUsers'
 import AdminAnalytics from '@/pages/AdminAnalytics'
 import AnnouncementDetail from '@/pages/Announcements/AnnouncementDetail'
+import ManageProducts from '@/pages/ManageProducts/ManageProducts'
+import ReceivedOrders from '@/pages/Orders/ReceivedOrders'
 import type { RootState } from '@/store'
 
 const AppRoutes = () => {
@@ -121,7 +123,9 @@ const AppRoutes = () => {
             <Route path="announcements/:id" element={<AnnouncementDetail />} />
             <Route path="notifications" element={<NotificationsScreen />} />
             <Route path="profile" element={<ProfileScreen />} />
+            <Route path="manage-products" element={<ManageProducts />} />
             <Route path="orders/:id" element={<OrderDetail />} />
+            <Route path="orders/received" element={<ReceivedOrders />} />
             <Route path="history" element={<HistoryPage />} />
           </Route>
           <Route path="/login" element={<Navigate to="/home" replace />} />

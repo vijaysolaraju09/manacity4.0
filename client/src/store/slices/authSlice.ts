@@ -56,7 +56,18 @@ export const login = createAsyncThunk(
   ) => {
     try {
       const res = await http.post('/auth/login', creds);
-      return ensureAuthResponse(toItem(res));
+      const auth = ensureAuthResponse(toItem(res));
+      localStorage.setItem('token', auth.token);
+
+      try {
+        const meRes = await http.get('/auth/me');
+        const me = toItem(meRes) as User;
+        localStorage.setItem('user', JSON.stringify(me));
+        return { token: auth.token, user: me } satisfies AuthResponse;
+      } catch {
+        localStorage.setItem('user', JSON.stringify(auth.user));
+        return auth;
+      }
     } catch (err) {
       return rejectWithValue(toErrorMessage(err));
     }

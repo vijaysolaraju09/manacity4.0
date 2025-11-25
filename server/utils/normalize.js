@@ -29,6 +29,9 @@ exports.normalizeProduct = (p) => {
   const shopId =
     p.shop && typeof p.shop === 'object' && p.shop._id ? p.shop._id.toString() : p.shop?.toString();
   const id = getProductId(p) ?? '';
+  const available = typeof p.available === 'boolean' ? p.available : true;
+  const stockValue = Number(p.stock);
+  const stock = Number.isFinite(stockValue) ? stockValue : undefined;
 
   return {
     id,
@@ -40,13 +43,15 @@ exports.normalizeProduct = (p) => {
     mrp,
     mrpPaise: toPaise(mrp),
     discount,
-    stock: p.stock,
+    stock,
     images: p.images,
     image: p.images?.[0] || p.image || '',
     category: p.category,
     shopId: shopId,
     shop: shopId,
     rating: p.rating || 0,
+    available,
+    status: p.status,
     shopMeta:
       p.shop && p.shop.name
         ? {

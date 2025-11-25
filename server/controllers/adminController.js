@@ -96,6 +96,9 @@ exports.updateUserRole = async (req, res) => {
     }
 
     user.role = role;
+    if (role === 'business') {
+      user.businessStatus = 'approved';
+    }
     if (role === 'verified') {
       user.isVerified = true;
       user.verificationStatus = 'approved';

@@ -549,7 +549,7 @@ const ProfileScreen = () => {
                       variant="outline"
                       size="sm"
                       className="rounded-full px-4 shadow-sm"
-                      onClick={handleManageBusiness}
+                      onClick={() => navigate(paths.manageProducts())}
                     >
                       Manage products & shops
                     </Button>

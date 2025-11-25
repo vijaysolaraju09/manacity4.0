@@ -63,6 +63,11 @@ exports.adminUpdate = async (req, res, next) => {
       if (req.body[f] !== undefined) user[f] = req.body[f];
     });
 
+    if (req.body.role && req.body.role.toLowerCase() === 'business') {
+      user.role = 'business';
+      user.businessStatus = 'approved';
+    }
+
     if (req.body.email !== undefined) {
       const email = req.body.email === "" ? undefined : req.body.email.toLowerCase();
       if (email) {
@@ -95,6 +100,7 @@ exports.promoteToBusiness = async (userId) => {
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
   user.role = "business";
+  user.businessStatus = "approved";
   await user.save();
   return user;
 };

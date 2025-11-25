@@ -13,6 +13,7 @@ import {
   type CreateProductPayload,
   type UpdateProductPayload,
 } from '../../store/slices/productSlice';
+import { fetchMe } from '../../store/slices/authSlice';
 import Loader from '../../components/Loader';
 import ProductCard, {
   type Product as ProductCardProduct,
@@ -138,9 +139,10 @@ const ManageProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { items, loading } = useSelector((s: RootState) => s.products);
   const currentUser = useSelector((s: RootState) => s.auth.user);
+  const normalizedRole = currentUser?.role?.toLowerCase();
   const isPrivileged =
-    currentUser?.role === 'business' ||
-    currentUser?.role === 'admin' ||
+    normalizedRole === 'business' ||
+    normalizedRole === 'admin' ||
     currentUser?.businessStatus === 'approved';
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<ProductFormState>(emptyForm);
@@ -152,20 +154,8 @@ const ManageProducts = () => {
   const [shops, setShops] = useState<ShopSummary[]>([]);
   const [shopsLoading, setShopsLoading] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [authRefreshError, setAuthRefreshError] = useState<string | null>(null);
   const navigate = useNavigate();
-
-  if (!isPrivileged) {
-    return (
-      <div className={styles.guard}>
-        <EmptyState
-          title="Business access required"
-          message="Only approved business accounts can manage catalog products. Visit your profile to request or review business verification."
-          ctaLabel="Go to profile"
-          onCtaClick={() => navigate(paths.profile())}
-        />
-      </div>
-    );
-  }
 
   const defaultShopId = useMemo(() => {
     if (!shops.length) return '';
@@ -175,10 +165,29 @@ const ManageProducts = () => {
   }, [shops]);
 
   useEffect(() => {
-    dispatch(fetchMyProducts());
+    let active = true;
+    const refreshAuth = async () => {
+      try {
+        await dispatch(fetchMe()).unwrap();
+      } catch (err) {
+        if (active) {
+          setAuthRefreshError(toErrorMessage(err));
+        }
+      }
+    };
+    void refreshAuth();
+    return () => {
+      active = false;
+    };
   }, [dispatch]);
 
   useEffect(() => {
+    if (!isPrivileged) return;
+    dispatch(fetchMyProducts());
+  }, [dispatch, isPrivileged]);
+
+  useEffect(() => {
+    if (!isPrivileged) return;
     let active = true;
     const loadShops = async () => {
       try {
@@ -206,7 +215,7 @@ const ManageProducts = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [isPrivileged]);
 
   useEffect(() => {
     if (!defaultShopId) return;
@@ -215,6 +224,22 @@ const ManageProducts = () => {
       return { ...prev, shopId: defaultShopId };
     });
   }, [defaultShopId]);
+
+  if (!isPrivileged) {
+    return (
+      <div className={styles.guard}>
+        <EmptyState
+          title="Business access required"
+          message="Only approved business accounts can manage catalog products. If you were recently approved, please sign out and back in to refresh your access."
+          ctaLabel="Go to profile"
+          onCtaClick={() => navigate(paths.profile())}
+        />
+        {authRefreshError ? (
+          <p className={styles.mutedText}>Session update failed: {authRefreshError}</p>
+        ) : null}
+      </div>
+    );
+  }
 
   const resetForm = () => {
     setForm((prev) => ({ ...emptyForm, shopId: prev.shopId || defaultShopId }));
@@ -420,7 +445,12 @@ const ManageProducts = () => {
             })}
           </ul>
         ) : (
-          <p className={styles.mutedText}>Create a shop before adding products.</p>
+          <EmptyState
+            title="No shops yet"
+            message="Create a shop from your profile to start adding menu items."
+            ctaLabel="Go to profile"
+            onCtaClick={() => navigate(paths.profile())}
+          />
         )}
         {!shopsLoading && shops.some((shop) => shop.status !== 'approved') && (
           <p className={styles.hint}>Shops must be approved before they can be opened.</p>

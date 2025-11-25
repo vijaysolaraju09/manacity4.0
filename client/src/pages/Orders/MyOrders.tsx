@@ -29,8 +29,11 @@ const statusOptions: (OrderStatus | 'all')[] = [
   'pending',
   'placed',
   'confirmed',
+  'accepted',
+  'preparing',
   'out_for_delivery',
   'delivered',
+  'completed',
   'cancelled',
   'returned',
 ];
@@ -39,15 +42,15 @@ const statusLabels: Record<OrderStatus | 'all', string> = {
   all: 'All',
   draft: 'Draft',
   pending: 'Pending',
-  placed: 'Placed',
-  confirmed: 'Confirmed',
+  placed: 'Pending',
+  confirmed: 'Pending',
   accepted: 'Accepted',
   rejected: 'Rejected',
-  preparing: 'Preparing',
-  ready: 'Ready',
-  out_for_delivery: 'Out for delivery',
+  preparing: 'In Progress',
+  ready: 'In Progress',
+  out_for_delivery: 'In Progress',
   delivered: 'Delivered',
-  completed: 'Completed',
+  completed: 'Delivered',
   cancelled: 'Cancelled',
   returned: 'Returned',
 };
@@ -73,10 +76,8 @@ const MyOrders = () => {
   );
 
   useEffect(() => {
-    if (mineState.status === 'idle') {
-      dispatch(fetchMyOrders());
-    }
-  }, [dispatch, mineState.status]);
+    dispatch(fetchMyOrders());
+  }, [dispatch]);
 
   const ordersList = orders ?? [];
   const isLoading = mineState.status === 'loading';

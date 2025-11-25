@@ -13,7 +13,15 @@ const {
 // Helpers
 // ---------------------------------------------------------------------------
 const allowedTransitions = {
-  pending: ['accepted', 'rejected'],
+  pending: ['accepted', 'rejected', 'cancelled'],
+  placed: ['accepted', 'rejected', 'cancelled'],
+  confirmed: ['accepted', 'rejected', 'cancelled'],
+  accepted: ['preparing', 'cancelled'],
+  preparing: ['delivered', 'completed', 'cancelled'],
+  ready: ['delivered', 'completed', 'cancelled'],
+  out_for_delivery: ['delivered', 'completed', 'cancelled'],
+  delivered: ['completed'],
+  completed: [],
 };
 
 const ownerRoles = new Set(['owner', 'business']);
@@ -575,25 +583,31 @@ exports.updateOrderStatus = async (req, res, next) => {
     if (!allowed.includes(nextStatus)) {
       throw AppError.badRequest('INVALID_STATUS', 'Invalid status transition');
     }
+    const now = new Date();
     order.status = nextStatus;
     order.timeline.push({
-      at: new Date(),
+      at: now,
       by: 'shop',
       status: nextStatus,
       note,
     });
-    if (nextStatus === 'rejected') {
+    if (nextStatus === 'rejected' || nextStatus === 'cancelled') {
       order.cancel = {
         by: 'shop',
         reason: note,
-        at: new Date(),
+        at: now,
       };
     }
     await order.save();
     const notificationContext = buildOrderNotificationContext(order);
+    const code = orderCode(order);
+    const message =
+      nextStatus === 'cancelled'
+        ? `Order ${code || ''} was cancelled by the shop${note ? `: ${note}` : ''}.`
+        : `Order ${code || ''} is ${statusLabel(nextStatus)}`;
     await notifyUser(order.user, {
       type: 'order',
-      message: `Order is ${statusLabel(nextStatus)}`,
+      message,
       ...notificationContext,
       payload: notificationContext,
     });

@@ -36,6 +36,7 @@ const statusOptions: (OrderStatus | 'all')[] = [
   'ready',
   'out_for_delivery',
   'delivered',
+  'completed',
   'cancelled',
   'rejected',
 ];
@@ -152,28 +153,28 @@ const ReceivedOrders = () => {
   const handleAccept = (order: Order) =>
     performStatusUpdate(order, 'accepted', { successMessage: 'Order accepted' });
 
-  const handleReject = (order: Order) => {
-    const reason = window.prompt('Reason for rejecting this order:', '');
+  const handleInProgress = (order: Order) =>
+    performStatusUpdate(order, 'preparing', {
+      successMessage: 'Order marked as in progress',
+      confirmMessage: 'Move this order to in progress?',
+    });
+
+  const handleComplete = (order: Order) =>
+    performStatusUpdate(order, 'completed', {
+      successMessage: 'Order marked as completed',
+      confirmMessage: 'Mark this order as completed?',
+    });
+
+  const handleCancel = (order: Order) => {
+    const reason = window.prompt('Reason for cancelling this order:', '');
     if (reason === null) return;
     const note = reason.trim() || undefined;
-    performStatusUpdate(order, 'rejected', {
-      successMessage: 'Order rejected',
+    performStatusUpdate(order, 'cancelled', {
+      successMessage: 'Order cancelled',
       note,
-      confirmMessage: note ? undefined : 'Reject this order without a reason?',
+      confirmMessage: 'Cancel this order?',
     });
   };
-
-  const handleOutForDelivery = (order: Order) =>
-    performStatusUpdate(order, 'out_for_delivery', {
-      successMessage: 'Marked as out for delivery',
-      confirmMessage: 'Mark this order as out for delivery?',
-    });
-
-  const handleDelivered = (order: Order) =>
-    performStatusUpdate(order, 'delivered', {
-      successMessage: 'Order marked as delivered',
-      confirmMessage: 'Confirm that this order has been delivered?',
-    });
 
   const resolveStatus = (order: Order): OrderStatus =>
     optimisticStatuses[order.id] ?? order.status;
@@ -255,13 +256,15 @@ const ReceivedOrders = () => {
                 const currentStatus = resolveStatus(order);
                 const isUpdating = pendingOrderId === order.id;
                 const canAccept = ['pending', 'placed', 'confirmed'].includes(currentStatus);
-                const canReject = ['pending', 'placed', 'confirmed'].includes(currentStatus);
-                const canOutForDelivery =
-                  currentStatus === 'accepted' ||
-                  currentStatus === 'confirmed' ||
+                const canCancel = !['cancelled', 'delivered', 'completed', 'rejected'].includes(
+                  currentStatus,
+                );
+                const canMoveInProgress =
+                  currentStatus === 'accepted' || currentStatus === 'confirmed';
+                const canComplete =
                   currentStatus === 'preparing' ||
+                  currentStatus === 'out_for_delivery' ||
                   currentStatus === 'ready';
-                const canMarkDelivered = currentStatus === 'out_for_delivery';
                 const summary = itemsSummary(order);
                 return (
                   <div key={order.id} className={styles.orderBlock}>
@@ -343,38 +346,40 @@ const ReceivedOrders = () => {
                           {isUpdating && resolveStatus(order) === 'accepted' ? 'Updating…' : 'Accept'}
                         </Button>
                       )}
-                      {canReject && (
+                      {canMoveInProgress && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleInProgress(order)}
+                          disabled={isUpdating}
+                        >
+                          {isUpdating && resolveStatus(order) === 'preparing'
+                            ? 'Updating…'
+                            : 'In progress'}
+                        </Button>
+                      )}
+                      {canComplete && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleComplete(order)}
+                          disabled={isUpdating}
+                        >
+                          {isUpdating && resolveStatus(order) === 'completed'
+                            ? 'Updating…'
+                            : 'Completed'}
+                        </Button>
+                      )}
+                      {canCancel && (
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => handleReject(order)}
+                          onClick={() => handleCancel(order)}
                           disabled={isUpdating}
                           className={styles.danger}
                         >
-                          Reject
-                        </Button>
-                      )}
-                      {canOutForDelivery && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => handleOutForDelivery(order)}
-                          disabled={isUpdating}
-                        >
-                          {isUpdating && resolveStatus(order) === 'out_for_delivery'
-                            ? 'Updating…'
-                            : 'Out for delivery'}
-                        </Button>
-                      )}
-                      {canMarkDelivered && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => handleDelivered(order)}
-                          disabled={isUpdating}
-                        >
-                          {isUpdating && resolveStatus(order) === 'delivered' ? 'Updating…' : 'Delivered'}
+                          Cancel
                         </Button>
                       )}
                     </div>

@@ -25,6 +25,22 @@ const statusTone: Record<OrderStatus, BadgeVariant> = {
   returned: 'warning',
 };
 
+const statusText: Record<OrderStatus, string> = {
+  draft: 'Draft',
+  pending: 'Pending',
+  placed: 'Pending',
+  confirmed: 'Pending',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
+  preparing: 'In Progress',
+  ready: 'In Progress',
+  out_for_delivery: 'In Progress',
+  delivered: 'Delivered',
+  completed: 'Delivered',
+  cancelled: 'Cancelled',
+  returned: 'Returned',
+};
+
 type OrderListItemProps = {
   order: Order;
   onView: () => void;
@@ -106,7 +122,7 @@ const OrderListItem = ({
                   variant={statusTone[order.status]}
                   className="rounded-full px-3 py-1 text-xs font-semibold"
                 >
-                  {order.status.replace(/_/g, ' ').toUpperCase()}
+                  {statusText[order.status] ?? order.status.replace(/_/g, ' ').toUpperCase()}
                 </Badge>
               </div>
               <p className="text-xs text-ink-500 dark:text-ink-500">Placed {formatDate(order.createdAt)}</p>

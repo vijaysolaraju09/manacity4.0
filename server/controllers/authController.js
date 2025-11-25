@@ -91,9 +91,6 @@ exports.signup = async (req, res, next) => {
     }
 
     const normalizedLocation = typeof location === 'string' ? location.trim() : '';
-    if (!normalizedLocation) {
-      throw AppError.badRequest('MISSING_LOCATION', 'Location is required');
-    }
 
     if (!phone) {
       throw AppError.badRequest('MISSING_CONTACT', 'Phone is required');

@@ -23,6 +23,24 @@ const ensurePaise = (value, field) => {
 
 const toPrice = (paise) => paise / 100;
 
+const createSampleProductForShop = async (shop) => {
+  return Product.create({
+    shop: shop._id,
+    createdBy: shop.owner,
+    updatedBy: shop.owner,
+    name: 'Sample product',
+    description: 'Your catalog items will appear here once added.',
+    price: 99,
+    mrp: 129,
+    category: 'general',
+    stock: 10,
+    available: true,
+    status: 'active',
+    city: shop.location,
+    images: [],
+  });
+};
+
 exports.createProduct = async (req, res, next) => {
   try {
     const {
@@ -344,9 +362,27 @@ exports.getMyProducts = async (req, res, next) => {
   try {
     const shops = await Shop.find({ owner: req.user._id });
     const shopIds = shops.map((s) => s._id);
-    const products = await Product.find({ shop: { $in: shopIds }, isDeleted: false })
-      .populate('shop', 'name image location')
+    let products = await Product.find({ shop: { $in: shopIds }, isDeleted: false })
+      .populate('shop', 'name image location owner location')
       .lean();
+
+    if (shopIds.length && products.length === 0) {
+      const primaryShop = shops.find((shop) => shop.status === 'approved') || shops[0];
+      if (primaryShop) {
+        const sample = await createSampleProductForShop(primaryShop);
+        const normalizedSample = normalizeProduct({
+          ...sample.toObject(),
+          shop: {
+            _id: primaryShop._id,
+            name: primaryShop.name,
+            image: primaryShop.image,
+            location: primaryShop.location,
+          },
+        });
+        products = [normalizedSample];
+        return res.json(products);
+      }
+    }
     res.json(products.map((product) => normalizeProduct(product)));
   } catch (err) {
     return next(err);

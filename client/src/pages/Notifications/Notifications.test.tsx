@@ -62,7 +62,6 @@ describe('Notifications page', () => {
           entityType: 'order',
           targetType: 'order',
           targetId: 'order-99',
-          targetLink: '/orders/order-99',
         },
         {
           _id: 'promo-1',

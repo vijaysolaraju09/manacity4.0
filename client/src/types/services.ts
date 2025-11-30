@@ -19,6 +19,7 @@ export interface ServiceProviderUser {
   _id: string;
   name: string;
   phone?: string;
+  email?: string | null;
   location?: string;
   address?: string;
   avatarUrl?: string;

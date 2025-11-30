@@ -44,7 +44,7 @@ const ServiceRequestDetail = () => {
   const { requestId } = useParams<{ requestId: string }>();
   const detailState = useSelector(selectServiceRequestDetailState);
   const request = detailState.item;
-  const currentUserId = useSelector((state: RootState) => state.auth.user?._id ?? state.auth.user?.id ?? null);
+  const currentUserId = useSelector((state: RootState) => state.auth.user?.id ?? null);
   const loading = detailState.status === 'loading';
   const error = detailState.error;
   const [canceling, setCanceling] = useState(false);

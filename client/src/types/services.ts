@@ -125,6 +125,7 @@ export interface PublicServiceRequest {
   offersCount: number;
   visibility: 'public' | 'private';
   requester: string;
+  requesterId?: string | null;
   type?: 'public' | 'private';
   acceptedBy?: string | null;
   requesterContactVisible?: boolean;
@@ -141,6 +142,8 @@ export interface CreateServiceRequestPayload {
   preferredDate?: string;
   preferredTime?: string;
   visibility?: 'public' | 'private';
+  providerId?: string;
+  type?: 'public' | 'private' | 'direct';
 }
 
 export interface UpdateServiceRequestPayload {

@@ -401,8 +401,10 @@ exports.createServiceRequest = async (req, res, next) => {
     const providerId = sanitizeString(body.providerId);
     const preferredDate = sanitizeString(body.preferredDate);
     const preferredTime = sanitizeString(body.preferredTime);
-    const visibility = ensureVisibility(body.visibility);
-    const type = ensureVisibility(body.type || visibility);
+    const rawType = sanitizeString(body.type);
+    const isDirect = rawType === 'direct';
+    const visibility = ensureVisibility(isDirect ? 'private' : body.visibility);
+    const type = isDirect ? 'private' : ensureVisibility(body.type || visibility);
 
     if (!serviceId && !customName)
       throw AppError.badRequest(
@@ -529,6 +531,63 @@ exports.listMyServiceRequests = async (req, res, next) => {
 
     const items = Array.isArray(requests)
       ? requests.map((doc) => toRequestJson(doc, { currentUserId: req.user._id }))
+      : [];
+
+    res.json({
+      ok: true,
+      data: {
+        items,
+        total,
+        page: pageNumber,
+        pageSize: safePageSize,
+        hasMore: skip + items.length < total,
+      },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.listAcceptedServiceRequests = async (req, res, next) => {
+  try {
+    const { page = 1, pageSize, limit } = req.query;
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const sizeInput = limit ?? pageSize;
+    const safePageSize = Math.max(Math.min(Number(sizeInput) || 20, 50), 1);
+    const skip = (pageNumber - 1) * safePageSize;
+
+    const helperId = toObjectId(req.user?._id || req.user?.id || req.user?.userId);
+    if (!helperId)
+      throw AppError.unauthorized(
+        'NOT_AUTHENTICATED',
+        'Please sign in to view your assigned services'
+      );
+
+    const filter = {
+      $or: [
+        { acceptedBy: helperId },
+        { assignedProviderId: helperId },
+        { assignedProviderIds: helperId },
+      ],
+    };
+
+    const query = populateRequest(
+      ServiceRequest.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(safePageSize),
+    );
+
+    const [requests, total] = await Promise.all([
+      query.lean(),
+      ServiceRequest.countDocuments(filter),
+    ]);
+
+    const items = Array.isArray(requests)
+      ? requests.map((doc) =>
+          toRequestJson(doc, { currentUserId: helperId, isAdmin: req.user?.role === 'admin' })
+        )
       : [];
 
     res.json({
@@ -778,6 +837,7 @@ exports.listPublicServiceRequests = async (req, res, next) => {
             visibility: json.visibility,
             type: json.type,
             requester: json.requesterDisplayName || 'Community member',
+            requesterId: json.userId,
             acceptedBy: json.acceptedBy,
             requesterContactVisible: json.requesterContactVisible,
           };
@@ -824,6 +884,8 @@ exports.acceptPublicServiceRequest = async (req, res, next) => {
       throw AppError.badRequest('SERVICE_REQUEST_ALREADY_ACCEPTED', 'This request is already accepted');
 
     request.acceptedBy = currentUserId;
+    request.assignedProviderId = currentUserId;
+    request.assignedProviderIds = [currentUserId];
     request.status = STATUS.ACCEPTED;
 
     appendHistory(request, {

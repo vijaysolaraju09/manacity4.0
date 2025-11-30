@@ -51,6 +51,7 @@ export interface ServiceRequestsState {
   createStatus: RequestStatus;
   createError: string | null;
   mine: ListState;
+  assigned: ListState;
   admin: ListState;
   publicList: PublicListState;
   detail: DetailState;
@@ -61,6 +62,7 @@ const initialState: ServiceRequestsState = {
   createStatus: 'idle',
   createError: null,
   mine: { items: [], status: 'idle', error: null },
+  assigned: { items: [], status: 'idle', error: null },
   admin: { items: [], status: 'idle', error: null, total: 0, page: 1, pageSize: 20 },
   publicList: { items: [], status: 'idle', error: null, total: 0, page: 1, pageSize: 20 },
   detail: { item: null, status: 'idle', error: null, currentId: null },
@@ -152,6 +154,12 @@ const normalizePublicRequest = (data: any): PublicServiceRequest => ({
       : 0,
   visibility: data?.visibility === 'private' ? 'private' : 'public',
   requester: data?.requester ?? 'Anonymous',
+  requesterId:
+    data?.requesterId && typeof data.requesterId === 'object'
+      ? String(data.requesterId._id ?? data.requesterId.id ?? data.requesterId)
+      : data?.requesterId
+      ? String(data.requesterId)
+      : null,
   type: data?.type === 'private' ? 'private' : 'public',
   acceptedBy:
     data?.acceptedBy && typeof data.acceptedBy === 'object'
@@ -315,6 +323,9 @@ const applyRequestUpdate = (state: Draft<ServiceRequestsState>, updated: Service
   state.mine.items = state.mine.items.map((item) =>
     item._id === updated._id ? merge(item) : item
   );
+  state.assigned.items = state.assigned.items.map((item) =>
+    item._id === updated._id ? merge(item) : item
+  );
   state.admin.items = state.admin.items.map((item) =>
     item._id === updated._id ? merge(item) : item
   );
@@ -380,6 +391,24 @@ export const fetchMyServiceRequests = createAsyncThunk<
       const res = await http.get('/requests/mine');
       const items = (toItems(res) as any[]).map(normalizeRequest);
       return items as ServiceRequest[];
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
+    }
+  }
+);
+
+export const fetchAssignedServiceRequests = createAsyncThunk<
+  ServiceRequest[],
+  void,
+  { rejectValue: string }
+>(
+  'serviceRequests/fetchAssigned',
+  async (_unused, thunkApi) => {
+    try {
+      const res = await http.get('/requests/assigned');
+      const body = res?.data?.data ?? res?.data ?? {};
+      const items = toItems(body.requests ?? body.items ?? body).map(normalizeRequest);
+      return items;
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
     }
@@ -648,6 +677,18 @@ const serviceRequestsSlice = createSlice({
         state.mine.status = 'failed';
         state.mine.error = action.payload ?? action.error.message ?? 'Failed to load requests';
       })
+      .addCase(fetchAssignedServiceRequests.pending, (state) => {
+        state.assigned.status = 'loading';
+        state.assigned.error = null;
+      })
+      .addCase(fetchAssignedServiceRequests.fulfilled, (state, action: PayloadAction<ServiceRequest[]>) => {
+        state.assigned.status = 'succeeded';
+        state.assigned.items = action.payload;
+      })
+      .addCase(fetchAssignedServiceRequests.rejected, (state, action) => {
+        state.assigned.status = 'failed';
+        state.assigned.error = action.payload ?? action.error.message ?? 'Failed to load services';
+      })
       .addCase(fetchServiceRequestById.pending, (state, action) => {
         state.detail.status = 'loading';
         state.detail.error = null;
@@ -686,6 +727,8 @@ const serviceRequestsSlice = createSlice({
       })
       .addCase(acceptPublicServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         applyRequestUpdate(state, action.payload);
+        const exists = state.assigned.items.some((item) => item._id === action.payload._id);
+        if (!exists) state.assigned.items = [action.payload, ...state.assigned.items];
       })
       .addCase(adminFetchServiceRequests.pending, (state) => {
         state.admin.status = 'loading';

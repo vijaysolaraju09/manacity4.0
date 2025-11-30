@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState, type FormEventHandler } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { RootState, AppDispatch } from '@/store';
-import { fetchServiceById, fetchServiceProviders, createServiceRequest } from '@/store/services';
+import { fetchServiceById, fetchServiceProviders } from '@/store/services';
+import { createServiceRequest } from '@/store/serviceRequests';
 import type { Service, ServiceProvider } from '@/types/services';
 import { paths } from '@/routes/paths';
+import ProviderCard from '@/components/services/ProviderCard';
 
 const ServiceDetails = () => {
   const { serviceId = '' } = useParams<{ serviceId: string }>();
@@ -17,6 +19,7 @@ const ServiceDetails = () => {
 
   const [selectedProviderId, setSelectedProviderId] = useState<string | 'assign-later'>('assign-later');
   const [notes, setNotes] = useState('');
+  const [showProviderProfile, setShowProviderProfile] = useState<ServiceProvider | null>(null);
 
   useEffect(() => {
     if (!serviceId) return;
@@ -58,7 +61,10 @@ const ServiceDetails = () => {
     const payload = {
       serviceId,
       providerId: selectedProviderId === 'assign-later' ? undefined : selectedProviderId,
-      notes: notes.trim() || undefined,
+      description: notes.trim() || undefined,
+      details: notes.trim() || undefined,
+      visibility: selectedProviderId === 'assign-later' ? 'public' : 'private',
+      type: selectedProviderId === 'assign-later' ? 'public' : 'direct',
     };
 
     try {
@@ -135,13 +141,22 @@ const ServiceDetails = () => {
                       </div>
                     </div>
                   </label>
-                  <button
-                    type="button"
-                    className="w-full rounded-lg border border-borderc/50 px-3 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50"
-                    onClick={() => selectProviderAndScroll(provider.id)}
-                  >
-                    Request this provider
-                  </button>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      className="flex-1 rounded-lg border border-borderc/50 px-3 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50"
+                      onClick={() => selectProviderAndScroll(provider.id)}
+                    >
+                      Request this provider
+                    </button>
+                    <button
+                      type="button"
+                      className="flex-1 rounded-lg border border-borderc/40 bg-white px-3 py-2 text-sm font-semibold text-text-secondary hover:border-borderc"
+                      onClick={() => setShowProviderProfile(provider)}
+                    >
+                      View profile
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -181,6 +196,41 @@ const ServiceDetails = () => {
           </button>
         </form>
       </div>
+
+      {showProviderProfile ? (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 px-4 py-10">
+          <div className="relative w-full max-w-xl rounded-2xl bg-white p-4 shadow-lg">
+            <button
+              type="button"
+              className="absolute right-3 top-3 text-sm text-text-secondary"
+              onClick={() => setShowProviderProfile(null)}
+            >
+              Close
+            </button>
+            <ProviderCard provider={showProviderProfile} />
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                className="flex-1 rounded-lg border border-borderc/50 px-3 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50"
+                onClick={() => {
+                  setSelectedProviderId(showProviderProfile.id);
+                  setShowProviderProfile(null);
+                  selectProviderAndScroll(showProviderProfile.id);
+                }}
+              >
+                Request this provider
+              </button>
+              <button
+                type="button"
+                className="flex-1 rounded-lg border border-borderc/40 bg-surface-1 px-3 py-2 text-sm font-semibold text-text-secondary"
+                onClick={() => setShowProviderProfile(null)}
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

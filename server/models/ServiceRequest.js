@@ -110,6 +110,12 @@ const ServiceRequestSchema = new mongoose.Schema(
       trim: true,
       maxlength: 32,
     },
+    type: {
+      type: String,
+      enum: ['public', 'private'],
+      default: 'public',
+      index: true,
+    },
     visibility: {
       type: String,
       enum: ['public', 'private'],
@@ -164,6 +170,12 @@ const ServiceRequestSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       default: null,
+    },
+    acceptedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true,
     },
     provider: {
       type: mongoose.Schema.Types.ObjectId,
@@ -236,6 +248,12 @@ const syncRequestFields = (doc) => {
     doc.assignedProviderId = doc.provider;
   if (!doc.provider && doc.assignedProviderId) doc.provider = doc.assignedProviderId;
 
+  if (doc.visibility && !doc.type) doc.type = doc.visibility;
+  if (doc.type && !doc.visibility) doc.visibility = doc.type;
+  if (doc.type && doc.visibility && doc.type !== doc.visibility) {
+    doc.type = doc.visibility = doc.visibility === 'private' ? 'private' : 'public';
+  }
+
   if (typeof doc.status !== 'undefined') {
     doc.status = normalizeStatusValue(doc.status);
   }
@@ -255,6 +273,7 @@ const syncUpdateFields = (update = {}) => {
     ensurePairedField(target, 'service', 'serviceId');
     ensurePairedField(target, 'desc', 'description');
     ensurePairedField(target, 'provider', 'assignedProviderId');
+    ensurePairedField(target, 'type', 'visibility');
 
     if (Object.prototype.hasOwnProperty.call(target, 'status')) {
       target.status = normalizeStatusValue(target.status);

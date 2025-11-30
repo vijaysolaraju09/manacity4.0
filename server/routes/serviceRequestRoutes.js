@@ -9,6 +9,7 @@ const {
   completeServiceRequest,
   reopenServiceRequest,
   cancelServiceRequest,
+  acceptPublicServiceRequest,
   adminUpdateServiceRequest,
   adminListServiceRequests,
 } = require('../controllers/serviceRequestsController');
@@ -24,6 +25,7 @@ router.post('/', protect, createServiceRequest);
 router.get('/mine', protect, listMyServiceRequests);
 router.get('/me', protect, listMyServiceRequests);
 router.get('/:id', protect, getServiceRequestById);
+router.patch('/:id/accept', protect, acceptPublicServiceRequest);
 router.post('/:id/reopen', protect, reopenServiceRequest);
 router.post('/:id/complete', protect, completeServiceRequest);
 router.post('/:id/cancel', protect, cancelServiceRequest);

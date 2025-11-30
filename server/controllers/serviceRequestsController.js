@@ -108,6 +108,23 @@ const ensureVisibility = (value) => {
   return normalized === 'private' ? 'private' : 'public';
 };
 
+const maskName = (name = '') => {
+  const trimmed = sanitizeString(name);
+  if (!trimmed) return 'Community member';
+  const [first] = trimmed.split(' ').filter(Boolean);
+  if (!first) return 'Community member';
+  if (first.length <= 2) return `${first[0] ?? ''}***`;
+  return `${first.slice(0, 2)}***`;
+};
+
+const maskPhone = (value = '') => {
+  const digits = sanitizeString(value);
+  if (!digits) return '';
+  if (digits.length <= 4) return '****';
+  const tail = digits.slice(-4);
+  return `****${tail}`;
+};
+
 const anonymizeLocation = (value) => {
   const trimmed = sanitizeString(value);
   if (!trimmed) return '';
@@ -139,6 +156,7 @@ const toUserSummary = (user) => {
     phone: user.phone || '',
     location: user.location || '',
     address: user.address || '',
+    email: user.email || '',
   };
 };
 
@@ -201,6 +219,9 @@ const toRequestJson = (doc, options = {}) => {
   const ownerId = toId(doc.userId);
   const isOwner = Boolean(currentUserId && ownerId && currentUserId === ownerId);
 
+  const acceptedById = toId(doc.acceptedBy);
+  const isAcceptedHelper = Boolean(currentUserId && acceptedById && currentUserId === acceptedById);
+
   const service = doc.serviceId && doc.serviceId.name ? doc.serviceId : doc.service;
   const feedback = isOwner || isAdmin ? formatFeedback(options.feedback) : null;
   const assignedRaw = Array.isArray(doc.assignedProviderIds)
@@ -229,20 +250,48 @@ const toRequestJson = (doc, options = {}) => {
     ? doc.history.map((entry) => formatHistory(entry)).filter(Boolean)
     : [];
 
+  const requester =
+    doc.userId && typeof doc.userId === 'object' && doc.userId.name ? toUserSummary(doc.userId) : null;
+  const acceptedHelper =
+    doc.acceptedBy && typeof doc.acceptedBy === 'object' && doc.acceptedBy.name
+      ? toUserSummary(doc.acceptedBy)
+      : null;
+  const contactVisible = isOwner || isAdmin || isAcceptedHelper;
+  const locationValue =
+    contactVisible || ensureVisibility(doc.visibility) === 'private'
+      ? doc.location || ''
+      : anonymizeLocation(doc.location);
+  const phoneValue = (() => {
+    const fallbackPhone = doc.phone || requester?.phone || '';
+    if (!fallbackPhone) return '';
+    return contactVisible ? fallbackPhone : maskPhone(fallbackPhone);
+  })();
+  const requesterName = contactVisible
+    ? requester?.name || ''
+    : maskName(requester?.name || (doc.isAnonymizedPublic ? '' : doc.phone || ''));
+  const emailValue = contactVisible && requester && requester?.email ? requester.email : '';
+
   return {
     id: toId(doc._id),
     _id: toId(doc._id),
     userId: ownerId,
+    type: ensureVisibility(doc.type || doc.visibility),
     serviceId: doc.serviceId ? toId(doc.serviceId) : null,
     service: toServiceJson(service),
     customName: doc.customName || '',
     description: doc.description || '',
     details: doc.details || doc.desc || doc.description || '',
-    location: doc.location || '',
-    phone: isOwner || isAdmin ? doc.phone || '' : '',
+    location: locationValue,
+    phone: phoneValue,
+    requester: requester
+      ? { ...requester, email: emailValue, name: requesterName }
+      : { _id: ownerId, name: requesterName, phone: phoneValue },
+    requesterDisplayName: requesterName,
+    requesterContactVisible: contactVisible,
+    email: emailValue,
     preferredDate: doc.preferredDate || '',
     preferredTime: doc.preferredTime || '',
-    visibility: doc.visibility || 'public',
+    visibility: ensureVisibility(doc.visibility || doc.type),
     status: normalizeStatus(doc.status),
     adminNotes: doc.adminNotes || '',
     reopenedCount: typeof doc.reopenedCount === 'number' ? doc.reopenedCount : 0,
@@ -250,6 +299,8 @@ const toRequestJson = (doc, options = {}) => {
     assignedProvider,
     assignedProviders,
     assignedProviderIds,
+    acceptedBy: acceptedById || null,
+    acceptedHelper,
     offers,
     offersCount: Array.isArray(doc.offers) ? doc.offers.length : offers.length,
     history,
@@ -278,8 +329,10 @@ const populateRequest = (query) => {
   if (!query || typeof query.populate !== 'function') return query;
   const paths = [
     { path: 'serviceId', select: 'name description icon' },
+    { path: 'userId', select: 'name phone location address email' },
     { path: 'assignedProviderId', select: 'name phone location address' },
     { path: 'assignedProviderIds', select: 'name phone location address' },
+    { path: 'acceptedBy', select: 'name phone location address email' },
     { path: 'offers.providerId', select: 'name phone location address' },
   ];
   return query.populate(paths);
@@ -349,6 +402,7 @@ exports.createServiceRequest = async (req, res, next) => {
     const preferredDate = sanitizeString(body.preferredDate);
     const preferredTime = sanitizeString(body.preferredTime);
     const visibility = ensureVisibility(body.visibility);
+    const type = ensureVisibility(body.type || visibility);
 
     if (!serviceId && !customName)
       throw AppError.badRequest(
@@ -403,6 +457,7 @@ exports.createServiceRequest = async (req, res, next) => {
       preferredDate,
       preferredTime,
       visibility,
+      type,
       status: providerUser ? STATUS.ASSIGNED : STATUS.PENDING,
       isAnonymizedPublic: visibility === 'public',
     };
@@ -503,7 +558,8 @@ exports.getServiceRequestById = async (req, res, next) => {
     const isOwner = currentUserId ? isSameId(request.userId, currentUserId) : false;
     const isAdmin = req.user?.role === 'admin';
 
-    if (!isOwner && !isAdmin)
+    const isPublic = ensureVisibility(request.visibility || request.type) === 'public';
+    if (!isOwner && !isAdmin && !isPublic)
       throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to view this request');
 
     const ownerObjectId = toObjectId(request.userId || request.user);
@@ -675,7 +731,7 @@ exports.listPublicServiceRequests = async (req, res, next) => {
     const limit = Math.min(100, Math.max(parseInt(pageSize, 10) || 20, 1));
     const skip = (pageNum - 1) * limit;
 
-    const filter = { visibility: 'public' };
+    const filter = { visibility: 'public', type: 'public' };
     const currentUserId = toObjectId(req.user?._id || req.user?.userId);
     if (currentUserId) {
       filter.userId = { $ne: currentUserId };
@@ -692,12 +748,14 @@ exports.listPublicServiceRequests = async (req, res, next) => {
       ];
     }
 
-    const baseQuery = ServiceRequest.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .select('customName description location status createdAt offers serviceId visibility isAnonymizedPublic')
-      .populate('serviceId', 'name');
+    const baseQuery = populateRequest(
+      ServiceRequest.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+    ).select(
+      'customName description location status createdAt offers serviceId visibility type userId phone acceptedBy'
+    );
 
     const [items, total] = await Promise.all([
       baseQuery.lean(),
@@ -705,19 +763,25 @@ exports.listPublicServiceRequests = async (req, res, next) => {
     ]);
 
     const normalized = Array.isArray(items)
-      ? items.map((doc) => ({
-          id: toId(doc._id),
-          _id: toId(doc._id),
-          serviceId: doc.serviceId ? toId(doc.serviceId._id || doc.serviceId) : null,
-          title: doc.serviceId?.name || doc.customName || 'Service request',
-          description: doc.description ? doc.description.slice(0, 220) : '',
-          location: anonymizeLocation(doc.location),
-          createdAt: doc.createdAt || null,
-          status: doc.status || 'open',
-          offersCount: Array.isArray(doc.offers) ? doc.offers.length : 0,
-          visibility: doc.visibility || 'public',
-          requester: 'Anonymous',
-        }))
+      ? items.map((doc) => {
+          const json = toRequestJson(doc, { currentUserId });
+          return {
+            id: json.id,
+            _id: json.id,
+            serviceId: json.serviceId,
+            title: json.service?.name || json.customName || 'Service request',
+            description: json.description ? json.description.slice(0, 220) : '',
+            location: json.location,
+            createdAt: json.createdAt || null,
+            status: json.status,
+            offersCount: json.offersCount,
+            visibility: json.visibility,
+            type: json.type,
+            requester: json.requesterDisplayName || 'Community member',
+            acceptedBy: json.acceptedBy,
+            requesterContactVisible: json.requesterContactVisible,
+          };
+        })
       : [];
 
     res.json({
@@ -727,6 +791,71 @@ exports.listPublicServiceRequests = async (req, res, next) => {
         page: pageNum,
         pageSize: limit,
         total,
+      },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.acceptPublicServiceRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const request = await populateRequest(ServiceRequest.findById(id));
+    if (!request)
+      throw AppError.notFound('SERVICE_REQUEST_NOT_FOUND', 'Service request not found');
+
+    const currentUserId = toObjectId(req.user?._id || req.user?.userId);
+    if (!currentUserId)
+      throw AppError.unauthorized('NOT_AUTHENTICATED', 'Please sign in to accept requests');
+
+    if (isSameId(request.userId, currentUserId))
+      throw AppError.badRequest(
+        'SERVICE_REQUEST_SELF_ACCEPT',
+        'You cannot accept your own public request'
+      );
+
+    const visibility = ensureVisibility(request.visibility || request.type);
+    if (visibility !== 'public')
+      throw AppError.badRequest('SERVICE_REQUEST_NOT_PUBLIC', 'Only public requests can be accepted');
+
+    if (request.acceptedBy)
+      throw AppError.badRequest('SERVICE_REQUEST_ALREADY_ACCEPTED', 'This request is already accepted');
+
+    request.acceptedBy = currentUserId;
+    request.status = STATUS.ACCEPTED;
+
+    appendHistory(request, {
+      by: currentUserId,
+      type: 'assigned',
+      message: 'Accepted by helper',
+    });
+
+    await request.save();
+    await populateRequest(request);
+
+    const requesterName = request.userId?.name || 'requester';
+    const helperName = req.user?.name || 'helper';
+
+    await sendNotification(
+      request.userId,
+      'accepted',
+      `Your public request was accepted by ${helperName}`,
+      request
+    );
+
+    await sendNotification(
+      currentUserId,
+      'accepted',
+      `You accepted ${requesterName}'s request`,
+      request
+    );
+
+    res.json({
+      ok: true,
+      data: {
+        request: toRequestJson(request.toObject(), { currentUserId }),
       },
       traceId: req.traceId,
     });

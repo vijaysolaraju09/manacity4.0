@@ -152,6 +152,17 @@ const normalizePublicRequest = (data: any): PublicServiceRequest => ({
       : 0,
   visibility: data?.visibility === 'private' ? 'private' : 'public',
   requester: data?.requester ?? 'Anonymous',
+  type: data?.type === 'private' ? 'private' : 'public',
+  acceptedBy:
+    data?.acceptedBy && typeof data.acceptedBy === 'object'
+      ? String(data.acceptedBy._id ?? data.acceptedBy.id ?? data.acceptedBy)
+      : data?.acceptedBy
+      ? String(data.acceptedBy)
+      : null,
+  requesterContactVisible:
+    typeof data?.requesterContactVisible === 'boolean'
+      ? data.requesterContactVisible
+      : undefined,
 });
 
 const normalizeRequestFeedback = (data: any): ServiceRequestFeedback => {
@@ -181,6 +192,7 @@ const normalizeRequest = (data: any): ServiceRequest => ({
   _id: String(data._id ?? data.id ?? ''),
   id: String(data.id ?? data._id ?? ''),
   userId: String(data.userId ?? data.user_id ?? ''),
+  type: data.type === 'private' ? 'private' : 'public',
   serviceId:
     typeof data.serviceId === 'string' || data.serviceId === null
       ? data.serviceId
@@ -216,12 +228,29 @@ const normalizeRequest = (data: any): ServiceRequest => ({
       : data.description ?? '',
   location: data.location ?? '',
   phone: data.phone ?? data.contactPhone ?? '',
+  email: data.email ?? '',
+  requester: data.requester ? normalizeUserSummary(data.requester) : null,
+  requesterDisplayName: data.requesterDisplayName ?? data.requester?.name,
+  requesterContactVisible:
+    typeof data.requesterContactVisible === 'boolean' ? data.requesterContactVisible : undefined,
   preferredDate: data.preferredDate ?? '',
   preferredTime: data.preferredTime ?? '',
   visibility: data.visibility === 'private' ? 'private' : 'public',
   status: normalizeStatusValue(data.status),
   adminNotes: data.adminNotes ?? '',
   reopenedCount: typeof data.reopenedCount === 'number' ? data.reopenedCount : 0,
+  acceptedBy:
+    data.acceptedBy && typeof data.acceptedBy === 'object'
+      ? String(data.acceptedBy._id ?? data.acceptedBy.id ?? data.acceptedBy)
+      : data.acceptedBy
+      ? String(data.acceptedBy)
+      : null,
+  acceptedHelper:
+    data.acceptedHelper && typeof data.acceptedHelper === 'object'
+      ? normalizeUserSummary(data.acceptedHelper)
+      : data.acceptedBy && typeof data.acceptedBy === 'object' && data.acceptedBy._id
+      ? normalizeUserSummary(data.acceptedBy)
+      : null,
   assignedProviderId:
     data.assignedProviderId
       ? typeof data.assignedProviderId === 'string'
@@ -398,6 +427,25 @@ export const fetchPublicServiceRequests = createAsyncThunk<
         typeof body.pageSize === 'number' ? body.pageSize : params?.pageSize ?? items.length;
       const total = typeof body.total === 'number' ? body.total : items.length;
       return { items, page, pageSize, total };
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
+    }
+  }
+);
+
+export const acceptPublicServiceRequest = createAsyncThunk<
+  ServiceRequest,
+  { id: string },
+  { rejectValue: string }
+>(
+  'serviceRequests/acceptPublic',
+  async ({ id }, thunkApi) => {
+    try {
+      const res = await http.patch(`/requests/${id}/accept`);
+      const data = res?.data?.data ?? res?.data ?? {};
+      const request = data.request ? normalizeRequest(data.request) : null;
+      if (!request) throw new Error('Invalid request response');
+      return request;
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
     }
@@ -635,6 +683,9 @@ const serviceRequestsSlice = createSlice({
       .addCase(fetchPublicServiceRequests.rejected, (state, action) => {
         state.publicList.status = 'failed';
         state.publicList.error = action.payload ?? action.error.message ?? 'Failed to load public requests';
+      })
+      .addCase(acceptPublicServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
+        applyRequestUpdate(state, action.payload);
       })
       .addCase(adminFetchServiceRequests.pending, (state) => {
         state.admin.status = 'loading';

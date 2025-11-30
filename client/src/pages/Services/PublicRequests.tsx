@@ -27,7 +27,7 @@ const PublicRequests = () => {
   const navigate = useNavigate();
   const publicState = useSelector((state: RootState) => state.serviceRequests.publicList);
   const currentUserId = useSelector(
-    (state: RootState) => state.userProfile.item?._id ?? state.auth.user?._id ?? null
+    (state: RootState) => state.userProfile.item?.id ?? state.auth.user?.id ?? null
   );
   const isAuthenticated = Boolean(useSelector((state: RootState) => state.auth.token));
   const [submitting, setSubmitting] = useState<string | null>(null);

@@ -85,6 +85,8 @@ const loadItems = (): CartItem[] => {
   }
 };
 
+export const readPersistedCart = (): CartItem[] => loadItems();
+
 let persistTimeout: ReturnType<typeof setTimeout> | undefined;
 const persistItems = (items: CartItem[]) => {
   if (typeof localStorage === 'undefined') return;

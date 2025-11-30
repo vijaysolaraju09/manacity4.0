@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import ModalSheet from '@/components/base/ModalSheet';
 import Button from '@/components/ui/button';
 import SkeletonList from '@/components/ui/SkeletonList';
 import showToast from '@/components/ui/Toast';
 import { paths } from '@/routes/paths';
 import {
+  acceptPublicServiceRequest,
   fetchPublicServiceRequests,
-  submitServiceOffer,
 } from '@/store/serviceRequests';
 import type { AppDispatch, RootState } from '@/store';
 import styles from './PublicRequests.module.scss';
@@ -28,10 +27,7 @@ const PublicRequests = () => {
   const navigate = useNavigate();
   const publicState = useSelector((state: RootState) => state.serviceRequests.publicList);
   const isAuthenticated = Boolean(useSelector((state: RootState) => state.auth.token));
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [note, setNote] = useState('');
-  const [contact, setContact] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState<string | null>(null);
 
   useEffect(() => {
     if (publicState.status === 'idle') {
@@ -40,50 +36,25 @@ const PublicRequests = () => {
   }, [dispatch, publicState.status]);
 
   const items = useMemo(() => publicState.items ?? [], [publicState.items]);
-  const selectedRequest = useMemo(
-    () => items.find((item) => item._id === selectedId) ?? null,
-    [items, selectedId]
-  );
 
   const handleRefresh = () => {
     dispatch(fetchPublicServiceRequests({ page: publicState.page }));
   };
 
-  const handleOffer = (id: string) => {
-    setSelectedId(id);
-    setNote('');
-    setContact('');
-  };
-
-  const closeModal = () => {
-    if (submitting) return;
-    setSelectedId(null);
-    setNote('');
-    setContact('');
-  };
-
-  const handleSubmit = async () => {
-    if (!selectedId) return;
-    const payload = {
-      note: note.trim() || undefined,
-      contact: contact.trim(),
-    };
-    if (!payload.contact) {
-      showToast('Please add a contact number or email.', 'error');
+  const handleAccept = async (id: string) => {
+    if (!isAuthenticated) {
+      navigate(paths.auth.login());
       return;
     }
-    setSubmitting(true);
+    setSubmitting(id);
     try {
-      await dispatch(submitServiceOffer({ requestId: selectedId, payload })).unwrap();
-      showToast('Offer submitted', 'success');
-      setSelectedId(null);
-      setNote('');
-      setContact('');
+      await dispatch(acceptPublicServiceRequest({ id })).unwrap();
+      showToast('Request accepted. Contact details will be shared with you.', 'success');
     } catch (err) {
-      const message = typeof err === 'string' ? err : 'Failed to submit offer';
+      const message = typeof err === 'string' ? err : 'Failed to accept request';
       showToast(message, 'error');
     } finally {
-      setSubmitting(false);
+      setSubmitting(null);
     }
   };
 
@@ -108,22 +79,52 @@ const PublicRequests = () => {
       ) : (
         <div className={styles.list}>
           {items.map((request) => (
-            <div key={request._id} className={styles.card}>
+            <div
+              key={request._id}
+              className={styles.card}
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(paths.serviceRequests.detail(request._id))}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  navigate(paths.serviceRequests.detail(request._id));
+                }
+              }}
+            >
               <div className={styles.cardTitle}>{request.title}</div>
               {request.description ? (
                 <p className={styles.description}>{request.description}</p>
               ) : null}
               <div className={styles.meta}>
                 {request.location ? <span>{request.location}</span> : null}
+                {request.requester ? <span>{request.requester}</span> : null}
                 {request.createdAt ? <span>Posted {formatDate(request.createdAt)}</span> : null}
                 <span className={styles.chip}>{formatStatus(request.status)}</span>
-                <span>{request.offersCount} offers</span>
+                {request.acceptedBy ? <span>Accepted</span> : <span>{request.offersCount} offers</span>}
               </div>
               {isAuthenticated ? (
-                <Button className={styles.offerButton} onClick={() => handleOffer(request._id)}>
-                  Offer to help
+                <Button
+                  className={styles.offerButton}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void handleAccept(request._id);
+                  }}
+                  disabled={Boolean(request.acceptedBy) || submitting === request._id}
+                >
+                  {request.acceptedBy ? 'Already accepted' : submitting === request._id ? 'Accepting…' : 'Offer help / Accept'}
                 </Button>
-              ) : null}
+              ) : (
+                <Button
+                  className={styles.offerButton}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    navigate(paths.auth.login());
+                  }}
+                >
+                  Sign in to help
+                </Button>
+              )}
             </div>
           ))}
           <div className={styles.actions}>
@@ -133,54 +134,6 @@ const PublicRequests = () => {
           </div>
         </div>
       )}
-
-      <ModalSheet open={Boolean(selectedRequest)} onClose={closeModal}>
-        <div className={styles.modal}>
-          <div className={styles.modalHeader}>
-            <h2>{selectedRequest?.title ?? 'Offer to help'}</h2>
-            <button
-              type="button"
-              className={styles.closeButton}
-              aria-label="Close offer dialog"
-              onClick={closeModal}
-              disabled={submitting}
-            >
-              ×
-            </button>
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="offer-note">
-              Note (optional)
-            </label>
-            <textarea
-              id="offer-note"
-              className={styles.textarea}
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-            />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="offer-contact">
-              Contact information
-            </label>
-            <input
-              id="offer-contact"
-              className={styles.input}
-              value={contact}
-              onChange={(event) => setContact(event.target.value)}
-              placeholder="Phone or alternate contact"
-            />
-          </div>
-          <div className={styles.modalActions}>
-            <Button variant="secondary" onClick={closeModal} disabled={submitting}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Submitting…' : 'Submit offer'}
-            </Button>
-          </div>
-        </div>
-      </ModalSheet>
     </div>
   );
 };

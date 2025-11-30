@@ -6,7 +6,7 @@ import Button from '@/components/ui/button';
 import showToast from '@/components/ui/Toast';
 import { paths } from '@/routes/paths';
 import { cancelServiceRequest, fetchServiceRequestById, selectServiceRequestDetailState } from '@/store/serviceRequests';
-import type { AppDispatch } from '@/store';
+import type { AppDispatch, RootState } from '@/store';
 import type { ServiceRequestHistoryEntry } from '@/types/services';
 
 const historyLabels: Record<ServiceRequestHistoryEntry['type'], string> = {
@@ -44,6 +44,7 @@ const ServiceRequestDetail = () => {
   const { requestId } = useParams<{ requestId: string }>();
   const detailState = useSelector(selectServiceRequestDetailState);
   const request = detailState.item;
+  const currentUserId = useSelector((state: RootState) => state.auth.user?._id ?? state.auth.user?.id ?? null);
   const loading = detailState.status === 'loading';
   const error = detailState.error;
   const [canceling, setCanceling] = useState(false);
@@ -60,7 +61,12 @@ const ServiceRequestDetail = () => {
     }
   }, [detailState.status, detailState.error]);
 
-  const canCancel = useMemo(() => request?.status === 'pending', [request?.status]);
+  const isOwner = useMemo(() => request && currentUserId && request.userId === currentUserId, [request, currentUserId]);
+  const canCancel = useMemo(() => isOwner && request?.status === 'pending', [isOwner, request?.status]);
+  const canSeeContact = useMemo(
+    () => Boolean(request?.requesterContactVisible || (request && request.userId === currentUserId)),
+    [request?.requesterContactVisible, request?.userId, currentUserId]
+  );
 
   const handleCancel = useCallback(async () => {
     if (!requestId || !request) return;
@@ -138,6 +144,7 @@ const ServiceRequestDetail = () => {
                 <span>Visibility: {request.visibility === 'private' ? 'Private' : 'Public'}</span>
                 <span>Created: {formatDate(request.createdAt)}</span>
                 {request.updatedAt ? <span>Updated: {formatDate(request.updatedAt)}</span> : null}
+                {request.requesterDisplayName ? <span>Requester: {request.requesterDisplayName}</span> : null}
               </div>
             </div>
 
@@ -153,10 +160,17 @@ const ServiceRequestDetail = () => {
               <div>
                 <dt className="font-medium text-slate-500">Contact</dt>
                 <dd>{request.phone || 'Not provided'}</dd>
+                {!canSeeContact ? (
+                  <p className="text-xs text-slate-500">Contact details are shared after you accept the request.</p>
+                ) : null}
               </div>
               <div>
                 <dt className="font-medium text-slate-500">Location</dt>
                 <dd>{request.location || 'Not provided'}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-slate-500">Email</dt>
+                <dd>{canSeeContact ? request.email || request.requester?.email || 'Not provided' : 'Hidden until acceptance'}</dd>
               </div>
               <div>
                 <dt className="font-medium text-slate-500">Assigned provider</dt>
@@ -168,7 +182,33 @@ const ServiceRequestDetail = () => {
                     : 'Not assigned'}
                 </dd>
               </div>
+              {request.acceptedHelper ? (
+                <div>
+                  <dt className="font-medium text-slate-500">Accepted by</dt>
+                  <dd>{request.acceptedHelper.name || 'Helper'}</dd>
+                </div>
+              ) : null}
             </dl>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button
+                onClick={() => {
+                  if (canSeeContact && request.phone) window.location.href = `tel:${request.phone}`;
+                }}
+                disabled={!canSeeContact || !request.phone}
+              >
+                Call requester
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  if (canSeeContact && request.phone) window.location.href = `sms:${request.phone}`;
+                }}
+                disabled={!canSeeContact || !request.phone}
+              >
+                Message requester
+              </Button>
+            </div>
 
             {request.adminNotes ? (
               <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">

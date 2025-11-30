@@ -79,6 +79,7 @@ export interface ServiceRequest {
   _id: string;
   id: string;
   userId: string;
+  type: 'public' | 'private';
   serviceId: string | null;
   service?: Pick<Service, '_id' | 'id' | 'name' | 'description' | 'icon'> | null;
   customName?: string;
@@ -86,12 +87,18 @@ export interface ServiceRequest {
   details?: string;
   location?: string;
   phone?: string;
+  email?: string;
+  requester?: ServiceProviderUser | null;
+  requesterDisplayName?: string;
+  requesterContactVisible?: boolean;
   preferredDate?: string;
   preferredTime?: string;
   visibility: 'public' | 'private';
   status: ServiceRequestStatus;
   adminNotes?: string;
   reopenedCount: number;
+  acceptedBy: string | null;
+  acceptedHelper?: ServiceProviderUser | null;
   assignedProviderId: string | null;
   assignedProvider?: ServiceProviderUser | null;
   assignedProviders?: ServiceProviderUser[];
@@ -117,6 +124,9 @@ export interface PublicServiceRequest {
   offersCount: number;
   visibility: 'public' | 'private';
   requester: string;
+  type?: 'public' | 'private';
+  acceptedBy?: string | null;
+  requesterContactVisible?: boolean;
 }
 
 export interface CreateServiceRequestPayload {

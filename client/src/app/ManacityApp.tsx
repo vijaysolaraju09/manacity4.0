@@ -1,4 +1,4 @@
-import { PropsWithChildren, useEffect } from 'react'
+import { type PropsWithChildren, useEffect } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { Provider, useDispatch } from 'react-redux'
 import ThemeStyles from '@/app/components/ThemeStyles'

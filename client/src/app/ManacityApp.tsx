@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
+import { PropsWithChildren, useEffect } from 'react'
 import { BrowserRouter } from 'react-router-dom'
-import { Provider } from 'react-redux'
+import { Provider, useDispatch } from 'react-redux'
 import ThemeStyles from '@/app/components/ThemeStyles'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import HeroCarousel from '@/app/components/HeroCarousel'
@@ -9,7 +9,18 @@ import AppLayout from '@/app/layouts/AppLayout'
 import AppRoutes from '@/app/routes/AppRoutes'
 import { Sidebar, Header, BottomTabs } from '@/app/components/navigation'
 import useCountdown from '@/app/hooks/useCountdown'
-import { store } from '@/store'
+import { store, type AppDispatch } from '@/store'
+import { hydrateCart, readPersistedCart } from '@/store/slices/cartSlice'
+
+const CartHydrator = ({ children }: PropsWithChildren) => {
+  const dispatch = useDispatch<AppDispatch>()
+
+  useEffect(() => {
+    dispatch(hydrateCart(readPersistedCart()))
+  }, [dispatch])
+
+  return children
+}
 
 const ManacityApp = () => {
   useEffect(() => {
@@ -21,9 +32,11 @@ const ManacityApp = () => {
     <>
       <ThemeStyles />
       <Provider store={store}>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <CartHydrator>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </CartHydrator>
       </Provider>
     </>
   )

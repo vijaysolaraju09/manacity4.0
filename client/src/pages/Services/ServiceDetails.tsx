@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { RootState, AppDispatch } from '@/store';
 import { fetchServiceById, fetchServiceProviders } from '@/store/services';
 import { createServiceRequest } from '@/store/serviceRequests';
-import type { Service, ServiceProvider } from '@/types/services';
+import type { CreateServiceRequestPayload, Service, ServiceProvider } from '@/types/services';
 import { paths } from '@/routes/paths';
 import ProviderCard from '@/components/services/ProviderCard';
 
@@ -58,7 +58,7 @@ const ServiceDetails = () => {
     event.preventDefault();
     if (!serviceId) return;
 
-    const payload = {
+    const payload: CreateServiceRequestPayload = {
       serviceId,
       providerId: selectedProviderId === 'assign-later' ? undefined : selectedProviderId,
       description: notes.trim() || undefined,

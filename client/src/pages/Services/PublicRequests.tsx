@@ -26,6 +26,9 @@ const PublicRequests = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const publicState = useSelector((state: RootState) => state.serviceRequests.publicList);
+  const currentUserId = useSelector(
+    (state: RootState) => state.userProfile.item?._id ?? state.auth.user?._id ?? null
+  );
   const isAuthenticated = Boolean(useSelector((state: RootState) => state.auth.token));
   const [submitting, setSubmitting] = useState<string | null>(null);
 
@@ -35,7 +38,13 @@ const PublicRequests = () => {
     }
   }, [dispatch, publicState.status]);
 
-  const items = useMemo(() => publicState.items ?? [], [publicState.items]);
+  const items = useMemo(() => {
+    const raw = publicState.items ?? [];
+    if (!currentUserId) return raw;
+    return raw.filter(
+      (entry) => entry.requesterId !== currentUserId && entry.acceptedBy !== currentUserId
+    );
+  }, [publicState.items, currentUserId]);
 
   const handleRefresh = () => {
     dispatch(fetchPublicServiceRequests({ page: publicState.page }));

@@ -2,6 +2,7 @@ const express = require('express');
 const {
   createServiceRequest,
   listMyServiceRequests,
+  listAcceptedServiceRequests,
   getServiceRequestById,
   listPublicServiceRequests,
   submitOffer,
@@ -24,6 +25,7 @@ router.get('/public', optionalAuth, listPublicServiceRequests);
 router.post('/', protect, createServiceRequest);
 router.get('/mine', protect, listMyServiceRequests);
 router.get('/me', protect, listMyServiceRequests);
+router.get('/assigned', protect, listAcceptedServiceRequests);
 router.get('/:id', protect, getServiceRequestById);
 router.patch('/:id/accept', protect, acceptPublicServiceRequest);
 router.post('/:id/reopen', protect, reopenServiceRequest);

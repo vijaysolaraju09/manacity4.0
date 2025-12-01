@@ -1,19 +1,38 @@
+import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 
 import Button from '@/components/ui/button';
+import ModalSheet from '@/components/base/ModalSheet';
+import showToast from '@/components/ui/Toast';
 import { paths } from '@/routes/paths';
+import {
+  createServiceRequest,
+  fetchAssignedServiceRequests,
+  fetchMyServiceRequests,
+  fetchPublicServiceRequests,
+} from '@/store/serviceRequests';
+import type { AppDispatch, RootState } from '@/store';
+import { useDispatch, useSelector } from 'react-redux';
 import styles from './ServicesHub.module.scss';
 
 const ServicesHub = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
   const navigate = useNavigate();
+  const createStatus = useSelector((state: RootState) => state.serviceRequests.createStatus);
+
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [locationInput, setLocationInput] = useState('');
+  const [paymentOffer, setPaymentOffer] = useState('');
+  const [type, setType] = useState<'public' | 'private'>('public');
 
   const catalogPath = paths.services.catalog();
   const requestsPath = paths.services.requests();
-  const myRequestsPath = paths.services.requestsMine();
+  const myRequestsPath = paths.serviceRequests.mine();
   const myServicesPath = paths.services.myServices();
-  const createRequestPath = paths.services.request();
 
   const normalizedPath =
     location.pathname.endsWith('/') && location.pathname !== '/'
@@ -45,7 +64,29 @@ const ServicesHub = () => {
   };
 
   const handleCreateRequest = () => {
-    navigate(createRequestPath);
+    setShowRequestModal(true);
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      await dispatch(
+        createServiceRequest({ title, message, description: message, location: locationInput, paymentOffer, type })
+      ).unwrap();
+      showToast('Request submitted successfully', 'success');
+      setShowRequestModal(false);
+      setTitle('');
+      setMessage('');
+      setLocationInput('');
+      setPaymentOffer('');
+      setType('public');
+      dispatch(fetchMyServiceRequests());
+      dispatch(fetchPublicServiceRequests(undefined));
+      dispatch(fetchAssignedServiceRequests());
+    } catch (err) {
+      const messageText = typeof err === 'string' ? err : 'Failed to submit request';
+      showToast(messageText, 'error');
+    }
   };
 
   return (
@@ -74,7 +115,7 @@ const ServicesHub = () => {
               onClick={() => handlePrimaryTab('requests')}
               aria-current={isRequestsRoute ? 'page' : undefined}
             >
-              Requests
+              Public Requests
             </button>
             <button
               type="button"
@@ -98,6 +139,83 @@ const ServicesHub = () => {
       <div className={styles.content}>
         <Outlet />
       </div>
+      <ModalSheet open={showRequestModal} onClose={() => setShowRequestModal(false)}>
+        <form className={styles.requestForm} onSubmit={handleSubmit}>
+          <h2 className={styles.modalTitle}>Raise a request</h2>
+          <div className={styles.field}>
+            <label htmlFor="request-title">Title</label>
+            <input
+              id="request-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="request-message">Message / details</label>
+            <textarea
+              id="request-message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              required
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="request-location">Location</label>
+            <input
+              id="request-location"
+              type="text"
+              value={locationInput}
+              onChange={(e) => setLocationInput(e.target.value)}
+              placeholder="Area or landmark"
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="request-payment">Payment offer (optional)</label>
+            <input
+              id="request-payment"
+              type="text"
+              value={paymentOffer}
+              onChange={(e) => setPaymentOffer(e.target.value)}
+              placeholder="e.g. ₹500"
+            />
+          </div>
+          <div className={styles.field}>
+            <span>Type</span>
+            <div className={styles.choiceRow}>
+              <label>
+                <input
+                  type="radio"
+                  name="type"
+                  value="public"
+                  checked={type === 'public'}
+                  onChange={() => setType('public')}
+                />
+                Public
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="type"
+                  value="private"
+                  checked={type === 'private'}
+                  onChange={() => setType('private')}
+                />
+                Private
+              </label>
+            </div>
+          </div>
+          <div className={styles.modalActions}>
+            <Button type="submit" disabled={createStatus === 'loading'}>
+              {createStatus === 'loading' ? 'Submitting…' : 'Submit request'}
+            </Button>
+            <Button variant="secondary" type="button" onClick={() => setShowRequestModal(false)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </ModalSheet>
     </div>
   );
 };

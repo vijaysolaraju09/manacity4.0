@@ -98,17 +98,19 @@ const MyServices = () => {
         <div className="grid gap-4">
           {requests.map((request) => {
             const title = request.service?.name || request.customName || 'Service request';
-            const description = request.details || request.description || '';
-            const canMarkInProgress = ['pending', 'accepted', 'assigned'].includes(request.status);
+            const description = request.details || request.description || request.message || '';
+            const canMarkInProgress = ['pending', 'accepted', 'awaiting_approval'].includes(request.status);
             const canComplete = request.status === 'in_progress';
             const requesterContact =
               request.requesterContactVisible && (request.requester?.phone || request.phone);
+            const noteToSeeker = request.providerNote;
+            const myOffer = request.myOffer;
 
             return (
               <div key={request._id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-lg font-semibold text-slate-900">{title}</div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-lg font-semibold text-slate-900">{title}</div>
                     {description ? (
                       <p className="text-sm text-slate-600">{description.slice(0, 180)}</p>
                     ) : null}
@@ -120,12 +122,21 @@ const MyServices = () => {
                         {statusLabel(request.status)}
                       </span>
                     </div>
-                    {requesterContact ? (
-                      <div className="mt-2 text-sm text-slate-700">Contact: {requesterContact}</div>
-                    ) : null}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {canMarkInProgress ? (
+                      {requesterContact ? (
+                        <div className="mt-2 text-sm text-slate-700">Contact: {requesterContact}</div>
+                      ) : null}
+                      {myOffer ? (
+                        <div className="mt-2 text-sm text-slate-700">
+                          My offer: {myOffer.expectedReturn || 'Shared'}
+                          {myOffer.helperNote ? ` · ${myOffer.helperNote}` : ''}
+                        </div>
+                      ) : null}
+                      {noteToSeeker ? (
+                        <div className="mt-2 text-sm text-slate-700">Your note: {noteToSeeker}</div>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {canMarkInProgress ? (
                       <Button
                         variant="outline"
                         onClick={() => handleStatusUpdate(request._id, 'in_progress')}

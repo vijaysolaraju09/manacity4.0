@@ -81,40 +81,62 @@ const normalizeStatusValue = (value: any): ServiceRequest['status'] => {
   if (!value) return 'pending';
   const raw = String(value).trim();
   if (!raw) return 'pending';
-  const lower = raw.toLowerCase();
-  if (
-    ['pending', 'accepted', 'assigned', 'in_progress', 'completed', 'cancelled'].includes(lower)
-  ) {
-    return lower as ServiceRequest['status'];
-  }
-  if (lower === 'open' || lower === 'offered') return 'pending';
-  if (lower === 'closed') return 'cancelled';
-  if (lower === 'in-progress') return 'in_progress';
-  if (lower === 'complete') return 'completed';
-  return 'pending';
+  const map: Record<string, ServiceRequest['status']> = {
+    pending: 'pending',
+    awaitingapproval: 'awaiting_approval',
+    awaiting_approval: 'awaiting_approval',
+    accepted: 'accepted',
+    inprogress: 'in_progress',
+    in_progress: 'in_progress',
+    completed: 'completed',
+    cancelled: 'cancelled',
+    canceled: 'cancelled',
+    rejected: 'rejected',
+  };
+  const normalized = raw.replace(/\s+/g, '').toLowerCase();
+  return map[normalized] ?? 'pending';
 };
 
-const normalizeOffer = (data: any): ServiceRequestOffer => ({
-  _id: String(data?._id ?? data?.id ?? ''),
-  providerId:
-    typeof data?.providerId === 'string'
-      ? data.providerId
-      : data?.providerId?._id
-      ? String(data.providerId._id)
-      : data?.providerId
-      ? String(data.providerId)
-      : '',
-  provider:
-    data?.provider
+const normalizeOffer = (data: any): ServiceRequestOffer => {
+  const statusRaw = typeof data?.status === 'string' ? data.status.toLowerCase() : '';
+  const statusMap: Record<string, ServiceRequestOffer['status']> = {
+    pending: 'pending',
+    acceptedbyseeker: 'accepted_by_seeker',
+    accepted_by_seeker: 'accepted_by_seeker',
+    rejectedbyseeker: 'rejected_by_seeker',
+    rejected_by_seeker: 'rejected_by_seeker',
+  };
+
+  const helper =
+    data?.helper || data?.helperId?.name
+      ? normalizeUserSummary(data.helper || data.helperId)
+      : data?.provider
       ? normalizeUserSummary(data.provider)
       : data?.providerId && typeof data.providerId === 'object' && data.providerId._id
       ? normalizeUserSummary(data.providerId)
-      : null,
-  note: data?.note ?? '',
-  contact: data?.contact ?? '',
-  createdAt: data?.createdAt ?? data?.created_at ?? undefined,
-  status: (data?.status as ServiceRequestOffer['status']) ?? 'pending',
-});
+      : null;
+
+  return {
+    _id: String(data?._id ?? data?.id ?? ''),
+    providerId:
+      typeof data?.helperId === 'string'
+        ? data.helperId
+        : data?.helperId?._id
+        ? String(data.helperId._id)
+        : typeof data?.providerId === 'string'
+        ? data.providerId
+        : data?.providerId?._id
+        ? String(data.providerId._id)
+        : data?.providerId
+        ? String(data.providerId)
+        : '',
+    provider: helper,
+    note: data?.note ?? data?.helperNote ?? '',
+    expectedReturn: data?.expectedReturn ?? data?.paymentOffer ?? '',
+    createdAt: data?.createdAt ?? data?.created_at ?? undefined,
+    status: statusMap[statusRaw] ?? 'pending',
+  };
+};
 
 const normalizeHistory = (data: any): ServiceRequestHistoryEntry => ({
   at: (data?.at ?? data?.createdAt ?? null) as string | null,
@@ -142,10 +164,11 @@ const normalizePublicRequest = (data: any): PublicServiceRequest => ({
       ? String(data.serviceId)
       : null,
   title: data?.title ?? '',
-  description: data?.description ?? '',
+  description: data?.description ?? data?.message ?? '',
+  message: data?.message ?? data?.description ?? '',
   location: data?.location ?? '',
   createdAt: (data?.createdAt ?? null) as string | null,
-  status: (data?.status as ServiceRequest['status']) ?? 'open',
+  status: normalizeStatusValue(data?.status),
   offersCount:
     typeof data?.offersCount === 'number'
       ? data.offersCount
@@ -153,14 +176,17 @@ const normalizePublicRequest = (data: any): PublicServiceRequest => ({
       ? data.offers.length
       : 0,
   visibility: data?.visibility === 'private' ? 'private' : 'public',
-  requester: data?.requester ?? 'Anonymous',
+  requester: data?.requester?.name || data?.requester?.displayName || 'Anonymous',
   requesterId:
-    data?.requesterId && typeof data.requesterId === 'object'
-      ? String(data.requesterId._id ?? data.requesterId.id ?? data.requesterId)
+    data?.requester?._id
+      ? String(data.requester._id)
+      : data?.userId
+      ? String(data.userId)
       : data?.requesterId
       ? String(data.requesterId)
       : null,
   type: data?.type === 'private' ? 'private' : 'public',
+  paymentOffer: data?.paymentOffer ?? '',
   acceptedBy:
     data?.acceptedBy && typeof data.acceptedBy === 'object'
       ? String(data.acceptedBy._id ?? data.acceptedBy.id ?? data.acceptedBy)
@@ -202,128 +228,142 @@ const normalizeRequestFeedback = (data: any): ServiceRequestFeedback => {
   };
 };
 
-const normalizeRequest = (data: any): ServiceRequest => ({
-  _id: String(data._id ?? data.id ?? ''),
-  id: String(data.id ?? data._id ?? ''),
-  userId: String(data.userId ?? data.user_id ?? ''),
-  type: data.type === 'private' ? 'private' : 'public',
-  serviceId:
-    typeof data.serviceId === 'string' || data.serviceId === null
-      ? data.serviceId
-      : data.serviceId?._id
-      ? String(data.serviceId._id)
-      : data.serviceId
-      ? String(data.serviceId)
+const normalizeRequest = (data: any): ServiceRequest => {
+  const id = String(data._id ?? data.id ?? '');
+  const offers = Array.isArray(data.offers)
+    ? data.offers.map(normalizeOffer)
+    : Array.isArray(data.offersData)
+    ? data.offersData.map(normalizeOffer)
+    : [];
+
+  return {
+    _id: id,
+    id,
+    userId:
+      typeof data.userId === 'string'
+        ? data.userId
+        : data.userId?._id
+        ? String(data.userId._id)
+        : data.requester?._id
+        ? String(data.requester._id)
+        : '',
+    type: data.type === 'private' ? 'private' : data.type === 'direct' ? 'direct' : 'public',
+    serviceId:
+      typeof data.serviceId === 'string' || data.serviceId === null
+        ? data.serviceId
+        : data.serviceId?._id
+        ? String(data.serviceId._id)
+        : null,
+    service: data.service
+      ? {
+          _id: String(data.service._id ?? data.service.id ?? ''),
+          id: String(data.service.id ?? data.service._id ?? ''),
+          name: data.service.name ?? '',
+          description: data.service.description ?? '',
+          icon: data.service.icon ?? '',
+        }
       : null,
-  service: data.service
-    ? {
-        _id: String(data.service._id ?? data.service.id ?? ''),
-        id: String(data.service.id ?? data.service._id ?? ''),
-        name: data.service.name ?? '',
-        description: data.service.description ?? '',
-        icon: data.service.icon ?? '',
-      }
-    : data.serviceId && data.serviceId.name
-    ? {
-        _id: String(data.serviceId._id ?? data.serviceId.id ?? ''),
-        id: String(data.serviceId.id ?? data.serviceId._id ?? ''),
-        name: data.serviceId.name ?? '',
-        description: data.serviceId.description ?? '',
-        icon: data.serviceId.icon ?? '',
-      }
-    : null,
-  customName: data.customName ?? '',
-  description: data.description ?? '',
-  details:
-    typeof data.details === 'string'
-      ? data.details
-      : typeof data.desc === 'string'
-      ? data.desc
-      : data.description ?? '',
-  location: data.location ?? '',
-  phone: data.phone ?? data.contactPhone ?? '',
-  email: data.email ?? '',
-  requester: data.requester ? normalizeUserSummary(data.requester) : null,
-  requesterDisplayName: data.requesterDisplayName ?? data.requester?.name,
-  requesterContactVisible:
-    typeof data.requesterContactVisible === 'boolean' ? data.requesterContactVisible : undefined,
-  preferredDate: data.preferredDate ?? '',
-  preferredTime: data.preferredTime ?? '',
-  visibility: data.visibility === 'private' ? 'private' : 'public',
-  status: normalizeStatusValue(data.status),
-  adminNotes: data.adminNotes ?? '',
-  reopenedCount: typeof data.reopenedCount === 'number' ? data.reopenedCount : 0,
-  acceptedBy:
-    data.acceptedBy && typeof data.acceptedBy === 'object'
-      ? String(data.acceptedBy._id ?? data.acceptedBy.id ?? data.acceptedBy)
-      : data.acceptedBy
-      ? String(data.acceptedBy)
-      : null,
-  acceptedHelper:
-    data.acceptedHelper && typeof data.acceptedHelper === 'object'
-      ? normalizeUserSummary(data.acceptedHelper)
-      : data.acceptedBy && typeof data.acceptedBy === 'object' && data.acceptedBy._id
-      ? normalizeUserSummary(data.acceptedBy)
-      : null,
-  acceptedAt:
-    typeof data.acceptedAt === 'string'
-      ? data.acceptedAt
-      : data.acceptedAt instanceof Date
-      ? data.acceptedAt.toISOString()
-      : null,
-  assignedProviderId:
-    data.assignedProviderId
-      ? typeof data.assignedProviderId === 'string'
-        ? data.assignedProviderId
-        : data.assignedProviderId?._id
-        ? String(data.assignedProviderId._id)
-        : String(data.assignedProviderId)
-      : null,
-  assignedProvider:
-    data.assignedProvider
-      ? normalizeUserSummary(data.assignedProvider)
-      : data.assignedProviderId && data.assignedProviderId.name
-      ? normalizeUserSummary(data.assignedProviderId)
-      : null,
-  assignedProviders: Array.isArray(data.assignedProviders)
-    ? data.assignedProviders.map((entry: any) => normalizeUserSummary(entry))
-    : [],
-  assignedProviderIds: Array.isArray(data.assignedProviderIds)
-    ? data.assignedProviderIds.map((value: any) => {
-        if (typeof value === 'string') return value;
-        if (value && typeof value === 'object' && value._id) return String(value._id);
-        if (value && typeof value === 'object' && typeof value.toString === 'function')
-          return value.toString();
-        return String(value ?? '');
-      })
-    : data.assignedProviderId
-    ? [
-        typeof data.assignedProviderId === 'string'
+    customName: data.customName ?? '',
+    title: data.title ?? data.customName ?? '',
+    message: data.message ?? data.details ?? data.description ?? '',
+    description: data.description ?? data.message ?? '',
+    details: data.details ?? data.message ?? data.desc ?? '',
+    location: data.location ?? '',
+    paymentOffer: data.paymentOffer ?? '',
+    phone: data.phone ?? data.contactPhone ?? '',
+    email: data.email ?? '',
+    requester: data.requester ? normalizeUserSummary(data.requester) : null,
+    requesterDisplayName: data.requester?.name ?? data.requester?.displayName,
+    requesterContactVisible:
+      typeof data.requesterContactVisible === 'boolean' ? data.requesterContactVisible : undefined,
+    preferredDate: data.preferredDate ?? '',
+    preferredTime: data.preferredTime ?? '',
+    visibility: data.visibility === 'private' ? 'private' : 'public',
+    status: normalizeStatusValue(data.status),
+    adminNotes: data.adminNotes ?? '',
+    reopenedCount: typeof data.reopenedCount === 'number' ? data.reopenedCount : 0,
+    acceptedBy:
+      data.acceptedBy && typeof data.acceptedBy === 'object'
+        ? String(data.acceptedBy._id ?? data.acceptedBy.id ?? data.acceptedBy)
+        : data.acceptedBy
+        ? String(data.acceptedBy)
+        : null,
+    acceptedHelper:
+      data.acceptedHelper && typeof data.acceptedHelper === 'object'
+        ? normalizeUserSummary(data.acceptedHelper)
+        : data.acceptedBy && typeof data.acceptedBy === 'object' && data.acceptedBy._id
+        ? normalizeUserSummary(data.acceptedBy)
+        : null,
+    acceptedAt:
+      typeof data.acceptedAt === 'string'
+        ? data.acceptedAt
+        : data.acceptedAt instanceof Date
+        ? data.acceptedAt.toISOString()
+        : null,
+    directTargetUserId:
+      typeof data.directTargetUserId === 'string'
+        ? data.directTargetUserId
+        : data.directTargetUserId?._id
+        ? String(data.directTargetUserId._id)
+        : null,
+    providerNote: data.providerNote ?? '',
+    assignedProviderId:
+      data.assignedProviderId
+        ? typeof data.assignedProviderId === 'string'
           ? data.assignedProviderId
           : data.assignedProviderId?._id
           ? String(data.assignedProviderId._id)
-          : String(data.assignedProviderId ?? ''),
-      ].filter(Boolean)
-    : [],
-  offers: Array.isArray(data.offers) ? data.offers.map(normalizeOffer) : [],
-  offersCount:
-    typeof data.offersCount === 'number'
-      ? data.offersCount
-      : Array.isArray(data.offers)
-      ? data.offers.length
-      : 0,
-  history: Array.isArray(data.history) ? data.history.map(normalizeHistory) : [],
-  isAnonymizedPublic:
-    typeof data.isAnonymizedPublic === 'boolean' ? data.isAnonymizedPublic : undefined,
-  createdAt: data.createdAt,
-  updatedAt: data.updatedAt,
-  feedback:
-    typeof data.feedback === 'undefined'
-      ? undefined
-      : data.feedback === null
-      ? null
-      : normalizeRequestFeedback(data.feedback),
-});
+          : String(data.assignedProviderId)
+        : null,
+    assignedProvider:
+      data.assignedProvider
+        ? normalizeUserSummary(data.assignedProvider)
+        : data.assignedProviderId && data.assignedProviderId.name
+        ? normalizeUserSummary(data.assignedProviderId)
+        : null,
+    assignedProviders: Array.isArray(data.assignedProviders)
+      ? data.assignedProviders.map((entry: any) => normalizeUserSummary(entry))
+      : [],
+    assignedProviderIds: Array.isArray(data.assignedProviderIds)
+      ? data.assignedProviderIds.map((value: any) => {
+          if (typeof value === 'string') return value;
+          if (value && typeof value === 'object' && value._id) return String(value._id);
+          if (value && typeof value === 'object' && typeof value.toString === 'function')
+            return value.toString();
+          return String(value ?? '');
+        })
+      : data.assignedProviderId
+      ? [
+          typeof data.assignedProviderId === 'string'
+            ? data.assignedProviderId
+            : data.assignedProviderId?._id
+            ? String(data.assignedProviderId._id)
+            : String(data.assignedProviderId ?? ''),
+        ].filter(Boolean)
+      : [],
+    offers,
+    offersCount: typeof data.offersCount === 'number' ? data.offersCount : offers.length,
+    history: Array.isArray(data.history) ? data.history.map(normalizeHistory) : [],
+    isAnonymizedPublic:
+      typeof data.isAnonymizedPublic === 'boolean' ? data.isAnonymizedPublic : undefined,
+    myOffer: data.myOffer
+      ? {
+          id: String(data.myOffer.id ?? data.myOffer._id ?? ''),
+          helperNote: data.myOffer.helperNote ?? '',
+          expectedReturn: data.myOffer.expectedReturn ?? '',
+          status: normalizeOffer(data.myOffer).status,
+        }
+      : undefined,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+    feedback:
+      typeof data.feedback === 'undefined'
+        ? undefined
+        : data.feedback === null
+        ? null
+        : normalizeRequestFeedback(data.feedback),
+  };
+};
 
 const applyRequestUpdate = (state: Draft<ServiceRequestsState>, updated: ServiceRequest) => {
   const merge = (item: ServiceRequest): ServiceRequest => ({
@@ -383,10 +423,51 @@ export const createServiceRequest = createAsyncThunk<
   'serviceRequests/create',
   async (payload, thunkApi) => {
     try {
-      const res = await http.post('/requests', payload);
+      const body: Record<string, any> = { ...payload };
+      body.title =
+        payload.title ||
+        payload.customName ||
+        payload.details ||
+        payload.description ||
+        'Service request';
+      body.message = payload.message || payload.details || payload.description || '';
+      if (payload.visibility) body.type = payload.visibility;
+      if (payload.type) body.type = payload.type;
+      if (payload.paymentOffer) body.paymentOffer = payload.paymentOffer;
+
+      const res = await http.post('/service-requests', body);
       const data = res?.data?.data ?? res?.data ?? {};
-      const request = data.request ? normalizeRequest(data.request) : null;
-      if (!request) throw new Error('Invalid request response');
+      const requestData = data.request ?? data;
+      const request = normalizeRequest(requestData);
+      return request;
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
+    }
+  }
+);
+
+export const createDirectServiceRequest = createAsyncThunk<
+  ServiceRequest,
+  CreateServiceRequestPayload,
+  { rejectValue: string }
+>(
+  'serviceRequests/createDirect',
+  async (payload, thunkApi) => {
+    try {
+      const body: Record<string, any> = { ...payload };
+      body.title =
+        payload.title ||
+        payload.customName ||
+        payload.details ||
+        payload.description ||
+        'Service request';
+      body.message = payload.message || payload.details || payload.description || '';
+      body.paymentOffer = payload.paymentOffer;
+      if (!body.directTargetUserId && payload.providerId) body.directTargetUserId = payload.providerId;
+
+      const res = await http.post('/service-requests/direct', body);
+      const data = res?.data?.data ?? res?.data ?? {};
+      const request = data.request ? normalizeRequest(data.request) : normalizeRequest(data);
       return request;
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
@@ -402,8 +483,9 @@ export const fetchMyServiceRequests = createAsyncThunk<
   'serviceRequests/fetchMine',
   async (_unused, thunkApi) => {
     try {
-      const res = await http.get('/requests/mine');
-      const items = (toItems(res) as any[]).map(normalizeRequest);
+      const res = await http.get('/service-requests/my-requests');
+      const body = res?.data?.data ?? res?.data ?? {};
+      const items = toItems(body).map(normalizeRequest);
       return items as ServiceRequest[];
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
@@ -419,12 +501,7 @@ export const fetchAssignedServiceRequests = createAsyncThunk<
   'serviceRequests/fetchAssigned',
   async (_unused, thunkApi) => {
     try {
-      let res;
-      try {
-        res = await http.get('/requests/my-services');
-      } catch (err) {
-        res = await http.get('/requests/assigned');
-      }
+      const res = await http.get('/service-requests/my-services');
       const body = res?.data?.data ?? res?.data ?? {};
       const items = toItems(body.requests ?? body.items ?? body).map(normalizeRequest);
       return items;
@@ -442,10 +519,10 @@ export const fetchServiceRequestById = createAsyncThunk<
   'serviceRequests/fetchById',
   async (id, thunkApi) => {
     try {
-      const res = await http.get(`/requests/${id}`);
+      const res = await http.get(`/service-requests/${id}`);
       const data = res?.data?.data ?? res?.data ?? {};
-      const request = data.request ? normalizeRequest(data.request) : null;
-      if (!request) throw new Error('Service request not found');
+      const requestData = data.request ?? data;
+      const request = normalizeRequest(requestData);
       return request;
     } catch (error) {
       const message = toErrorMessage(error);
@@ -467,7 +544,7 @@ export const fetchPublicServiceRequests = createAsyncThunk<
   'serviceRequests/fetchPublic',
   async (params, thunkApi) => {
     try {
-      const res = await http.get('/requests/public', { params });
+      const res = await http.get('/service-requests/public', { params });
       const body = res?.data?.data ?? res?.data ?? {};
       const items = Array.isArray(body.items) ? body.items.map(normalizePublicRequest) : [];
       const page = typeof body.page === 'number' ? body.page : params?.page ?? 1;
@@ -489,15 +566,9 @@ export const acceptPublicServiceRequest = createAsyncThunk<
   'serviceRequests/acceptPublic',
   async ({ id }, thunkApi) => {
     try {
-      let res;
-      try {
-        res = await http.patch(`/requests/${id}/offer-help`);
-      } catch (_err) {
-        res = await http.patch(`/requests/${id}/accept`);
-      }
-      const data = res?.data?.data ?? res?.data ?? {};
-      const request = data.request ? normalizeRequest(data.request) : null;
-      if (!request) throw new Error('Invalid request response');
+      const res = await http.post(`/service-requests/${id}/offers`, {});
+      const body = res?.data?.data ?? res?.data ?? {};
+      const request = body.request ? normalizeRequest(body.request) : normalizeRequest(body);
       return request;
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
@@ -513,10 +584,21 @@ export const updateServiceRequestStatus = createAsyncThunk<
   'serviceRequests/updateStatus',
   async ({ id, status }, thunkApi) => {
     try {
-      const res = await http.patch(`/requests/${id}/status`, { status });
+      const statusMap: Record<ServiceRequestStatus, string> = {
+        pending: 'Pending',
+        awaiting_approval: 'AwaitingApproval',
+        accepted: 'Accepted',
+        in_progress: 'InProgress',
+        completed: 'Completed',
+        cancelled: 'Cancelled',
+        rejected: 'Rejected',
+      };
+      const res = await http.patch(`/service-requests/${id}/status`, {
+        status: statusMap[status] ?? 'Pending',
+      });
       const data = res?.data?.data ?? res?.data ?? {};
-      const request = data.request ? normalizeRequest(data.request) : null;
-      if (!request) throw new Error('Invalid request response');
+      const requestData = data.request ?? data;
+      const request = normalizeRequest(requestData);
       return request;
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
@@ -532,10 +614,9 @@ export const submitServiceOffer = createAsyncThunk<
   'serviceRequests/submitOffer',
   async ({ requestId, payload }, thunkApi) => {
     try {
-      const res = await http.post(`/requests/${requestId}/offers`, payload);
+      const res = await http.post(`/service-requests/${requestId}/offers`, payload);
       const data = res?.data?.data ?? res?.data ?? {};
-      const request = data.request ? normalizeRequest(data.request) : null;
-      if (!request) throw new Error('Invalid request response');
+      const request = data.request ? normalizeRequest(data.request) : normalizeRequest(data);
       return request;
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
@@ -551,10 +632,49 @@ export const actOnServiceOffer = createAsyncThunk<
   'serviceRequests/actOnOffer',
   async ({ requestId, offerId, payload }, thunkApi) => {
     try {
-      const res = await http.patch(`/requests/${requestId}/offers/${offerId}`, payload);
+      const endpoint =
+        payload.action === 'accept'
+          ? `/service-requests/${requestId}/offers/${offerId}/accept`
+          : `/service-requests/${requestId}/offers/${offerId}/reject`;
+      const res = await http.patch(endpoint, payload.providerNote ? { providerNote: payload.providerNote } : undefined);
       const data = res?.data?.data ?? res?.data ?? {};
-      const request = data.request ? normalizeRequest(data.request) : null;
-      if (!request) throw new Error('Invalid request response');
+      const request = data.request ? normalizeRequest(data.request) : normalizeRequest(data);
+      return request;
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
+    }
+  }
+);
+
+export const acceptDirectRequest = createAsyncThunk<
+  ServiceRequest,
+  { id: string; providerNote?: string },
+  { rejectValue: string }
+>(
+  'serviceRequests/acceptDirect',
+  async ({ id, providerNote }, thunkApi) => {
+    try {
+      const res = await http.patch(`/service-requests/${id}/accept-direct`, providerNote ? { providerNote } : undefined);
+      const data = res?.data?.data ?? res?.data ?? {};
+      const request = data.request ? normalizeRequest(data.request) : normalizeRequest(data);
+      return request;
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
+    }
+  }
+);
+
+export const rejectDirectRequest = createAsyncThunk<
+  ServiceRequest,
+  { id: string },
+  { rejectValue: string }
+>(
+  'serviceRequests/rejectDirect',
+  async ({ id }, thunkApi) => {
+    try {
+      const res = await http.patch(`/service-requests/${id}/reject-direct`);
+      const data = res?.data?.data ?? res?.data ?? {};
+      const request = data.request ? normalizeRequest(data.request) : normalizeRequest(data);
       return request;
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
@@ -570,11 +690,12 @@ export const completeServiceRequest = createAsyncThunk<
   'serviceRequests/complete',
   async ({ id, message }, thunkApi) => {
     try {
-      const body = message ? { message } : undefined;
-      const res = await http.post(`/requests/${id}/complete`, body);
+      const body: Record<string, any> = { status: 'Completed' };
+      if (message) body.message = message;
+      const res = await http.patch(`/service-requests/${id}/status`, body);
       const data = res?.data?.data ?? res?.data ?? {};
-      const request = data.request ? normalizeRequest(data.request) : null;
-      if (!request) throw new Error('Invalid request response');
+      const requestData = data.request ?? data;
+      const request = normalizeRequest(requestData);
       return request;
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
@@ -590,11 +711,12 @@ export const reopenServiceRequest = createAsyncThunk<
   'serviceRequests/reopen',
   async ({ id, message }, thunkApi) => {
     try {
-      const body = message ? { message } : undefined;
-      const res = await http.post(`/requests/${id}/reopen`, body);
+      const body: Record<string, any> = { status: 'Pending' };
+      if (message) body.message = message;
+      const res = await http.patch(`/service-requests/${id}/status`, body);
       const data = res?.data?.data ?? res?.data ?? {};
-      const request = data.request ? normalizeRequest(data.request) : null;
-      if (!request) throw new Error('Invalid request response');
+      const requestData = data.request ?? data;
+      const request = normalizeRequest(requestData);
       return request;
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
@@ -608,18 +730,18 @@ export const cancelServiceRequest = createAsyncThunk<
   { rejectValue: string }
 >(
   'serviceRequests/cancel',
-  async (id, thunkApi) => {
-    try {
-      const res = await http.post(`/requests/${id}/cancel`);
-      const data = res?.data?.data ?? res?.data ?? {};
-      const request = data.request ? normalizeRequest(data.request) : null;
-      if (!request) throw new Error('Invalid request response');
-      return request;
-    } catch (error) {
-      return thunkApi.rejectWithValue(toErrorMessage(error));
+    async (id, thunkApi) => {
+      try {
+        const res = await http.patch(`/service-requests/${id}/status`, { status: 'Cancelled' });
+        const data = res?.data?.data ?? res?.data ?? {};
+        const requestData = data.request ?? data;
+        const request = normalizeRequest(requestData);
+        return request;
+      } catch (error) {
+        return thunkApi.rejectWithValue(toErrorMessage(error));
+      }
     }
-  }
-);
+  );
 
 export const adminFetchServiceRequests = createAsyncThunk<
   AdminRequestsResponse,
@@ -704,6 +826,20 @@ const serviceRequestsSlice = createSlice({
       .addCase(createServiceRequest.rejected, (state, action) => {
         state.createStatus = 'failed';
         state.createError = action.payload ?? action.error.message ?? 'Failed to submit request';
+      })
+      .addCase(createDirectServiceRequest.pending, (state) => {
+        state.createStatus = 'loading';
+        state.createError = null;
+      })
+      .addCase(createDirectServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
+        state.createStatus = 'succeeded';
+        state.createError = null;
+        state.mine.items = [action.payload, ...state.mine.items];
+        applyRequestUpdate(state, action.payload);
+      })
+      .addCase(createDirectServiceRequest.rejected, (state, action) => {
+        state.createStatus = 'failed';
+        state.createError = action.payload ?? action.error.message ?? 'Failed to send direct request';
       })
       .addCase(fetchMyServiceRequests.pending, (state) => {
         state.mine.status = 'loading';
@@ -814,6 +950,12 @@ const serviceRequestsSlice = createSlice({
         applyRequestUpdate(state, action.payload);
       })
       .addCase(actOnServiceOffer.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
+        applyRequestUpdate(state, action.payload);
+      })
+      .addCase(acceptDirectRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
+        applyRequestUpdate(state, action.payload);
+      })
+      .addCase(rejectDirectRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         applyRequestUpdate(state, action.payload);
       })
       .addCase(completeServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {

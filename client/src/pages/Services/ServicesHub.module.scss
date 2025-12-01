@@ -90,6 +90,62 @@
   flex-direction: column;
 }
 
+.requestForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field label {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.field input,
+.field textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  font: inherit;
+}
+
+.field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.choiceRow {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.choiceRow label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #1f2937;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
 @media (max-width: 640px) {
   .navRow {
     align-items: stretch;

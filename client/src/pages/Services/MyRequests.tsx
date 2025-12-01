@@ -3,18 +3,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import Button from '@/components/ui/button';
 import SkeletonList from '@/components/ui/SkeletonList';
 import showToast from '@/components/ui/Toast';
-import {
-  actOnServiceOffer,
-  completeServiceRequest,
-  fetchMyServiceRequests,
-  reopenServiceRequest,
-} from '@/store/serviceRequests';
+import { actOnServiceOffer, cancelServiceRequest, fetchMyServiceRequests } from '@/store/serviceRequests';
 import type { AppDispatch, RootState } from '@/store';
 import type { ServiceRequest, ServiceRequestOffer } from '@/types/services';
 import styles from './MyRequests.module.scss';
 
 const statusLabel = (status: ServiceRequest['status']) =>
-  status.charAt(0).toUpperCase() + status.slice(1);
+  status
+    .split('_')
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(' ');
 
 const MyRequests = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -57,28 +55,15 @@ const MyRequests = () => {
     }
   };
 
-  const handleComplete = async (requestId: string) => {
-    startAction(requestId, 'complete');
+  const handleCancel = async (requestId: string) => {
+    const confirmCancel = window.confirm('Cancel this request?');
+    if (!confirmCancel) return;
+    startAction(requestId, 'cancel');
     try {
-      await dispatch(completeServiceRequest({ id: requestId })).unwrap();
-      showToast('Request marked as completed', 'success');
+      await dispatch(cancelServiceRequest(requestId)).unwrap();
+      showToast('Request cancelled', 'success');
     } catch (err) {
-      const message = typeof err === 'string' ? err : 'Failed to mark completed';
-      showToast(message, 'error');
-    } finally {
-      finishAction();
-    }
-  };
-
-  const handleReopen = async (requestId: string) => {
-    const confirmReopen = window.confirm('Reopen this request? Providers will be notified.');
-    if (!confirmReopen) return;
-    startAction(requestId, 'reopen');
-    try {
-      await dispatch(reopenServiceRequest({ id: requestId })).unwrap();
-      showToast('Request reopened', 'success');
-    } catch (err) {
-      const message = typeof err === 'string' ? err : 'Failed to reopen request';
+      const message = typeof err === 'string' ? err : 'Failed to cancel request';
       showToast(message, 'error');
     } finally {
       finishAction();
@@ -100,11 +85,9 @@ const MyRequests = () => {
       ) : (
         <div className={styles.list}>
           {items.map((request) => {
-            const canComplete = request.status === 'assigned';
-            const canReopen = ['completed', 'closed'].includes(request.status);
-            const reopenLimitReached = request.reopenedCount >= 3;
             const offers = Array.isArray(request.offers) ? request.offers : [];
             const assignedName = request.assignedProvider?.name;
+            const canEdit = ['pending', 'awaiting_approval'].includes(request.status) && !request.acceptedBy;
 
             return (
               <div key={request._id} className={styles.card}>
@@ -138,12 +121,12 @@ const MyRequests = () => {
                       <div key={offer._id} className={styles.offer}>
                         <div className={styles.offerMeta}>
                           <span>{offer.provider?.name || 'Provider'}</span>
-                          <span className={styles.badge}>{offer.status}</span>
-                          {offer.contact ? <span>Contact: {offer.contact}</span> : null}
+                          <span className={styles.badge}>{statusLabel(offer.status as ServiceRequest['status'])}</span>
+                          {offer.expectedReturn ? <span>Offer: {offer.expectedReturn}</span> : null}
                           {offer.createdAt ? <span>{new Date(offer.createdAt).toLocaleString()}</span> : null}
                         </div>
                         {offer.note ? <p>{offer.note}</p> : null}
-                        {offer.status === 'pending' ? (
+                        {offer.status === 'pending' && !request.acceptedBy ? (
                           <div className={styles.offerActions}>
                             <Button
                               onClick={() => handleOfferAction(request._id, offer._id, 'accept')}
@@ -167,23 +150,12 @@ const MyRequests = () => {
 
                 <div className={styles.actions}>
                   <Button
-                    onClick={() => handleComplete(request._id)}
-                    disabled={!canComplete || pendingId === request._id}
-                  >
-                    {pendingId === request._id && pendingAction === 'complete'
-                      ? 'Updating…'
-                      : 'Mark Completed'}
-                  </Button>
-                  <Button
                     variant="secondary"
-                    onClick={() => handleReopen(request._id)}
-                    disabled={!canReopen || reopenLimitReached || pendingId === request._id}
+                    onClick={() => handleCancel(request._id)}
+                    disabled={!canEdit || pendingId === request._id}
                   >
-                    {pendingId === request._id && pendingAction === 'reopen'
-                      ? 'Reopening…'
-                      : 'Reopen Request'}
+                    {pendingId === request._id && pendingAction === 'cancel' ? 'Cancelling…' : 'Cancel request'}
                   </Button>
-                  {reopenLimitReached ? <span>Reopen limit reached</span> : null}
                 </div>
               </div>
             );

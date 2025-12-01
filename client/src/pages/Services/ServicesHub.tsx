@@ -12,6 +12,7 @@ const ServicesHub = () => {
   const catalogPath = paths.services.catalog();
   const requestsPath = paths.services.requests();
   const myRequestsPath = paths.services.requestsMine();
+  const myServicesPath = paths.services.myServices();
   const createRequestPath = paths.services.request();
 
   const normalizedPath =
@@ -22,8 +23,9 @@ const ServicesHub = () => {
   const isCatalogRoute = normalizedPath === catalogPath;
   const isRequestsRoute = normalizedPath === requestsPath;
   const isMyRequestsRoute = normalizedPath === myRequestsPath;
+  const isMyServicesRoute = normalizedPath === myServicesPath;
 
-  const handlePrimaryTab = (target: 'catalog' | 'requests' | 'myRequests') => {
+  const handlePrimaryTab = (target: 'catalog' | 'requests' | 'myRequests' | 'myServices') => {
     if (target === 'catalog') {
       navigate(catalogPath);
       return;
@@ -31,6 +33,11 @@ const ServicesHub = () => {
 
     if (target === 'requests') {
       navigate(requestsPath);
+      return;
+    }
+
+    if (target === 'myServices') {
+      navigate(myServicesPath);
       return;
     }
 
@@ -59,7 +66,7 @@ const ServicesHub = () => {
               onClick={() => handlePrimaryTab('catalog')}
               aria-current={isCatalogRoute ? 'page' : undefined}
             >
-              Catalog
+              Available Services
             </button>
             <button
               type="button"
@@ -76,6 +83,14 @@ const ServicesHub = () => {
               aria-current={isMyRequestsRoute ? 'page' : undefined}
             >
               My Requests
+            </button>
+            <button
+              type="button"
+              className={isMyServicesRoute ? `${styles.tab} ${styles.tabActive}` : styles.tab}
+              onClick={() => handlePrimaryTab('myServices')}
+              aria-current={isMyServicesRoute ? 'page' : undefined}
+            >
+              My Services
             </button>
           </div>
         </div>

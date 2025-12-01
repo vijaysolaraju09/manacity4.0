@@ -25,6 +25,7 @@ export const paths = {
     catalog: () => '/services',
     requests: () => '/services/requests',
     requestsMine: () => '/services/requests/mine',
+    myServices: () => '/services/my-services',
     detail: (id: string = ':id') => `/services/${id}`,
     request: () => '/services/request',
   },

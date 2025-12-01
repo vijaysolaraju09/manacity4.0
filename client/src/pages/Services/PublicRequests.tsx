@@ -33,10 +33,8 @@ const PublicRequests = () => {
   const [submitting, setSubmitting] = useState<string | null>(null);
 
   useEffect(() => {
-    if (publicState.status === 'idle') {
-      dispatch(fetchPublicServiceRequests(undefined));
-    }
-  }, [dispatch, publicState.status]);
+    dispatch(fetchPublicServiceRequests(undefined));
+  }, [dispatch]);
 
   const items = useMemo(() => {
     const raw = publicState.items ?? [];

@@ -47,6 +47,7 @@ const ServicesHub = lazy(() => import('@/pages/Services/ServicesHub'));
 const ServicesCatalog = lazy(() => import('@/pages/Services/ServicesCatalog'));
 const ServiceDetails = lazy(() => import('@/pages/Services/ServiceDetails'));
 const PublicRequests = lazy(() => import('@/pages/Services/PublicRequests'));
+const MyServices = lazy(() => import('@/pages/Services/MyServices'));
 const ServiceRequestListPage = lazy(() => import('@/pages/ServiceRequests/MyRequests'));
 const ServiceRequestDetailPage = lazy(() => import('@/pages/ServiceRequests/ServiceRequestDetail'));
 const ServiceProviders = lazy(() => import('@/pages/Services/ServiceProviders'));
@@ -161,6 +162,7 @@ const AppRoutes = () => (
             <Route index element={<ServicesCatalog />} />
             <Route path="requests" element={<PublicRequests />} />
             <Route path="requests/mine" element={<Navigate to={paths.serviceRequests.mine()} replace />} />
+            <Route path="my-services" element={<MyServices />} />
           </Route>
           <Route
             key="service-requests"

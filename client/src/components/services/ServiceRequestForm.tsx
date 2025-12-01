@@ -116,6 +116,7 @@ const ServiceRequestForm = ({
       location: location.trim() || undefined,
       preferredDate: preferredDate || undefined,
       preferredTime: preferredTime || undefined,
+      type: visibility,
     };
     if (trimmedDetails) {
       payload.description = trimmedDetails;

@@ -43,23 +43,21 @@ export interface ServiceProvider {
 
 export type ServiceRequestStatus =
   | 'pending'
+  | 'awaiting_approval'
   | 'accepted'
-  | 'assigned'
   | 'in_progress'
   | 'completed'
-  | 'cancelled'
-  | 'open'
-  | 'offered'
-  | 'closed';
+  | 'rejected'
+  | 'cancelled';
 
 export interface ServiceRequestOffer {
   _id: string;
   providerId: string;
   provider?: ServiceProviderUser | null;
   note: string;
-  contact?: string;
+  expectedReturn?: string;
   createdAt?: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: 'pending' | 'accepted_by_seeker' | 'rejected_by_seeker';
 }
 
 export interface ServiceRequestHistoryEntry {
@@ -80,13 +78,16 @@ export interface ServiceRequest {
   _id: string;
   id: string;
   userId: string;
-  type: 'public' | 'private';
+  type: 'public' | 'private' | 'direct';
   serviceId: string | null;
   service?: Pick<Service, '_id' | 'id' | 'name' | 'description' | 'icon'> | null;
   customName?: string;
+  title?: string;
+  message?: string;
   description?: string;
   details?: string;
   location?: string;
+  paymentOffer?: string;
   phone?: string;
   email?: string;
   requester?: ServiceProviderUser | null;
@@ -101,6 +102,8 @@ export interface ServiceRequest {
   acceptedBy: string | null;
   acceptedHelper?: ServiceProviderUser | null;
   acceptedAt?: string | null;
+  directTargetUserId?: string | null;
+  providerNote?: string;
   assignedProviderId: string | null;
   assignedProvider?: ServiceProviderUser | null;
   assignedProviders?: ServiceProviderUser[];
@@ -109,6 +112,7 @@ export interface ServiceRequest {
   offersCount: number;
   history: ServiceRequestHistoryEntry[];
   isAnonymizedPublic?: boolean;
+  myOffer?: { id: string; helperNote?: string; expectedReturn?: string; status: ServiceRequestOffer['status'] };
   createdAt?: string;
   updatedAt?: string;
   feedback?: ServiceRequestFeedback | null;
@@ -120,6 +124,7 @@ export interface PublicServiceRequest {
   serviceId: string | null;
   title: string;
   description: string;
+  message?: string;
   location: string;
   createdAt: string | null;
   status: ServiceRequestStatus;
@@ -128,6 +133,7 @@ export interface PublicServiceRequest {
   requester: string;
   requesterId?: string | null;
   type?: 'public' | 'private';
+  paymentOffer?: string;
   acceptedBy?: string | null;
   acceptedAt?: string | null;
   requesterContactVisible?: boolean;
@@ -138,9 +144,12 @@ export interface CreateServiceRequestPayload {
   customName?: string;
   description?: string;
   details?: string;
+  message?: string;
+  title?: string;
   location?: string;
   phone?: string;
   contactPhone?: string;
+  paymentOffer?: string;
   preferredDate?: string;
   preferredTime?: string;
   visibility?: 'public' | 'private';
@@ -157,12 +166,13 @@ export interface UpdateServiceRequestPayload {
 }
 
 export interface SubmitServiceOfferPayload {
-  note?: string;
-  contact: string;
+  helperNote?: string;
+  expectedReturn?: string;
 }
 
 export interface ActOnServiceOfferPayload {
   action: 'accept' | 'reject';
+  providerNote?: string;
 }
 
 export interface UpsertServicePayload {

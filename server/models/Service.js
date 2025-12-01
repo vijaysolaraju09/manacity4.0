@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const ServiceSchema = new mongoose.Schema(
   {
+    // Legacy fields kept for backwards compatibility with the existing admin UI
     name: {
       type: String,
       required: true,
@@ -21,6 +22,31 @@ const ServiceSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    // New Services module fields
+    title: {
+      type: String,
+      trim: true,
+      maxlength: 150,
+    },
+    category: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+    },
+    image: {
+      type: String,
+      trim: true,
+    },
+    town: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+    },
+    location: {
+      type: String,
+      trim: true,
+      maxlength: 250,
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -39,12 +65,20 @@ const ServiceSchema = new mongoose.Schema(
         ref: 'User',
       },
     ],
+    assignedProviders: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   { timestamps: true }
 );
 
 const syncActiveFlags = (doc) => {
   if (!doc) return;
+  if (!doc.title && doc.name) doc.title = doc.name;
+  if (!doc.name && doc.title) doc.name = doc.title;
   if (typeof doc.active === 'boolean' && typeof doc.isActive === 'undefined') {
     doc.isActive = doc.active;
   }
@@ -72,6 +106,13 @@ const syncActiveFlagsFromUpdate = (update = {}) => {
   apply(update);
   if (update.$set) apply(update.$set);
   if (update.$setOnInsert) apply(update.$setOnInsert);
+
+  if (update.assignedProviders && !update.providers) {
+    update.providers = update.assignedProviders;
+  }
+  if (update.providers && !update.assignedProviders) {
+    update.assignedProviders = update.providers;
+  }
 
   return update;
 };

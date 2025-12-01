@@ -5,11 +5,10 @@ import Button from '@/components/ui/button';
 import SkeletonList from '@/components/ui/SkeletonList';
 import showToast from '@/components/ui/Toast';
 import { paths } from '@/routes/paths';
-import {
-  acceptPublicServiceRequest,
-  fetchPublicServiceRequests,
-} from '@/store/serviceRequests';
+import { fetchAssignedServiceRequests, fetchPublicServiceRequests, submitServiceOffer } from '@/store/serviceRequests';
 import type { AppDispatch, RootState } from '@/store';
+import ModalSheet from '@/components/base/ModalSheet';
+import type { PublicServiceRequest } from '@/types/services';
 import styles from './PublicRequests.module.scss';
 
 const formatDate = (value: string | null | undefined) => {
@@ -20,7 +19,12 @@ const formatDate = (value: string | null | undefined) => {
 };
 
 const formatStatus = (status: string) =>
-  status ? status.charAt(0).toUpperCase() + status.slice(1) : '';
+  status
+    ? status
+        .split('_')
+        .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+        .join(' ')
+    : '';
 
 const PublicRequests = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -31,6 +35,9 @@ const PublicRequests = () => {
   );
   const isAuthenticated = Boolean(useSelector((state: RootState) => state.auth.token));
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [activeRequest, setActiveRequest] = useState<PublicServiceRequest | null>(null);
+  const [helperNote, setHelperNote] = useState('');
+  const [expectedReturn, setExpectedReturn] = useState('');
 
   useEffect(() => {
     dispatch(fetchPublicServiceRequests(undefined));
@@ -48,17 +55,25 @@ const PublicRequests = () => {
     dispatch(fetchPublicServiceRequests({ page: publicState.page }));
   };
 
-  const handleAccept = async (id: string) => {
-    if (!isAuthenticated) {
-      navigate(paths.auth.login());
-      return;
-    }
-    setSubmitting(id);
+  const openOfferModal = (request: PublicServiceRequest) => {
+    setActiveRequest(request);
+    setHelperNote('');
+    setExpectedReturn(request.paymentOffer ?? '');
+  };
+
+  const handleSubmitOffer = async () => {
+    if (!activeRequest) return;
+    setSubmitting(activeRequest._id);
     try {
-      await dispatch(acceptPublicServiceRequest({ id })).unwrap();
-      showToast('Request accepted. Contact details will be shared with you.', 'success');
+      await dispatch(
+        submitServiceOffer({ requestId: activeRequest._id, payload: { helperNote, expectedReturn } })
+      ).unwrap();
+      showToast('Offer submitted', 'success');
+      setActiveRequest(null);
+      dispatch(fetchPublicServiceRequests({ page: publicState.page }));
+      dispatch(fetchAssignedServiceRequests());
     } catch (err) {
-      const message = typeof err === 'string' ? err : 'Failed to accept request';
+      const message = typeof err === 'string' ? err : 'Failed to submit offer';
       showToast(message, 'error');
     } finally {
       setSubmitting(null);
@@ -100,12 +115,11 @@ const PublicRequests = () => {
               }}
             >
               <div className={styles.cardTitle}>{request.title}</div>
-              {request.description ? (
-                <p className={styles.description}>{request.description}</p>
+              {request.message || request.description ? (
+                <p className={styles.description}>{request.message || request.description}</p>
               ) : null}
               <div className={styles.meta}>
                 {request.location ? <span>{request.location}</span> : null}
-                {request.requester ? <span>{request.requester}</span> : null}
                 {request.createdAt ? <span>Posted {formatDate(request.createdAt)}</span> : null}
                 <span className={styles.chip}>{formatStatus(request.status)}</span>
                 {request.acceptedBy ? <span>Accepted</span> : <span>{request.offersCount} offers</span>}
@@ -115,7 +129,7 @@ const PublicRequests = () => {
                   className={styles.offerButton}
                   onClick={(event) => {
                     event.stopPropagation();
-                    void handleAccept(request._id);
+                    openOfferModal(request);
                   }}
                   disabled={
                     request.status !== 'pending' || Boolean(request.acceptedBy) || submitting === request._id
@@ -147,6 +161,39 @@ const PublicRequests = () => {
           </div>
         </div>
       )}
+      <ModalSheet open={Boolean(activeRequest)} onClose={() => setActiveRequest(null)}>
+        <div className={styles.offerModal}>
+          <h2>Offer help</h2>
+          <p className={styles.modalSubtitle}>{activeRequest?.title}</p>
+          <label className={styles.fieldLabel} htmlFor="helper-note">
+            Note to requester
+          </label>
+          <textarea
+            id="helper-note"
+            value={helperNote}
+            onChange={(e) => setHelperNote(e.target.value)}
+            placeholder="Share how you can help"
+          />
+          <label className={styles.fieldLabel} htmlFor="expected-return">
+            Expected return / payment
+          </label>
+          <input
+            id="expected-return"
+            type="text"
+            value={expectedReturn}
+            onChange={(e) => setExpectedReturn(e.target.value)}
+            placeholder="Optional"
+          />
+          <div className={styles.modalActions}>
+            <Button onClick={() => void handleSubmitOffer()} disabled={!activeRequest || submitting === activeRequest._id}>
+              {submitting === activeRequest?._id ? 'Submitting…' : 'Submit offer'}
+            </Button>
+            <Button variant="secondary" onClick={() => setActiveRequest(null)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </ModalSheet>
     </div>
   );
 };

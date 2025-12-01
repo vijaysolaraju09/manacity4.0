@@ -6,6 +6,8 @@ import type { AppDispatch, RootState } from '@/store';
 import {
   fetchAssignedServiceRequests,
   updateServiceRequestStatus,
+  acceptDirectRequest,
+  rejectDirectRequest,
 } from '@/store/serviceRequests';
 import type { ServiceRequestStatus } from '@/types/services';
 
@@ -19,6 +21,7 @@ const MyServices = () => {
   const dispatch = useDispatch<AppDispatch>();
   const assigned = useSelector((state: RootState) => state.serviceRequests.assigned);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [providerNotes, setProviderNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (assigned.status === 'idle') {
@@ -43,6 +46,28 @@ const MyServices = () => {
     }
   };
 
+  const handleDirectAction = async (
+    id: string,
+    action: 'accept' | 'reject',
+    providerNote?: string
+  ) => {
+    setUpdating(`${id}-${action}`);
+    try {
+      if (action === 'accept') {
+        await dispatch(acceptDirectRequest({ id, providerNote })).unwrap();
+        showToast('Direct request accepted', 'success');
+      } else {
+        await dispatch(rejectDirectRequest({ id })).unwrap();
+        showToast('Direct request rejected', 'info');
+      }
+    } catch (err) {
+      const message = typeof err === 'string' ? err : 'Failed to update request';
+      showToast(message, 'error');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   const requests = useMemo(() => assigned.items ?? [], [assigned.items]);
   const loading = assigned.status === 'loading';
   const empty = !loading && requests.length === 0;
@@ -52,8 +77,8 @@ const MyServices = () => {
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-slate-900">My services</h1>
         <p className="text-sm text-slate-600">
-          Requests you have accepted will appear here. Update progress and view requester contact
-          details when available.
+          Direct requests and accepted jobs will appear here. Update progress and view requester
+          contact details when available.
         </p>
       </header>
 
@@ -90,8 +115,8 @@ const MyServices = () => {
       ) : empty ? (
         <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center">
           <p className="text-sm text-slate-600">
-            You have not accepted any service requests yet. Visit the public requests tab to help
-            neighbors.
+            You have not received or accepted any service requests yet. Visit the public requests tab
+            to help neighbors.
           </p>
         </div>
       ) : (
@@ -99,12 +124,15 @@ const MyServices = () => {
           {requests.map((request) => {
             const title = request.service?.name || request.customName || 'Service request';
             const description = request.details || request.description || request.message || '';
-            const canMarkInProgress = ['pending', 'accepted', 'awaiting_approval'].includes(request.status);
+            const canMarkInProgress = ['accepted', 'in_progress'].includes(request.status);
             const canComplete = request.status === 'in_progress';
             const requesterContact =
               request.requesterContactVisible && (request.requester?.phone || request.phone);
             const noteToSeeker = request.providerNote;
             const myOffer = request.myOffer;
+            const awaitingDecision = request.type === 'direct' && request.status === 'awaiting_approval';
+            const noteValue = providerNotes[request._id] ?? '';
+            const payment = request.paymentOffer;
 
             return (
               <div key={request._id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -112,7 +140,7 @@ const MyServices = () => {
                     <div>
                       <div className="text-lg font-semibold text-slate-900">{title}</div>
                     {description ? (
-                      <p className="text-sm text-slate-600">{description.slice(0, 180)}</p>
+                      <p className="text-sm text-slate-600 whitespace-pre-wrap">{description}</p>
                     ) : null}
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                       {request.location ? <span>Location: {request.location}</span> : null}
@@ -125,6 +153,9 @@ const MyServices = () => {
                       {requesterContact ? (
                         <div className="mt-2 text-sm text-slate-700">Contact: {requesterContact}</div>
                       ) : null}
+                      {payment ? (
+                        <div className="mt-1 text-sm text-slate-700">Payment offer: {payment}</div>
+                      ) : null}
                       {myOffer ? (
                         <div className="mt-2 text-sm text-slate-700">
                           My offer: {myOffer.expectedReturn || 'Shared'}
@@ -136,23 +167,51 @@ const MyServices = () => {
                       ) : null}
                     </div>
                     <div className="flex flex-col gap-2">
+                      {awaitingDecision ? (
+                        <div className="flex flex-col gap-2">
+                          <textarea
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                            rows={2}
+                            value={noteValue}
+                            onChange={(event) =>
+                              setProviderNotes((prev) => ({ ...prev, [request._id]: event.target.value }))
+                            }
+                            placeholder="Add a note for the requester (optional)"
+                          />
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <Button
+                              variant="outline"
+                              onClick={() => handleDirectAction(request._id, 'reject')}
+                              disabled={updating === `${request._id}-reject`}
+                            >
+                              {updating === `${request._id}-reject` ? 'Updating…' : 'Reject request'}
+                            </Button>
+                            <Button
+                              onClick={() => handleDirectAction(request._id, 'accept', noteValue.trim() || undefined)}
+                              disabled={updating === `${request._id}-accept`}
+                            >
+                              {updating === `${request._id}-accept` ? 'Updating…' : 'Accept request'}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
                       {canMarkInProgress ? (
-                      <Button
-                        variant="outline"
-                        onClick={() => handleStatusUpdate(request._id, 'in_progress')}
-                        disabled={updating === `${request._id}-in_progress`}
-                      >
-                        {updating === `${request._id}-in_progress` ? 'Updating…' : 'Mark in progress'}
-                      </Button>
-                    ) : null}
-                    {canComplete ? (
-                      <Button
-                        onClick={() => handleStatusUpdate(request._id, 'completed')}
-                        disabled={updating === `${request._id}-completed`}
-                      >
-                        {updating === `${request._id}-completed` ? 'Updating…' : 'Mark completed'}
-                      </Button>
-                    ) : null}
+                        <Button
+                          variant="outline"
+                          onClick={() => handleStatusUpdate(request._id, 'in_progress')}
+                          disabled={updating === `${request._id}-in_progress`}
+                        >
+                          {updating === `${request._id}-in_progress` ? 'Updating…' : 'Mark in progress'}
+                        </Button>
+                      ) : null}
+                      {canComplete ? (
+                        <Button
+                          onClick={() => handleStatusUpdate(request._id, 'completed')}
+                          disabled={updating === `${request._id}-completed`}
+                        >
+                          {updating === `${request._id}-completed` ? 'Updating…' : 'Mark completed'}
+                        </Button>
+                      ) : null}
                   </div>
                 </div>
               </div>

@@ -3,10 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { RootState, AppDispatch } from '@/store';
 import { fetchServiceById, fetchServiceProviders } from '@/store/services';
-import { createServiceRequest } from '@/store/serviceRequests';
+import { createDirectServiceRequest, createServiceRequest } from '@/store/serviceRequests';
 import type { CreateServiceRequestPayload, Service, ServiceProvider } from '@/types/services';
 import { paths } from '@/routes/paths';
 import ProviderCard from '@/components/services/ProviderCard';
+import showToast from '@/components/ui/Toast';
 
 const ServiceDetails = () => {
   const { serviceId = '' } = useParams<{ serviceId: string }>();
@@ -17,8 +18,12 @@ const ServiceDetails = () => {
   const providersByService = useSelector((state: RootState) => state.services.providers);
   const entry = serviceId ? providersByService[serviceId] : undefined;
 
-  const [selectedProviderId, setSelectedProviderId] = useState<string | 'assign-later'>('assign-later');
   const [notes, setNotes] = useState('');
+  const [submittingPublic, setSubmittingPublic] = useState(false);
+  const [directTarget, setDirectTarget] = useState<ServiceProvider | null>(null);
+  const [directNotes, setDirectNotes] = useState('');
+  const [directPayment, setDirectPayment] = useState('');
+  const [submittingDirect, setSubmittingDirect] = useState(false);
   const [showProviderProfile, setShowProviderProfile] = useState<ServiceProvider | null>(null);
 
   useEffect(() => {
@@ -28,8 +33,10 @@ const ServiceDetails = () => {
   }, [dispatch, serviceId]);
 
   useEffect(() => {
-    setSelectedProviderId('assign-later');
     setNotes('');
+    setDirectTarget(null);
+    setDirectNotes('');
+    setDirectPayment('');
   }, [serviceId]);
 
   const svc: (Service & { title?: string; images?: string[] }) | null =
@@ -48,31 +55,78 @@ const ServiceDetails = () => {
   const error = detail.error ?? entry?.error ?? null;
   const hasProviders = providerList.length > 0;
 
-  const selectProviderAndScroll = (id: string) => {
-    setSelectedProviderId(id);
-    const formEl = document.getElementById('service-request-form');
-    if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   const onSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
     if (!serviceId) return;
 
+    setSubmittingPublic(true);
+
     const payload: CreateServiceRequestPayload = {
       serviceId,
-      providerId: selectedProviderId === 'assign-later' ? undefined : selectedProviderId,
       description: notes.trim() || undefined,
       details: notes.trim() || undefined,
-      visibility: selectedProviderId === 'assign-later' ? 'public' : 'private',
-      type: selectedProviderId === 'assign-later' ? 'public' : 'direct',
+      visibility: 'public',
+      type: 'public',
     };
 
     try {
       await dispatch(createServiceRequest(payload)).unwrap();
       navigate(paths.services.requests());
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('createServiceRequest failed', err);
+      const message =
+        typeof err === 'string'
+          ? err
+          : err instanceof Error
+          ? err.message
+          : 'Failed to submit request';
+      showToast(message, 'error');
+    } finally {
+      setSubmittingPublic(false);
+    }
+  };
+
+  const openDirectRequest = (provider: ServiceProvider) => {
+    setDirectTarget(provider);
+    setDirectNotes('');
+    setDirectPayment('');
+  };
+
+  const submitDirect: FormEventHandler<HTMLFormElement> = async (event) => {
+    event.preventDefault();
+    if (!serviceId || !directTarget) return;
+
+    setSubmittingDirect(true);
+    const trimmedNotes = directNotes.trim();
+    const providerId = directTarget.user?._id || directTarget.id;
+    if (!providerId) {
+      showToast('Unable to determine the selected provider. Please try again.', 'error');
+      setSubmittingDirect(false);
+      return;
+    }
+    const payload: CreateServiceRequestPayload = {
+      serviceId,
+      providerId,
+      type: 'direct',
+      visibility: 'direct',
+      description: trimmedNotes || undefined,
+      details: trimmedNotes || undefined,
+      message: trimmedNotes || undefined,
+      paymentOffer: directPayment.trim() || undefined,
+    };
+
+    try {
+      await dispatch(createDirectServiceRequest(payload)).unwrap();
+      navigate(paths.services.requests());
+    } catch (err) {
+      const message =
+        typeof err === 'string'
+          ? err
+          : err instanceof Error
+          ? err.message
+          : 'Failed to send direct request';
+      showToast(message, 'error');
+    } finally {
+      setSubmittingDirect(false);
     }
   };
 
@@ -112,7 +166,11 @@ const ServiceDetails = () => {
           id="service-request-form"
           className="space-y-4 rounded-2xl border border-borderc/40 bg-surface-1 p-4 shadow-inner-card"
         >
-          <h2 className="text-lg font-semibold">Choose a provider</h2>
+          <h2 className="text-lg font-semibold">Ask for this service</h2>
+          <p className="text-sm text-text-secondary">
+            Pick a provider to send a direct request, or submit a public request and we&apos;ll match you.
+          </p>
+
           <div className="space-y-2">
             {providerList.map((provider) => {
               const providerName = provider.user?.name || provider.profession || 'Service provider';
@@ -123,29 +181,20 @@ const ServiceDetails = () => {
                   key={provider.id}
                   className="flex flex-col gap-3 rounded-xl border border-borderc/60 bg-white/70 p-3 shadow-sm"
                 >
-                  <label className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="provider"
-                      value={provider.id}
-                      checked={selectedProviderId === provider.id}
-                      onChange={() => setSelectedProviderId(provider.id)}
-                    />
-                    <div className="truncate">
-                      <div className="font-medium">{providerName}</div>
-                      {providerCategory ? (
-                        <div className="text-sm text-text-muted">{providerCategory}</div>
-                      ) : null}
-                      <div className="text-sm text-text-secondary">
-                        Completed {completed} service{completed === 1 ? '' : 's'}
-                      </div>
+                  <div className="truncate">
+                    <div className="font-medium">{providerName}</div>
+                    {providerCategory ? (
+                      <div className="text-sm text-text-muted">{providerCategory}</div>
+                    ) : null}
+                    <div className="text-sm text-text-secondary">
+                      Completed {completed} service{completed === 1 ? '' : 's'}
                     </div>
-                  </label>
+                  </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <button
                       type="button"
                       className="flex-1 rounded-lg border border-borderc/50 px-3 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50"
-                      onClick={() => selectProviderAndScroll(provider.id)}
+                      onClick={() => openDirectRequest(provider)}
                     >
                       Request this provider
                     </button>
@@ -165,37 +214,92 @@ const ServiceDetails = () => {
                 No providers found for this service yet. You can still submit a request and an admin will assign one.
               </div>
             ) : null}
-            <label className="flex items-center gap-3">
-              <input
-                type="radio"
-                name="provider"
-                value="assign-later"
-                checked={selectedProviderId === 'assign-later'}
-                onChange={() => setSelectedProviderId('assign-later')}
+          </div>
+
+          <div className="rounded-xl border border-borderc/60 bg-white/70 p-3 shadow-sm">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div>
+                <div className="text-base font-semibold">Open to all providers</div>
+                <div className="text-sm text-text-secondary">We&apos;ll notify available helpers.</div>
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm">Notes (optional)</label>
+              <textarea
+                className="w-full rounded-xl border border-borderc/40 bg-surface-1 p-3"
+                rows={3}
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Tell us anything helpful…"
               />
-              <span className="text-text-secondary">Assign later (Admin will match a provider)</span>
-            </label>
+            </div>
+            <button
+              type="submit"
+              className="mt-3 w-full rounded-xl bg-gradient-to-r from-accent-500 to-brand-500 px-4 py-3 text-white shadow-elev-1 hover:shadow-elev-2"
+              disabled={submittingPublic}
+            >
+              {submittingPublic ? 'Submitting…' : 'Submit public request'}
+            </button>
           </div>
-
-          <div>
-            <label className="mb-1 block text-sm">Notes (optional)</label>
-            <textarea
-              className="w-full rounded-xl border border-borderc/40 bg-surface-1 p-3"
-              rows={3}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Tell us anything helpful…"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-gradient-to-r from-accent-500 to-brand-500 px-4 py-3 text-white shadow-elev-1 hover:shadow-elev-2"
-          >
-            Submit Request
-          </button>
         </form>
       </div>
+
+      {directTarget ? (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 px-4 py-10">
+          <div className="relative w-full max-w-lg rounded-2xl bg-white p-4 shadow-lg">
+            <button
+              type="button"
+              className="absolute right-3 top-3 text-sm text-text-secondary"
+              onClick={() => setDirectTarget(null)}
+            >
+              Close
+            </button>
+            <h3 className="mb-1 text-lg font-semibold">Request {directTarget.user?.name || 'this provider'}</h3>
+            <p className="mb-3 text-sm text-text-secondary">
+              Share any details and the payment offer you have in mind. Your contact details will be shared after the
+              provider accepts.
+            </p>
+            <form className="space-y-3" onSubmit={submitDirect}>
+              <div>
+                <label className="mb-1 block text-sm">Notes</label>
+                <textarea
+                  className="w-full rounded-xl border border-borderc/40 bg-surface-1 p-3"
+                  rows={3}
+                  value={directNotes}
+                  onChange={(event) => setDirectNotes(event.target.value)}
+                  placeholder="Describe the help you need…"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm">Payment offer (optional)</label>
+                <input
+                  type="text"
+                  className="w-full rounded-xl border border-borderc/40 bg-surface-1 p-3"
+                  value={directPayment}
+                  onChange={(event) => setDirectPayment(event.target.value)}
+                  placeholder="e.g. $40 or barter"
+                />
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  className="flex-1 rounded-lg border border-borderc/50 px-4 py-2 text-sm font-semibold text-text-secondary hover:bg-surface-1"
+                  onClick={() => setDirectTarget(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-lg bg-gradient-to-r from-accent-500 to-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-elev-1 hover:shadow-elev-2"
+                  disabled={submittingDirect}
+                >
+                  {submittingDirect ? 'Sending…' : 'Send request'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
 
       {showProviderProfile ? (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 px-4 py-10">
@@ -213,9 +317,8 @@ const ServiceDetails = () => {
                 type="button"
                 className="flex-1 rounded-lg border border-borderc/50 px-3 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50"
                 onClick={() => {
-                  setSelectedProviderId(showProviderProfile.id);
                   setShowProviderProfile(null);
-                  selectProviderAndScroll(showProviderProfile.id);
+                  openDirectRequest(showProviderProfile);
                 }}
               >
                 Request this provider

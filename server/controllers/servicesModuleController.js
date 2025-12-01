@@ -22,15 +22,44 @@ const sanitize = (value) => {
 };
 
 const statusOrder = ['Pending', 'AwaitingApproval', 'Accepted', 'InProgress', 'Completed'];
+const normalizeStatusName = (value) => {
+  const normalized = typeof value === 'string' ? value.replace(/[_\s-]/g, '').toLowerCase() : '';
+  const map = {
+    pending: 'Pending',
+    awaitingapproval: 'AwaitingApproval',
+    accepted: 'Accepted',
+    inprogress: 'InProgress',
+    completed: 'Completed',
+    rejected: 'Rejected',
+    cancelled: 'Cancelled',
+    canceled: 'Cancelled',
+  };
+  return map[normalized] || 'Pending';
+};
+
 const canSeeRequester = (request, viewerId) => {
   if (!viewerId) return false;
   const viewer = String(viewerId);
+  const statusValue = normalizeStatusName(request.status);
+  const statusIdx = statusOrder.indexOf(statusValue);
+  const acceptedIdx = statusOrder.indexOf('Accepted');
+  const hasReachedAcceptance = statusIdx >= acceptedIdx;
+
   if (request.acceptedBy && String(request.acceptedBy) === viewer) return true;
-  if (request.directTargetUserId && String(request.directTargetUserId) === viewer) {
-    const idx = statusOrder.indexOf(request.status || 'Pending');
-    const acceptedIdx = statusOrder.indexOf('Accepted');
-    return idx >= acceptedIdx;
-  }
+  if (
+    hasReachedAcceptance &&
+    request.assignedProviderId &&
+    String(request.assignedProviderId) === viewer
+  )
+    return true;
+  if (
+    hasReachedAcceptance &&
+    Array.isArray(request.assignedProviderIds) &&
+    request.assignedProviderIds.some((id) => String(id) === viewer)
+  )
+    return true;
+  if (hasReachedAcceptance && request.directTargetUserId && String(request.directTargetUserId) === viewer)
+    return true;
   return false;
 };
 
@@ -109,7 +138,7 @@ const toRequestResponse = (request, viewerId, { includeOffers = false } = {}) =>
     updatedAt: request.updatedAt,
   };
 
-  const requesterVisible = canSeeRequester(request, viewerId) || request.type !== 'public';
+  const requesterVisible = isOwner || canSeeRequester(request, viewerId);
   const requester = requesterVisible
     ? buildRequester(request.userId || request.user)
     : maskContact(request.userId || request.user);
@@ -242,13 +271,18 @@ exports.createServiceRequest = async (req, res, next) => {
 
 exports.createDirectRequest = async (req, res, next) => {
   try {
+    const targetId = toObjectId(req.body.directTargetUserId || req.body.providerId);
+    if (!targetId)
+      throw new AppError('Please choose a provider to request directly', 400);
+
     const payload = {
       userId: req.user._id,
-      directTargetUserId: req.body.directTargetUserId,
+      directTargetUserId: targetId,
       serviceId: req.body.serviceId || null,
       title: req.body.title,
-      description: req.body.message,
-      message: req.body.message,
+      description: req.body.message || req.body.description || req.body.details,
+      message: req.body.message || req.body.description || req.body.details,
+      details: req.body.details,
       paymentOffer: req.body.paymentOffer,
       type: 'direct',
       visibility: 'direct',
@@ -520,11 +554,15 @@ exports.acceptDirect = async (req, res, next) => {
     if (!request) throw new AppError('Request not found', 404);
     if (String(request.directTargetUserId) !== String(req.user._id)) throw new AppError('Not allowed', 403);
     request.acceptedBy = req.user._id;
+    request.assignedProviderId = req.user._id;
     request.providerNote = req.body.providerNote;
     request.acceptedAt = new Date();
     request.status = 'Accepted';
     await request.save();
-    await createNotification(request.userId, 'Direct request accepted', request._id);
+    await Promise.all([
+      createNotification(request.userId, 'Direct request accepted', request._id),
+      createNotification(req.user._id, 'You accepted a direct request', request._id),
+    ]);
     res.json({ data: toRequestResponse(request, req.user._id) });
   } catch (err) {
     next(err);
@@ -538,7 +576,10 @@ exports.rejectDirect = async (req, res, next) => {
     if (String(request.directTargetUserId) !== String(req.user._id)) throw new AppError('Not allowed', 403);
     request.status = 'Rejected';
     await request.save();
-    await createNotification(request.userId, 'Direct request rejected', request._id);
+    await Promise.all([
+      createNotification(request.userId, 'Direct request rejected', request._id),
+      createNotification(req.user._id, 'You rejected a direct request', request._id),
+    ]);
     res.json({ data: toRequestResponse(request, req.user._id) });
   } catch (err) {
     next(err);

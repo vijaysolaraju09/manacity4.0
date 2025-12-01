@@ -405,7 +405,12 @@ export const fetchAssignedServiceRequests = createAsyncThunk<
   'serviceRequests/fetchAssigned',
   async (_unused, thunkApi) => {
     try {
-      const res = await http.get('/requests/assigned');
+      let res;
+      try {
+        res = await http.get('/requests/my-services');
+      } catch (err) {
+        res = await http.get('/requests/assigned');
+      }
       const body = res?.data?.data ?? res?.data ?? {};
       const items = toItems(body.requests ?? body.items ?? body).map(normalizeRequest);
       return items;
@@ -471,6 +476,25 @@ export const acceptPublicServiceRequest = createAsyncThunk<
   async ({ id }, thunkApi) => {
     try {
       const res = await http.patch(`/requests/${id}/accept`);
+      const data = res?.data?.data ?? res?.data ?? {};
+      const request = data.request ? normalizeRequest(data.request) : null;
+      if (!request) throw new Error('Invalid request response');
+      return request;
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
+    }
+  }
+);
+
+export const updateServiceRequestStatus = createAsyncThunk<
+  ServiceRequest,
+  { id: string; status: ServiceRequestStatus },
+  { rejectValue: string }
+>(
+  'serviceRequests/updateStatus',
+  async ({ id, status }, thunkApi) => {
+    try {
+      const res = await http.patch(`/requests/${id}/status`, { status });
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');
@@ -654,6 +678,7 @@ const serviceRequestsSlice = createSlice({
       .addCase(createServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         state.createStatus = 'succeeded';
         state.createError = null;
+        state.publicList.status = 'idle';
         state.mine.items = [action.payload, ...state.mine.items];
         applyRequestUpdate(state, action.payload);
       })
@@ -726,6 +751,11 @@ const serviceRequestsSlice = createSlice({
         state.publicList.error = action.payload ?? action.error.message ?? 'Failed to load public requests';
       })
       .addCase(acceptPublicServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
+        applyRequestUpdate(state, action.payload);
+        const exists = state.assigned.items.some((item) => item._id === action.payload._id);
+        if (!exists) state.assigned.items = [action.payload, ...state.assigned.items];
+      })
+      .addCase(updateServiceRequestStatus.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
         applyRequestUpdate(state, action.payload);
         const exists = state.assigned.items.some((item) => item._id === action.payload._id);
         if (!exists) state.assigned.items = [action.payload, ...state.assigned.items];

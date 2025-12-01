@@ -926,6 +926,78 @@ exports.acceptPublicServiceRequest = async (req, res, next) => {
   }
 };
 
+exports.updateServiceRequestStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const nextStatus = normalizeStatus(req.body?.status);
+    const request = await populateRequest(ServiceRequest.findById(id));
+
+    if (!request)
+      throw AppError.notFound('SERVICE_REQUEST_NOT_FOUND', 'Service request not found');
+
+    const currentUserId = toObjectId(req.user?._id || req.user?.userId || req.user?.id);
+    if (!currentUserId)
+      throw AppError.unauthorized('NOT_AUTHENTICATED', 'Please sign in to update requests');
+
+    const isOwner = isSameId(request.userId, currentUserId);
+    const assignedIds = getAssignedProviderIds(request).map((entry) => toObjectId(entry));
+    const isHelper = assignedIds.some((entry) => entry && entry.equals(currentUserId));
+
+    if (!isOwner && !isHelper)
+      throw AppError.forbidden('NOT_AUTHORIZED', 'You cannot update this request');
+
+    const currentStatus = normalizeStatus(request.status);
+    const allowed = ALLOWED_TRANSITIONS[currentStatus] || new Set();
+    if (!allowed.has(nextStatus))
+      throw AppError.badRequest('INVALID_TRANSITION', 'Status transition not allowed');
+
+    if (
+      isHelper &&
+      !isOwner &&
+      ![STATUS.IN_PROGRESS, STATUS.COMPLETED, STATUS.CANCELLED].includes(nextStatus)
+    ) {
+      throw AppError.badRequest(
+        'INVALID_HELPER_STATUS',
+        'Helpers can only update progress or completion status'
+      );
+    }
+
+    request.status = nextStatus;
+    appendHistory(request, {
+      at: new Date(),
+      by: currentUserId,
+      type: historyTypeForStatus(nextStatus),
+      message: `Status updated to ${nextStatus}`,
+    });
+
+    await request.save();
+    await populateRequest(request);
+
+    const recipients = new Set();
+    const ownerId = toId(request.userId || request.user);
+    if (ownerId) recipients.add(ownerId);
+    getAssignedProviderIds(request).forEach((entry) => recipients.add(entry));
+
+    const statusSubType = STATUS_NOTIFICATION_TYPES[nextStatus] || 'service_request';
+    await sendNotification(
+      Array.from(recipients),
+      statusSubType,
+      toStatusMessage(nextStatus),
+      request,
+    );
+
+    res.json({
+      ok: true,
+      data: {
+        request: toRequestJson(request.toObject(), { currentUserId }),
+      },
+      traceId: req.traceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.submitOffer = async (req, res, next) => {
   try {
     const { id } = req.params;

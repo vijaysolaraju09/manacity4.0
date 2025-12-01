@@ -50,7 +50,6 @@ const PublicRequests = lazy(() => import('@/pages/Services/PublicRequests'));
 const MyServices = lazy(() => import('@/pages/Services/MyServices'));
 const ServiceRequestListPage = lazy(() => import('@/pages/ServiceRequests/MyRequests'));
 const ServiceRequestDetailPage = lazy(() => import('@/pages/ServiceRequests/ServiceRequestDetail'));
-const ServiceProviders = lazy(() => import('@/pages/Services/ServiceProviders'));
 const ServiceRequestFormPage = lazy(() => import('@/pages/Services/ServiceRequestForm'));
 const LegacyVerified = lazy(() => import('@/pages/Services/LegacyVerified'));
 const ProvidersPage = lazy(() => import('@/pages/Providers/ProvidersPage'));
@@ -163,6 +162,11 @@ const AppRoutes = () => (
             <Route path="requests" element={<PublicRequests />} />
             <Route path="requests/mine" element={<Navigate to={paths.serviceRequests.mine()} replace />} />
             <Route path="my-services" element={<MyServices />} />
+            <Route
+              key="service-detail"
+              path=":serviceId"
+              element={withSuspense(ServiceDetails, <RouteSkeleton label="Service details" />)}
+            />
           </Route>
           <Route
             key="service-requests"
@@ -179,11 +183,6 @@ const AppRoutes = () => (
               ServiceRequestDetailPage,
               <RouteSkeleton label="Service request" />
             )}
-          />
-          <Route
-            key="service-detail"
-            path="services/:serviceId"
-            element={withSuspense(ServiceDetails, <RouteSkeleton label="Service details" />)}
           />
           <Route
             key="service-request"
@@ -257,11 +256,6 @@ const AppRoutes = () => (
           key="event-register"
           path="events/:id/register"
           element={withSuspense(EventRegisterPage, <RouteSkeleton label="Event registration" />)}
-        />
-        <Route
-          key="service-providers"
-          path="services/:id"
-          element={withSuspense(ServiceProviders, <RouteSkeleton label="Service providers" />)}
         />
         <Route
           key="verified-details"

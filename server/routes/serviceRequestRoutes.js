@@ -30,6 +30,7 @@ router.get('/assigned', protect, listAcceptedServiceRequests);
 router.get('/my-services', protect, listAcceptedServiceRequests);
 router.get('/:id', protect, getServiceRequestById);
 router.patch('/:id/accept', protect, acceptPublicServiceRequest);
+router.patch('/:id/offer-help', protect, acceptPublicServiceRequest);
 router.patch('/:id/status', protect, updateServiceRequestStatus);
 router.post('/:id/reopen', protect, reopenServiceRequest);
 router.post('/:id/complete', protect, completeServiceRequest);

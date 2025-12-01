@@ -38,6 +38,17 @@ const maskContact = () => ({
   name: 'Community member',
 });
 
+const buildHelperSummary = (user) => {
+  if (!user) return null;
+  return {
+    _id: String(user._id || user.id || user),
+    name: sanitize(user.name),
+    phone: sanitize(user.phone),
+    email: sanitize(user.email),
+    address: sanitize(user.address),
+  };
+};
+
 const buildRequester = (user) => {
   if (!user) return null;
   return {
@@ -49,8 +60,35 @@ const buildRequester = (user) => {
   };
 };
 
+const toOfferResponse = (offer, { viewerId, ownerId }) => {
+  const viewerString = viewerId ? String(viewerId) : null;
+  const ownerString = ownerId ? String(ownerId) : null;
+  const helper = offer.helperId && offer.helperId.name ? buildHelperSummary(offer.helperId) : null;
+  const isAccepted = offer.status === 'AcceptedBySeeker';
+  const isOfferHelper = helper && viewerString && helper._id === viewerString;
+  const isOwner = ownerString && viewerString && ownerString === viewerString;
+  const includeContact = isAccepted || isOfferHelper || isOwner;
+  const helperInfo = helper
+    ? includeContact
+      ? helper
+      : { _id: helper._id, name: helper.name || 'Provider' }
+    : undefined;
+
+  return {
+    id: String(offer._id),
+    helperId: String(offer.helperId),
+    helperNote: offer.helperNote || offer.note || '',
+    expectedReturn: offer.expectedReturn || offer.payment || '',
+    status: offer.status,
+    createdAt: offer.createdAt,
+    helper: helperInfo,
+  };
+};
+
 const toRequestResponse = (request, viewerId, { includeOffers = false } = {}) => {
   const userId = request.userId ? String(request.userId) : request.user ? String(request.user) : null;
+  const viewerString = viewerId ? String(viewerId) : null;
+  const isOwner = viewerString && userId && viewerString === userId;
 
   const base = {
     id: String(request._id),
@@ -80,23 +118,20 @@ const toRequestResponse = (request, viewerId, { includeOffers = false } = {}) =>
   base.requester = requester;
   base.requesterContactVisible = requesterVisible;
 
+  if (request.acceptedBy) {
+    const acceptedHelper =
+      request.acceptedHelper && request.acceptedHelper.name
+        ? buildHelperSummary(request.acceptedHelper)
+        : request.acceptedBy && request.acceptedBy.name
+        ? buildHelperSummary(request.acceptedBy)
+        : null;
+    if (acceptedHelper && isOwner) base.acceptedHelper = acceptedHelper;
+  }
+
   if (includeOffers && Array.isArray(request.offersData)) {
-    base.offers = request.offersData.map((offer) => ({
-      id: String(offer._id),
-      helperId: String(offer.helperId),
-      helperNote: offer.helperNote || '',
-      expectedReturn: offer.expectedReturn || '',
-      status: offer.status,
-      createdAt: offer.createdAt,
-      helper:
-        offer.helperId && offer.helperId.name
-          ? {
-              _id: String(offer.helperId._id || offer.helperId.id),
-              name: sanitize(offer.helperId.name),
-              phone: sanitize(offer.helperId.phone),
-            }
-          : undefined,
-    }));
+    base.offers = request.offersData.map((offer) =>
+      toOfferResponse(offer, { viewerId: viewerString, ownerId: userId })
+    );
     base.offersCount = request.offersData.length;
   }
 
@@ -284,7 +319,9 @@ exports.listPublicRequests = async (req, res, next) => {
 
 exports.listMyRequests = async (req, res, next) => {
   try {
-    const requests = await ServiceRequest.find({ userId: req.user._id }).sort({ createdAt: -1 });
+    const requests = await ServiceRequest.find({ userId: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate('acceptedBy');
     const offers = await Offer.find({ requestId: { $in: requests.map((r) => r._id) } }).populate('helperId');
     const offerMap = offers.reduce((acc, offer) => {
       const key = String(offer.requestId);
@@ -300,6 +337,34 @@ exports.listMyRequests = async (req, res, next) => {
       return toRequestResponse(reqDoc, req.user._id, { includeOffers: true });
     });
     res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getOffersForRequest = async (req, res, next) => {
+  try {
+    const request = await ServiceRequest.findById(req.params.id)
+      .populate('userId')
+      .populate('acceptedBy');
+
+    if (!request) throw new AppError('Request not found', 404);
+
+    const isOwner = String(request.userId) === String(req.user._id);
+    if (!isOwner && req.user?.role !== 'admin') throw new AppError('Not allowed', 403);
+
+    const offers = await Offer.find({ requestId: request._id }).populate('helperId');
+    const ownerId = request.userId ? request.userId._id || request.userId : null;
+    const shapedOffers = offers.map((offer) =>
+      toOfferResponse(offer, { viewerId: req.user?._id, ownerId })
+    );
+
+    res.json({
+      data: {
+        offers: shapedOffers,
+        request: toRequestResponse(request, req.user?._id),
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -344,7 +409,9 @@ exports.listMyServices = async (req, res, next) => {
 
 exports.getServiceRequest = async (req, res, next) => {
   try {
-    const request = await ServiceRequest.findById(req.params.id).populate('userId');
+    const request = await ServiceRequest.findById(req.params.id)
+      .populate('userId')
+      .populate('acceptedBy');
     if (!request) throw new AppError('Request not found', 404);
     const offers = await Offer.find({ requestId: request._id }).populate('helperId');
     request.offersData = offers;
@@ -361,13 +428,11 @@ exports.submitOffer = async (req, res, next) => {
     if (request.type !== 'public') throw new AppError('Only public requests accept offers', 400);
     if (String(request.userId) === String(req.user._id)) throw new AppError('You cannot offer on your own request', 400);
 
+    const helperNote = req.body.helperNote ?? req.body.note;
+    const expectedReturn = req.body.expectedReturn ?? req.body.payment;
     const offer = await Offer.findOneAndUpdate(
       { requestId: request._id, helperId: req.user._id },
-      {
-        helperNote: req.body.helperNote,
-        expectedReturn: req.body.expectedReturn,
-        status: 'Pending',
-      },
+      { helperNote, expectedReturn, status: 'Pending' },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
 
@@ -377,7 +442,10 @@ exports.submitOffer = async (req, res, next) => {
     ]);
     const offerCount = offers.length ? offers[0].count : 0;
 
-    await createNotification(request.userId, 'New offer submitted', request._id);
+    await Promise.all([
+      createNotification(request.userId, 'New offer submitted', request._id),
+      createNotification(req.user._id, 'Offer submitted', request._id),
+    ]);
     res.status(201).json({
       data: {
         request: { ...toRequestResponse(request, req.user._id), offersCount: offerCount },
@@ -391,7 +459,7 @@ exports.submitOffer = async (req, res, next) => {
 
 exports.acceptOffer = async (req, res, next) => {
   try {
-    const request = await ServiceRequest.findById(req.params.id);
+    const request = await ServiceRequest.findById(req.params.id).populate('userId');
     if (!request) throw new AppError('Request not found', 404);
     if (String(request.userId) !== String(req.user._id)) throw new AppError('Not allowed', 403);
     const offer = await Offer.findOneAndUpdate(
@@ -404,8 +472,20 @@ exports.acceptOffer = async (req, res, next) => {
     request.acceptedAt = new Date();
     request.status = 'Accepted';
     await request.save();
-    await createNotification(offer.helperId, 'Offer accepted', request._id);
-    res.json({ data: toRequestResponse(request, req.user._id) });
+    await Offer.updateMany(
+      { requestId: request._id, _id: { $ne: offer._id }, status: 'Pending' },
+      { status: 'RejectedBySeeker' },
+    );
+
+    const offers = await Offer.find({ requestId: request._id }).populate('helperId');
+    request.offersData = offers;
+    await request.populate('acceptedBy');
+
+    await Promise.all([
+      createNotification(offer.helperId, 'Offer accepted', request._id),
+      createNotification(request.userId, 'You accepted an offer', request._id),
+    ]);
+    res.json({ data: toRequestResponse(request, req.user._id, { includeOffers: true }) });
   } catch (err) {
     next(err);
   }
@@ -413,7 +493,7 @@ exports.acceptOffer = async (req, res, next) => {
 
 exports.rejectOffer = async (req, res, next) => {
   try {
-    const request = await ServiceRequest.findById(req.params.id);
+    const request = await ServiceRequest.findById(req.params.id).populate('userId');
     if (!request) throw new AppError('Request not found', 404);
     if (String(request.userId) !== String(req.user._id)) throw new AppError('Not allowed', 403);
     const offer = await Offer.findOneAndUpdate(
@@ -422,8 +502,13 @@ exports.rejectOffer = async (req, res, next) => {
       { new: true },
     );
     if (!offer) throw new AppError('Offer not found', 404);
-    await createNotification(offer.helperId, 'Offer rejected', request._id);
-    res.json({ data: offer });
+    const offers = await Offer.find({ requestId: request._id }).populate('helperId');
+    request.offersData = offers;
+    await Promise.all([
+      createNotification(offer.helperId, 'Offer rejected', request._id),
+      createNotification(request.userId, 'You rejected an offer', request._id),
+    ]);
+    res.json({ data: toRequestResponse(request, req.user._id, { includeOffers: true }) });
   } catch (err) {
     next(err);
   }

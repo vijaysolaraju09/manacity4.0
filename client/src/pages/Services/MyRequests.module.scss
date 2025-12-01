@@ -119,3 +119,21 @@
   color: #374151;
   font-size: 0.9rem;
 }
+
+.acceptedHelper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  color: #0f172a;
+}
+
+.helperRow {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  font-size: 0.95rem;
+}

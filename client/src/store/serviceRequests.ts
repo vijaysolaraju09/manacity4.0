@@ -131,8 +131,9 @@ const normalizeOffer = (data: any): ServiceRequestOffer => {
         ? String(data.providerId)
         : '',
     provider: helper,
+    helper,
     note: data?.note ?? data?.helperNote ?? '',
-    expectedReturn: data?.expectedReturn ?? data?.paymentOffer ?? '',
+    expectedReturn: data?.expectedReturn ?? data?.payment ?? data?.paymentOffer ?? '',
     createdAt: data?.createdAt ?? data?.created_at ?? undefined,
     status: statusMap[statusRaw] ?? 'pending',
   };
@@ -488,6 +489,25 @@ export const fetchMyServiceRequests = createAsyncThunk<
       const body = res?.data?.data ?? res?.data ?? {};
       const items = toItems(body).map(normalizeRequest);
       return items as ServiceRequest[];
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
+    }
+  }
+);
+
+export const fetchServiceRequestOffers = createAsyncThunk<
+  { requestId: string; offers: ServiceRequestOffer[]; request: ServiceRequest | null },
+  string,
+  { rejectValue: string }
+>(
+  'serviceRequests/fetchOffers',
+  async (requestId, thunkApi) => {
+    try {
+      const res = await http.get(`/service-requests/${requestId}/offers`);
+      const data = res?.data?.data ?? res?.data ?? {};
+      const offers = Array.isArray(data.offers) ? data.offers.map(normalizeOffer) : [];
+      const request = data.request ? normalizeRequest(data.request) : null;
+      return { requestId, offers, request };
     } catch (error) {
       return thunkApi.rejectWithValue(toErrorMessage(error));
     }
@@ -862,6 +882,28 @@ const serviceRequestsSlice = createSlice({
       .addCase(fetchMyServiceRequests.rejected, (state, action) => {
         state.mine.status = 'failed';
         state.mine.error = action.payload ?? action.error.message ?? 'Failed to load requests';
+      })
+      .addCase(fetchServiceRequestOffers.fulfilled, (state, action) => {
+        const { requestId, offers, request } = action.payload;
+        const applyOffers = (entry?: Draft<ServiceRequest> | null) => {
+          if (!entry || entry._id !== requestId) return;
+          entry.offers = offers;
+          if (request) {
+            entry.status = request.status;
+            entry.acceptedBy = request.acceptedBy;
+            entry.acceptedHelper = request.acceptedHelper;
+            entry.requesterContactVisible = request.requesterContactVisible;
+            entry.acceptedAt = request.acceptedAt;
+          }
+        };
+        state.mine.items.forEach(applyOffers);
+        state.assigned.items.forEach(applyOffers);
+        applyOffers(state.detail.item as Draft<ServiceRequest> | null);
+      })
+      .addCase(fetchServiceRequestOffers.rejected, (state, action) => {
+        if (!state.mine.error) {
+          state.mine.error = action.payload ?? action.error.message ?? null;
+        }
       })
       .addCase(fetchAssignedServiceRequests.pending, (state) => {
         state.assigned.status = 'loading';

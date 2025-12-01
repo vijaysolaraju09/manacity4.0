@@ -6,11 +6,13 @@ import type { AppDispatch, RootState } from '@/store'
 import { fetchServices } from '@/store/services'
 import {
   fetchMyServiceRequests,
+  acceptPublicServiceRequest,
   fetchPublicServiceRequests,
 } from '@/store/serviceRequests'
 import { fetchAssignedRequests } from '@/store/providerServiceRequests'
 import { Badge, Button, Card, Chip, Input } from '@/app/components/primitives'
 import { paths } from '@/routes/paths'
+import showToast from '@/components/ui/Toast'
 
 const ServicesScreen = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -20,8 +22,12 @@ const ServicesScreen = () => {
   const myRequestsState = useSelector((state: RootState) => state.serviceRequests.mine)
   const myServicesState = useSelector((state: RootState) => state.providerServiceRequests)
   const isAuthenticated = Boolean(useSelector((state: RootState) => state.auth.token))
+  const currentUserId = useSelector(
+    (state: RootState) => state.userProfile.item?.id ?? state.auth.user?.id ?? null,
+  )
   const [filter, setFilter] = useState<'all' | 'publicRequests' | 'myRequests' | 'myServices'>('all')
   const [query, setQuery] = useState('')
+  const [submitting, setSubmitting] = useState<string | null>(null)
 
   useEffect(() => {
     if (servicesState.status === 'idle') {
@@ -72,7 +78,9 @@ const ServicesScreen = () => {
   const filteredPublicRequests = useMemo(() => {
     const items = publicRequestsState.items ?? []
     return items.filter((request) => {
-      const isMine = myRequestIds.has(request._id)
+      const isMine =
+        myRequestIds.has(request._id) ||
+        (!!currentUserId && (request.requesterId === currentUserId || request.acceptedBy === currentUserId))
       if (isMine) return false
       if (!normalizedQuery) return true
       return (
@@ -80,7 +88,7 @@ const ServicesScreen = () => {
         (request.description ?? '').toLowerCase().includes(normalizedQuery)
       )
     })
-  }, [publicRequestsState.items, myRequestIds, normalizedQuery])
+  }, [publicRequestsState.items, myRequestIds, normalizedQuery, currentUserId])
 
   const filteredMyRequests = useMemo(() => {
     const items = myRequestsState.items ?? []
@@ -141,6 +149,23 @@ const ServicesScreen = () => {
       navigate(path)
     },
     [navigate],
+  )
+
+  const handleOfferHelp = useCallback(
+    async (requestId: string) => {
+      setSubmitting(requestId)
+      try {
+        await dispatch(acceptPublicServiceRequest({ id: requestId })).unwrap()
+        showToast('Request accepted. Contact details will be shared with you.', 'success')
+        void dispatch(fetchAssignedRequests())
+      } catch (error) {
+        const message = typeof error === 'string' ? error : 'Unable to accept request'
+        showToast(message, 'error')
+      } finally {
+        setSubmitting(null)
+      }
+    },
+    [dispatch],
   )
 
   return (
@@ -249,26 +274,58 @@ const ServicesScreen = () => {
                     }
                   }}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-semibold text-primary">{request.title}</h2>
-                        <Badge tone="accent">Public</Badge>
+                  {(() => {
+                    const type = (request.type || '').toLowerCase()
+                    const status = (request.status || '').toLowerCase()
+                    const isMine =
+                      myRequestIds.has(request._id) ||
+                      (!!currentUserId &&
+                        (request.requesterId === currentUserId || request.acceptedBy === currentUserId))
+                    const canOfferHelp =
+                      filter === 'publicRequests' &&
+                      type === 'public' &&
+                      status === 'pending' &&
+                      !isMine &&
+                      !request.acceptedBy
+                    return (
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <h2 className="text-lg font-semibold text-primary">{request.title}</h2>
+                              <Badge tone="accent">Public</Badge>
+                            </div>
+                            <p className="text-sm text-muted">{request.description}</p>
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
+                              {request.location ? (
+                                <span className="inline-flex items-center gap-1">
+                                  <ShieldCheck className="h-3.5 w-3.5" /> {request.location}
+                                </span>
+                              ) : null}
+                              <span className="inline-flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5" /> {request.offersCount} offer(s)
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-3">
+                            <Badge tone="neutral">{request.status}</Badge>
+                            {canOfferHelp ? (
+                              <Button
+                                size="sm"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  void handleOfferHelp(request._id)
+                                }}
+                                disabled={submitting === request._id}
+                              >
+                                {submitting === request._id ? 'Offering help…' : 'Offer help'}
+                              </Button>
+                            ) : null}
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted">{request.description}</p>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
-                        {request.location ? (
-                          <span className="inline-flex items-center gap-1">
-                            <ShieldCheck className="h-3.5 w-3.5" /> {request.location}
-                          </span>
-                        ) : null}
-                        <span className="inline-flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" /> {request.offersCount} offer(s)
-                        </span>
-                      </div>
-                    </div>
-                    <Badge tone="neutral">{request.status}</Badge>
-                  </div>
+                    )
+                  })()}
                 </Card>
               ))
             : null}

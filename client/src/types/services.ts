@@ -124,6 +124,7 @@ export interface PublicServiceRequest {
   serviceId: string | null;
   title: string;
   description: string;
+  details?: string;
   message?: string;
   location: string;
   createdAt: string | null;

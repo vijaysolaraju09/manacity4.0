@@ -165,6 +165,7 @@ const normalizePublicRequest = (data: any): PublicServiceRequest => ({
       : null,
   title: data?.title ?? '',
   description: data?.description ?? data?.message ?? '',
+  details: data?.details ?? '',
   message: data?.message ?? data?.description ?? '',
   location: data?.location ?? '',
   createdAt: (data?.createdAt ?? null) as string | null,
@@ -546,7 +547,12 @@ export const fetchPublicServiceRequests = createAsyncThunk<
     try {
       const res = await http.get('/service-requests/public', { params });
       const body = res?.data?.data ?? res?.data ?? {};
-      const items = Array.isArray(body.items) ? body.items.map(normalizePublicRequest) : [];
+      const rawItems = Array.isArray(body.items)
+        ? body.items
+        : Array.isArray(body.data)
+        ? body.data
+        : [];
+      const items = rawItems.map(normalizePublicRequest);
       const page = typeof body.page === 'number' ? body.page : params?.page ?? 1;
       const pageSize =
         typeof body.pageSize === 'number' ? body.pageSize : params?.pageSize ?? items.length;

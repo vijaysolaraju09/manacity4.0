@@ -26,6 +26,12 @@ const formatStatus = (status: string) =>
         .join(' ')
     : '';
 
+const toPreview = (value?: string, limit = 160) => {
+  if (!value) return '';
+  if (value.length <= limit) return value;
+  return `${value.slice(0, limit)}…`;
+};
+
 const PublicRequests = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -115,8 +121,10 @@ const PublicRequests = () => {
               }}
             >
               <div className={styles.cardTitle}>{request.title}</div>
-              {request.message || request.description ? (
-                <p className={styles.description}>{request.message || request.description}</p>
+              {request.message || request.details || request.description ? (
+                <p className={styles.description}>
+                  {toPreview(request.message || request.details || request.description)}
+                </p>
               ) : null}
               <div className={styles.meta}>
                 {request.location ? <span>{request.location}</span> : null}

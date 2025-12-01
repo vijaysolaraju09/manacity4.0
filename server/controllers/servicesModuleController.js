@@ -229,21 +229,54 @@ exports.createDirectRequest = async (req, res, next) => {
 
 exports.listPublicRequests = async (req, res, next) => {
   try {
-    const criteria = { type: 'public' };
-    if (req.user?._id) criteria.userId = { $ne: req.user._id };
+    const page = Math.max(parseInt(req.query?.page, 10) || 1, 1);
+    const pageSize = Math.min(100, Math.max(parseInt(req.query?.pageSize, 10) || 20, 1));
+    const skip = (page - 1) * pageSize;
 
-    const requests = await ServiceRequest.find(criteria).sort({ createdAt: -1 }).populate('userId');
+    const criteria = { type: 'public', status: 'Pending' };
+    const viewerId = req.user?._id;
+    if (viewerId) criteria.userId = { $ne: viewerId };
+
+    const offeredRequestIds = viewerId
+      ? await Offer.find({ helperId: viewerId }).distinct('requestId')
+      : [];
+    if (offeredRequestIds.length) criteria._id = { $nin: offeredRequestIds };
+
+    const baseQuery = ServiceRequest.find(criteria)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
+      .populate('userId');
+
+    const [requests, total] = await Promise.all([
+      baseQuery,
+      ServiceRequest.countDocuments(criteria),
+    ]);
+
     const requestIds = requests.map((r) => r._id);
     const offers = await Offer.aggregate([
       { $match: { requestId: { $in: requestIds } } },
       { $group: { _id: '$requestId', count: { $sum: 1 } } },
     ]);
     const offerMap = new Map(offers.map((o) => [String(o._id), o.count]));
-    const data = requests.map((reqDoc) => ({
-      ...toRequestResponse(reqDoc, req.user?._id),
-      offersCount: offerMap.get(String(reqDoc._id)) || 0,
-    }));
-    res.json({ data });
+
+    const items = requests.map((reqDoc) => {
+      const shaped = toRequestResponse(reqDoc, viewerId);
+      return {
+        ...shaped,
+        details: reqDoc.details || reqDoc.desc || '',
+        offersCount: offerMap.get(String(reqDoc._id)) || 0,
+      };
+    });
+
+    res.json({
+      data: {
+        items,
+        page,
+        pageSize,
+        total,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -274,14 +307,19 @@ exports.listMyRequests = async (req, res, next) => {
 
 exports.listMyServices = async (req, res, next) => {
   try {
-    const offerRequests = await Offer.find({ helperId: req.user._id }).distinct('requestId');
+    const acceptedOfferRequests = await Offer.find({
+      helperId: req.user._id,
+      status: 'AcceptedBySeeker',
+    }).distinct('requestId');
+
     const query = {
       $or: [
         { acceptedBy: req.user._id },
         { directTargetUserId: req.user._id },
-        { _id: { $in: offerRequests } },
+        { _id: { $in: acceptedOfferRequests } },
       ],
     };
+
     const requests = await ServiceRequest.find(query).populate('userId');
     const offers = await Offer.find({ requestId: { $in: requests.map((r) => r._id) }, helperId: req.user._id });
     const offerMap = new Map(offers.map((o) => [String(o.requestId), o]));
@@ -318,9 +356,11 @@ exports.getServiceRequest = async (req, res, next) => {
 
 exports.submitOffer = async (req, res, next) => {
   try {
-    const request = await ServiceRequest.findById(req.params.id);
+    const request = await ServiceRequest.findById(req.params.id).populate('userId');
     if (!request) throw new AppError('Request not found', 404);
     if (request.type !== 'public') throw new AppError('Only public requests accept offers', 400);
+    if (String(request.userId) === String(req.user._id)) throw new AppError('You cannot offer on your own request', 400);
+
     const offer = await Offer.findOneAndUpdate(
       { requestId: request._id, helperId: req.user._id },
       {
@@ -330,8 +370,20 @@ exports.submitOffer = async (req, res, next) => {
       },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
+
+    const offers = await Offer.aggregate([
+      { $match: { requestId: request._id } },
+      { $group: { _id: '$requestId', count: { $sum: 1 } } },
+    ]);
+    const offerCount = offers.length ? offers[0].count : 0;
+
     await createNotification(request.userId, 'New offer submitted', request._id);
-    res.status(201).json({ data: offer });
+    res.status(201).json({
+      data: {
+        request: { ...toRequestResponse(request, req.user._id), offersCount: offerCount },
+        offer,
+      },
+    });
   } catch (err) {
     next(err);
   }

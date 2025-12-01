@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Button from '@/components/ui/button';
 import SkeletonList from '@/components/ui/SkeletonList';
 import showToast from '@/components/ui/Toast';
-import { actOnServiceOffer, cancelServiceRequest, fetchMyServiceRequests } from '@/store/serviceRequests';
+import {
+  actOnServiceOffer,
+  cancelServiceRequest,
+  fetchMyServiceRequests,
+  fetchServiceRequestOffers,
+} from '@/store/serviceRequests';
 import type { AppDispatch, RootState } from '@/store';
 import type { ServiceRequest, ServiceRequestOffer } from '@/types/services';
 import styles from './MyRequests.module.scss';
@@ -19,6 +24,7 @@ const MyRequests = () => {
   const mineState = useSelector((state: RootState) => state.serviceRequests.mine);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const offersFetchedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (mineState.status === 'idle') {
@@ -27,6 +33,21 @@ const MyRequests = () => {
   }, [dispatch, mineState.status]);
 
   const items = useMemo(() => mineState.items ?? [], [mineState.items]);
+
+  useEffect(() => {
+    const publicRequests = items.filter((request) => request.type === 'public');
+    publicRequests.forEach((request) => {
+      if (offersFetchedRef.current.has(request._id)) return;
+      offersFetchedRef.current.add(request._id);
+      dispatch(fetchServiceRequestOffers(request._id))
+        .unwrap()
+        .catch((err) => {
+          offersFetchedRef.current.delete(request._id);
+          const message = typeof err === 'string' ? err : 'Failed to load offers';
+          showToast(message, 'error');
+        });
+    });
+  }, [dispatch, items]);
 
   const startAction = (id: string, action: string) => {
     setPendingId(id);
@@ -88,6 +109,7 @@ const MyRequests = () => {
             const offers = Array.isArray(request.offers) ? request.offers : [];
             const assignedName = request.assignedProvider?.name;
             const canEdit = ['pending', 'awaiting_approval'].includes(request.status) && !request.acceptedBy;
+            const acceptedHelper = request.acceptedHelper;
 
             return (
               <div key={request._id} className={styles.card}>
@@ -102,6 +124,15 @@ const MyRequests = () => {
                       <span>Reopened {request.reopenedCount} time(s)</span>
                     ) : null}
                   </div>
+                  {acceptedHelper ? (
+                    <div className={styles.acceptedHelper}>
+                      <div className={styles.sectionTitle}>Accepted helper</div>
+                      <div className={styles.helperRow}>
+                        <span>{acceptedHelper.name || 'Helper'}</span>
+                        {acceptedHelper.phone ? <span> · {acceptedHelper.phone}</span> : null}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 {request.description ? <p>{request.description}</p> : null}
@@ -120,12 +151,12 @@ const MyRequests = () => {
                     {offers.map((offer: ServiceRequestOffer) => (
                       <div key={offer._id} className={styles.offer}>
                         <div className={styles.offerMeta}>
-                          <span>{offer.provider?.name || 'Provider'}</span>
+                          <span>{offer.helper?.name || offer.provider?.name || 'Provider'}</span>
                           <span className={styles.badge}>{statusLabel(offer.status as ServiceRequest['status'])}</span>
                           {offer.expectedReturn ? <span>Offer: {offer.expectedReturn}</span> : null}
                           {offer.createdAt ? <span>{new Date(offer.createdAt).toLocaleString()}</span> : null}
                         </div>
-                        {offer.note ? <p>{offer.note}</p> : null}
+                        {offer.note || offer.helperNote ? <p>{offer.note || offer.helperNote}</p> : null}
                         {offer.status === 'pending' && !request.acceptedBy ? (
                           <div className={styles.offerActions}>
                             <Button

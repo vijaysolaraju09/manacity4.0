@@ -4,8 +4,8 @@ const OfferSchema = new mongoose.Schema(
   {
     requestId: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', required: true, index: true },
     helperId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    helperNote: { type: String, trim: true, maxlength: 2000 },
-    expectedReturn: { type: String, trim: true, maxlength: 120 },
+    helperNote: { type: String, trim: true, maxlength: 2000, alias: 'note' },
+    expectedReturn: { type: String, trim: true, maxlength: 120, alias: 'payment' },
     status: {
       type: String,
       enum: ['Pending', 'AcceptedBySeeker', 'RejectedBySeeker'],

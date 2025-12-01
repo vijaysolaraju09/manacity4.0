@@ -54,7 +54,9 @@ export interface ServiceRequestOffer {
   _id: string;
   providerId: string;
   provider?: ServiceProviderUser | null;
+  helper?: ServiceProviderUser | null;
   note: string;
+  helperNote?: string;
   expectedReturn?: string;
   createdAt?: string;
   status: 'pending' | 'accepted_by_seeker' | 'rejected_by_seeker';

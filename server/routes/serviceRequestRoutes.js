@@ -9,6 +9,7 @@ const {
   listMyRequests,
   listMyServices,
   getServiceRequest,
+  getOffersForRequest,
   submitOffer,
   acceptOffer,
   rejectOffer,
@@ -26,6 +27,7 @@ router.post('/direct', protect, createDirectRequest);
 router.get('/my-requests', protect, listMyRequests);
 router.get('/my-services', protect, listMyServices);
 router.get('/:id', optionalAuth, getServiceRequest);
+router.get('/:id/offers', protect, getOffersForRequest);
 router.post('/:id/offers', protect, submitOffer);
 router.patch('/:id/offers/:offerId/accept', protect, acceptOffer);
 router.patch('/:id/offers/:offerId/reject', protect, rejectOffer);

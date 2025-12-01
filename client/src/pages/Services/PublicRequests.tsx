@@ -117,9 +117,15 @@ const PublicRequests = () => {
                     event.stopPropagation();
                     void handleAccept(request._id);
                   }}
-                  disabled={Boolean(request.acceptedBy) || submitting === request._id}
+                  disabled={
+                    request.status !== 'pending' || Boolean(request.acceptedBy) || submitting === request._id
+                  }
                 >
-                  {request.acceptedBy ? 'Already accepted' : submitting === request._id ? 'Accepting…' : 'Offer help / Accept'}
+                  {request.acceptedBy
+                    ? 'Already accepted'
+                    : submitting === request._id
+                    ? 'Offering help…'
+                    : 'Offer Help'}
                 </Button>
               ) : (
                 <Button

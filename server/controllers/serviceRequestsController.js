@@ -301,6 +301,7 @@ const toRequestJson = (doc, options = {}) => {
     assignedProviderIds,
     acceptedBy: acceptedById || null,
     acceptedHelper,
+    acceptedAt: doc.acceptedAt || null,
     offers,
     offersCount: Array.isArray(doc.offers) ? doc.offers.length : offers.length,
     history,
@@ -813,7 +814,7 @@ exports.listPublicServiceRequests = async (req, res, next) => {
         .skip(skip)
         .limit(limit)
     ).select(
-      'customName description location status createdAt offers serviceId visibility type userId phone acceptedBy'
+      'customName description location status createdAt offers serviceId visibility type userId phone acceptedBy acceptedAt'
     );
 
     const [items, total] = await Promise.all([
@@ -839,6 +840,7 @@ exports.listPublicServiceRequests = async (req, res, next) => {
             requester: json.requesterDisplayName || 'Community member',
             requesterId: json.userId,
             acceptedBy: json.acceptedBy,
+            acceptedAt: json.acceptedAt,
             requesterContactVisible: json.requesterContactVisible,
           };
         })
@@ -887,6 +889,7 @@ exports.acceptPublicServiceRequest = async (req, res, next) => {
     request.assignedProviderId = currentUserId;
     request.assignedProviderIds = [currentUserId];
     request.status = STATUS.ACCEPTED;
+    request.acceptedAt = new Date();
 
     appendHistory(request, {
       by: currentUserId,
@@ -910,7 +913,7 @@ exports.acceptPublicServiceRequest = async (req, res, next) => {
     await sendNotification(
       currentUserId,
       'accepted',
-      `You accepted ${requesterName}'s request`,
+      `You offered help to ${requesterName}`,
       request
     );
 

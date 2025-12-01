@@ -100,6 +100,7 @@ export interface ServiceRequest {
   reopenedCount: number;
   acceptedBy: string | null;
   acceptedHelper?: ServiceProviderUser | null;
+  acceptedAt?: string | null;
   assignedProviderId: string | null;
   assignedProvider?: ServiceProviderUser | null;
   assignedProviders?: ServiceProviderUser[];
@@ -128,6 +129,7 @@ export interface PublicServiceRequest {
   requesterId?: string | null;
   type?: 'public' | 'private';
   acceptedBy?: string | null;
+  acceptedAt?: string | null;
   requesterContactVisible?: boolean;
 }
 

@@ -182,6 +182,10 @@ const ServiceRequestSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    acceptedAt: {
+      type: Date,
+      default: null,
+    },
     assignedProviderIds: {
       type: [
         {

@@ -167,6 +167,12 @@ const normalizePublicRequest = (data: any): PublicServiceRequest => ({
       : data?.acceptedBy
       ? String(data.acceptedBy)
       : null,
+  acceptedAt:
+    typeof data?.acceptedAt === 'string'
+      ? data.acceptedAt
+      : data?.acceptedAt instanceof Date
+      ? data.acceptedAt.toISOString()
+      : null,
   requesterContactVisible:
     typeof data?.requesterContactVisible === 'boolean'
       ? data.requesterContactVisible
@@ -259,6 +265,12 @@ const normalizeRequest = (data: any): ServiceRequest => ({
       : data.acceptedBy && typeof data.acceptedBy === 'object' && data.acceptedBy._id
       ? normalizeUserSummary(data.acceptedBy)
       : null,
+  acceptedAt:
+    typeof data.acceptedAt === 'string'
+      ? data.acceptedAt
+      : data.acceptedAt instanceof Date
+      ? data.acceptedAt.toISOString()
+      : null,
   assignedProviderId:
     data.assignedProviderId
       ? typeof data.assignedProviderId === 'string'
@@ -337,6 +349,8 @@ const applyRequestUpdate = (state: Draft<ServiceRequestsState>, updated: Service
           description: updated.description ?? item.description,
           status: updated.status,
           offersCount: updated.offersCount,
+          acceptedBy: updated.acceptedBy ?? item.acceptedBy,
+          acceptedAt: updated.acceptedAt ?? item.acceptedAt,
         }
       : item
   );
@@ -475,7 +489,12 @@ export const acceptPublicServiceRequest = createAsyncThunk<
   'serviceRequests/acceptPublic',
   async ({ id }, thunkApi) => {
     try {
-      const res = await http.patch(`/requests/${id}/accept`);
+      let res;
+      try {
+        res = await http.patch(`/requests/${id}/offer-help`);
+      } catch (_err) {
+        res = await http.patch(`/requests/${id}/accept`);
+      }
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : null;
       if (!request) throw new Error('Invalid request response');

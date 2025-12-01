@@ -155,7 +155,7 @@ export interface CreateServiceRequestPayload {
   paymentOffer?: string;
   preferredDate?: string;
   preferredTime?: string;
-  visibility?: 'public' | 'private';
+  visibility?: 'public' | 'private' | 'direct';
   providerId?: string;
   type?: 'public' | 'private' | 'direct';
 }

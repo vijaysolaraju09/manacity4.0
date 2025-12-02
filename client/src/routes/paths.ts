@@ -22,6 +22,7 @@ export const paths = {
     detail: (id: string = ':id') => `/providers/${id}`,
   },
   services: {
+    available: () => '/services/available',
     catalog: () => '/services',
     requests: () => '/services/requests',
     requestsMine: () => '/services/requests/mine',

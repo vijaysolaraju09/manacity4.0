@@ -30,6 +30,7 @@ const ServicesHub = () => {
   const [type, setType] = useState<'public' | 'private'>('public');
 
   const catalogPath = paths.services.catalog();
+  const availablePath = paths.services.available();
   const requestsPath = paths.services.requests();
   const myRequestsPath = paths.serviceRequests.mine();
   const myServicesPath = paths.services.myServices();
@@ -39,14 +40,14 @@ const ServicesHub = () => {
       ? location.pathname.slice(0, -1)
       : location.pathname;
 
-  const isCatalogRoute = normalizedPath === catalogPath;
+  const isCatalogRoute = normalizedPath === catalogPath || normalizedPath === availablePath;
   const isRequestsRoute = normalizedPath === requestsPath;
   const isMyRequestsRoute = normalizedPath === myRequestsPath;
   const isMyServicesRoute = normalizedPath === myServicesPath;
 
   const handlePrimaryTab = (target: 'catalog' | 'requests' | 'myRequests' | 'myServices') => {
     if (target === 'catalog') {
-      navigate(catalogPath);
+      navigate(availablePath);
       return;
     }
 

@@ -68,7 +68,7 @@ const ServiceRequestFormPage = () => {
         )}
       </div>
       <div className={styles.actions}>
-        <Button variant="secondary" onClick={() => navigate(paths.services.catalog())}>
+        <Button variant="secondary" onClick={() => navigate(paths.services.available())}>
           Back to services catalog
         </Button>
       </div>

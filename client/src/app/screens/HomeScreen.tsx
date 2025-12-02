@@ -89,7 +89,7 @@ const HomeScreen = () => {
           title: 'Discover verified shops and services',
           description: 'Browse curated merchants, concierge-grade services, and exclusive experiences around you.',
           primaryAction: { label: 'Start exploring', to: paths.shops() },
-          secondaryAction: { label: 'View services', to: paths.services.catalog() },
+          secondaryAction: { label: 'View services', to: paths.services.available() },
         },
       ]
     }
@@ -108,7 +108,7 @@ const HomeScreen = () => {
               : undefined,
           }
         : undefined,
-      secondaryAction: { label: 'Explore services', to: paths.services.catalog() },
+      secondaryAction: { label: 'Explore services', to: paths.services.available() },
     }))
   }, [announcements])
 
@@ -315,7 +315,7 @@ const HomeScreen = () => {
           )}
         </div>
         <div className="flex justify-end">
-          <Button variant="ghost" onClick={() => navigate(paths.services.catalog())}>
+          <Button variant="ghost" onClick={() => navigate(paths.services.available())}>
             Explore more services
           </Button>
         </div>

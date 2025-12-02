@@ -13,7 +13,7 @@ const LegacyVerified = () => {
           The verified professionals experience now lives inside Services. Explore the service catalog or raise a service request to share custom needs.
         </p>
         <div className={styles.actions}>
-          <Button onClick={() => navigate(paths.services.catalog())}>Go to Services</Button>
+          <Button onClick={() => navigate(paths.services.available())}>Go to Services</Button>
           <Button variant="secondary" onClick={() => navigate(paths.services.request())}>
             Raise Service Request
           </Button>

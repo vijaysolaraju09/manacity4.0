@@ -29,7 +29,7 @@ export default function Sidebar() {
     { to: paths.home(), label: 'Home', icon: <Home className="mc-item__icon" /> },
     { to: paths.shops(), label: 'Shops', icon: <Store className="mc-item__icon" /> },
     {
-      to: paths.services.catalog(),
+      to: paths.services.available(),
       label: 'Services',
       icon: <PackageOpen className="mc-item__icon" />,
     },

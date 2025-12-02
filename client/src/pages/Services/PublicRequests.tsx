@@ -60,14 +60,17 @@ const PublicRequests = () => {
   const filteredItems = useMemo(() => {
     if (!debouncedQuery) return items;
     return items.filter((entry) => {
-      const haystack = `${
-        entry.title ?? ''
-      } ${entry.message ?? ''} ${entry.description ?? ''} ${entry.category ?? ''} ${
-        entry.town ?? entry.location ?? ''
-      }`
-        .toLowerCase()
-        .trim();
-      return haystack.includes(debouncedQuery);
+      const tokens = [
+        entry.title,
+        entry.location,
+        entry.town,
+        entry.description,
+        entry.message,
+        entry.details,
+      ]
+        .filter(Boolean)
+        .map((value) => value?.toLowerCase().trim());
+      return tokens.some((value) => value && value.includes(debouncedQuery));
     });
   }, [items, debouncedQuery]);
 
@@ -125,7 +128,7 @@ const PublicRequests = () => {
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search requests by title, details, or location"
+              placeholder="Search requests by title, location, or description"
               className={styles.searchInput}
               aria-label="Search public requests"
             />

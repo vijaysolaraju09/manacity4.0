@@ -158,7 +158,8 @@ const AppRoutes = () => (
           <Route key="shops" path="shops" element={<Shops />} />
           <Route key="products" path="products" element={<ProductsList />} />
           <Route key="services" path="services" element={<ServicesHub />}>
-            <Route index element={<ServicesCatalog />} />
+            <Route index element={<Navigate to={paths.services.available()} replace />} />
+            <Route path="available" element={<ServicesCatalog />} />
             <Route path="requests" element={<PublicRequests />} />
             <Route path="requests/mine" element={<Navigate to={paths.serviceRequests.mine()} replace />} />
             <Route path="my-services" element={<MyServices />} />

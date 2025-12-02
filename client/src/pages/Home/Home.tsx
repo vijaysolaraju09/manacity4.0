@@ -251,7 +251,7 @@ const Home = () => {
       />
       <Section
         title="Services"
-        path={paths.services.catalog()}
+        path={paths.services.available()}
         data={services.items}
         status={services.status}
         error={services.error}

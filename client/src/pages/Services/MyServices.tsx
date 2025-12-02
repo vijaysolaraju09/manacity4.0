@@ -124,7 +124,9 @@ const MyServices = () => {
           {requests.map((request) => {
             const title = request.service?.name || request.customName || 'Service request';
             const description = request.details || request.description || request.message || '';
-            const canMarkInProgress = ['accepted', 'in_progress'].includes(request.status);
+            const canMarkInProgress = ['accepted', 'in_progress', 'assigned'].includes(
+              request.status as any
+            );
             const canComplete = request.status === 'in_progress';
             const requesterContact =
               request.requesterContactVisible && (request.requester?.phone || request.phone);

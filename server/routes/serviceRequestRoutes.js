@@ -17,6 +17,7 @@ const {
   rejectDirect,
   updateStatus,
   assignProvider,
+  updateServiceRequest,
 } = require('../controllers/servicesModuleController');
 
 const router = express.Router();
@@ -26,6 +27,7 @@ router.post('/', protect, createServiceRequest);
 router.post('/direct', protect, createDirectRequest);
 router.get('/my-requests', protect, listMyRequests);
 router.get('/my-services', protect, listMyServices);
+router.patch('/:id', protect, updateServiceRequest);
 router.get('/:id', optionalAuth, getServiceRequest);
 router.get('/:id/offers', protect, getOffersForRequest);
 router.post('/:id/offers', protect, submitOffer);

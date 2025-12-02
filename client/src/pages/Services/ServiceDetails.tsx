@@ -71,7 +71,7 @@ const ServiceDetails = () => {
 
     try {
       await dispatch(createServiceRequest(payload)).unwrap();
-      navigate(paths.services.requests());
+      navigate(paths.serviceRequests.mine());
     } catch (err) {
       const message =
         typeof err === 'string'
@@ -116,7 +116,7 @@ const ServiceDetails = () => {
 
     try {
       await dispatch(createDirectServiceRequest(payload)).unwrap();
-      navigate(paths.services.requests());
+      navigate(paths.serviceRequests.mine());
     } catch (err) {
       const message =
         typeof err === 'string'

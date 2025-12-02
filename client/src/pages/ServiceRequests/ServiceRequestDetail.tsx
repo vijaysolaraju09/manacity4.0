@@ -144,7 +144,9 @@ const ServiceRequestDetail = () => {
                 <span>Visibility: {request.visibility === 'private' ? 'Private' : 'Public'}</span>
                 <span>Created: {formatDate(request.createdAt)}</span>
                 {request.updatedAt ? <span>Updated: {formatDate(request.updatedAt)}</span> : null}
-                {request.requesterDisplayName ? <span>Requester: {request.requesterDisplayName}</span> : null}
+                {canSeeContact && request.requesterDisplayName ? (
+                  <span>Requester: {request.requesterDisplayName}</span>
+                ) : null}
               </div>
             </div>
 
@@ -159,7 +161,7 @@ const ServiceRequestDetail = () => {
               </div>
               <div>
                 <dt className="font-medium text-slate-500">Contact</dt>
-                <dd>{request.phone || 'Not provided'}</dd>
+                <dd>{canSeeContact ? request.phone || 'Not provided' : 'Hidden until acceptance'}</dd>
                 {!canSeeContact ? (
                   <p className="text-xs text-slate-500">Contact details are shared after you accept the request.</p>
                 ) : null}
@@ -170,7 +172,11 @@ const ServiceRequestDetail = () => {
               </div>
               <div>
                 <dt className="font-medium text-slate-500">Email</dt>
-                <dd>{canSeeContact ? request.email || request.requester?.email || 'Not provided' : 'Hidden until acceptance'}</dd>
+                <dd>{
+                  canSeeContact
+                    ? request.email || request.requester?.email || 'Not provided'
+                    : 'Hidden until acceptance'
+                }</dd>
               </div>
               <div>
                 <dt className="font-medium text-slate-500">Assigned provider</dt>

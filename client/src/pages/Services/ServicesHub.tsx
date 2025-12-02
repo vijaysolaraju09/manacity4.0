@@ -83,6 +83,7 @@ const ServicesHub = () => {
       dispatch(fetchMyServiceRequests());
       dispatch(fetchPublicServiceRequests(undefined));
       dispatch(fetchAssignedServiceRequests());
+      navigate(paths.serviceRequests.mine());
     } catch (err) {
       const messageText = typeof err === 'string' ? err : 'Failed to submit request';
       showToast(messageText, 'error');

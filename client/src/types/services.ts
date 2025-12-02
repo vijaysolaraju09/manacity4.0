@@ -3,11 +3,13 @@ export interface Service {
   id: string;
   name: string;
   description?: string;
+  category?: string;
   icon?: string;
   isActive?: boolean;
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
+  town?: string;
   serviceArea?: string;
   startingPricePaise?: number;
   title?: string;

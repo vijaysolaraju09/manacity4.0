@@ -44,10 +44,17 @@ const PublicRequests = () => {
   const [activeRequest, setActiveRequest] = useState<PublicServiceRequest | null>(null);
   const [helperNote, setHelperNote] = useState('');
   const [expectedReturn, setExpectedReturn] = useState('');
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
 
   useEffect(() => {
     dispatch(fetchPublicServiceRequests(undefined));
   }, [dispatch]);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedQuery(query.trim().toLowerCase()), 250);
+    return () => window.clearTimeout(id);
+  }, [query]);
 
   const items = useMemo(() => {
     const raw = publicState.items ?? [];
@@ -56,6 +63,16 @@ const PublicRequests = () => {
       (entry) => entry.requesterId !== currentUserId && entry.acceptedBy !== currentUserId
     );
   }, [publicState.items, currentUserId]);
+
+  const filteredItems = useMemo(() => {
+    if (!debouncedQuery) return items;
+    return items.filter((entry) => {
+      const haystack = `${entry.title ?? ''} ${entry.message ?? ''} ${entry.location ?? ''}`
+        .toLowerCase()
+        .trim();
+      return haystack.includes(debouncedQuery);
+    });
+  }, [items, debouncedQuery]);
 
   const handleRefresh = () => {
     dispatch(fetchPublicServiceRequests({ page: publicState.page }));
@@ -106,7 +123,17 @@ const PublicRequests = () => {
         </div>
       ) : (
         <div className={styles.list}>
-          {items.map((request) => (
+          <div className={styles.searchWrapper}>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search requests by title, details, or location"
+              className={styles.searchInput}
+              aria-label="Search public requests"
+            />
+          </div>
+          {filteredItems.map((request) => (
             <div
               key={request._id}
               className={styles.card}

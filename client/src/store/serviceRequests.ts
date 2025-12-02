@@ -85,6 +85,7 @@ const normalizeStatusValue = (value: any): ServiceRequest['status'] => {
     pending: 'pending',
     awaitingapproval: 'awaiting_approval',
     awaiting_approval: 'awaiting_approval',
+    assigned: 'accepted',
     accepted: 'accepted',
     inprogress: 'in_progress',
     in_progress: 'in_progress',
@@ -468,6 +469,29 @@ export const createDirectServiceRequest = createAsyncThunk<
       if (!body.directTargetUserId && payload.providerId) body.directTargetUserId = payload.providerId;
 
       const res = await http.post('/service-requests/direct', body);
+      const data = res?.data?.data ?? res?.data ?? {};
+      const request = data.request ? normalizeRequest(data.request) : normalizeRequest(data);
+      return request;
+    } catch (error) {
+      return thunkApi.rejectWithValue(toErrorMessage(error));
+    }
+  }
+);
+
+type UpdateServiceRequestPayload = {
+  id: string;
+  changes: Partial<Pick<CreateServiceRequestPayload, 'title' | 'message' | 'description' | 'details' | 'location' | 'paymentOffer'>>;
+};
+
+export const updateServiceRequest = createAsyncThunk<
+  ServiceRequest,
+  UpdateServiceRequestPayload,
+  { rejectValue: string }
+>(
+  'serviceRequests/update',
+  async ({ id, changes }, thunkApi) => {
+    try {
+      const res = await http.patch(`/service-requests/${id}`, changes);
       const data = res?.data?.data ?? res?.data ?? {};
       const request = data.request ? normalizeRequest(data.request) : normalizeRequest(data);
       return request;
@@ -866,6 +890,12 @@ const serviceRequestsSlice = createSlice({
       .addCase(createDirectServiceRequest.rejected, (state, action) => {
         state.createStatus = 'failed';
         state.createError = action.payload ?? action.error.message ?? 'Failed to send direct request';
+      })
+      .addCase(updateServiceRequest.fulfilled, (state, action: PayloadAction<ServiceRequest>) => {
+        applyRequestUpdate(state, action.payload);
+      })
+      .addCase(updateServiceRequest.rejected, (state, action) => {
+        state.createError = action.payload ?? action.error.message ?? null;
       })
       .addCase(fetchMyServiceRequests.pending, (state) => {
         state.mine.status = 'loading';

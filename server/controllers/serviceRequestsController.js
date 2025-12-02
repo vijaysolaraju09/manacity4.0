@@ -619,7 +619,14 @@ exports.getServiceRequestById = async (req, res, next) => {
     const isAdmin = req.user?.role === 'admin';
 
     const isPublic = ensureVisibility(request.visibility || request.type) === 'public';
-    if (!isOwner && !isAdmin && !isPublic)
+    const isAcceptedProvider = currentUserId
+      ? isSameId(request.acceptedBy, currentUserId) ||
+        isSameId(request.assignedProviderId, currentUserId) ||
+        (Array.isArray(request.assignedProviderIds) &&
+          request.assignedProviderIds.some((id) => isSameId(id, currentUserId)))
+      : false;
+
+    if (!isOwner && !isAdmin && !isPublic && !isAcceptedProvider)
       throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to view this request');
 
     const ownerObjectId = toObjectId(request.userId || request.user);

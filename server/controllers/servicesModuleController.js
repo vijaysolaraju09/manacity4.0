@@ -476,6 +476,13 @@ exports.submitOffer = async (req, res, next) => {
     ]);
     const offerCount = offers.length ? offers[0].count : 0;
 
+    const normalizedStatus = normalizeStatusName(request.status);
+    const lockedStatuses = ['Accepted', 'InProgress', 'Completed'];
+    if (!lockedStatuses.includes(normalizedStatus) && normalizedStatus !== 'AwaitingApproval') {
+      request.status = 'AwaitingApproval';
+      await request.save();
+    }
+
     await Promise.all([
       createNotification(request.userId, 'New offer submitted', request._id),
       createNotification(req.user._id, 'Offer submitted', request._id),
@@ -581,6 +588,39 @@ exports.rejectDirect = async (req, res, next) => {
       createNotification(req.user._id, 'You rejected a direct request', request._id),
     ]);
     res.json({ data: toRequestResponse(request, req.user._id) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.updateServiceRequest = async (req, res, next) => {
+  try {
+    const request = await ServiceRequest.findById(req.params.id);
+    if (!request) throw new AppError('Request not found', 404);
+
+    const viewerId = req.user?._id;
+    const isOwner = viewerId && String(request.userId) === String(viewerId);
+    const isAdmin = req.user?.role === 'admin';
+    if (!isOwner && !isAdmin) throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to edit this request');
+
+    const statusValue = normalizeStatusName(request.status);
+    if (!['Pending', 'AwaitingApproval'].includes(statusValue)) {
+      throw AppError.badRequest(
+        'REQUEST_NOT_EDITABLE',
+        'Only pending or awaiting approval requests can be edited',
+      );
+    }
+
+    const fields = ['title', 'message', 'description', 'details', 'location', 'paymentOffer'];
+    fields.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, key)) {
+        const value = typeof req.body[key] === 'string' ? req.body[key].trim() : req.body[key];
+        request[key] = value;
+      }
+    });
+
+    await request.save();
+    res.json({ data: toRequestResponse(request, req.user?._id) });
   } catch (err) {
     next(err);
   }

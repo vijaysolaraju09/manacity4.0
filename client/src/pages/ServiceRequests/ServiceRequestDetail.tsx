@@ -8,7 +8,7 @@ import { paths } from '@/routes/paths';
 import { cancelServiceRequest, fetchServiceRequestById, selectServiceRequestDetailState } from '@/store/serviceRequests';
 import type { AppDispatch, RootState } from '@/store';
 import type { ServiceRequestHistoryEntry } from '@/types/services';
-import { formatServiceStatus } from '@/utils/serviceStatus';
+import { formatServiceStatus, normalizeServiceStatus } from '@/utils/serviceStatus';
 
 const historyLabels: Record<ServiceRequestHistoryEntry['type'], string> = {
   created: 'Created',
@@ -98,17 +98,13 @@ const ServiceRequestDetail = () => {
     return `${request.preferredDate || ''} ${request.preferredTime || ''}`.trim();
   }, [request?.preferredDate, request?.preferredTime, request]);
 
-  const showProviderNote = useMemo(
-    () =>
-      Boolean(
-        request &&
-          isOwner &&
-          request.type === 'direct' &&
-          request.status === 'accepted' &&
-          request.providerNote?.trim(),
-      ),
-    [isOwner, request],
-  );
+  const showProviderNote = useMemo(() => {
+    if (!request || !isOwner) return false;
+    if (request.type !== 'direct') return false;
+    const normalizedStatus = normalizeServiceStatus(request.status);
+    const acceptedStatuses = new Set(['accepted', 'in_progress', 'completed']);
+    return acceptedStatuses.has(normalizedStatus) && Boolean(request.providerNote?.trim());
+  }, [isOwner, request]);
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">

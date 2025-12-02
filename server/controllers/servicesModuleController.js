@@ -633,8 +633,7 @@ exports.updateServiceRequest = async (req, res, next) => {
 
     const viewerId = req.user?._id;
     const isOwner = viewerId && String(request.userId) === String(viewerId);
-    const isAdmin = req.user?.role === 'admin';
-    if (!isOwner && !isAdmin) throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to edit this request');
+    if (!isOwner) throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to edit this request');
 
     const statusValue = normalizeStatusName(request.status);
     if (request.acceptedBy) {

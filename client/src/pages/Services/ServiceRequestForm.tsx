@@ -34,7 +34,7 @@ const ServiceRequestFormPage = () => {
       await dispatch(createServiceRequest(payload)).unwrap();
       showToast('Request submitted successfully', 'success');
       dispatch(fetchMyServiceRequests());
-      navigate(paths.services.requestsMine());
+      navigate(paths.serviceRequests.mine());
     } catch (err) {
       const message = typeof err === 'string' ? err : 'Failed to submit request';
       showToast(message, 'error');

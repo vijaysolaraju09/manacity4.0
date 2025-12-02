@@ -8,9 +8,11 @@ import {
   cancelServiceRequest,
   fetchMyServiceRequests,
   fetchServiceRequestOffers,
+  updateServiceRequest,
 } from '@/store/serviceRequests';
 import type { AppDispatch, RootState } from '@/store';
 import type { ServiceRequest, ServiceRequestOffer } from '@/types/services';
+import ModalSheet from '@/components/base/ModalSheet';
 import styles from './MyRequests.module.scss';
 
 const statusLabel = (status: ServiceRequest['status']) =>
@@ -24,6 +26,11 @@ const MyRequests = () => {
   const mineState = useSelector((state: RootState) => state.serviceRequests.mine);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [editing, setEditing] = useState<ServiceRequest | null>(null);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
+  const [paymentOffer, setPaymentOffer] = useState('');
   const offersFetchedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -85,6 +92,50 @@ const MyRequests = () => {
       showToast('Request cancelled', 'success');
     } catch (err) {
       const message = typeof err === 'string' ? err : 'Failed to cancel request';
+      showToast(message, 'error');
+    } finally {
+      finishAction();
+    }
+  };
+
+  const openEditor = (request: ServiceRequest) => {
+    setEditing(request);
+    setTitle(request.title || request.customName || '');
+    setDescription(request.description || request.details || request.message || '');
+    setLocation(request.location || '');
+    setPaymentOffer(request.paymentOffer || '');
+  };
+
+  const resetEditor = () => {
+    setEditing(null);
+    setTitle('');
+    setDescription('');
+    setLocation('');
+    setPaymentOffer('');
+  };
+
+  const handleEditSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editing) return;
+    startAction(editing._id, 'edit');
+    try {
+      await dispatch(
+        updateServiceRequest({
+          id: editing._id,
+          changes: {
+            title: title.trim() || editing.title || editing.customName,
+            description: description.trim() || undefined,
+            message: description.trim() || undefined,
+            details: description.trim() || undefined,
+            location: location.trim() || undefined,
+            paymentOffer: paymentOffer.trim() || undefined,
+          },
+        })
+      ).unwrap();
+      showToast('Request updated', 'success');
+      resetEditor();
+    } catch (err) {
+      const message = typeof err === 'string' ? err : 'Failed to update request';
       showToast(message, 'error');
     } finally {
       finishAction();
@@ -187,12 +238,74 @@ const MyRequests = () => {
                   >
                     {pendingId === request._id && pendingAction === 'cancel' ? 'Cancelling…' : 'Cancel request'}
                   </Button>
+                  {canEdit ? (
+                    <Button onClick={() => openEditor(request)} disabled={pendingId === request._id}>
+                      Edit
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             );
           })}
         </div>
       )}
+
+      <ModalSheet open={Boolean(editing)} onClose={resetEditor}>
+        <form className={styles.editForm} onSubmit={handleEditSubmit}>
+          <h2 className={styles.modalTitle}>Edit request</h2>
+          <label className={styles.fieldLabel} htmlFor="edit-title">
+            Title
+          </label>
+          <input
+            id="edit-title"
+            type="text"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            required
+          />
+
+          <label className={styles.fieldLabel} htmlFor="edit-description">
+            Details
+          </label>
+          <textarea
+            id="edit-description"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            rows={4}
+          />
+
+          <label className={styles.fieldLabel} htmlFor="edit-location">
+            Location
+          </label>
+          <input
+            id="edit-location"
+            type="text"
+            value={location}
+            onChange={(event) => setLocation(event.target.value)}
+            placeholder="Area or landmark"
+          />
+
+          <label className={styles.fieldLabel} htmlFor="edit-payment">
+            Payment offer (optional)
+          </label>
+          <input
+            id="edit-payment"
+            type="text"
+            value={paymentOffer}
+            onChange={(event) => setPaymentOffer(event.target.value)}
+            placeholder="e.g. ₹500"
+          />
+
+          <div className={styles.modalActions}>
+            <Button type="submit" disabled={pendingAction === 'edit'}>
+              {pendingAction === 'edit' ? 'Saving…' : 'Save changes'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={resetEditor}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </ModalSheet>
     </div>
   );
 };

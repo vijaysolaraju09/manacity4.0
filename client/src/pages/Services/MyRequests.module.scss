@@ -137,3 +137,28 @@
   align-items: center;
   font-size: 0.95rem;
 }
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.modalTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.fieldLabel {
+  font-weight: 600;
+  color: #1f2937;
+  display: block;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}

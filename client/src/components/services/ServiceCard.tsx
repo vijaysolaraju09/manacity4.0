@@ -16,6 +16,8 @@ const ServiceCard = ({ service, to, onClick, footer }: ServiceCardProps) => {
   const isImageIcon = Boolean(rawIcon && /^(https?:)?\/\//.test(rawIcon));
   const icon = rawIcon && !isImageIcon ? rawIcon : service.name?.charAt(0) ?? 'S';
   const descriptor = service.description?.trim() || 'Explore providers for this service.';
+  const category = service.category?.trim();
+  const town = service.town?.trim() || service.serviceArea?.trim();
   const isActive = service.isActive !== false;
   const updatedAt = service.updatedAt ?? service.createdAt;
 
@@ -55,6 +57,12 @@ const ServiceCard = ({ service, to, onClick, footer }: ServiceCardProps) => {
         </div>
       </div>
       <p className={styles.description}>{descriptor}</p>
+      {category || town ? (
+        <div className={styles.tags}>
+          {category ? <span className={styles.tag}>{category}</span> : null}
+          {town ? <span className={styles.tag}>{town}</span> : null}
+        </div>
+      ) : null}
       <div className={styles.meta}>
         <span className={styles.metaHint}>Tap to view details</span>
         <span className={styles.metaArrow} aria-hidden="true">

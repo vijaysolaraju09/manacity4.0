@@ -288,7 +288,7 @@ const HistoryPage = () => {
         navigate(paths.events.detail(entry.referenceId));
         return;
       }
-      navigate(paths.services.requestsMine());
+      navigate(paths.serviceRequests.mine());
     },
     [navigate],
   );
@@ -301,7 +301,7 @@ const HistoryPage = () => {
       </p>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         <Button onClick={() => navigate(paths.orders.mine())}>Browse orders</Button>
-        <Button variant="outline" onClick={() => navigate(paths.services.requestsMine())}>
+        <Button variant="outline" onClick={() => navigate(paths.serviceRequests.mine())}>
           Manage requests
         </Button>
       </div>

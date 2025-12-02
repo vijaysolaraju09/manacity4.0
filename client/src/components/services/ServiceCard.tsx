@@ -60,8 +60,18 @@ const ServiceCard = ({ service, to, onClick, footer }: ServiceCardProps) => {
       <p className={styles.description}>{descriptor}</p>
       {category || town ? (
         <div className={styles.tags}>
-          {category ? <span className={styles.tag}>{category}</span> : null}
-          {town ? <span className={styles.tag}>{town}</span> : null}
+          {category ? (
+            <span className={styles.tag}>
+              <span className={styles.tagLabel}>Category</span>
+              {category}
+            </span>
+          ) : null}
+          {town ? (
+            <span className={styles.tag}>
+              <span className={styles.tagLabel}>Town</span>
+              {town}
+            </span>
+          ) : null}
         </div>
       ) : null}
       <div className={styles.meta}>

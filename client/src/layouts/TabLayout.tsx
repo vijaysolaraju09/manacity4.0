@@ -84,7 +84,7 @@ const TabLayout = () => {
     {
       name: "Services",
       icon: Users,
-      path: paths.services.catalog(),
+      path: paths.services.available(),
     },
     { name: "Events", icon: CalendarDays, path: paths.events.list() },
     { name: "History", icon: History, path: paths.history() },

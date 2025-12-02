@@ -36,14 +36,18 @@ const ServicesCatalog = () => {
     if (!Array.isArray(items)) return [] as typeof items;
     if (!debouncedQ) return items;
     return items.filter((service) => {
-      const label = `${
-        service?.name || service?.title || ''
-      } ${service?.description || ''} ${service?.category || ''} ${
-        service?.town || service?.serviceArea || ''
-      }`
-        .toLowerCase()
-        .trim();
-      return label.includes(debouncedQ);
+      const tokens = [
+        service?.title,
+        service?.name,
+        service?.category,
+        service?.town,
+        service?.serviceArea,
+        service?.description,
+      ]
+        .filter(Boolean)
+        .map((value) => value?.toLowerCase().trim());
+
+      return tokens.some((value) => value && value.includes(debouncedQ));
     });
   }, [items, debouncedQ]);
 
@@ -78,10 +82,10 @@ const ServicesCatalog = () => {
 
       <div className={styles.searchWrapper}>
         <input
-          type="text"
+          type="search"
           value={q}
           onChange={(event) => setQ(event.target.value)}
-          placeholder="Search services…"
+          placeholder="Search by title, category, town, or description"
           className={styles.searchInput}
           aria-label="Search services"
         />

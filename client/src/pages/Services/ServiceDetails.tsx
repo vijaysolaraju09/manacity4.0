@@ -140,12 +140,24 @@ const ServiceDetails = () => {
 
   const serviceName = svc?.title || svc?.name || 'Service details';
   const images = Array.isArray(svc?.images) ? svc?.images : [];
+  const category = svc?.category;
+  const town = svc?.town || svc?.serviceArea;
 
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-2 rounded-2xl border border-borderc/40 bg-surface-1 p-4 shadow-inner-card">
           <h1 className="mb-2 text-2xl font-bold">{serviceName}</h1>
+          {(category || town) && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+              {category ? (
+                <span className="rounded-full bg-brand-50 px-3 py-1 font-medium text-brand-700">{category}</span>
+              ) : null}
+              {town ? (
+                <span className="rounded-full bg-surface-2 px-3 py-1 text-text-secondary">{town}</span>
+              ) : null}
+            </div>
+          )}
           {images.length > 0 ? (
             <div className="mb-4 grid grid-cols-2 gap-3">
               {images.map((src, index) => (

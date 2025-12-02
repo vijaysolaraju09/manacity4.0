@@ -128,6 +128,8 @@ export interface PublicServiceRequest {
   serviceId: string | null;
   title: string;
   description: string;
+  category?: string;
+  town?: string;
   details?: string;
   message?: string;
   location: string;

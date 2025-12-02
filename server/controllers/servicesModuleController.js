@@ -28,6 +28,7 @@ const normalizeStatusName = (value) => {
     pending: 'Pending',
     awaitingapproval: 'AwaitingApproval',
     accepted: 'Accepted',
+    assigned: 'Accepted',
     inprogress: 'InProgress',
     completed: 'Completed',
     rejected: 'Rejected',
@@ -137,6 +138,25 @@ const toRequestResponse = (request, viewerId, { includeOffers = false } = {}) =>
     createdAt: request.createdAt,
     updatedAt: request.updatedAt,
   };
+
+  const serviceDoc = request.service || request.serviceId;
+  if (serviceDoc && typeof serviceDoc === 'object') {
+    const serviceId = serviceDoc._id || serviceDoc.id;
+    if (serviceId && !base.serviceId) base.serviceId = String(serviceId);
+    const serviceName = serviceDoc.name || serviceDoc.title;
+    const category = serviceDoc.category || serviceDoc.serviceCategory;
+    const town = serviceDoc.town || serviceDoc.serviceArea;
+    base.service = {
+      id: serviceId ? String(serviceId) : undefined,
+      _id: serviceId ? String(serviceId) : undefined,
+      name: serviceName,
+      description: serviceDoc.description,
+      category,
+      town,
+    };
+    if (category) base.category = category;
+    if (town) base.town = town;
+  }
 
   const requesterVisible = isOwner || canSeeRequester(request, viewerId);
   const requester = requesterVisible
@@ -315,7 +335,8 @@ exports.listPublicRequests = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(pageSize)
-      .populate('userId');
+      .populate('userId')
+      .populate('serviceId');
 
     const [requests, total] = await Promise.all([
       baseQuery,
@@ -331,10 +352,19 @@ exports.listPublicRequests = async (req, res, next) => {
 
     const items = requests.map((reqDoc) => {
       const shaped = toRequestResponse(reqDoc, viewerId);
+      const serviceDoc = reqDoc.serviceId;
+      const category =
+        (serviceDoc && typeof serviceDoc === 'object' && serviceDoc.category) || shaped.category || '';
+      const town =
+        (serviceDoc && typeof serviceDoc === 'object' && (serviceDoc.town || serviceDoc.serviceArea)) ||
+        shaped.town ||
+        '';
       return {
         ...shaped,
         details: reqDoc.details || reqDoc.desc || '',
         offersCount: offerMap.get(String(reqDoc._id)) || 0,
+        category,
+        town,
       };
     });
 
@@ -478,7 +508,10 @@ exports.submitOffer = async (req, res, next) => {
 
     const normalizedStatus = normalizeStatusName(request.status);
     const lockedStatuses = ['Accepted', 'InProgress', 'Completed'];
-    if (!lockedStatuses.includes(normalizedStatus) && normalizedStatus !== 'AwaitingApproval') {
+    if (normalizedStatus === 'Pending' && offerCount <= 1) {
+      request.status = 'AwaitingApproval';
+      await request.save();
+    } else if (!lockedStatuses.includes(normalizedStatus) && normalizedStatus !== 'AwaitingApproval') {
       request.status = 'AwaitingApproval';
       await request.save();
     }
@@ -604,6 +637,9 @@ exports.updateServiceRequest = async (req, res, next) => {
     if (!isOwner && !isAdmin) throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to edit this request');
 
     const statusValue = normalizeStatusName(request.status);
+    if (request.acceptedBy) {
+      throw AppError.badRequest('REQUEST_NOT_EDITABLE', 'Accepted requests cannot be edited');
+    }
     if (!['Pending', 'AwaitingApproval'].includes(statusValue)) {
       throw AppError.badRequest(
         'REQUEST_NOT_EDITABLE',
@@ -611,13 +647,35 @@ exports.updateServiceRequest = async (req, res, next) => {
       );
     }
 
-    const fields = ['title', 'message', 'description', 'details', 'location', 'paymentOffer'];
-    fields.forEach((key) => {
-      if (Object.prototype.hasOwnProperty.call(req.body, key)) {
-        const value = typeof req.body[key] === 'string' ? req.body[key].trim() : req.body[key];
-        request[key] = value;
-      }
-    });
+    if (Object.prototype.hasOwnProperty.call(req.body, 'title')) {
+      const title = typeof req.body.title === 'string' ? req.body.title.trim() : req.body.title;
+      request.title = title;
+    }
+
+    if (
+      Object.prototype.hasOwnProperty.call(req.body, 'description') ||
+      Object.prototype.hasOwnProperty.call(req.body, 'message')
+    ) {
+      const descriptionRaw =
+        typeof req.body.description === 'string'
+          ? req.body.description
+          : typeof req.body.message === 'string'
+          ? req.body.message
+          : '';
+      const description = descriptionRaw.trim();
+      request.description = description;
+      request.message = description;
+      request.details = description;
+      request.desc = description;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'paymentOffer')) {
+      const paymentOffer =
+        typeof req.body.paymentOffer === 'string'
+          ? req.body.paymentOffer.trim()
+          : req.body.paymentOffer;
+      request.paymentOffer = paymentOffer;
+    }
 
     await request.save();
     res.json({ data: toRequestResponse(request, req.user?._id) });

@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Button from '@/components/ui/button';
 import { paths } from '@/routes/paths';
 import type { AppDispatch, RootState } from '@/store';
-import { fetchMyServiceRequests } from '@/store/serviceRequests';
+import { fetchMyServiceRequests, updateServiceRequest } from '@/store/serviceRequests';
+import showToast from '@/components/ui/Toast';
+import ModalSheet from '@/components/base/ModalSheet';
+import type { ServiceRequest } from '@/types/services';
 
 const formatStatus = (value: string) =>
   value
@@ -32,6 +35,11 @@ const MyRequestsPage = () => {
   const requests = mine.items;
   const loading = mine.status === 'loading';
   const error = mine.error;
+  const [editing, setEditing] = useState<ServiceRequest | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPayment, setEditPayment] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     if (mine.status === 'idle') {
@@ -44,6 +52,41 @@ const MyRequestsPage = () => {
   }, [dispatch]);
 
   const hasRequests = useMemo(() => requests.length > 0, [requests.length]);
+
+  const canEditRequest = (request: ServiceRequest) =>
+    (request.status === 'pending' || request.status === 'awaiting_approval') && !request.acceptedBy;
+
+  const openEditModal = (request: ServiceRequest) => {
+    setEditing(request);
+    setEditTitle(request.title || request.customName || '');
+    setEditDescription(request.details || request.description || request.message || '');
+    setEditPayment(request.paymentOffer || '');
+  };
+
+  const handleEditSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editing) return;
+    setSavingEdit(true);
+    try {
+      await dispatch(
+        updateServiceRequest({
+          id: editing._id,
+          changes: {
+            title: editTitle.trim(),
+            description: editDescription.trim(),
+            paymentOffer: editPayment.trim() || undefined,
+          },
+        }),
+      ).unwrap();
+      showToast('Request updated', 'success');
+      setEditing(null);
+    } catch (err) {
+      const message = typeof err === 'string' ? err : 'Failed to update request';
+      showToast(message, 'error');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
@@ -128,22 +171,78 @@ const MyRequestsPage = () => {
                         {formatStatus(request.status)}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{formatDate(request.createdAt)}</td>
-                    <td className="px-4 py-3 text-right">
-                      <Button
-                        variant="outline"
-                        onClick={() => navigate(paths.serviceRequests.detail(request._id))}
-                      >
-                        View details
+                <td className="px-4 py-3">{formatDate(request.createdAt)}</td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex justify-end gap-2">
+                    {canEditRequest(request) ? (
+                      <Button variant="secondary" onClick={() => openEditModal(request)}>
+                        Edit
                       </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
+                    ) : null}
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate(paths.serviceRequests.detail(request._id))}
+                    >
+                      View details
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
           </table>
         </div>
       )}
+
+      <ModalSheet open={Boolean(editing)} onClose={() => setEditing(null)}>
+        <form className="flex flex-col gap-3" onSubmit={handleEditSubmit}>
+          <h3 className="text-lg font-semibold text-slate-900">Edit request</h3>
+          <div className="text-sm text-slate-600">
+            Update the request title, description, or payment offer while it is pending approval.
+          </div>
+          <label className="text-sm font-medium text-slate-700" htmlFor="edit-title">
+            Title
+          </label>
+          <input
+            id="edit-title"
+            type="text"
+            className="rounded-lg border border-slate-200 px-3 py-2"
+            value={editTitle}
+            onChange={(event) => setEditTitle(event.target.value)}
+            required
+          />
+          <label className="text-sm font-medium text-slate-700" htmlFor="edit-description">
+            Description
+          </label>
+          <textarea
+            id="edit-description"
+            className="min-h-[120px] rounded-lg border border-slate-200 px-3 py-2"
+            value={editDescription}
+            onChange={(event) => setEditDescription(event.target.value)}
+            required
+          />
+          <label className="text-sm font-medium text-slate-700" htmlFor="edit-payment">
+            Payment offer (optional)
+          </label>
+          <input
+            id="edit-payment"
+            type="text"
+            className="rounded-lg border border-slate-200 px-3 py-2"
+            value={editPayment}
+            onChange={(event) => setEditPayment(event.target.value)}
+            placeholder="e.g. ₹500"
+          />
+          <div className="mt-2 flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setEditing(null)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={savingEdit}>
+              {savingEdit ? 'Saving…' : 'Save changes'}
+            </Button>
+          </div>
+        </form>
+      </ModalSheet>
     </div>
   );
 };

@@ -36,7 +36,13 @@ const ServicesCatalog = () => {
     if (!Array.isArray(items)) return [] as typeof items;
     if (!debouncedQ) return items;
     return items.filter((service) => {
-      const label = (service?.name || service?.description || '').toLowerCase();
+      const label = `${
+        service?.name || service?.title || ''
+      } ${service?.description || ''} ${service?.category || ''} ${
+        service?.town || service?.serviceArea || ''
+      }`
+        .toLowerCase()
+        .trim();
       return label.includes(debouncedQ);
     });
   }, [items, debouncedQ]);

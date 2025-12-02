@@ -10,12 +10,7 @@ import {
   rejectDirectRequest,
 } from '@/store/serviceRequests';
 import type { ServiceRequestStatus } from '@/types/services';
-
-const statusLabel = (value: string) =>
-  value
-    .split('_')
-    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
-    .join(' ');
+import { formatServiceStatus, normalizeServiceStatus } from '@/utils/serviceStatus';
 
 const MyServices = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -124,18 +119,15 @@ const MyServices = () => {
           {requests.map((request) => {
             const title = request.service?.name || request.customName || 'Service request';
             const description = request.details || request.description || request.message || '';
-            const normalizedStatus = (request.status as string)?.toLowerCase?.() ?? request.status;
-            const canMarkInProgress = ['accepted', 'in_progress', 'assigned'].includes(
-              normalizedStatus as any,
-            );
-            const canComplete = ['in_progress', 'assigned', 'accepted'].includes(
-              normalizedStatus as any,
-            );
+            const normalizedStatus = normalizeServiceStatus(request.status);
+            const canMarkInProgress = ['accepted', 'in_progress'].includes(normalizedStatus);
+            const canComplete = ['in_progress', 'accepted'].includes(normalizedStatus);
             const requesterContact =
               request.requesterContactVisible && (request.requester?.phone || request.phone);
             const noteToSeeker = request.providerNote;
             const myOffer = request.myOffer;
-            const awaitingDecision = request.type === 'direct' && request.status === 'awaiting_approval';
+            const awaitingDecision =
+              request.type === 'direct' && normalizedStatus === 'awaiting_approval';
             const noteValue = providerNotes[request._id] ?? '';
             const payment = request.paymentOffer;
 
@@ -152,7 +144,7 @@ const MyServices = () => {
                       {request.preferredDate ? <span>Date: {request.preferredDate}</span> : null}
                       {request.preferredTime ? <span>Time: {request.preferredTime}</span> : null}
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
-                        {statusLabel(request.status)}
+                        {formatServiceStatus(request.status)}
                       </span>
                     </div>
                       {requesterContact ? (

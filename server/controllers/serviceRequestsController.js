@@ -10,6 +10,7 @@ const { Types } = mongoose;
 
 const STATUS = {
   PENDING: 'pending',
+  AWAITING_APPROVAL: 'awaiting_approval',
   ACCEPTED: 'accepted',
   ASSIGNED: 'assigned',
   IN_PROGRESS: 'in_progress',
@@ -20,6 +21,7 @@ const STATUS = {
 const MAX_REOPEN_COUNT = 3;
 const OFFERABLE_STATUSES = new Set([
   STATUS.PENDING,
+  STATUS.AWAITING_APPROVAL,
   STATUS.ACCEPTED,
   'open',
   'offered',
@@ -27,7 +29,19 @@ const OFFERABLE_STATUSES = new Set([
 const ADMIN_STATUS_ALLOWED = new Set(Object.values(STATUS));
 
 const ALLOWED_TRANSITIONS = {
-  [STATUS.PENDING]: new Set([STATUS.ACCEPTED, STATUS.ASSIGNED, STATUS.CANCELLED]),
+  [STATUS.PENDING]: new Set([
+    STATUS.AWAITING_APPROVAL,
+    STATUS.ACCEPTED,
+    STATUS.ASSIGNED,
+    STATUS.CANCELLED,
+  ]),
+  [STATUS.AWAITING_APPROVAL]: new Set([
+    STATUS.ACCEPTED,
+    STATUS.ASSIGNED,
+    STATUS.IN_PROGRESS,
+    STATUS.COMPLETED,
+    STATUS.CANCELLED,
+  ]),
   [STATUS.ACCEPTED]: new Set([
     STATUS.ASSIGNED,
     STATUS.IN_PROGRESS,
@@ -57,6 +71,8 @@ const normalizeStatus = (value) => {
   if (!value) return STATUS.PENDING;
   const raw = sanitizeString(value);
   const lower = raw.toLowerCase();
+  const compact = lower.replace(/[_\s-]/g, '');
+  if (compact === 'awaitingapproval') return STATUS.AWAITING_APPROVAL;
   if (ADMIN_STATUS_ALLOWED.has(lower)) return lower;
   if (lower === 'open' || lower === 'offered') return STATUS.PENDING;
   if (lower === 'closed') return STATUS.CANCELLED;
@@ -383,6 +399,7 @@ const toStatusMessage = (status) => {
 
 const STATUS_NOTIFICATION_TYPES = {
   [STATUS.PENDING]: 'service_request',
+  [STATUS.AWAITING_APPROVAL]: 'service_request',
   [STATUS.ACCEPTED]: 'accepted',
   [STATUS.ASSIGNED]: 'assigned',
   [STATUS.IN_PROGRESS]: 'in_progress',
@@ -665,7 +682,7 @@ exports.cancelServiceRequest = async (req, res, next) => {
       throw AppError.forbidden('NOT_AUTHORIZED', 'Not authorized to cancel this request');
 
     const currentStatus = normalizeStatus(request.status);
-    if (![STATUS.PENDING, STATUS.ACCEPTED].includes(currentStatus))
+    if (![STATUS.PENDING, STATUS.AWAITING_APPROVAL, STATUS.ACCEPTED].includes(currentStatus))
       throw AppError.badRequest(
         'SERVICE_REQUEST_NOT_PENDING',
         'Only pending requests can be cancelled'
@@ -1053,7 +1070,7 @@ exports.submitOffer = async (req, res, next) => {
       status: 'pending',
     });
 
-    if (currentStatus === STATUS.PENDING) request.status = STATUS.ACCEPTED;
+    if (currentStatus === STATUS.PENDING) request.status = STATUS.AWAITING_APPROVAL;
 
     appendHistory(request, {
       at: now,
@@ -1367,7 +1384,7 @@ const historyTypeForStatus = (status) => {
   if (normalized === STATUS.COMPLETED) return 'completed';
   if (normalized === STATUS.CANCELLED) return 'closed';
   if (normalized === STATUS.PENDING) return 'reopened';
-  if (normalized === STATUS.ACCEPTED) return 'offer';
+  if (normalized === STATUS.AWAITING_APPROVAL || normalized === STATUS.ACCEPTED) return 'offer';
   if (normalized === STATUS.ASSIGNED || normalized === STATUS.IN_PROGRESS) return 'assigned';
   return 'admin_note';
 };

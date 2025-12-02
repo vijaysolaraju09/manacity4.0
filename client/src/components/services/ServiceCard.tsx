@@ -14,7 +14,8 @@ interface ServiceCardProps {
 const ServiceCard = ({ service, to, onClick, footer }: ServiceCardProps) => {
   const rawIcon = service.icon?.trim();
   const isImageIcon = Boolean(rawIcon && /^(https?:)?\/\//.test(rawIcon));
-  const icon = rawIcon && !isImageIcon ? rawIcon : service.name?.charAt(0) ?? 'S';
+  const name = service.title?.trim() || service.name;
+  const icon = rawIcon && !isImageIcon ? rawIcon : name?.charAt(0) ?? 'S';
   const descriptor = service.description?.trim() || 'Explore providers for this service.';
   const category = service.category?.trim();
   const town = service.town?.trim() || service.serviceArea?.trim();
@@ -41,7 +42,7 @@ const ServiceCard = ({ service, to, onClick, footer }: ServiceCardProps) => {
         </div>
         <div className={styles.headerText}>
           <div className={styles.titleRow}>
-            <div className={styles.title}>{service.name}</div>
+            <div className={styles.title}>{name}</div>
             <span
               className={cn(
                 'chip',

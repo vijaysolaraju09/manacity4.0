@@ -101,6 +101,18 @@ const ServiceRequestDetail = () => {
     return `${request.preferredDate || ''} ${request.preferredTime || ''}`.trim();
   }, [request?.preferredDate, request?.preferredTime, request]);
 
+  const showProviderNote = useMemo(
+    () =>
+      Boolean(
+        request &&
+          isOwner &&
+          request.type === 'direct' &&
+          request.status === 'accepted' &&
+          request.providerNote?.trim(),
+      ),
+    [isOwner, request],
+  );
+
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">
       <div className="flex items-center justify-between">
@@ -220,6 +232,13 @@ const ServiceRequestDetail = () => {
               <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
                 <div className="font-medium text-slate-600">Admin notes</div>
                 <p className="mt-2 whitespace-pre-wrap">{request.adminNotes}</p>
+              </div>
+            ) : null}
+
+            {showProviderNote ? (
+              <div className="mt-6 rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
+                <div className="font-semibold text-emerald-700">Message from Provider</div>
+                <p className="mt-2 whitespace-pre-wrap">{request?.providerNote}</p>
               </div>
             ) : null}
           </section>

@@ -67,7 +67,11 @@ const PublicRequests = () => {
   const filteredItems = useMemo(() => {
     if (!debouncedQuery) return items;
     return items.filter((entry) => {
-      const haystack = `${entry.title ?? ''} ${entry.message ?? ''} ${entry.location ?? ''}`
+      const haystack = `${
+        entry.title ?? ''
+      } ${entry.message ?? ''} ${entry.description ?? ''} ${entry.category ?? ''} ${
+        entry.town ?? entry.location ?? ''
+      }`
         .toLowerCase()
         .trim();
       return haystack.includes(debouncedQuery);

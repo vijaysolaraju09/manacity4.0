@@ -124,10 +124,13 @@ const MyServices = () => {
           {requests.map((request) => {
             const title = request.service?.name || request.customName || 'Service request';
             const description = request.details || request.description || request.message || '';
+            const normalizedStatus = (request.status as string)?.toLowerCase?.() ?? request.status;
             const canMarkInProgress = ['accepted', 'in_progress', 'assigned'].includes(
-              request.status as any
+              normalizedStatus as any,
             );
-            const canComplete = request.status === 'in_progress';
+            const canComplete = ['in_progress', 'assigned', 'accepted'].includes(
+              normalizedStatus as any,
+            );
             const requesterContact =
               request.requesterContactVisible && (request.requester?.phone || request.phone);
             const noteToSeeker = request.providerNote;

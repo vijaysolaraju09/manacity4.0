@@ -167,6 +167,17 @@ const normalizePublicRequest = (data: any): PublicServiceRequest => ({
       : null,
   title: data?.title ?? '',
   description: data?.description ?? data?.message ?? '',
+  category:
+    data?.category ??
+    data?.serviceCategory ??
+    data?.service?.category ??
+    (typeof data?.serviceId === 'object' ? data.serviceId?.category : undefined),
+  town:
+    data?.town ??
+    data?.serviceTown ??
+    data?.service?.town ??
+    data?.service?.serviceArea ??
+    (typeof data?.serviceId === 'object' ? data.serviceId?.town || data.serviceId?.serviceArea : undefined),
   details: data?.details ?? '',
   message: data?.message ?? data?.description ?? '',
   location: data?.location ?? '',

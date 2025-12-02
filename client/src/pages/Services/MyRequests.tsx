@@ -15,11 +15,13 @@ import type { ServiceRequest, ServiceRequestOffer } from '@/types/services';
 import ModalSheet from '@/components/base/ModalSheet';
 import styles from './MyRequests.module.scss';
 
-const statusLabel = (status: ServiceRequest['status']) =>
+const formatOfferStatus = (status: ServiceRequestOffer['status']) =>
   status
     .split('_')
     .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
     .join(' ');
+
+import { formatServiceStatus, normalizeServiceStatus } from '@/utils/serviceStatus';
 
 const MyRequests = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -159,7 +161,8 @@ const MyRequests = () => {
           {items.map((request) => {
             const offers = Array.isArray(request.offers) ? request.offers : [];
             const assignedName = request.assignedProvider?.name;
-            const canEdit = ['pending', 'awaiting_approval'].includes(request.status) && !request.acceptedBy;
+            const normalizedStatus = normalizeServiceStatus(request.status);
+            const canEdit = ['pending', 'awaiting_approval'].includes(normalizedStatus) && !request.acceptedBy;
             const acceptedHelper = request.acceptedHelper;
 
             return (
@@ -169,7 +172,7 @@ const MyRequests = () => {
                     {request.service?.name || request.customName || 'Service request'}
                   </div>
                   <div className={styles.statusRow}>
-                    <span className={styles.badge}>{statusLabel(request.status)}</span>
+                    <span className={styles.badge}>{formatServiceStatus(request.status)}</span>
                     {assignedName ? <span>Assigned to {assignedName}</span> : null}
                     {request.reopenedCount > 0 ? (
                       <span>Reopened {request.reopenedCount} time(s)</span>
@@ -203,7 +206,7 @@ const MyRequests = () => {
                       <div key={offer._id} className={styles.offer}>
                         <div className={styles.offerMeta}>
                           <span>{offer.helper?.name || offer.provider?.name || 'Provider'}</span>
-                          <span className={styles.badge}>{statusLabel(offer.status as ServiceRequest['status'])}</span>
+                          <span className={styles.badge}>{formatOfferStatus(offer.status)}</span>
                           {offer.expectedReturn ? <span>Offer: {offer.expectedReturn}</span> : null}
                           {offer.createdAt ? <span>{new Date(offer.createdAt).toLocaleString()}</span> : null}
                         </div>

@@ -10,6 +10,7 @@ import type { AppDispatch, RootState } from '@/store';
 import ModalSheet from '@/components/base/ModalSheet';
 import type { PublicServiceRequest } from '@/types/services';
 import styles from './PublicRequests.module.scss';
+import { formatServiceStatus, normalizeServiceStatus } from '@/utils/serviceStatus';
 
 const formatDate = (value: string | null | undefined) => {
   if (!value) return '';
@@ -17,14 +18,6 @@ const formatDate = (value: string | null | undefined) => {
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleString();
 };
-
-const formatStatus = (status: string) =>
-  status
-    ? status
-        .split('_')
-        .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
-        .join(' ')
-    : '';
 
 const toPreview = (value?: string, limit = 160) => {
   if (!value) return '';
@@ -157,40 +150,53 @@ const PublicRequests = () => {
                   {toPreview(request.message || request.details || request.description)}
                 </p>
               ) : null}
-              <div className={styles.meta}>
-                {request.location ? <span>{request.location}</span> : null}
-                {request.createdAt ? <span>Posted {formatDate(request.createdAt)}</span> : null}
-                <span className={styles.chip}>{formatStatus(request.status)}</span>
-                {request.acceptedBy ? <span>Accepted</span> : <span>{request.offersCount} offers</span>}
-              </div>
-              {isAuthenticated ? (
-                <Button
-                  className={styles.offerButton}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    openOfferModal(request);
-                  }}
-                  disabled={
-                    request.status !== 'pending' || Boolean(request.acceptedBy) || submitting === request._id
-                  }
-                >
-                  {request.acceptedBy
-                    ? 'Already accepted'
-                    : submitting === request._id
-                    ? 'Offering help…'
-                    : 'Offer Help'}
-                </Button>
-              ) : (
-                <Button
-                  className={styles.offerButton}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    navigate(paths.auth.login());
-                  }}
-                >
-                  Sign in to help
-                </Button>
-              )}
+              {(() => {
+                const normalizedStatus = normalizeServiceStatus(request.status);
+                const statusLabel = formatServiceStatus(normalizedStatus);
+                const canOffer =
+                  !request.acceptedBy && ['pending', 'awaiting_approval'].includes(normalizedStatus);
+
+                return (
+                  <>
+                    <div className={styles.meta}>
+                      {request.location ? <span>{request.location}</span> : null}
+                      {request.createdAt ? <span>Posted {formatDate(request.createdAt)}</span> : null}
+                      <span className={styles.chip}>{statusLabel}</span>
+                      {request.acceptedBy ? (
+                        <span>Accepted</span>
+                      ) : (
+                        <span>{request.offersCount} offers</span>
+                      )}
+                    </div>
+                    {isAuthenticated ? (
+                      <Button
+                        className={styles.offerButton}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openOfferModal(request);
+                        }}
+                        disabled={!canOffer || submitting === request._id}
+                      >
+                        {request.acceptedBy
+                          ? 'Already accepted'
+                          : submitting === request._id
+                          ? 'Offering help…'
+                          : 'Offer Help'}
+                      </Button>
+                    ) : (
+                      <Button
+                        className={styles.offerButton}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          navigate(paths.auth.login());
+                        }}
+                      >
+                        Sign in to help
+                      </Button>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           ))}
           <div className={styles.actions}>

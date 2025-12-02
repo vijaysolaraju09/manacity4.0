@@ -8,6 +8,7 @@ import { paths } from '@/routes/paths';
 import { cancelServiceRequest, fetchServiceRequestById, selectServiceRequestDetailState } from '@/store/serviceRequests';
 import type { AppDispatch, RootState } from '@/store';
 import type { ServiceRequestHistoryEntry } from '@/types/services';
+import { formatServiceStatus } from '@/utils/serviceStatus';
 
 const historyLabels: Record<ServiceRequestHistoryEntry['type'], string> = {
   created: 'Created',
@@ -19,11 +20,7 @@ const historyLabels: Record<ServiceRequestHistoryEntry['type'], string> = {
   admin_note: 'Admin note',
 };
 
-const formatStatus = (value: string) =>
-  value
-    .split('_')
-    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
-    .join(' ');
+const formatStatus = (value: string) => formatServiceStatus(value);
 
 const formatDate = (value?: string | null) => {
   if (!value) return '—';

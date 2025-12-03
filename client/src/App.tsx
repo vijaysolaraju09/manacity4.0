@@ -1,2 +1,2 @@
-export { AppRoutes } from './app/ManacityApp'
-export { ManacityApp as default } from './app/ManacityApp'
+export { AppRoutes } from './ManacityApp'
+export { ManacityApp as default } from './ManacityApp'

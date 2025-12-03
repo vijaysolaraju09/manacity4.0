@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "patch-package",
+    "postinstall": "npm install --prefix client && npm install --prefix server && patch-package",
+    "start": "npm run start --prefix server",
+    "build": "npm run build --prefix client && npm run build --prefix server",
     "dev": "concurrently \"npm run client\" \"npm run server\"",
     "server": "cd server && npm run dev",
     "client": "cd client && npm start",

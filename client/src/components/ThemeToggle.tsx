@@ -1,39 +1,38 @@
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
-import { useTheme } from '@/theme/ThemeProvider';
+const STORAGE_KEY = 'manacity-theme'
 
-const iconMap = {
-  light: Sun,
-  dark: Moon,
-  system: Monitor,
-} as const;
+type Theme = 'light' | 'dark'
 
-export default function ThemeToggle() {
-  const { theme, setTheme, availableThemes } = useTheme();
+const resolveInitialTheme = (): Theme => {
+  if (typeof window === 'undefined') return 'light'
+  const stored = window.localStorage.getItem(STORAGE_KEY)
+  return stored === 'dark' ? 'dark' : 'light'
+}
+
+const ThemeToggle = () => {
+  const [theme, setTheme] = useState<Theme>(() => resolveInitialTheme())
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(STORAGE_KEY, theme)
+    }
+  }, [theme])
+
+  const toggle = () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
 
   return (
-    <div className="card elevated flex flex-col gap-3">
-      <span className="text-sm font-medium text-ink-500">Theme</span>
-      <div className="flex flex-wrap gap-2">
-        {availableThemes.map((option) => {
-          const Icon = iconMap[option];
-          const isActive = theme === option;
-
-          return (
-            <button
-              key={option}
-              type="button"
-              className={`btn min-w-[96px] justify-center ${isActive ? 'btn--brand' : 'btn--ghost'}`}
-              onClick={() => setTheme(option)}
-              aria-pressed={isActive}
-              aria-label={`Switch to ${option} theme`}
-            >
-              {Icon ? <Icon className="h-4 w-4" aria-hidden="true" /> : null}
-              <span className="text-sm font-medium capitalize">{option}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+    <button
+      type="button"
+      aria-label={theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+      onClick={toggle}
+      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-default bg-surface-1 text-primary shadow-sm-theme transition-colors hover:bg-[color-mix(in_srgb,var(--surface-1)_75%,var(--surface-0))] focus-visible:outline-none focus-visible:ring-0 focus-visible:[box-shadow:var(--ring)]"
+    >
+      {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+    </button>
+  )
 }
+
+export default ThemeToggle

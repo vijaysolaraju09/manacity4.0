@@ -1,43 +1,45 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react'
 
-export const useCountdown = (seconds: number) => {
-  const [remaining, setRemaining] = useState(0);
-  const intervalRef = useRef<number | null>(null);
+export interface Countdown {
+  days: number
+  hours: number
+  minutes: number
+  seconds: number
+}
 
-  const clearTimer = useCallback(() => {
-    if (intervalRef.current) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
+const clampPositive = (value: number) => (Number.isFinite(value) && value > 0 ? value : 0)
+
+export const useCountdown = (target: Date | string | number | null | undefined): Countdown => {
+  const resolveTarget = () => {
+    if (!target) return Date.now()
+    if (target instanceof Date) return target.getTime()
+    if (typeof target === 'string') {
+      const parsed = Date.parse(target)
+      return Number.isFinite(parsed) ? parsed : Date.now()
     }
-  }, []);
+    if (typeof target === 'number') return target
+    return Date.now()
+  }
 
-  useEffect(() => clearTimer, [clearTimer]);
+  const [diff, setDiff] = useState(() => resolveTarget() - Date.now())
 
-  const start = useCallback(() => {
-    clearTimer();
-    setRemaining(seconds);
-    intervalRef.current = window.setInterval(() => {
-      setRemaining((prev) => {
-        if (prev <= 1) {
-          clearTimer();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, [clearTimer, seconds]);
+  useEffect(() => {
+    const nextTarget = resolveTarget()
+    setDiff(nextTarget - Date.now())
+    const interval = window.setInterval(() => {
+      setDiff(nextTarget - Date.now())
+    }, 1000)
+    return () => window.clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target instanceof Date ? target.getTime() : target])
 
-  const reset = useCallback(() => {
-    clearTimer();
-    setRemaining(0);
-  }, [clearTimer]);
+  const total = clampPositive(diff)
+  const days = Math.floor(total / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((total / (1000 * 60 * 60)) % 24)
+  const minutes = Math.floor((total / (1000 * 60)) % 60)
+  const seconds = Math.floor((total / 1000) % 60)
 
-  return {
-    remaining,
-    isRunning: remaining > 0,
-    start,
-    reset,
-  };
-};
+  return { days, hours, minutes, seconds }
+}
 
-export type UseCountdownReturn = ReturnType<typeof useCountdown>;
+export default useCountdown

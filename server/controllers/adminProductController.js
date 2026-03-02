@@ -16,6 +16,28 @@ const parseSort = (raw, fallback = '-updatedAt') => {
   return { [key || 'updatedAt']: direction };
 };
 
+
+const getStockInput = (body = {}) => {
+  if (body.stock_quantity !== undefined) return body.stock_quantity;
+  if (body.stockQuantity !== undefined) return body.stockQuantity;
+  if (body.quantity !== undefined) return body.quantity;
+  return body.stock;
+};
+
+const parseStockQuantity = (body = {}, { required = false } = {}) => {
+  const rawStock = getStockInput(body);
+  if (rawStock === undefined || rawStock === null || rawStock === '') {
+    return { provided: false, stockQty: required ? 0 : undefined };
+  }
+
+  const stockQty = Number.parseInt(rawStock, 10);
+  if (Number.isNaN(stockQty) || stockQty < 0) {
+    throw AppError.badRequest('PRODUCT_STOCK_INVALID', 'PRODUCT_STOCK_INVALID');
+  }
+
+  return { provided: true, stockQty };
+};
+
 const sanitizeRegex = (value) => {
   if (!value || typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -53,6 +75,7 @@ const normalizeProduct = (doc) => {
     mrp: doc.mrp,
     discount: doc.discount,
     stock: doc.stock,
+    stock_quantity: doc.stock,
     status: doc.status,
     image: primaryImage,
     images,
@@ -69,7 +92,6 @@ exports.createProduct = async (req, res, next) => {
       category,
       price,
       mrp,
-      stock,
       image,
       images,
     } = req.body || {};
@@ -96,16 +118,12 @@ exports.createProduct = async (req, res, next) => {
 
     const priceValue = Number(price);
     const mrpValue = Number(mrp);
-    const stockValue = Number(stock);
-
     if (!Number.isFinite(priceValue) || priceValue <= 0)
       throw AppError.badRequest('INVALID_PRICE', 'Price must be greater than zero');
     if (!Number.isFinite(mrpValue) || mrpValue <= 0)
       throw AppError.badRequest('INVALID_MRP', 'MRP must be greater than zero');
     if (priceValue > mrpValue)
       throw AppError.badRequest('PRICE_GT_MRP', 'Price cannot exceed MRP');
-    if (!Number.isFinite(stockValue) || stockValue < 0)
-      throw AppError.badRequest('INVALID_STOCK', 'Stock must be zero or a positive number');
 
     const imageList = Array.isArray(images)
       ? images.filter((img) => typeof img === 'string' && img.trim())
@@ -116,6 +134,9 @@ exports.createProduct = async (req, res, next) => {
       imageList.unshift(imageSource);
     }
 
+    const { stockQty } = parseStockQuantity(req.body, { required: true });
+    console.log('[PRODUCT_STOCK_IN]', { productId: null, stockQty });
+
     const payload = {
       shop: shop._id,
       name: trimmedName,
@@ -123,7 +144,7 @@ exports.createProduct = async (req, res, next) => {
       category: trimmedCategory,
       price: priceValue,
       mrp: mrpValue,
-      stock: stockValue,
+      stock: stockQty,
       status: 'active',
       image: imageSource,
       images: imageList,
@@ -257,7 +278,6 @@ exports.updateProduct = async (req, res, next) => {
       name,
       price,
       mrp,
-      stock,
       status,
       category,
       images,
@@ -280,12 +300,10 @@ exports.updateProduct = async (req, res, next) => {
       }
       product.mrp = value;
     }
-    if (stock !== undefined) {
-      const value = Number(stock);
-      if (!Number.isFinite(value) || value < 0) {
-        throw AppError.badRequest('INVALID_STOCK', 'Stock must be a positive number');
-      }
-      product.stock = value;
+    const { provided: stockProvided, stockQty } = parseStockQuantity(req.body);
+    if (stockProvided) {
+      console.log('[PRODUCT_STOCK_IN]', { productId: product._id?.toString?.() || id, stockQty });
+      product.stock = stockQty;
     }
     if (status !== undefined) {
       const mapped = STATUS_TO_INTERNAL[status] || status;

@@ -23,6 +23,30 @@ const ensurePaise = (value, field) => {
 
 const toPrice = (paise) => paise / 100;
 
+const getStockInput = (body = {}) => {
+  if (body.stock_quantity !== undefined) return body.stock_quantity;
+  if (body.stockQuantity !== undefined) return body.stockQuantity;
+  if (body.quantity !== undefined) return body.quantity;
+  return body.stock;
+};
+
+const parseStockQuantity = (body = {}, { required = false } = {}) => {
+  const rawStock = getStockInput(body);
+  if (rawStock === undefined || rawStock === null || rawStock === '') {
+    return { provided: false, stockQty: required ? 0 : undefined };
+  }
+
+  const stockQty = Number.parseInt(rawStock, 10);
+  if (Number.isNaN(stockQty) || stockQty < 0) {
+    throw Object.assign(new Error('PRODUCT_STOCK_INVALID'), {
+      statusCode: 400,
+      code: 'PRODUCT_STOCK_INVALID',
+    });
+  }
+
+  return { provided: true, stockQty };
+};
+
 const createSampleProductForShop = async (shop) => {
   return Product.create({
     shop: shop._id,
@@ -51,7 +75,6 @@ exports.createProduct = async (req, res, next) => {
       mrpPaise,
       category,
       imageUrl,
-      stock = 0,
       status,
       available,
       isSpecial,
@@ -88,8 +111,8 @@ exports.createProduct = async (req, res, next) => {
     }
 
     const trimmedImage = typeof imageUrl === 'string' ? imageUrl.trim() : '';
-    const numericStock = Number(stock);
-    const parsedStock = Number.isFinite(numericStock) && numericStock >= 0 ? numericStock : 0;
+    const { stockQty: parsedStock } = parseStockQuantity(req.body, { required: true });
+    console.log('[PRODUCT_STOCK_IN]', { productId: null, stockQty: parsedStock });
     const product = await Product.create({
       shop: shop._id,
       createdBy: req.user._id,
@@ -142,7 +165,6 @@ exports.updateProduct = async (req, res, next) => {
       imageUrl,
       image,
       images,
-      stock,
       status,
       available,
       isSpecial,
@@ -226,12 +248,10 @@ exports.updateProduct = async (req, res, next) => {
       }
     }
 
-    if (stock !== undefined) {
-      const nextStock = Number(stock);
-      if (!Number.isFinite(nextStock) || nextStock < 0) {
-        return res.status(400).json({ error: 'Stock must be a non-negative number' });
-      }
-      product.stock = nextStock;
+    const { provided: stockProvided, stockQty } = parseStockQuantity(req.body);
+    if (stockProvided) {
+      console.log('[PRODUCT_STOCK_IN]', { productId: product._id?.toString?.() || req.params.id, stockQty });
+      product.stock = stockQty;
     }
     if (status !== undefined) product.status = status;
     if (available !== undefined) product.available = available;
@@ -243,6 +263,9 @@ exports.updateProduct = async (req, res, next) => {
     invalidateProductCache();
     return res.json({ ok: true, data: { product: payload } });
   } catch (err) {
+    if (err?.statusCode) {
+      return res.status(err.statusCode).json({ error: err.message });
+    }
     return next(err);
   }
 };

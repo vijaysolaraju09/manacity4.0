@@ -44,6 +44,7 @@ exports.normalizeProduct = (p) => {
     mrpPaise: toPaise(mrp),
     discount,
     stock,
+    stock_quantity: stock ?? 0,
     images: p.images,
     image: p.images?.[0] || p.image || '',
     category: p.category,

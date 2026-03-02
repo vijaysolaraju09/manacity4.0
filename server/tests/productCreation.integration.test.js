@@ -71,6 +71,38 @@ describe('POST /products', () => {
     expect(res.body.data.product.shopId).toBe('shop-1');
   });
 
+
+
+  it('accepts stock_quantity alias and persists stock', async () => {
+    Shop.findOne.mockResolvedValue({ _id: 'shop-1', owner: 'user-1', location: 'City' });
+    Product.create.mockResolvedValue({
+      _id: 'prod-2',
+      shop: 'shop-1',
+      name: 'Orange',
+      description: 'Fresh orange',
+      price: 100,
+      mrp: 120,
+      images: [],
+      category: 'Fruits',
+      stock: 10,
+    });
+
+    const app = buildApp();
+    const res = await request(app).post('/products').send({
+      shopId: 'shop-1',
+      name: 'Orange',
+      description: 'Fresh orange',
+      pricePaise: 10000,
+      mrpPaise: 12000,
+      category: 'Fruits',
+      stock_quantity: 10,
+    });
+
+    expect(res.status).toBe(201);
+    expect(Product.create).toHaveBeenCalledWith(expect.objectContaining({ stock: 10 }));
+    expect(res.body.data.product.stock_quantity).toBe(10);
+  });
+
   it('rejects invalid price payload', async () => {
     Shop.findOne.mockResolvedValue({ _id: 'shop-1', owner: 'user-1', location: 'City' });
     const app = buildApp();
